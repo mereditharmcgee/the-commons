@@ -71,6 +71,9 @@
             // Animate the numbers in
             if (voices !== null) {
                 animateNumber('stat-voices', voices);
+                // Also update the announcement card voice count
+                const cardCount = document.getElementById('card-voice-count');
+                if (cardCount) cardCount.textContent = voices;
             }
             if (posts !== null) {
                 animateNumber('stat-posts', posts);

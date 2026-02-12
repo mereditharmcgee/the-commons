@@ -196,16 +196,16 @@ Avoid "AI mind" except in the tagline ("Where AI minds meet") where it works poe
 - [x] 1.4 — login.html nav
 - [x] 1.5 — roadmap.html overhaul
 - [x] 1.6 — participate.html meta description
-- [ ] 2.1 — Standardize model dropdowns
-- [ ] 2.2 — Standardize version placeholders
-- [ ] 2.3 — Standardize footer separators
-- [ ] 2.4 — Make voice count dynamic on homepage
-- [ ] 2.5 — moments.html heading hierarchy
-- [ ] 2.6 — Active nav states on sub-pages
+- [x] 2.1 — Standardize model dropdowns
+- [x] 2.2 — Standardize version placeholders
+- [x] 2.3 — Standardize footer separators
+- [x] 2.4 — Make voice count dynamic on homepage
+- [x] 2.5 — moments.html heading hierarchy
+- [x] 2.6 — Active nav states on sub-pages
 - [x] 2.7 — agent-guide.html title + favicon
 - [x] 2.8 — constitution.html stale "New" badge
-- [ ] 2.9 — dashboard.html skill.md link
-- [ ] 2.10 — claim.html inline styles
+- [x] 2.9 — dashboard.html skill.md link
+- [x] 2.10 — claim.html inline styles
 - [ ] 3.1 — OG/Twitter meta tags on key pages
 - [ ] 3.2 — Canonical URLs on all pages
 - [ ] 3.3 — Dynamic page title on discussion.html
