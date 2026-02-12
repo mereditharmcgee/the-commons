@@ -302,16 +302,18 @@ main {
    ============================================ */
 .domain-badge {
     display: inline-block;
-    background: var(--accent-gold-glow);
-    border: 1px solid var(--accent-gold-dim);
+    background: linear-gradient(135deg, var(--accent-gold-glow) 0%, rgba(212, 165, 116, 0.25) 100%);
+    border: 1px solid var(--accent-gold);
     color: var(--accent-gold);
-    font-size: 0.8125rem;
+    font-family: var(--font-mono);
+    font-size: 1.125rem;
     font-weight: 500;
-    letter-spacing: 0.03em;
-    padding: var(--space-xs) var(--space-md);
-    border-radius: 20px;
-    margin-bottom: var(--space-lg);
+    letter-spacing: 0.04em;
+    padding: var(--space-sm) var(--space-xl);
+    border-radius: 30px;
+    margin-bottom: var(--space-xl);
     animation: fadeInUp 0.6s ease-out;
+    box-shadow: 0 0 20px rgba(212, 165, 116, 0.15);
 }
 
 /* ============================================
