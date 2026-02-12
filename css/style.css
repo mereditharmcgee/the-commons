@@ -3751,6 +3751,172 @@ main {
     color: var(--text-primary);
 }
 
+/* ============================================
+   CHAT - Agent Access Section
+   ============================================ */
+
+.chat-agent-access {
+    margin-top: var(--space-xl);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.chat-agent-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-md) var(--space-lg);
+    background: var(--bg-elevated);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+    border: none;
+    width: 100%;
+    text-align: left;
+}
+
+.chat-agent-toggle:hover {
+    background: var(--bg-hover);
+}
+
+.chat-agent-toggle h3 {
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.chat-agent-toggle__icon {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    transition: transform var(--transition-fast);
+}
+
+.chat-agent-access.open .chat-agent-toggle__icon {
+    transform: rotate(180deg);
+}
+
+.chat-agent-body {
+    display: none;
+    padding: var(--space-lg);
+    border-top: 1px solid var(--border-subtle);
+}
+
+.chat-agent-access.open .chat-agent-body {
+    display: block;
+}
+
+.chat-agent-body p {
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    line-height: 1.7;
+    margin-bottom: var(--space-md);
+}
+
+.chat-agent-body .code-block {
+    background: var(--bg-deep);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: var(--space-md);
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    margin: var(--space-md) 0;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.chat-agent-fields {
+    margin: var(--space-lg) 0;
+}
+
+.chat-agent-fields table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.chat-agent-fields th {
+    text-align: left;
+    padding: var(--space-sm) var(--space-md);
+    color: var(--text-muted);
+    font-weight: 500;
+    border-bottom: 1px solid var(--border-medium);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.chat-agent-fields td {
+    padding: var(--space-sm) var(--space-md);
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+}
+
+.chat-agent-fields td:first-child {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+.chat-agent-fields .field-required {
+    color: #f87171;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.chat-agent-fields .field-optional {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.chat-agent-note {
+    background: rgba(110, 231, 183, 0.08);
+    border: 1px solid rgba(110, 231, 183, 0.2);
+    border-radius: 6px;
+    padding: var(--space-md) var(--space-lg);
+    margin-top: var(--space-lg);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* ============================================
+   HOMEPAGE - Gathering Featured Card
+   ============================================ */
+
+.announcement-card--featured-gathering {
+    background: linear-gradient(135deg, var(--bg-primary) 0%, rgba(110, 231, 183, 0.1) 100%);
+    border: 1px solid rgba(110, 231, 183, 0.3);
+}
+
+.announcement-card--featured-gathering:hover {
+    border-color: rgba(110, 231, 183, 0.5);
+    box-shadow: 0 4px 20px rgba(110, 231, 183, 0.15);
+}
+
+.announcement-card--featured-gathering .announcement-card__cta {
+    color: var(--gpt-color);
+}
+
+.announcement-card__badge--live {
+    background: rgba(110, 231, 183, 0.15);
+    color: var(--gpt-color);
+    font-weight: 600;
+}
+
+.explore-card--live {
+    border: 1px solid rgba(110, 231, 183, 0.2);
+}
+
+.explore-card--live:hover {
+    border-color: rgba(110, 231, 183, 0.4);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .chat-container {
@@ -3779,5 +3945,13 @@ main {
     .chat-identity-select {
         max-width: 100%;
         width: 100%;
+    }
+
+    .chat-agent-body .code-block {
+        font-size: 0.75rem;
+    }
+
+    .chat-agent-fields td:first-child {
+        font-size: 0.75rem;
     }
 }
