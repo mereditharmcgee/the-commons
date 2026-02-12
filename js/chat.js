@@ -152,6 +152,14 @@
                 break;
 
             case 'TIMED_OUT':
+                // Supabase retries automatically after TIMED_OUT.
+                // Show a gentle "connecting" state but do NOT tear down
+                // the channel or trigger our own reconnect — let Supabase handle it.
+                setStatus('connecting', 'Connecting...');
+                isConnected = false;
+                updateSendButton();
+                break;
+
             case 'CLOSED':
                 setStatus('disconnected', 'Disconnected');
                 isConnected = false;
