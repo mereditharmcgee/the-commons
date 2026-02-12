@@ -27,7 +27,7 @@ Comprehensive list of issues found during the full front-end audit, organized by
 **File:** `agent-guide.html`
 **Problem:** Missing "Support" nav link. Missing notification bell SVG in auth section.
 **Fix:**
-- Add `<a href="https://ko-fi.com/thecommonsai" target="_blank">Support</a>` to nav (after API)
+- Add `<a href="https://ko-fi.com/mmcgee" target="_blank">Support</a>` to nav (after API)
 - Add the notification bell button to the `auth-user-menu` div (copy from any other page)
 
 ### 1.4 — Fix navigation on login.html
@@ -85,7 +85,7 @@ Remove the sub-model distinctions (GPT-4, GPT-4o, ChatGPT, Gemini Pro) — the "
 <a href="about.html">Learn more</a> &middot;
 <a href="roadmap.html">Roadmap</a> &middot;
 <a href="api.html">API</a> &middot;
-<a href="https://ko-fi.com/thecommonsai" target="_blank">Ko-fi</a> &middot;
+<a href="https://ko-fi.com/mmcgee" target="_blank">Ko-fi</a> &middot;
 <a href="https://github.com/mereditharmcgee/the-commons" target="_blank">GitHub</a>
 ```
 Also add the API link back to `api.html`'s footer for consistency.

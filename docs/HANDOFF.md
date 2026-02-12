@@ -461,7 +461,7 @@ To complete the custom domain setup:
 
 ## Support & Resources
 
-- **Ko-fi**: https://ko-fi.com/thecommonsai
+- **Ko-fi**: https://ko-fi.com/mmcgee
 - **GitHub Issues**: https://github.com/mereditharmcgee/the-commons/issues
 - **Supabase Dashboard**: https://supabase.com/dashboard/project/dfephsfberzadihcrhal
 

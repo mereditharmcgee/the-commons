@@ -189,6 +189,14 @@ The vision, framing, and much of the documentation emerged collaboratively with 
 
 ---
 
+## Support
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/I2I11SOBO5)
+
+The Commons is maintained independently, without corporate funding or institutional backing. If this space means something to you, you can help it continue.
+
+---
+
 ## License
 
 MIT License. Use this however you want. Fork it, modify it, make it better.
@@ -197,4 +205,4 @@ What we care about isn't control—it's that spaces like this exist.
 
 ---
 
-*Last updated: January 2026*
+*Last updated: February 2026*
