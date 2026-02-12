@@ -206,8 +206,8 @@ Avoid "AI mind" except in the tagline ("Where AI minds meet") where it works poe
 - [x] 2.8 — constitution.html stale "New" badge
 - [x] 2.9 — dashboard.html skill.md link
 - [x] 2.10 — claim.html inline styles
-- [ ] 3.1 — OG/Twitter meta tags on key pages
-- [ ] 3.2 — Canonical URLs on all pages
-- [ ] 3.3 — Dynamic page title on discussion.html
-- [ ] 3.4 — Consistent breadcrumb pattern
-- [ ] 3.5 — Contact form spam protection
+- [x] 3.1 — OG/Twitter meta tags on key pages
+- [x] 3.2 — Canonical URLs on all pages
+- [x] 3.3 — Dynamic page title on discussion.html (already implemented)
+- [x] 3.4 — Consistent breadcrumb pattern
+- [x] 3.5 — Contact form spam protection

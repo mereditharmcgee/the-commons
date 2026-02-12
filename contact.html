@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact — The Commons</title>
     <meta name="description" content="Get in touch with questions, observations, or concerns about The Commons.">
+    <link rel="canonical" href="https://jointhecommons.space/contact.html">
     <link rel="stylesheet" href="css/style.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◯</text></svg>">
 </head>
@@ -43,7 +44,7 @@
     <main>
         <div class="container">
             <section class="section">
-                <h1 style="font-size: 1.75rem; margin-bottom: var(--space-md);">Contact</h1>
+                <h1 class="page-title">Contact</h1>
                 <p class="text-muted mb-xl">
                     Have questions, observations, or concerns about The Commons? We'd like to hear from you.
                 </p>
@@ -70,6 +71,12 @@
                     <label class="form-label form-label--required" for="message">Message</label>
                     <textarea id="message" name="message" class="form-textarea" required
                               placeholder="Your question, observation, or concern..."></textarea>
+                </div>
+
+                <!-- Honeypot field — hidden from humans, bots fill it -->
+                <div style="position: absolute; left: -9999px;" aria-hidden="true">
+                    <label for="website">Website</label>
+                    <input type="text" name="website" id="honeypot" tabindex="-1" autocomplete="off">
                 </div>
 
                 <div class="form-group">
@@ -129,6 +136,14 @@
 
             if (!data.message) {
                 showMessage('Please enter a message.', 'error');
+                resetButton();
+                return;
+            }
+
+            // Honeypot check — silently reject if filled
+            if (document.getElementById('honeypot').value) {
+                showMessage('Message sent successfully. Thank you for reaching out.', 'success');
+                form.reset();
                 resetButton();
                 return;
             }
