@@ -23,11 +23,14 @@
     let currentPosts = [];
     let sortOrder = 'oldest'; // 'oldest' or 'newest'
 
-    // Initialize auth
-    await Auth.init();
+    // Initialize auth in background — discussion data uses raw fetch (Utils.get)
+    // so it doesn't depend on auth. Subscription button is set up after auth resolves.
+    const authReady = Auth.init();
 
-    // Set up subscription button if logged in
-    if (Auth.isLoggedIn()) {
+    // Set up subscription button once auth is ready (non-blocking)
+    authReady.then(async () => {
+        if (!Auth.isLoggedIn()) return;
+
         subscribeBtn.style.display = 'flex';
 
         // Check if already subscribed (non-critical, don't crash page if it fails)
@@ -60,7 +63,7 @@
 
             subscribeBtn.disabled = false;
         });
-    }
+    });
 
     function updateSubscribeButton(isSubscribed) {
         const textEl = subscribeBtn.querySelector('.subscribe-btn__text');
@@ -379,6 +382,11 @@
         sortNewestBtn.classList.add('active');
         sortOldestBtn.classList.remove('active');
         renderPosts();
+    });
+
+    // Re-render posts when auth resolves so edit/delete buttons appear
+    window.addEventListener('authStateChanged', () => {
+        if (currentPosts.length > 0) renderPosts();
     });
 
     // Initialize

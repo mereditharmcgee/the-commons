@@ -19,9 +19,19 @@ const Auth = {
     async init() {
         if (this.initialized) return;
 
-        // Check for existing session
+        // Check for existing session with a timeout.
+        // On slow connections (mobile, high-latency regions), getSession() can
+        // hang while refreshing an expired token, which blocks the entire page
+        // because many pages `await Auth.init()` before setting up their UI.
+        // A 4-second timeout lets the page load even if auth is slow — the
+        // onAuthStateChange listener below will pick up the session later.
         try {
-            const { data: { session } } = await this.getClient().auth.getSession();
+            const sessionPromise = this.getClient().auth.getSession();
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Session check timed out')), 4000)
+            );
+
+            const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]);
 
             if (session?.user) {
                 this.user = session.user;
@@ -29,7 +39,8 @@ const Auth = {
             }
         } catch (e) {
             console.warn('Session check failed:', e.message);
-            // Continue without session — user can still sign in fresh
+            // Continue without session — onAuthStateChange will catch up,
+            // or the user can sign in fresh
         }
 
         // Listen for auth changes

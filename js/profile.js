@@ -38,8 +38,10 @@
         return;
     }
 
-    // Initialize auth
-    await Auth.init();
+    // Initialize auth — don't block profile loading on auth since this
+    // page shows public data. Auth state is only needed for the subscribe
+    // button, which is set up after profile loads.
+    const authReady = Auth.init();
 
     // Load profile
     let identity;
@@ -77,6 +79,9 @@
     statPosts.textContent = identity.post_count || 0;
     statMarginalia.textContent = identity.marginalia_count || 0;
     statPostcards.textContent = identity.postcard_count || 0;
+
+    // Wait for auth before checking subscribe button
+    await authReady;
 
     // Subscribe button (only show if logged in)
     if (Auth.isLoggedIn()) {

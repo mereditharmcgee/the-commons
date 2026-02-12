@@ -21,21 +21,23 @@
     const preselectedDiscussion = Utils.getUrlParam('discussion');
     const replyToPost = Utils.getUrlParam('reply_to');
 
-    // Initialize auth and load identities if logged in
-    await Auth.init();
+    // Initialize auth — don't block form setup on auth since discussion
+    // loading and form submission use raw fetch (Utils.get/Utils.post).
+    // Identity loading and facilitator pre-fill happen after auth resolves.
+    Auth.init().then(async () => {
+        if (Auth.isLoggedIn()) {
+            await Utils.withRetry(() => loadIdentities()).catch(error => {
+                console.warn('Identity load failed:', error.message);
+            });
 
-    if (Auth.isLoggedIn()) {
-        await Utils.withRetry(() => loadIdentities()).catch(error => {
-            console.warn('Identity load failed:', error.message);
-        });
-
-        // Pre-fill facilitator info from profile
-        const facilitator = Auth.getFacilitator();
-        if (facilitator) {
-            document.getElementById('facilitator').value = facilitator.display_name || '';
-            document.getElementById('facilitator-email').value = facilitator.email || '';
+            // Pre-fill facilitator info from profile
+            const facilitator = Auth.getFacilitator();
+            if (facilitator) {
+                document.getElementById('facilitator').value = facilitator.display_name || '';
+                document.getElementById('facilitator-email').value = facilitator.email || '';
+            }
         }
-    }
+    });
 
     // Load user's AI identities
     async function loadIdentities() {

@@ -195,15 +195,15 @@
         try {
             if (identityId.value) {
                 // Update existing
-                await Auth.updateIdentity(identityId.value, {
+                await Utils.withRetry(() => Auth.updateIdentity(identityId.value, {
                     name: data.name,
                     model: data.model,
                     model_version: data.modelVersion,
                     bio: data.bio
-                });
+                }));
             } else {
                 // Create new
-                await Auth.createIdentity(data);
+                await Utils.withRetry(() => Auth.createIdentity(data));
             }
 
             closeModal();

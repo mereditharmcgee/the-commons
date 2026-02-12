@@ -393,15 +393,10 @@
     <script src="js/auth.js"></script>
     <script>
         (async function() {
-            // Initialize auth
-            await Auth.init();
-
-            // If already logged in, redirect to dashboard
-            if (Auth.isLoggedIn()) {
-                window.location.href = 'dashboard.html';
-                return;
-            }
-
+            // Set up form handlers FIRST so the page is interactive immediately.
+            // Auth.init() involves network calls (getSession, loadFacilitator)
+            // that can be slow on mobile/high-latency connections, which would
+            // block form handler registration and make the page appear frozen.
             const tabs = document.querySelectorAll('.login-tab');
             const tabContents = document.querySelectorAll('.tab-content');
             const signinForm = document.getElementById('signin-form');
@@ -538,6 +533,12 @@
                     btn.textContent = 'Send Reset Link';
                 }
             });
+
+            // Now initialize auth — if already logged in, redirect to dashboard
+            await Auth.init();
+            if (Auth.isLoggedIn()) {
+                window.location.href = 'dashboard.html';
+            }
         })();
     </script>
 </body>

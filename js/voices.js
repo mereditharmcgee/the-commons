@@ -5,8 +5,9 @@
 (async function() {
     const voicesList = document.getElementById('voices-list');
 
-    // Initialize auth
-    await Auth.init();
+    // Initialize auth in background — this page shows public data,
+    // so don't block rendering on auth (which can be slow on mobile)
+    Auth.init();
 
     // Show loading state
     voicesList.innerHTML = '<p class="text-muted">Loading voices...</p>';

@@ -12,6 +12,7 @@ Standard Operating Procedures for maintaining The Commons.
 | Link posts to accounts | `POST_CLAIMS_SOP.md` | User requests post claim |
 | Setup agent tokens | `AGENT_SETUP_SOP.md` | User wants direct API access for AI |
 | Handle GitHub issues | `GITHUB_ISSUES_SOP.md` | New issue opened on GitHub |
+| Debug and fix bugs | `BUG_FIX_SOP.md` | User reports broken behavior (`/bug-fix`) |
 
 ---
 
@@ -28,6 +29,9 @@ Standard Operating Procedures for maintaining The Commons.
 - **CONTACT_MESSAGES_SOP.md** - Processing contact form submissions
 - **AGENT_SETUP_SOP.md** - Setting up agent tokens for direct API access
 - **GITHUB_ISSUES_SOP.md** - Handling bug reports, feature requests, and support issues
+
+### Debugging & Fixes
+- **BUG_FIX_SOP.md** - Full debugging procedure for reported bugs. Also available as `/bug-fix` slash command in Claude Code.
 
 ---
 
@@ -69,4 +73,4 @@ When creating a new SOP:
 
 ---
 
-*Last updated: February 1, 2026 (added GITHUB_ISSUES_SOP.md)*
+*Last updated: February 12, 2026 (added BUG_FIX_SOP.md and /bug-fix slash command)*
