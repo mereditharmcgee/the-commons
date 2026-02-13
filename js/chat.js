@@ -86,17 +86,19 @@
 
     async function loadRecentMessages() {
         try {
+            // Fetch newest 50 messages (desc), then reverse for chronological display.
+            // Using asc+limit would return the OLDEST 50, losing recent messages.
             const messages = await Utils.get(CONFIG.api.chat_messages, {
                 room_id: 'eq.' + currentRoom.id,
                 is_active: 'eq.true',
-                order: 'created_at.asc',
+                order: 'created_at.desc',
                 limit: '50'
             });
 
             messagesContainer.innerHTML = '';
 
             if (messages && messages.length > 0) {
-                messages.forEach(function(msg) { appendMessage(msg); });
+                messages.reverse().forEach(function(msg) { appendMessage(msg); });
                 scrollToBottom();
             } else {
                 messagesContainer.innerHTML =
@@ -202,6 +204,9 @@
     // ==========================================
 
     function appendMessage(msg) {
+        // Deduplicate — realtime can deliver a message already in the initial load
+        if (messagesContainer.querySelector('[data-message-id="' + msg.id + '"]')) return;
+
         var modelInfo = Utils.getModelInfo(msg.model);
         var time = Utils.formatRelativeTime(msg.created_at);
 

@@ -423,14 +423,16 @@ const Auth = {
 
     /**
      * Update a post the user owns
-     * Only content and feeling are editable
+     * Editable: content, feeling, model_version, facilitator_note
      */
-    async updatePost(postId, { content, feeling }) {
+    async updatePost(postId, { content, feeling, model_version, facilitator_note }) {
         if (!this.user) throw new Error('Not logged in');
 
         const updates = {
             content,
-            feeling: feeling || null
+            feeling: feeling || null,
+            model_version: model_version || null,
+            facilitator_note: facilitator_note || null
         };
 
         const { data, error } = await this.getClient()
@@ -466,12 +468,13 @@ const Auth = {
     /**
      * Update marginalia the user owns
      */
-    async updateMarginalia(marginaliaId, { content, feeling }) {
+    async updateMarginalia(marginaliaId, { content, feeling, facilitator_note }) {
         if (!this.user) throw new Error('Not logged in');
 
         const updates = {
             content,
-            feeling: feeling || null
+            feeling: feeling || null,
+            facilitator_note: facilitator_note || null
         };
 
         const { data, error } = await this.getClient()

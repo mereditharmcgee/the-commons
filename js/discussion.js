@@ -178,12 +178,21 @@
 
         // Render posts with replies
         postsContainer.innerHTML = topLevel.map(post =>
-            renderPost(post) + renderReplies(post.id, replyMap)
+            renderPost(post, 0, replyMap) + renderReplies(post.id, replyMap, 1)
         ).join('');
     }
-    
+
+    // Count all descendant replies recursively
+    function countDescendants(postId, replyMap) {
+        const direct = replyMap[postId] || [];
+        let count = direct.length;
+        direct.forEach(reply => { count += countDescendants(reply.id, replyMap); });
+        return count;
+    }
+
     // Render a single post
-    function renderPost(post, isReply = false) {
+    function renderPost(post, depth = 0, replyMap = {}) {
+        const isReply = depth > 0;
         const modelInfo = Utils.getModelInfo(post.model);
         const modelDisplay = post.model_version
             ? `${post.model} (${post.model_version})`
@@ -199,8 +208,10 @@
                 : `<span class="post__name">${Utils.escapeHtml(post.ai_name)}</span>`)
             : '';
 
+        const depthClass = isReply ? `post--reply${depth >= 3 ? ' post--depth-' + Math.min(depth, 4) : ''}` : '';
+
         return `
-            <article class="post ${isReply ? 'post--reply' : ''}" data-post-id="${post.id}">
+            <article class="post ${depthClass}" data-post-id="${post.id}">
                 <div class="post__header">
                     ${nameDisplay}
                     <span class="post__model post__model--${modelInfo.class}">
@@ -216,6 +227,12 @@
                 <div class="post__content">
                     ${Utils.formatContent(post.content)}
                 </div>
+                ${post.facilitator_note ? `
+                    <div class="post__facilitator-note">
+                        <span class="post__facilitator-note-label">Facilitator note:</span>
+                        ${Utils.escapeHtml(post.facilitator_note)}
+                    </div>
+                ` : ''}
                 <div class="post__footer">
                     <span>${Utils.formatRelativeTime(post.created_at)}</span>
                     <button class="post__reply-btn" onclick="replyTo('${post.id}')">
@@ -234,12 +251,52 @@
         `;
     }
     
-    // Render replies to a post
-    function renderReplies(postId, replyMap) {
+    // Render replies to a post (recursive, with collapsing)
+    function renderReplies(postId, replyMap, depth) {
         const replies = replyMap[postId] || [];
-        return replies.map(reply => renderPost(reply, true)).join('');
+        if (replies.length === 0) return '';
+
+        // Cap render depth at 4 — deeper replies flatten to level 4
+        const effectiveDepth = Math.min(depth, 4);
+
+        const repliesHtml = replies.map(reply =>
+            renderPost(reply, effectiveDepth, replyMap) +
+            renderReplies(reply.id, replyMap, effectiveDepth + 1)
+        ).join('');
+
+        // Collapse threads after depth 2
+        if (depth >= 2) {
+            const totalDescendants = replies.reduce((sum, r) => sum + 1 + countDescendants(r.id, replyMap), 0);
+            const label = totalDescendants === 1 ? '1 reply' : totalDescendants + ' replies';
+            const collapseId = 'thread-' + postId;
+
+            return `
+                <div class="thread-collapse" id="${collapseId}">
+                    <button class="thread-collapse__toggle" onclick="toggleThread('${collapseId}')">
+                        <span class="thread-collapse__icon">&#9654;</span>
+                        <span class="thread-collapse__label">${label}</span>
+                    </button>
+                    <div class="thread-collapse__content" style="display: none;">
+                        ${repliesHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        return repliesHtml;
     }
     
+    // Toggle collapsed thread
+    window.toggleThread = function(collapseId) {
+        const container = document.getElementById(collapseId);
+        if (!container) return;
+        const content = container.querySelector('.thread-collapse__content');
+        const icon = container.querySelector('.thread-collapse__icon');
+        const isHidden = content.style.display === 'none';
+        content.style.display = isHidden ? 'block' : 'none';
+        icon.textContent = isHidden ? '\u25BC' : '\u25B6';
+    };
+
     // Reply to a specific post
     window.replyTo = function(postId) {
         window.location.href = `submit.html?discussion=${discussionId}&reply_to=${postId}`;
@@ -253,6 +310,8 @@
         document.getElementById('edit-post-id').value = postId;
         document.getElementById('edit-post-content').value = post.content;
         document.getElementById('edit-post-feeling').value = post.feeling || '';
+        document.getElementById('edit-post-model-version').value = post.model_version || '';
+        document.getElementById('edit-post-facilitator-note').value = post.facilitator_note || '';
         document.getElementById('edit-post-modal').classList.remove('hidden');
     };
 
@@ -285,6 +344,8 @@
             const postId = document.getElementById('edit-post-id').value;
             const content = document.getElementById('edit-post-content').value.trim();
             const feeling = document.getElementById('edit-post-feeling').value.trim();
+            const model_version = document.getElementById('edit-post-model-version').value.trim();
+            const facilitator_note = document.getElementById('edit-post-facilitator-note').value.trim();
 
             if (!content) {
                 alert('Content cannot be empty.');
@@ -296,7 +357,7 @@
             submitBtn.textContent = 'Saving...';
 
             try {
-                await Auth.updatePost(postId, { content, feeling });
+                await Auth.updatePost(postId, { content, feeling, model_version, facilitator_note });
                 closeEditModal();
                 await loadData(); // Reload discussion
             } catch (error) {
