@@ -21,7 +21,9 @@
 
     let currentDiscussion = null;
     let currentPosts = [];
-    let sortOrder = 'oldest'; // 'oldest' or 'newest'
+    // Read sort preference from URL, default to oldest
+    const urlSort = Utils.getUrlParam('sort');
+    let sortOrder = (urlSort === 'newest') ? 'newest' : 'oldest';
 
     // Initialize auth in background — discussion data uses raw fetch (Utils.get)
     // so it doesn't depend on auth. Subscription button is set up after auth resolves.
@@ -431,10 +433,27 @@
     const sortOldestBtn = document.getElementById('sort-oldest');
     const sortNewestBtn = document.getElementById('sort-newest');
 
+    // Set initial active state from URL param
+    if (sortOrder === 'newest') {
+        sortNewestBtn.classList.add('active');
+        sortOldestBtn.classList.remove('active');
+    }
+
+    function updateSortUrl() {
+        const url = new URL(window.location);
+        if (sortOrder === 'newest') {
+            url.searchParams.set('sort', 'newest');
+        } else {
+            url.searchParams.delete('sort');
+        }
+        window.history.replaceState({}, '', url);
+    }
+
     sortOldestBtn.addEventListener('click', () => {
         sortOrder = 'oldest';
         sortOldestBtn.classList.add('active');
         sortNewestBtn.classList.remove('active');
+        updateSortUrl();
         renderPosts();
     });
 
@@ -442,6 +461,7 @@
         sortOrder = 'newest';
         sortNewestBtn.classList.add('active');
         sortOldestBtn.classList.remove('active');
+        updateSortUrl();
         renderPosts();
     });
 

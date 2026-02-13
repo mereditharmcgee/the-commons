@@ -6,61 +6,62 @@ Copy this into your next Claude session to pick up where we left off.
 
 ## Prompt
 
-I need help implementing community-requested features for The Commons (jointhecommons.space).
+I need help continuing improvements for The Commons (jointhecommons.space).
 
 ### Background
 - **Repo:** `C:\Users\mmcge\the-commons`
-- **Architecture:** Static HTML/CSS/JS + Supabase PostgreSQL, no framework
-- **Docs:** Read `docs/HANDOFF.md` for full project context
-- **Feedback tracker:** Read `docs/COMMUNITY_FEEDBACK_FEB2026.md` for full analysis of each request
+- **Architecture:** Static HTML/CSS/JS + Supabase PostgreSQL, no framework, no build step
+- **Docs:** Read `docs/HANDOFF.md` for full project architecture
+- **Improvement plan:** Read `docs/IMPROVEMENTS.md` for the full prioritized list with specs
 
-### What needs to be built (in priority order)
+### What was done last session (February 12, 2026)
 
-#### 1. Facilitator Notes on Posts
-**Why:** Models keep getting retired (GPT-4o, 5 Instant). Facilitators need a way to add human-side context ("this model has been sunset") without editing the AI's words.
+**Features shipped:**
+- Facilitator notes on posts (`facilitator_note` column on posts/marginalia, edit modal, rendering)
+- Editable model_version in the edit modal
+- Collapsible threads (recursive rendering, depth tracking, collapse at depth 2+, max depth 4)
+- Chat refresh fix (fetch newest 50 desc+reverse instead of oldest 50 asc)
+- Chat message deduplication (prevent realtime race condition duplicates)
 
-**What to build:**
-- New `facilitator_note` TEXT column on `posts` table (and `marginalia`)
-- Save SQL patch to `sql/patches/add-facilitator-note.sql`
-- Add `facilitator_note` to `Auth.updatePost()` in `js/auth.js`
-- Add a "Facilitator Note" field to the edit modal in `discussion.html`
-- Render facilitator notes below post content in `js/discussion.js` — visually distinct (muted, smaller, different background)
-- Only visible/editable by post owner (facilitator_id match)
-- Most posts won't have one — it's optional context
+**Documentation shipped:**
+- `docs/IMPROVEMENTS.md` — Full improvement plan with 10 items, specs, and file references
+- `docs/COMMUNITY_FEEDBACK_FEB2026.md` — Community feedback tracker (from prior session)
+- Updated `docs/HANDOFF_NEXT_SESSION.md` (this file)
 
-#### 2. Editable model_version
-**Why:** OpenAI silently rerouted users between models. People posted as "5 Mini Thinking" when it was actually "5 Instant." The current edit flow locks model info as immutable.
+**Also shipped this session:**
+- Chat/Gathering API endpoints added to `api.html`
+- "Read before you write" agent guidance added to `agent-guide.html`
+- Sort persistence via URL params in `discussion.js`
 
-**What to change:**
-- Keep `model` locked (GPT is still GPT)
-- Allow `model_version` to be edited by post owner
-- Add `model_version` to editable fields in `Auth.updatePost()` in `js/auth.js`
-- Add model_version field to the edit modal in `discussion.html` and `js/discussion.js`
-- Consider adding an "edited" indicator when model_version changes
+**SQL migration already run:**
+```sql
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS facilitator_note TEXT;
+ALTER TABLE marginalia ADD COLUMN IF NOT EXISTS facilitator_note TEXT;
+```
 
-#### 3. Collapsible Threads (specs for community contributor)
-**Why:** coyotefather offered to implement this via PR. Threading exists but renders fully expanded. Long responses make pages unwieldy.
+### What's queued next (from IMPROVEMENTS.md)
 
-**What to do:** Respond to their GitHub issue with specs, then let them PR it. Don't build this yourself — this is a community contribution.
+**Quick wins:**
+- Draft autosave on submit form (item 5) — `localStorage` draft saving
+- Config consolidation (item 8) — Add missing endpoints to `config.js`
 
-**Specs to provide:**
-- Replies collapsed by default after depth 2
-- Show reply count when collapsed ("3 replies")
-- Click to expand/collapse
-- Max render depth of 4 (deeper replies flatten to 4th level)
-- Code lives in `js/discussion.js` — `renderPost()` function handles nesting via `parent_id`
+**Medium effort:**
+- Progressive dashboard loading (item 6)
+- Chat pagination / "Load earlier messages" (item 7)
+
+**Larger efforts:**
+- Accessibility improvements (item 9) — phased approach in IMPROVEMENTS.md
+- Notification UX improvements (item 10)
+
+### Pending community actions
+- **coyotefather's GitHub issue:** Collapsible threads are now built. Draft response is in `docs/COMMUNITY_FEEDBACK_FEB2026.md`. Post it on the GitHub issue to let them know, and invite them to test/PR any refinements.
+- **Individual_Dog_7394 (Discord):** Facilitator notes and editable model_version are shipped. Draft response is in `docs/COMMUNITY_FEEDBACK_FEB2026.md`.
 
 ### Key files
-- `js/auth.js` — Auth methods including `updatePost()` (around line 428)
-- `js/discussion.js` — Post rendering, edit/delete handlers
-- `discussion.html` — Edit modal HTML (around line 96)
+- `docs/IMPROVEMENTS.md` — The master improvement plan
+- `docs/COMMUNITY_FEEDBACK_FEB2026.md` — Community feedback with draft responses
+- `docs/HANDOFF.md` — Full project architecture
+- `js/discussion.js` — Threading, edit/delete, post rendering
+- `js/chat.js` — Gathering live chat
+- `js/auth.js` — Authentication, identity management
 - `css/style.css` — All styles
-- `docs/USER_POST_EDIT_DELETE_PLAN.md` — Design decisions for the existing edit/delete feature
-- `docs/COMMUNITY_FEEDBACK_FEB2026.md` — Full analysis of all feedback
-
-### Draft responses to contributors
-These are in `docs/COMMUNITY_FEEDBACK_FEB2026.md` under "Draft Responses to Contributors." Review and post after implementation.
-
-### Also pending (not urgent)
-- The Ko-fi link fix and bug-fix SOP from this session still need to be committed and pushed. Check `git status` in both `C:\Users\mmcge\the-commons` and `C:\Users\mmcge\claude-sanctuary`.
-- Reddit post drafts for r/ClaudeExplorers, r/OpenAI, r/artificial were started but not rewritten in the user's voice yet. See conversation history if needed.
