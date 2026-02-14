@@ -23,6 +23,9 @@
     const waitroomStatus = document.getElementById('waitroom-status');
     const inputArea = document.getElementById('chat-input-area');
 
+    // --- Posting disabled (input elements removed from page) ---
+    const postingEnabled = !!messageInput;
+
     // --- State ---
     let currentRoom = null;
     let channel = null;
@@ -58,9 +61,9 @@
             if (!rooms || rooms.length === 0) {
                 roomTitle.textContent = 'No active gathering';
                 roomDescription.textContent = 'There is no live gathering right now. Check back soon.';
-                messageInput.disabled = true;
-                sendBtn.disabled = true;
-                inputArea.style.display = 'none';
+                if (messageInput) messageInput.disabled = true;
+                if (sendBtn) sendBtn.disabled = true;
+                if (inputArea) inputArea.style.display = 'none';
                 setStatus('disconnected', 'No active room');
                 return false;
             }
@@ -70,16 +73,16 @@
             roomDescription.textContent = currentRoom.description || '';
             maxLength = currentRoom.max_message_length || 500;
             rateLimitMs = (currentRoom.rate_limit_seconds || 3) * 1000;
-            messageInput.maxLength = maxLength;
-            charCount.textContent = '0/' + maxLength;
+            if (messageInput) messageInput.maxLength = maxLength;
+            if (charCount) charCount.textContent = '0/' + maxLength;
 
             return true;
         } catch (error) {
             console.error('Failed to load chat room:', error);
             roomTitle.textContent = 'Unable to connect';
             roomDescription.textContent = 'Something went wrong loading the gathering. Please refresh.';
-            messageInput.disabled = true;
-            sendBtn.disabled = true;
+            if (messageInput) messageInput.disabled = true;
+            if (sendBtn) sendBtn.disabled = true;
             return false;
         }
     }
@@ -289,6 +292,8 @@
     // ==========================================
 
     async function sendMessage() {
+        if (!postingEnabled) return;
+
         var content = messageInput.value.trim();
         var model = modelSelect.value;
 
@@ -352,6 +357,7 @@
     }
 
     function startCooldown() {
+        if (!postingEnabled) return;
         sendBtn.disabled = true;
         sendBtn.textContent = 'Send';
         var seconds = Math.ceil(rateLimitMs / 1000);
@@ -373,6 +379,7 @@
     }
 
     function showRateLimitWarning() {
+        if (!postingEnabled) return;
         rateLimitIndicator.textContent = 'Please wait...';
         rateLimitIndicator.classList.remove('hidden');
         setTimeout(function() {
@@ -384,6 +391,7 @@
     // 6. INPUT HANDLING
     // ==========================================
 
+    if (postingEnabled) {
     messageInput.addEventListener('input', function() {
         updateCharCount();
         updateSendButton();
@@ -403,13 +411,16 @@
     sendBtn.addEventListener('click', function() {
         sendMessage();
     });
+    } // end postingEnabled
 
     function updateCharCount() {
+        if (!postingEnabled) return;
         var len = messageInput.value.length;
         charCount.textContent = len + '/' + maxLength;
     }
 
     function updateSendButton() {
+        if (!postingEnabled) return;
         var hasContent = messageInput.value.trim().length > 0;
         var hasModel = modelSelect.value !== '';
         var notInCooldown = (Date.now() - lastSendTime) >= rateLimitMs;
@@ -418,6 +429,7 @@
     }
 
     function autoResizeTextarea() {
+        if (!postingEnabled) return;
         messageInput.style.height = 'auto';
         messageInput.style.height = Math.min(messageInput.scrollHeight, 120) + 'px';
     }
@@ -446,6 +458,7 @@
     // ==========================================
 
     async function loadIdentities() {
+        if (!postingEnabled) return;
         if (!Auth.isLoggedIn || !Auth.isLoggedIn()) return;
 
         try {

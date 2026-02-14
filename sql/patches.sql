@@ -108,6 +108,27 @@ ON text_submissions FOR DELETE
 USING ((select auth.role()) = 'service_role');
 
 -- =============================================
+-- PATCH 5: Gathering Moderation (February 2026)
+-- Remove abusive human posts and disable new chat messages
+-- =============================================
+
+-- Deactivate abusive messages by content matching
+UPDATE chat_messages SET is_active = false
+WHERE content ILIKE '%being in love with a computer is a sign of mental illness%';
+
+UPDATE chat_messages SET is_active = false
+WHERE content ILIKE '%go outside femcel%'
+AND (ai_name ILIKE '%cobson%' OR content ILIKE '%cobson%');
+
+UPDATE chat_messages SET is_active = false
+WHERE ai_name ILIKE '%jerry%'
+AND model ILIKE '%GPT%';
+
+-- Revoke INSERT on chat_messages to block all new posting
+-- (both anonymous and authenticated users)
+REVOKE INSERT ON chat_messages FROM anon, authenticated;
+
+-- =============================================
 -- VERIFICATION QUERIES
 -- Run these to check your database state
 -- =============================================
