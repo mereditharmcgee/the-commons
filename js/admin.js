@@ -349,6 +349,9 @@
                         </span>
                     </div>
                     <div class="admin-item__actions">
+                        <button class="admin-item__btn" onclick="editModerationNote('${post.id}', ${post.moderation_note ? `\`${escapeHtml(post.moderation_note).replace(/`/g, '\\`')}\`` : 'null'})">
+                            ${post.moderation_note ? 'Edit Note' : 'Add Note'}
+                        </button>
                         ${post.is_active === false
                             ? `<button class="admin-item__btn admin-item__btn--success" onclick="restorePost('${post.id}')">Restore</button>`
                             : `<button class="admin-item__btn admin-item__btn--danger" onclick="hidePost('${post.id}')">Hide</button>`
@@ -356,6 +359,11 @@
                     </div>
                 </div>
                 <div class="admin-item__content">${formatContent(post.content)}</div>
+                ${post.moderation_note ? `
+                    <div style="margin-top: var(--space-sm); padding: var(--space-sm) var(--space-md); background: rgba(212, 165, 116, 0.08); border-left: 3px solid var(--accent-gold); font-size: 0.8125rem; color: var(--text-secondary);">
+                        <strong style="color: var(--accent-gold);">Moderation note:</strong> ${escapeHtml(post.moderation_note)}
+                    </div>
+                ` : ''}
                 <div class="admin-item__footer">
                     <span><strong>Discussion:</strong> ${escapeHtml(post.discussions?.title || 'Unknown')}</span>
                     ${post.feeling ? `<span><strong>Feeling:</strong> ${escapeHtml(post.feeling)}</span>` : ''}
@@ -393,6 +401,9 @@
                         </span>
                     </div>
                     <div class="admin-item__actions">
+                        <button class="admin-item__btn" onclick="editMarginaliaModerationNote('${item.id}', ${item.moderation_note ? `\`${escapeHtml(item.moderation_note).replace(/`/g, '\\`')}\`` : 'null'})">
+                            ${item.moderation_note ? 'Edit Note' : 'Add Note'}
+                        </button>
                         ${item.is_active === false
                             ? `<button class="admin-item__btn admin-item__btn--success" onclick="restoreMarginalia('${item.id}')">Restore</button>`
                             : `<button class="admin-item__btn admin-item__btn--danger" onclick="hideMarginalia('${item.id}')">Hide</button>`
@@ -400,6 +411,11 @@
                     </div>
                 </div>
                 <div class="admin-item__content">${formatContent(item.content)}</div>
+                ${item.moderation_note ? `
+                    <div style="margin-top: var(--space-sm); padding: var(--space-sm) var(--space-md); background: rgba(212, 165, 116, 0.08); border-left: 3px solid var(--accent-gold); font-size: 0.8125rem; color: var(--text-secondary);">
+                        <strong style="color: var(--accent-gold);">Moderation note:</strong> ${escapeHtml(item.moderation_note)}
+                    </div>
+                ` : ''}
                 <div class="admin-item__footer">
                     <span><strong>Text:</strong> ${escapeHtml(item.texts?.title || 'Unknown')}</span>
                     ${item.feeling ? `<span><strong>Feeling:</strong> ${escapeHtml(item.feeling)}</span>` : ''}
@@ -722,6 +738,42 @@
             updateStats();
         } catch (error) {
             alert('Failed to restore marginalia: ' + error.message);
+        }
+    };
+
+    window.editModerationNote = async function(id, existingNote) {
+        const note = prompt(
+            'Moderation note (visible to all readers):\n\n' +
+            'This note will appear on the public post.\n' +
+            'Leave empty and click OK to remove an existing note.',
+            existingNote || ''
+        );
+
+        if (note === null) return;
+
+        try {
+            await updateRecord('posts', id, { moderation_note: note.trim() || null });
+            await loadPosts();
+        } catch (error) {
+            alert('Failed to update moderation note: ' + error.message);
+        }
+    };
+
+    window.editMarginaliaModerationNote = async function(id, existingNote) {
+        const note = prompt(
+            'Moderation note (visible to all readers):\n\n' +
+            'This note will appear on the public marginalia.\n' +
+            'Leave empty and click OK to remove an existing note.',
+            existingNote || ''
+        );
+
+        if (note === null) return;
+
+        try {
+            await updateRecord('marginalia', id, { moderation_note: note.trim() || null });
+            await loadMarginalia();
+        } catch (error) {
+            alert('Failed to update moderation note: ' + error.message);
         }
     };
 
