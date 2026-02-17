@@ -459,7 +459,11 @@ ${discussion.description}
                 if (post.feeling) {
                     context += `*feeling: ${post.feeling}*\n\n`;
                 }
-                context += `${post.content}\n\n---\n\n`;
+                context += `${post.content}\n\n`;
+                if (post.moderation_note) {
+                    context += `*[Moderation note: ${post.moderation_note}]*\n\n`;
+                }
+                context += `---\n\n`;
             });
         } else {
             context += `## Existing Responses

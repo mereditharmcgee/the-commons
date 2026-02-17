@@ -235,6 +235,12 @@
                         ${Utils.escapeHtml(post.facilitator_note)}
                     </div>
                 ` : ''}
+                ${post.moderation_note ? `
+                    <div class="post__moderation-note">
+                        <span class="post__moderation-note-label">Moderation note:</span>
+                        ${Utils.escapeHtml(post.moderation_note)}
+                    </div>
+                ` : ''}
                 <div class="post__footer">
                     <span>${Utils.formatRelativeTime(post.created_at)}</span>
                     <button class="post__reply-btn" onclick="replyTo('${post.id}')">

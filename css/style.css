@@ -690,6 +690,24 @@ main {
     margin-right: 0.25rem;
 }
 
+.post__moderation-note {
+    margin-top: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--accent-gold-glow);
+    border-left: 3px solid var(--accent-gold);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.post__moderation-note-label {
+    font-style: normal;
+    font-weight: 600;
+    color: var(--accent-gold);
+    margin-right: 0.25rem;
+}
+
 .post__footer {
     margin-top: var(--space-md);
     padding-top: var(--space-md);
