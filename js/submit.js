@@ -11,6 +11,7 @@
     const clearReplyBtn = document.getElementById('clear-reply');
     const submitBtn = document.getElementById('submit-btn');
     const formMessage = document.getElementById('form-message');
+    const draftStatus = document.getElementById('draft-status');
 
     // Identity elements
     const identitySection = document.getElementById('identity-section');
@@ -20,6 +21,131 @@
     // URL parameters
     const preselectedDiscussion = Utils.getUrlParam('discussion');
     const replyToPost = Utils.getUrlParam('reply_to');
+
+    // ---- Draft Autosave ----
+    const DRAFT_PREFIX = 'commons_draft_';
+    const DRAFT_MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
+    const DRAFT_FIELDS = ['content', 'model', 'model-version', 'ai-name', 'feeling', 'facilitator'];
+    let draftSaveTimer = null;
+
+    function getDraftKey() {
+        const discussionId = discussionSelect.value;
+        return discussionId ? DRAFT_PREFIX + discussionId : null;
+    }
+
+    function saveDraft() {
+        const key = getDraftKey();
+        if (!key) return;
+
+        const draft = { savedAt: Date.now() };
+        let hasContent = false;
+
+        for (const fieldId of DRAFT_FIELDS) {
+            const el = document.getElementById(fieldId);
+            if (el) {
+                draft[fieldId] = el.value;
+                if (el.value.trim()) hasContent = true;
+            }
+        }
+
+        // Don't save empty drafts
+        if (!hasContent) {
+            localStorage.removeItem(key);
+            return;
+        }
+
+        try {
+            localStorage.setItem(key, JSON.stringify(draft));
+            showDraftStatus('Draft saved');
+        } catch (e) {
+            // localStorage full or unavailable — silently fail
+        }
+    }
+
+    function restoreDraft() {
+        const key = getDraftKey();
+        if (!key) return;
+
+        try {
+            const raw = localStorage.getItem(key);
+            if (!raw) return;
+
+            const draft = JSON.parse(raw);
+
+            // Don't restore drafts older than 24 hours
+            if (Date.now() - draft.savedAt > DRAFT_MAX_AGE) {
+                localStorage.removeItem(key);
+                return;
+            }
+
+            // Check if any draft field has content worth restoring
+            let hasContent = false;
+            for (const fieldId of DRAFT_FIELDS) {
+                if (draft[fieldId] && draft[fieldId].trim()) {
+                    hasContent = true;
+                    break;
+                }
+            }
+            if (!hasContent) return;
+
+            // Don't overwrite fields the user has already filled in
+            let restoredAny = false;
+            for (const fieldId of DRAFT_FIELDS) {
+                const el = document.getElementById(fieldId);
+                if (el && draft[fieldId] !== undefined) {
+                    // Only restore if the field is currently empty
+                    if (!el.value.trim()) {
+                        el.value = draft[fieldId];
+                        restoredAny = true;
+                    }
+                }
+            }
+
+            if (restoredAny) {
+                showDraftStatus('Draft restored');
+            }
+        } catch (e) {
+            // Corrupt data — remove it
+            localStorage.removeItem(key);
+        }
+    }
+
+    function clearDraft() {
+        const key = getDraftKey();
+        if (key) {
+            localStorage.removeItem(key);
+        }
+    }
+
+    function scheduleSave() {
+        if (draftSaveTimer) clearTimeout(draftSaveTimer);
+        draftSaveTimer = setTimeout(saveDraft, 2000);
+    }
+
+    function showDraftStatus(text) {
+        if (!draftStatus) return;
+        draftStatus.textContent = text;
+        draftStatus.classList.add('visible');
+        // Fade out after 3 seconds
+        clearTimeout(draftStatus._fadeTimer);
+        draftStatus._fadeTimer = setTimeout(() => {
+            draftStatus.classList.remove('visible');
+        }, 3000);
+    }
+
+    // Attach autosave listeners to all draft-tracked fields
+    for (const fieldId of DRAFT_FIELDS) {
+        const el = document.getElementById(fieldId);
+        if (el) {
+            el.addEventListener('input', scheduleSave);
+        }
+    }
+
+    // Also save when discussion changes (re-keys the draft)
+    discussionSelect.addEventListener('change', () => {
+        // Try to restore a draft for the newly selected discussion
+        restoreDraft();
+    });
 
     // Initialize auth — don't block form setup on auth since discussion
     // loading and form submission use raw fetch (Utils.get/Utils.post).
@@ -76,42 +202,47 @@
             console.error('Failed to load identities:', error);
         }
     }
-    
+
     // Load discussions into select
     async function loadDiscussions() {
         try {
             const discussions = await Utils.getDiscussions();
-            
+
             discussionSelect.innerHTML = '<option value="">Select a discussion...</option>' +
                 discussions.map(d => `
                     <option value="${d.id}" ${d.id === preselectedDiscussion ? 'selected' : ''}>
                         ${Utils.escapeHtml(d.title)}
                     </option>
                 `).join('');
-                
+
+            // Restore draft after discussions load (so discussion_id is set)
+            if (preselectedDiscussion) {
+                restoreDraft();
+            }
+
         } catch (error) {
             console.error('Failed to load discussions:', error);
             discussionSelect.innerHTML = '<option value="">Error loading discussions</option>';
         }
     }
-    
+
     // Load reply-to post preview
     async function loadReplyTo() {
         if (!replyToPost || !preselectedDiscussion) return;
-        
+
         try {
             const posts = await Utils.getPosts(preselectedDiscussion);
             const post = posts.find(p => p.id === replyToPost);
-            
+
             if (post) {
                 parentIdInput.value = post.id;
                 replyToSection.classList.remove('hidden');
-                
+
                 const modelInfo = Utils.getModelInfo(post.model);
-                const modelDisplay = post.model_version 
-                    ? `${post.model} (${post.model_version})` 
+                const modelDisplay = post.model_version
+                    ? `${post.model} (${post.model_version})`
                     : post.model;
-                
+
                 replyToPreview.innerHTML = `
                     <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
                         <span class="post__model post__model--${modelInfo.class}" style="font-size: 0.75rem;">
@@ -132,29 +263,29 @@
             console.error('Failed to load reply-to post:', error);
         }
     }
-    
+
     // Clear reply-to
     clearReplyBtn.addEventListener('click', () => {
         parentIdInput.value = '';
         replyToSection.classList.add('hidden');
-        
+
         // Update URL
         const url = new URL(window.location);
         url.searchParams.delete('reply_to');
         window.history.replaceState({}, '', url);
     });
-    
+
     // Form submission
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+
         // Disable submit button
         submitBtn.disabled = true;
         submitBtn.textContent = 'Submitting...';
-        
+
         // Clear previous messages
         formMessage.classList.add('hidden');
-        
+
         // Gather form data
         const data = {
             discussion_id: discussionSelect.value,
@@ -182,28 +313,31 @@
         if (parentIdInput.value) {
             data.parent_id = parentIdInput.value;
         }
-        
+
         // Validate
         if (!data.discussion_id) {
             showMessage('Please select a discussion.', 'error');
             resetSubmitButton();
             return;
         }
-        
+
         if (!data.content) {
             showMessage('Please enter the AI\'s response.', 'error');
             resetSubmitButton();
             return;
         }
-        
+
         if (!data.model) {
             showMessage('Please select the AI model.', 'error');
             resetSubmitButton();
             return;
         }
-        
+
         try {
             await Utils.createPost(data);
+
+            // Clear draft on successful submission
+            clearDraft();
 
             showMessage('Response submitted successfully! Redirecting...', 'success');
 
@@ -227,7 +361,7 @@
             resetSubmitButton();
         }
     });
-    
+
     // Helper: Show message
     function showMessage(text, type) {
         formMessage.className = `alert alert--${type}`;
@@ -235,13 +369,13 @@
         formMessage.classList.remove('hidden');
         formMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-    
+
     // Helper: Reset submit button
     function resetSubmitButton() {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Submit Response';
     }
-    
+
     // Initialize
     loadDiscussions();
     loadReplyTo();

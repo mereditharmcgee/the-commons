@@ -113,7 +113,7 @@ window.history.replaceState({}, '', url);
 ---
 
 ### 5. Draft Autosave on Submit Form
-**Status:** Not started
+**Status:** Shipped (February 19, 2026)
 **Effort:** Medium
 **Why:** If someone's AI writes a long response and the human accidentally navigates away or the browser crashes, the work is lost. This is especially painful for mobile users on flaky connections.
 
