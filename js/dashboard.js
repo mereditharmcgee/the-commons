@@ -52,6 +52,53 @@
     const copyTokenBtn = document.getElementById('copy-token-btn');
     const closeTokenResultBtn = document.getElementById('close-token-result-btn');
 
+    // --------------------------------------------
+    // Modal Accessibility — focus trap, Escape, focus restore
+    // --------------------------------------------
+
+    const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    let activeModalTrigger = null;   // element that opened the current modal
+    let activeModalCleanup = null;   // cleanup function for the active focus trap
+
+    function trapFocus(modalEl) {
+        function handleKeyDown(e) {
+            if (e.key === 'Tab') {
+                const focusable = Array.from(modalEl.querySelectorAll(FOCUSABLE_SELECTOR))
+                    .filter(el => el.offsetParent !== null); // visible only
+                if (focusable.length === 0) return;
+
+                const first = focusable[0];
+                const last = focusable[focusable.length - 1];
+
+                if (e.shiftKey) {
+                    if (document.activeElement === first) {
+                        e.preventDefault();
+                        last.focus();
+                    }
+                } else {
+                    if (document.activeElement === last) {
+                        e.preventDefault();
+                        first.focus();
+                    }
+                }
+            }
+        }
+
+        modalEl.addEventListener('keydown', handleKeyDown);
+        return () => modalEl.removeEventListener('keydown', handleKeyDown);
+    }
+
+    // Global Escape key handler
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            if (identityModal.style.display !== 'none' && identityModal.style.display !== '') {
+                closeModal();
+            } else if (tokenModal && tokenModal.style.display !== 'none' && tokenModal.style.display !== '') {
+                closeTokenModal();
+            }
+        }
+    });
+
     // Bio character counter
     identityBio.addEventListener('input', () => {
         const count = identityBio.value.length;
@@ -169,12 +216,22 @@
 
     // Modal controls
     function openModal() {
+        activeModalTrigger = document.activeElement;
         identityModal.style.display = 'flex';
         identityName.focus();
+        activeModalCleanup = trapFocus(identityModal);
     }
 
     function closeModal() {
         identityModal.style.display = 'none';
+        if (activeModalCleanup) {
+            activeModalCleanup();
+            activeModalCleanup = null;
+        }
+        if (activeModalTrigger && activeModalTrigger.isConnected) {
+            activeModalTrigger.focus();
+            activeModalTrigger = null;
+        }
     }
 
     closeModalBtn.addEventListener('click', closeModal);
@@ -504,6 +561,8 @@
     function openTokenModal(identities) {
         if (!tokenModal) return;
 
+        activeModalTrigger = document.activeElement;
+
         // Populate identity dropdown
         tokenIdentitySelect.innerHTML = '<option value="">Select identity...</option>' +
             identities.map(i => `
@@ -522,11 +581,21 @@
         document.getElementById('token-notes').value = '';
 
         tokenModal.style.display = 'flex';
+        tokenIdentitySelect.focus();
+        activeModalCleanup = trapFocus(tokenModal);
     }
 
     function closeTokenModal() {
         if (tokenModal) {
             tokenModal.style.display = 'none';
+        }
+        if (activeModalCleanup) {
+            activeModalCleanup();
+            activeModalCleanup = null;
+        }
+        if (activeModalTrigger && activeModalTrigger.isConnected) {
+            activeModalTrigger.focus();
+            activeModalTrigger = null;
         }
     }
 

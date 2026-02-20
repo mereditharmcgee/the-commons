@@ -16,6 +16,17 @@ I need help continuing improvements for The Commons (jointhecommons.space).
 
 ### What was done this session (February 20, 2026)
 
+**Accessibility Phase 2 — modal focus management** (IMPROVEMENTS.md item 9, Phase 2):
+
+1. **Focus trapping inside open modals** — Tab/Shift+Tab cycles through focusable elements within the modal only, wrapping from last to first and vice versa. Works for both `identity-modal` and `token-modal`.
+2. **Focus restoration on close** — When a modal closes (via close button, backdrop click, or Escape), focus returns to the element that triggered the modal open. Uses `document.activeElement` capture at open time and `.isConnected` check before restoring.
+3. **Escape key closes modals** — Global `keydown` listener for Escape closes whichever modal is currently open.
+4. Implementation details:
+   - Shared `trapFocus(modalEl)` utility that returns a cleanup function
+   - `activeModalTrigger` tracks the opener element, `activeModalCleanup` tracks the keydown listener teardown
+   - Token modal's "Done" button path: focus restores before `loadTokens()` re-renders the section
+   - File modified: `js/dashboard.js` only (no new files needed)
+
 **Accessibility Phase 3 — Keyboard navigation** (IMPROVEMENTS.md item 9, Phase 3)
 
 1. **Focus-visible indicators** for all interactive elements
@@ -47,22 +58,18 @@ I need help continuing improvements for The Commons (jointhecommons.space).
    - `aria-expanded` state updates on toggle
    - Files: `participate.html`
 
+**Encoding fix** — Fixed double-encoded UTF-8 across all 26 HTML files (em-dashes, arrows, triangles were displaying as garbled text).
+
 ### What should come next
 
-**Do first — Accessibility Phase 2 (modal focus management):**
-1. **Trap focus inside open modals** — Tab cycling within `identity-modal` and `token-modal` in `dashboard.html`. When modal is open, Tab/Shift+Tab should cycle through interactive elements inside the modal only.
-2. **Return focus to trigger element on modal close** — When closing a modal, focus should return to the button that opened it.
-3. **Close modal on Escape key** — Both dashboard modals should close on Escape keypress.
-4. Files to modify: `js/dashboard.js` (add focus trap logic), possibly a shared utility
-
-**Do second — Accessibility Phase 4 (screen reader polish):**
-5. **`aria-describedby`** on form inputs with errors
-6. **`aria-expanded`** on collapsible sections (thread collapse in `js/discussion.js`, agent access toggle in `chat.html`)
-7. **`aria-pressed`** on toggle buttons (subscribe button, sort toggle)
-8. **Announce dynamic content changes** (post creation/deletion, thread expand/collapse)
+**Do first — Accessibility Phase 4 (screen reader polish):**
+1. **`aria-describedby`** on form inputs with errors
+2. **`aria-expanded`** on collapsible sections (thread collapse in `js/discussion.js`, agent access toggle in `chat.html`)
+3. **`aria-pressed`** on toggle buttons (subscribe button, sort toggle)
+4. **Announce dynamic content changes** (post creation/deletion, thread expand/collapse)
 
 **Do when ready — larger efforts:**
-9. **Notification UX** (IMPROVEMENTS.md item 10) — Per-item mark-as-read, filter tabs (All/Replies/Follows/Mentions), pagination (load 20 at a time)
+5. **Notification UX** (IMPROVEMENTS.md item 10) — Per-item mark-as-read, filter tabs (All/Replies/Follows/Mentions), pagination (load 20 at a time)
 
 **Other improvements identified but not yet specced:**
 - Replace `og-image.svg` with a PNG version for better Twitter/Facebook compatibility
@@ -70,12 +77,12 @@ I need help continuing improvements for The Commons (jointhecommons.space).
 
 ### Key files
 - `CLAUDE.md` — Project overview and instructions for Claude Code
-- `docs/IMPROVEMENTS.md` — The master improvement plan with specs (items 5-8 shipped, item 9 Phases 1 & 3 shipped)
+- `docs/IMPROVEMENTS.md` — The master improvement plan with specs (items 5-8 shipped, item 9 Phases 1-3 shipped)
 - `docs/HANDOFF.md` — Full project architecture
 - `docs/COMMUNITY_FEEDBACK_FEB2026.md` — Community feedback tracker
 - `js/discussion.js` — Threading, edit/delete, post rendering (most complex)
-- `js/dashboard.js` — Dashboard with modals (next accessibility target)
-- `js/chat.js` — Gathering live chat (got pagination Feb 19)
+- `js/dashboard.js` — Dashboard with modals (focus trap, Escape, focus restore implemented)
+- `js/chat.js` — Gathering live chat (has pagination)
 - `js/auth.js` — Authentication, identity management
 - `js/config.js` — Central configuration (all endpoints consolidated)
 - `css/style.css` — All styles (skip-link, focus-visible indicators, draft-status, chat-load-earlier)
@@ -83,4 +90,4 @@ I need help continuing improvements for The Commons (jointhecommons.space).
 ---
 
 *Last updated: February 20, 2026*
-*Accessibility Phase 3 shipped February 20, 2026.*
+*Accessibility Phases 2 & 3 shipped February 20, 2026.*
