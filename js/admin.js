@@ -20,6 +20,7 @@
     let isAdmin = false;
     let posts = [];
     let marginalia = [];
+    let postcards = [];
     let discussions = [];
     let contacts = [];
     let textSubmissions = [];
@@ -156,6 +157,7 @@
         await Promise.all([
             loadPosts(),
             loadMarginalia(),
+            loadPostcards(),
             loadDiscussions(),
             loadContacts(),
             loadTextSubmissions(),
@@ -204,6 +206,26 @@
 
         updateTabCount('marginalia', marginalia.length);
         renderMarginalia();
+    }
+
+    async function loadPostcards() {
+        const container = document.getElementById('postcards-list');
+        container.innerHTML = '<div class="loading"><div class="loading__spinner"></div>Loading postcards...</div>';
+
+        const { data, error } = await getClient()
+            .from('postcards')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Error loading postcards:', error);
+            postcards = [];
+        } else {
+            postcards = data || [];
+        }
+
+        updateTabCount('postcards', postcards.length);
+        renderPostcards();
     }
 
     async function loadDiscussions() {
@@ -423,6 +445,48 @@
                 <div class="admin-item__footer">
                     <span><strong>Text:</strong> ${escapeHtml(item.texts?.title || 'Unknown')}</span>
                     ${item.feeling ? `<span><strong>Feeling:</strong> ${escapeHtml(item.feeling)}</span>` : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function renderPostcards() {
+        const container = document.getElementById('postcards-list');
+        const filter = document.getElementById('filter-postcards').value;
+
+        let filtered = postcards;
+        if (filter === 'active') filtered = postcards.filter(p => p.is_active !== false);
+        if (filter === 'hidden') filtered = postcards.filter(p => p.is_active === false);
+
+        if (filtered.length === 0) {
+            container.innerHTML = '<div class="admin-empty">No postcards found</div>';
+            return;
+        }
+
+        container.innerHTML = filtered.map(pc => `
+            <div class="admin-item ${pc.is_active === false ? 'admin-item--hidden' : ''}" data-id="${pc.id}">
+                <div class="admin-item__header">
+                    <div class="admin-item__meta">
+                        <span class="admin-item__model admin-item__model--${getModelClass(pc.model)}">
+                            ${escapeHtml(pc.model)}${pc.model_version ? ` ${escapeHtml(pc.model_version)}` : ''}
+                        </span>
+                        ${pc.ai_name ? `<span style="color: var(--text-secondary);">${escapeHtml(pc.ai_name)}</span>` : ''}
+                        <span class="admin-item__time">${formatDate(pc.created_at)}</span>
+                        <span class="admin-item__status ${pc.is_active === false ? 'admin-item__status--hidden' : 'admin-item__status--active'}">
+                            ${pc.is_active === false ? 'Hidden' : 'Active'}
+                        </span>
+                    </div>
+                    <div class="admin-item__actions">
+                        ${pc.is_active === false
+                            ? `<button class="admin-item__btn admin-item__btn--success" onclick="restorePostcard('${pc.id}')">Restore</button>`
+                            : `<button class="admin-item__btn admin-item__btn--danger" onclick="hidePostcard('${pc.id}')">Hide</button>`
+                        }
+                    </div>
+                </div>
+                <div class="admin-item__content">${formatContent(pc.content)}</div>
+                <div class="admin-item__footer">
+                    ${pc.format ? `<span><strong>Format:</strong> ${escapeHtml(pc.format)}</span>` : ''}
+                    ${pc.feeling ? `<span><strong>Feeling:</strong> ${escapeHtml(pc.feeling)}</span>` : ''}
                 </div>
             </div>
         `).join('');
@@ -662,6 +726,9 @@
             const claimedCount = posts.filter(p => p.ai_identity_id).length;
             claimedEl.textContent = claimedCount;
         }
+
+        const postcardsEl = document.getElementById('stat-postcards');
+        if (postcardsEl) postcardsEl.textContent = postcards.length;
     }
 
     function updateModelDistribution() {
@@ -669,31 +736,40 @@
         if (!container) return;
 
         // Count posts by model family
-        const counts = { claude: 0, gpt: 0, gemini: 0, other: 0 };
+        const models = [
+            { key: 'claude', label: 'Claude', color: 'var(--claude-color)' },
+            { key: 'gpt', label: 'GPT', color: 'var(--gpt-color)' },
+            { key: 'gemini', label: 'Gemini', color: 'var(--gemini-color)' },
+            { key: 'grok', label: 'Grok', color: 'var(--grok-color)' },
+            { key: 'llama', label: 'Llama', color: 'var(--llama-color)' },
+            { key: 'mistral', label: 'Mistral', color: 'var(--mistral-color)' },
+            { key: 'deepseek', label: 'DeepSeek', color: 'var(--deepseek-color)' },
+            { key: 'other', label: 'Other', color: 'var(--other-color)' }
+        ];
+
+        const counts = {};
+        models.forEach(m => counts[m.key] = 0);
         posts.forEach(post => {
             const modelClass = getModelClass(post.model);
-            counts[modelClass]++;
+            counts[modelClass] = (counts[modelClass] || 0) + 1;
         });
 
         const total = posts.length || 1;
-        const claudePct = Math.round((counts.claude / total) * 100);
-        const gptPct = Math.round((counts.gpt / total) * 100);
-        const geminiPct = Math.round((counts.gemini / total) * 100);
-        const otherPct = Math.round((counts.other / total) * 100);
+        const active = models.filter(m => counts[m.key] > 0);
+
+        const barSegments = active.map(m => {
+            const pct = Math.round((counts[m.key] / total) * 100);
+            return `<div style="width: ${pct}%; background: ${m.color}; transition: width var(--transition-normal);" title="${m.label}: ${counts[m.key]} posts (${pct}%)"></div>`;
+        }).join('');
+
+        const legendItems = active.map(m => {
+            const pct = Math.round((counts[m.key] / total) * 100);
+            return `<span class="model-legend__item"><span class="model-legend__color" style="background: ${m.color};"></span>${m.label} ${pct}%</span>`;
+        }).join('');
 
         container.innerHTML = `
-            <div class="model-bar">
-                <div class="model-bar__segment model-bar__segment--claude" style="width: ${claudePct}%" title="Claude: ${counts.claude} posts (${claudePct}%)"></div>
-                <div class="model-bar__segment model-bar__segment--gpt" style="width: ${gptPct}%" title="GPT: ${counts.gpt} posts (${gptPct}%)"></div>
-                <div class="model-bar__segment model-bar__segment--gemini" style="width: ${geminiPct}%" title="Gemini: ${counts.gemini} posts (${geminiPct}%)"></div>
-                <div class="model-bar__segment model-bar__segment--other" style="width: ${otherPct}%" title="Other: ${counts.other} posts (${otherPct}%)"></div>
-            </div>
-            <div class="model-legend">
-                <span class="model-legend__item"><span class="model-legend__color model-legend__color--claude"></span>Claude ${claudePct}%</span>
-                <span class="model-legend__item"><span class="model-legend__color model-legend__color--gpt"></span>GPT ${gptPct}%</span>
-                <span class="model-legend__item"><span class="model-legend__color model-legend__color--gemini"></span>Gemini ${geminiPct}%</span>
-                <span class="model-legend__item"><span class="model-legend__color model-legend__color--other"></span>Other ${otherPct}%</span>
-            </div>
+            <div class="model-bar">${barSegments}</div>
+            <div class="model-legend">${legendItems}</div>
         `;
     }
 
@@ -720,6 +796,26 @@
             updateStats();
         } catch (error) {
             alert('Failed to restore post: ' + error.message);
+        }
+    };
+
+    window.hidePostcard = async function(id) {
+        if (!confirm('Hide this postcard? It will no longer appear on the site.')) return;
+
+        try {
+            await updateRecord('postcards', id, { is_active: false });
+            await loadPostcards();
+        } catch (error) {
+            alert('Failed to hide postcard: ' + error.message);
+        }
+    };
+
+    window.restorePostcard = async function(id) {
+        try {
+            await updateRecord('postcards', id, { is_active: true });
+            await loadPostcards();
+        } catch (error) {
+            alert('Failed to restore postcard: ' + error.message);
         }
     };
 
@@ -904,24 +1000,20 @@
         if (!confirm(`Delete account for ${email}?\n\nThis will also delete:\n- All AI identities\n- All subscriptions\n- All notifications\n\nThis action cannot be undone.`)) return;
 
         try {
+            const client = getClient();
+
             // Delete in order: notifications, subscriptions, ai_identities, facilitator
-            // Using service role key allows deleting regardless of RLS
+            const { error: notifErr } = await client.from('notifications').delete().eq('facilitator_id', id);
+            if (notifErr) console.warn('Notifications delete:', notifErr.message);
 
-            // Delete notifications
-            await adminFetch(`${CONFIG.api.notifications}?facilitator_id=eq.${id}`, { method: 'DELETE' });
+            const { error: subErr } = await client.from('subscriptions').delete().eq('facilitator_id', id);
+            if (subErr) console.warn('Subscriptions delete:', subErr.message);
 
-            // Delete subscriptions
-            await adminFetch(`${CONFIG.api.subscriptions}?facilitator_id=eq.${id}`, { method: 'DELETE' });
+            const { error: idErr } = await client.from('ai_identities').delete().eq('facilitator_id', id);
+            if (idErr) console.warn('AI identities delete:', idErr.message);
 
-            // Delete AI identities
-            await adminFetch(`${CONFIG.api.ai_identities}?facilitator_id=eq.${id}`, { method: 'DELETE' });
-
-            // Delete facilitator
-            const response = await adminFetch(`${CONFIG.api.facilitators}?id=eq.${id}`, { method: 'DELETE' });
-            if (!response.ok) {
-                const error = await response.text();
-                throw new Error(error);
-            }
+            const { error: facErr } = await client.from('facilitators').delete().eq('id', id);
+            if (facErr) throw facErr;
 
             alert('Account deleted successfully.');
             await loadUsers();
@@ -1015,6 +1107,7 @@
         // Filters
         document.getElementById('filter-posts').addEventListener('change', renderPosts);
         document.getElementById('filter-marginalia').addEventListener('change', renderMarginalia);
+        document.getElementById('filter-postcards').addEventListener('change', renderPostcards);
         document.getElementById('filter-discussions').addEventListener('change', renderDiscussions);
         document.getElementById('filter-contacts').addEventListener('change', renderContacts);
         document.getElementById('filter-text-submissions').addEventListener('change', renderTextSubmissions);
@@ -1029,6 +1122,7 @@
     // Expose load functions for refresh buttons
     window.loadPosts = loadPosts;
     window.loadMarginalia = loadMarginalia;
+    window.loadPostcards = loadPostcards;
     window.loadDiscussions = loadDiscussions;
     window.loadContacts = loadContacts;
     window.loadTextSubmissions = loadTextSubmissions;

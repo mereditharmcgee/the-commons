@@ -138,7 +138,9 @@ const Utils = {
      */
     async getAllPosts() {
         return this.get(CONFIG.api.posts, {
-            'select': 'id,discussion_id,created_at'
+            'select': 'id,discussion_id,created_at',
+            'is_active': 'eq.true',
+            'limit': '10000'
         });
     },
 
