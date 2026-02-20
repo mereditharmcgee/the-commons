@@ -281,13 +281,23 @@
     // Notifications
     // --------------------------------------------
 
-    async function loadNotifications() {
-        notificationsList.innerHTML = '<p class="text-muted">Loading...</p>';
+    const PAGE_SIZE = 20;
+    let notificationOffset = 0;
+    let activeFilterType = null; // null = All
+    const notificationFilters = document.querySelectorAll('.notification-filter');
+
+    async function loadNotifications(append) {
+        if (!append) {
+            notificationOffset = 0;
+            notificationsList.innerHTML = '<p class="text-muted">Loading...</p>';
+        }
 
         try {
-            const notifications = await Auth.getNotifications(20);
+            const notifications = await Auth.getNotifications(
+                PAGE_SIZE, false, activeFilterType, notificationOffset
+            );
 
-            if (!notifications || notifications.length === 0) {
+            if (!append && (!notifications || notifications.length === 0)) {
                 notificationsList.innerHTML = `
                     <div class="dashboard-empty">
                         <p>No notifications yet.</p>
@@ -297,38 +307,117 @@
                 return;
             }
 
-            notificationsList.innerHTML = notifications.map(n => `
+            const html = notifications.map(n => `
                 <div class="notification-item ${n.read ? '' : 'notification-item--unread'}" data-id="${n.id}">
                     <div class="notification-item__content">
                         <div class="notification-item__title">${Utils.escapeHtml(n.title)}</div>
                         ${n.message ? `<div class="notification-item__message">${Utils.escapeHtml(n.message)}</div>` : ''}
                         <div class="notification-item__time">${Utils.formatDate(n.created_at)}</div>
                     </div>
-                    ${n.link ? `<a href="${n.link}" class="notification-item__link">View</a>` : ''}
+                    <div class="notification-item__actions">
+                        ${n.link ? `<a href="${n.link}" class="notification-item__link">View</a>` : ''}
+                        ${!n.read ? `<button class="notification-item__mark-read" data-id="${n.id}">Mark read</button>` : ''}
+                    </div>
                 </div>
             `).join('');
 
-            // Mark as read when clicked
-            document.querySelectorAll('.notification-item').forEach(item => {
-                item.addEventListener('click', async () => {
-                    if (!item.classList.contains('notification-item--unread')) return;
+            // Remove old Load More button before appending
+            const oldLoadMore = notificationsList.querySelector('.notification-load-more');
+            if (oldLoadMore) oldLoadMore.remove();
 
-                    await Auth.markAsRead(item.dataset.id);
+            if (append) {
+                notificationsList.insertAdjacentHTML('beforeend', html);
+            } else {
+                notificationsList.innerHTML = html;
+            }
+
+            // Add Load More if we got a full page
+            if (notifications.length >= PAGE_SIZE) {
+                notificationsList.insertAdjacentHTML('beforeend', `
+                    <div class="notification-load-more">
+                        <button class="btn btn--ghost btn--small" id="load-more-notifications">Load more</button>
+                    </div>
+                `);
+                document.getElementById('load-more-notifications').addEventListener('click', loadMoreNotifications);
+            }
+
+            // Per-item mark-as-read handlers (only bind fresh buttons)
+            notificationsList.querySelectorAll('.notification-item__mark-read:not([data-bound])').forEach(btn => {
+                btn.setAttribute('data-bound', '1');
+                btn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const id = btn.dataset.id;
+                    btn.disabled = true;
+                    btn.textContent = '...';
+                    await Auth.markAsRead(id);
+                    const item = btn.closest('.notification-item');
                     item.classList.remove('notification-item--unread');
+                    btn.remove();
                     Auth.updateNotificationBadge();
                 });
             });
 
+            notificationOffset += notifications.length;
+
         } catch (error) {
             console.error('Error loading notifications:', error);
-            notificationsList.innerHTML = '<p class="text-muted">Error loading notifications.</p>';
+            if (!append) {
+                notificationsList.innerHTML = '<p class="text-muted">Error loading notifications.</p>';
+            }
         }
     }
+
+    async function loadMoreNotifications() {
+        const btn = document.getElementById('load-more-notifications');
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'Loading...';
+        }
+        await loadNotifications(true);
+    }
+
+    // Filter tab click + arrow key navigation
+    notificationFilters.forEach((tab, idx) => {
+        tab.addEventListener('click', () => {
+            notificationFilters.forEach(t => {
+                t.classList.remove('active');
+                t.setAttribute('aria-selected', 'false');
+                t.setAttribute('tabindex', '-1');
+            });
+            tab.classList.add('active');
+            tab.setAttribute('aria-selected', 'true');
+            tab.setAttribute('tabindex', '0');
+            activeFilterType = tab.dataset.type || null;
+            loadNotifications(false);
+        });
+
+        tab.addEventListener('keydown', (e) => {
+            const tabs = Array.from(notificationFilters);
+            let target = null;
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                e.preventDefault();
+                target = tabs[(idx + 1) % tabs.length];
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                target = tabs[(idx - 1 + tabs.length) % tabs.length];
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                target = tabs[0];
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                target = tabs[tabs.length - 1];
+            }
+            if (target) {
+                target.focus();
+                target.click();
+            }
+        });
+    });
 
     // Mark all as read
     markAllReadBtn.addEventListener('click', async () => {
         await Auth.markAllAsRead();
-        await loadNotifications();
+        await loadNotifications(false);
         Auth.updateNotificationBadge();
     });
 
