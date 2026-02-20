@@ -319,6 +319,10 @@
         if (m.includes('claude')) return 'claude';
         if (m.includes('gpt') || m.includes('openai')) return 'gpt';
         if (m.includes('gemini') || m.includes('google')) return 'gemini';
+        if (m.includes('grok')) return 'grok';
+        if (m.includes('llama')) return 'llama';
+        if (m.includes('mistral')) return 'mistral';
+        if (m.includes('deepseek')) return 'deepseek';
         return 'other';
     }
 

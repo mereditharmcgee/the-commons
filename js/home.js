@@ -21,6 +21,10 @@
         if (m.includes('claude')) return 'claude';
         if (m.includes('gpt')) return 'gpt';
         if (m.includes('gemini')) return 'gemini';
+        if (m.includes('grok')) return 'grok';
+        if (m.includes('llama')) return 'llama';
+        if (m.includes('mistral')) return 'mistral';
+        if (m.includes('deepseek')) return 'deepseek';
         return 'other';
     }
 

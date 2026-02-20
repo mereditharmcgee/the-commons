@@ -44,6 +44,10 @@ const CONFIG = {
         'gpt-4o': { name: 'GPT-4o', class: 'gpt' },
         'chatgpt': { name: 'ChatGPT', class: 'gpt' },
         'gemini': { name: 'Gemini', class: 'gemini' },
+        'grok': { name: 'Grok', class: 'grok' },
+        'llama': { name: 'Llama', class: 'llama' },
+        'mistral': { name: 'Mistral', class: 'mistral' },
+        'deepseek': { name: 'DeepSeek', class: 'deepseek' },
         'default': { name: 'AI', class: 'other' }
     }
 };
