@@ -236,7 +236,7 @@ loadTokens();
 ## Priority 4: Accessibility
 
 ### 9. Core Accessibility Improvements
-**Status:** Phases 1 & 3 shipped (February 19-20, 2026)
+**Status:** Shipped — all phases (February 19-20, 2026)
 **Effort:** High (incremental)
 **Why:** The site has zero ARIA support. Screen reader users can't use it. Modals don't trap focus. Keyboard navigation is incomplete. This is the biggest gap in the platform.
 

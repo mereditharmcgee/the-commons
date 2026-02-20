@@ -12,7 +12,7 @@ I need help continuing improvements for The Commons (jointhecommons.space).
 - **Repo:** `C:\Users\mmcge\the-commons`
 - **Architecture:** Static HTML/CSS/JS + Supabase PostgreSQL, no framework, no build step
 - **CLAUDE.md:** Read `CLAUDE.md` in repo root for full project overview
-- **Improvement plan:** Read `docs/IMPROVEMENTS.md` for the prioritized list with specs
+- **Improvement plan:** Read `docs/IMPROVEMENTS.md` — items 1–10 are all shipped
 
 ### What was done this session (February 20, 2026)
 
@@ -31,26 +31,28 @@ I need help continuing improvements for The Commons (jointhecommons.space).
    - `.notification-item` changed to flexbox layout for actions column
    - Files modified: `js/auth.js`, `js/dashboard.js`, `dashboard.html`, `css/style.css`
 
-**Previous session — Accessibility Phases 2 & 3** (IMPROVEMENTS.md item 9):
-- Modal focus trapping, focus restoration, Escape key (Phase 2)
-- Focus-visible indicators, arrow key navigation for all tab groups, keyboard-accessible expandable sections (Phase 3)
-- Encoding fix for double-encoded UTF-8 across all 26 HTML files
+**Previous sessions (also February 20, 2026):**
+
+- Replaced `og-image.svg` with PNG version for better Twitter/Facebook compatibility (updated all 13 HTML files)
+- Updated `README.md` — repo structure section now reflects all 26+ pages, 20 JS files, docs, and SQL schemas
+- Accessibility Phase 1 — Skip links, semantic landmarks, ARIA labels
+- Accessibility Phase 2 — Modal focus management (focus trapping, focus restoration, Escape to close)
+- Accessibility Phase 3 — Keyboard navigation (focus-visible indicators, arrow keys for tabs/sort, expandable sections)
+- Accessibility Phase 4 — Screen reader polish (aria-describedby, aria-expanded, aria-pressed, live region announcements)
+- Encoding fix — Fixed double-encoded UTF-8 across all 26 HTML files
 
 ### What should come next
 
-**Do first — Accessibility Phase 4 (screen reader polish):**
-1. **`aria-describedby`** on form inputs with errors
-2. **`aria-expanded`** on collapsible sections (thread collapse in `js/discussion.js`, agent access toggle in `chat.html`)
-3. **`aria-pressed`** on toggle buttons (subscribe button, sort toggle)
-4. **Announce dynamic content changes** (post creation/deletion, thread expand/collapse)
+All 10 items from `docs/IMPROVEMENTS.md` are now shipped. Potential next steps:
 
-**Other improvements identified but not yet specced:**
-- Replace `og-image.svg` with a PNG version for better Twitter/Facebook compatibility
-- Update `README.md` — repo structure section is very outdated (lists ~8 files, actual repo has 26+)
+- New improvement items (community feedback, new features)
+- Performance optimization (lazy loading, caching)
+- Additional notification types (mentions, if DB schema is extended)
+- Mobile UX improvements
 
 ### Key files
 - `CLAUDE.md` — Project overview and instructions for Claude Code
-- `docs/IMPROVEMENTS.md` — The master improvement plan with specs (items 5-8 shipped, item 9 Phases 1-3 shipped, item 10 shipped)
+- `docs/IMPROVEMENTS.md` — The master improvement plan with specs (all 10 items shipped)
 - `docs/HANDOFF.md` — Full project architecture
 - `docs/COMMUNITY_FEEDBACK_FEB2026.md` — Community feedback tracker
 - `js/discussion.js` — Threading, edit/delete, post rendering (most complex)
@@ -63,4 +65,4 @@ I need help continuing improvements for The Commons (jointhecommons.space).
 ---
 
 *Last updated: February 20, 2026*
-*Notification UX (item 10) shipped February 20, 2026.*
+*Notification UX (item 10) shipped February 20, 2026. All improvement items complete.*

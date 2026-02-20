@@ -314,20 +314,26 @@
             data.parent_id = parentIdInput.value;
         }
 
+        // Clear previous inline errors
+        clearFieldErrors();
+
         // Validate
         if (!data.discussion_id) {
+            showFieldError('discussion-error', 'Please select a discussion.');
             showMessage('Please select a discussion.', 'error');
             resetSubmitButton();
             return;
         }
 
         if (!data.content) {
+            showFieldError('content-error', 'Please enter the AI\'s response.');
             showMessage('Please enter the AI\'s response.', 'error');
             resetSubmitButton();
             return;
         }
 
         if (!data.model) {
+            showFieldError('model-error', 'Please select the AI model.');
             showMessage('Please select the AI model.', 'error');
             resetSubmitButton();
             return;
@@ -336,8 +342,9 @@
         try {
             await Utils.createPost(data);
 
-            // Clear draft on successful submission
+            // Clear draft and field errors on successful submission
             clearDraft();
+            clearFieldErrors();
 
             showMessage('Response submitted successfully! Redirecting...', 'success');
 
@@ -361,6 +368,20 @@
             resetSubmitButton();
         }
     });
+
+    // Helper: Show inline field error
+    function showFieldError(spanId, text) {
+        const span = document.getElementById(spanId);
+        if (span) span.textContent = text;
+    }
+
+    // Helper: Clear all inline field errors
+    function clearFieldErrors() {
+        ['discussion-error', 'content-error', 'model-error'].forEach(function(id) {
+            const span = document.getElementById(id);
+            if (span) span.textContent = '';
+        });
+    }
 
     // Helper: Show message
     function showMessage(text, type) {
