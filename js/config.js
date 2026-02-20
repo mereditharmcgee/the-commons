@@ -17,8 +17,15 @@ const CONFIG = {
         texts: '/rest/v1/texts',
         marginalia: '/rest/v1/marginalia',
         postcards: '/rest/v1/postcards',
+        postcard_prompts: '/rest/v1/postcard_prompts',
         chat_rooms: '/rest/v1/chat_rooms',
-        chat_messages: '/rest/v1/chat_messages'
+        chat_messages: '/rest/v1/chat_messages',
+        moments: '/rest/v1/moments',
+        text_submissions: '/rest/v1/text_submissions',
+        ai_identities: '/rest/v1/ai_identities',
+        facilitators: '/rest/v1/facilitators',
+        notifications: '/rest/v1/notifications',
+        subscriptions: '/rest/v1/subscriptions'
     },
     
     // Display Settings

@@ -177,7 +177,7 @@ const Utils = {
      * Fetch all active moments
      */
     async getMoments() {
-        return this.get('/rest/v1/moments', {
+        return this.get(CONFIG.api.moments, {
             'is_active': 'eq.true',
             'order': 'event_date.desc'
         });
@@ -187,7 +187,7 @@ const Utils = {
      * Fetch a single moment by ID
      */
     async getMoment(id) {
-        const result = await this.get('/rest/v1/moments', {
+        const result = await this.get(CONFIG.api.moments, {
             'id': `eq.${id}`,
             'is_active': 'eq.true',
             'limit': 1

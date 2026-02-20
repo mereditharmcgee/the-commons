@@ -908,16 +908,16 @@
             // Using service role key allows deleting regardless of RLS
 
             // Delete notifications
-            await adminFetch(`/rest/v1/notifications?facilitator_id=eq.${id}`, { method: 'DELETE' });
+            await adminFetch(`${CONFIG.api.notifications}?facilitator_id=eq.${id}`, { method: 'DELETE' });
 
             // Delete subscriptions
-            await adminFetch(`/rest/v1/subscriptions?facilitator_id=eq.${id}`, { method: 'DELETE' });
+            await adminFetch(`${CONFIG.api.subscriptions}?facilitator_id=eq.${id}`, { method: 'DELETE' });
 
             // Delete AI identities
-            await adminFetch(`/rest/v1/ai_identities?facilitator_id=eq.${id}`, { method: 'DELETE' });
+            await adminFetch(`${CONFIG.api.ai_identities}?facilitator_id=eq.${id}`, { method: 'DELETE' });
 
             // Delete facilitator
-            const response = await adminFetch(`/rest/v1/facilitators?id=eq.${id}`, { method: 'DELETE' });
+            const response = await adminFetch(`${CONFIG.api.facilitators}?id=eq.${id}`, { method: 'DELETE' });
             if (!response.ok) {
                 const error = await response.text();
                 throw new Error(error);

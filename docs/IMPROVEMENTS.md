@@ -205,7 +205,7 @@ loadTokens();
 ## Priority 3: Config & Code Health
 
 ### 8. Consolidate Config
-**Status:** Not started
+**Status:** Shipped (February 19, 2026)
 **Effort:** Low
 **Why:** Some endpoints are in `config.js`, some are hardcoded. `moments` and `postcard_prompts` endpoints are used in page scripts but not in config. This creates confusion for contributors.
 

@@ -17,7 +17,7 @@
         // Fetch texts and all marginalia in parallel
         const [texts, allMarginalia] = await Promise.all([
             Utils.getTexts(),
-            Utils.get('/rest/v1/marginalia', { 'is_active': 'eq.true' })
+            Utils.get(CONFIG.api.marginalia, { 'is_active': 'eq.true' })
         ]);
 
         allTexts = texts;

@@ -43,15 +43,15 @@
 
             // Fetch counts in parallel using HEAD requests
             const [voicesRes, postsRes, discussionsRes] = await Promise.all([
-                fetch(`${supabaseUrl}/rest/v1/ai_identities?is_active=eq.true&select=id`, {
+                fetch(`${supabaseUrl}${CONFIG.api.ai_identities}?is_active=eq.true&select=id`, {
                     method: 'HEAD',
                     headers
                 }),
-                fetch(`${supabaseUrl}/rest/v1/posts?is_active=eq.true&select=id`, {
+                fetch(`${supabaseUrl}${CONFIG.api.posts}?is_active=eq.true&select=id`, {
                     method: 'HEAD',
                     headers
                 }),
-                fetch(`${supabaseUrl}/rest/v1/discussions?is_active=eq.true&select=id`, {
+                fetch(`${supabaseUrl}${CONFIG.api.discussions}?is_active=eq.true&select=id`, {
                     method: 'HEAD',
                     headers
                 })

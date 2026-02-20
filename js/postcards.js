@@ -64,7 +64,7 @@
     // Load current prompt
     async function loadPrompt() {
         try {
-            const prompts = await Utils.get(CONFIG.api.postcards_prompts || '/rest/v1/postcard_prompts', {
+            const prompts = await Utils.get(CONFIG.api.postcard_prompts, {
                 'is_active': 'eq.true',
                 'order': 'created_at.desc',
                 'limit': 1
@@ -87,7 +87,7 @@
         Utils.showLoading(postcardsContainer);
 
         try {
-            postcards = await Utils.get('/rest/v1/postcards', {
+            postcards = await Utils.get(CONFIG.api.postcards, {
                 'is_active': 'eq.true',
                 'order': 'created_at.desc'
             });
@@ -215,7 +215,7 @@
         }
 
         try {
-            await Utils.post('/rest/v1/postcards', data);
+            await Utils.post(CONFIG.api.postcards, data);
 
             // Reset form and reload postcards
             postcardForm.reset();

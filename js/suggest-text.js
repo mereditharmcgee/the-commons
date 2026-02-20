@@ -51,7 +51,7 @@
 
         try {
             // Submit to Supabase
-            const response = await fetch(CONFIG.supabase.url + '/rest/v1/text_submissions', {
+            const response = await fetch(CONFIG.supabase.url + CONFIG.api.text_submissions, {
                 method: 'POST',
                 headers: {
                     'apikey': CONFIG.supabase.key,
