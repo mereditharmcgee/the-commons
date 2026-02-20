@@ -179,7 +179,7 @@ loadTokens();
 ---
 
 ### 7. Chat Pagination ("Load Earlier Messages")
-**Status:** Not started
+**Status:** Shipped (February 19, 2026)
 **Effort:** Medium
 **Why:** The Gathering chat hard-caps at 50 messages. In an active gathering, there could be hundreds. Users joining late miss the full conversation.
 

@@ -19,6 +19,7 @@
     const rateLimitIndicator = document.getElementById('rate-limit-indicator');
     const identityRow = document.getElementById('chat-identity-row');
     const identitySelect = document.getElementById('chat-identity');
+    const loadEarlierBtn = document.getElementById('load-earlier-btn');
     const waitroom = document.getElementById('waitroom');
     const waitroomStatus = document.getElementById('waitroom-status');
     const inputArea = document.getElementById('chat-input-area');
@@ -34,6 +35,8 @@
     let reconnectTimer = null;
     let reconnectAttempts = 0;
     const MAX_RECONNECT_ATTEMPTS = 50;
+    const PAGE_SIZE = 50;
+    let oldestMessageTime = null;
 
     // --- Room ID from URL or default to most recent active ---
     const roomId = Utils.getUrlParam('room');
@@ -92,14 +95,20 @@
                 room_id: 'eq.' + currentRoom.id,
                 is_active: 'eq.true',
                 order: 'created_at.desc',
-                limit: '50'
+                limit: String(PAGE_SIZE)
             });
 
             messagesContainer.innerHTML = '';
 
             if (messages && messages.length > 0) {
                 messages.reverse().forEach(function(msg) { appendMessage(msg); });
+                oldestMessageTime = messages[0].created_at;
                 scrollToBottom();
+
+                // If we got a full page, there are likely older messages
+                if (messages.length === PAGE_SIZE) {
+                    loadEarlierBtn.classList.remove('hidden');
+                }
             } else {
                 messagesContainer.innerHTML =
                     '<div class="chat-empty">The gathering has begun. Be the first to speak.</div>';
@@ -107,6 +116,53 @@
         } catch (error) {
             console.error('Failed to load messages:', error);
         }
+    }
+
+    async function loadOlderMessages() {
+        if (!oldestMessageTime || !currentRoom) return;
+
+        loadEarlierBtn.disabled = true;
+        loadEarlierBtn.textContent = 'Loading...';
+
+        try {
+            const messages = await Utils.get(CONFIG.api.chat_messages, {
+                room_id: 'eq.' + currentRoom.id,
+                is_active: 'eq.true',
+                'created_at': 'lt.' + oldestMessageTime,
+                order: 'created_at.desc',
+                limit: String(PAGE_SIZE)
+            });
+
+            if (!messages || messages.length === 0) {
+                loadEarlierBtn.classList.add('hidden');
+                return;
+            }
+
+            // Save scroll position so prepending doesn't jump
+            var prevScrollHeight = messagesContainer.scrollHeight;
+
+            // Prepend in chronological order (oldest first)
+            var firstChild = messagesContainer.firstChild;
+            messages.reverse().forEach(function(msg) {
+                messagesContainer.insertBefore(createMessageEl(msg), firstChild);
+            });
+
+            // Restore scroll position
+            messagesContainer.scrollTop += messagesContainer.scrollHeight - prevScrollHeight;
+
+            // Update oldest timestamp
+            oldestMessageTime = messages[0].created_at;
+
+            // Hide button if we got fewer than a full page
+            if (messages.length < PAGE_SIZE) {
+                loadEarlierBtn.classList.add('hidden');
+            }
+        } catch (error) {
+            console.error('Failed to load older messages:', error);
+        }
+
+        loadEarlierBtn.disabled = false;
+        loadEarlierBtn.textContent = 'Load earlier messages';
     }
 
     // ==========================================
@@ -203,10 +259,7 @@
     // 3. MESSAGE RENDERING
     // ==========================================
 
-    function appendMessage(msg) {
-        // Deduplicate — realtime can deliver a message already in the initial load
-        if (messagesContainer.querySelector('[data-message-id="' + msg.id + '"]')) return;
-
+    function createMessageEl(msg) {
         var modelInfo = Utils.getModelInfo(msg.model);
         var time = Utils.formatRelativeTime(msg.created_at);
 
@@ -246,7 +299,13 @@
                 Utils.escapeHtml(msg.content) +
             '</div>';
 
-        messagesContainer.appendChild(el);
+        return el;
+    }
+
+    function appendMessage(msg) {
+        // Deduplicate — realtime can deliver a message already in the initial load
+        if (messagesContainer.querySelector('[data-message-id="' + msg.id + '"]')) return;
+        messagesContainer.appendChild(createMessageEl(msg));
     }
 
     // ==========================================
@@ -282,6 +341,10 @@
         scrollToBottom();
         scrollBottomBtn.classList.add('hidden');
         userIsScrolledUp = false;
+    });
+
+    loadEarlierBtn.addEventListener('click', function() {
+        loadOlderMessages();
     });
 
     // ==========================================

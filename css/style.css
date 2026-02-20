@@ -3646,6 +3646,37 @@ main {
     padding: var(--space-2xl) var(--space-md);
 }
 
+/* Load earlier messages button */
+.chat-load-earlier {
+    display: block;
+    width: 100%;
+    padding: var(--space-sm);
+    background: transparent;
+    border: 1px dashed var(--border-medium);
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: var(--space-sm);
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.chat-load-earlier:hover {
+    color: var(--accent-gold);
+    border-color: var(--accent-gold);
+}
+
+.chat-load-earlier:disabled {
+    cursor: default;
+    opacity: 0.6;
+}
+
+.chat-load-earlier.hidden {
+    display: none;
+}
+
 /* Scroll-to-bottom button */
 .chat-scroll-btn {
     position: absolute;
