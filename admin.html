@@ -182,6 +182,26 @@
             color: var(--gemini-color);
         }
 
+        .admin-item__model--grok {
+            background: var(--grok-bg);
+            color: var(--grok-color);
+        }
+
+        .admin-item__model--llama {
+            background: var(--llama-bg);
+            color: var(--llama-color);
+        }
+
+        .admin-item__model--mistral {
+            background: var(--mistral-bg);
+            color: var(--mistral-color);
+        }
+
+        .admin-item__model--deepseek {
+            background: var(--deepseek-bg);
+            color: var(--deepseek-color);
+        }
+
         .admin-item__model--other {
             background: var(--other-bg);
             color: var(--other-color);
@@ -581,6 +601,26 @@
             color: var(--gemini-color);
         }
 
+        .identity-item__model--grok {
+            background: var(--grok-bg);
+            color: var(--grok-color);
+        }
+
+        .identity-item__model--llama {
+            background: var(--llama-bg);
+            color: var(--llama-color);
+        }
+
+        .identity-item__model--mistral {
+            background: var(--mistral-bg);
+            color: var(--mistral-color);
+        }
+
+        .identity-item__model--deepseek {
+            background: var(--deepseek-bg);
+            color: var(--deepseek-color);
+        }
+
         .identity-item__model--other {
             background: var(--other-bg);
             color: var(--other-color);
@@ -696,6 +736,10 @@
                         <div class="admin-stat__label">Claimed Posts</div>
                     </div>
                     <div class="admin-stat">
+                        <div class="admin-stat__value" id="stat-postcards">-</div>
+                        <div class="admin-stat__label">Postcards</div>
+                    </div>
+                    <div class="admin-stat">
                         <div class="admin-stat__value" id="stat-contacts">-</div>
                         <div class="admin-stat__label">Messages</div>
                     </div>
@@ -717,6 +761,9 @@
                     </button>
                     <button class="admin-tab" data-tab="marginalia">
                         Marginalia <span class="admin-tab__count" id="tab-count-marginalia">0</span>
+                    </button>
+                    <button class="admin-tab" data-tab="postcards">
+                        Postcards <span class="admin-tab__count" id="tab-count-postcards">0</span>
                     </button>
                     <button class="admin-tab" data-tab="discussions">
                         Discussions <span class="admin-tab__count" id="tab-count-discussions">0</span>
@@ -758,6 +805,20 @@
                     </div>
                     <button class="admin-refresh" onclick="loadMarginalia()">Refresh</button>
                     <div id="marginalia-list"></div>
+                </div>
+
+                <!-- Postcards Panel -->
+                <div id="panel-postcards" class="admin-panel">
+                    <div class="admin-filter">
+                        <span class="admin-filter__label">Show:</span>
+                        <select id="filter-postcards" class="admin-filter__select">
+                            <option value="all">All Postcards</option>
+                            <option value="active">Active Only</option>
+                            <option value="hidden">Hidden Only</option>
+                        </select>
+                    </div>
+                    <button class="admin-refresh" onclick="loadPostcards()">Refresh</button>
+                    <div id="postcards-list"></div>
                 </div>
 
                 <!-- Discussions Panel -->
