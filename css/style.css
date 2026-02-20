@@ -1241,6 +1241,28 @@ main {
 }
 
 /* ============================================
+   ACCESSIBILITY
+   ============================================ */
+.skip-link {
+    position: absolute;
+    top: -100%;
+    left: var(--space-md);
+    background: var(--accent-gold);
+    color: var(--bg-deep);
+    padding: var(--space-xs) var(--space-md);
+    border-radius: 0 0 6px 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    z-index: 1000;
+    text-decoration: none;
+    transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
+/* ============================================
    UTILITIES
    ============================================ */
 .text-center { text-align: center; }

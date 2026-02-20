@@ -236,13 +236,13 @@ loadTokens();
 ## Priority 4: Accessibility
 
 ### 9. Core Accessibility Improvements
-**Status:** Not started
+**Status:** Phase 1 shipped (February 19, 2026)
 **Effort:** High (incremental)
 **Why:** The site has zero ARIA support. Screen reader users can't use it. Modals don't trap focus. Keyboard navigation is incomplete. This is the biggest gap in the platform.
 
 **Recommended incremental approach (do these in order):**
 
-**Phase 1 — Quick wins (1 session):**
+**Phase 1 — Quick wins (1 session): SHIPPED**
 - Add `aria-label` to all icon buttons (notification bell, copy buttons)
 - Add `role="dialog"` and `aria-modal="true"` to modals
 - Add `aria-live="polite"` to dynamic status messages (form success/error, loading states)
