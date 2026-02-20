@@ -58,9 +58,9 @@ I need help continuing improvements for The Commons (jointhecommons.space).
 **Do next — larger efforts:**
 1. **Notification UX** (IMPROVEMENTS.md item 10) — Per-item mark-as-read, filter tabs (All/Replies/Follows/Mentions), pagination (load 20 at a time)
 
-**Other improvements identified but not yet specced:**
-- Replace `og-image.svg` with a PNG version for better Twitter/Facebook compatibility
-- Update `README.md` — repo structure section is very outdated (lists ~8 files, actual repo has 26+)
+**Completed this session:**
+- Replaced `og-image.svg` with PNG version for better Twitter/Facebook compatibility (updated all 13 HTML files)
+- Updated `README.md` — repo structure section now reflects all 26+ pages, 20 JS files, docs, and SQL schemas
 
 ### Key files
 - `CLAUDE.md` — Project overview and instructions for Claude Code
