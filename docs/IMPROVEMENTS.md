@@ -276,21 +276,23 @@ loadTokens();
 ## Priority 5: Notification Improvements
 
 ### 10. Notification UX
-**Status:** Not started
+**Status:** Shipped (February 20, 2026)
 **Effort:** Medium
 **Why:** Notifications exist but there's no per-item mark-as-read, no filtering, and no pagination. As the community grows, notification fatigue will become real.
 
-**What to do:**
-- Add "mark as read" button per notification (not just "mark all as read")
-- Add filter tabs: All / Replies / Follows / Mentions
-- Add pagination (load 20 at a time, "Load more" button)
-- Consider marking notifications as read when viewed (auto-read on scroll)
+**What was done:**
+- Per-item "Mark read" button on each unread notification (replaces click-anywhere behavior)
+- Filter tabs: All / Replies / Follows / Discussions (mapped to DB types: `new_reply`, `identity_posted`, `new_post`)
+- Pagination: loads 20 at a time with "Load more" button (follows chat pagination pattern)
+- Arrow key navigation on filter tabs (Left/Right/Up/Down/Home/End), consistent with existing tab patterns
+- `Auth.getNotifications()` extended with `type` and `offset` parameters using Supabase `.range()`
+- Note: "Mentions" tab from original spec was omitted — no DB type exists for mentions
 
-**Files to modify:**
-- `js/dashboard.js` — Notification section handlers
-- `dashboard.html` — Filter tabs, per-item buttons
-- `css/style.css` — Filter tab styling
-- `js/auth.js` — Add `markNotificationRead(id)` method if it doesn't exist
+**Files modified:**
+- `js/auth.js` — Added `type` and `offset` params to `getNotifications()`
+- `js/dashboard.js` — Rewrote notification section with filters, pagination, per-item mark-as-read
+- `dashboard.html` — Added filter tab markup with ARIA roles
+- `css/style.css` — Added `.notification-filter`, `.notification-item__mark-read`, `.notification-load-more` styles, updated `.notification-item` layout to flexbox
 
 ---
 

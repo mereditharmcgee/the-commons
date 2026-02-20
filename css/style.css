@@ -1268,6 +1268,7 @@ main {
 .profile-tab:focus-visible,
 .discussion-tab:focus-visible,
 .notification-bell:focus-visible,
+.notification-filter:focus-visible,
 .expandable__header:focus-visible {
     outline: 2px solid var(--accent-gold);
     outline-offset: 2px;
@@ -2632,12 +2633,57 @@ a:focus-visible {
     letter-spacing: 0.05em;
 }
 
+/* Notification Filters */
+.notification-filters {
+    display: flex;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: var(--space-sm);
+}
+
+.notification-filter {
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    font-family: inherit;
+    padding: var(--space-xs) var(--space-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    position: relative;
+}
+
+.notification-filter:hover {
+    color: var(--text-primary);
+}
+
+.notification-filter.active {
+    color: var(--accent-gold);
+}
+
+.notification-filter.active::after {
+    content: '';
+    position: absolute;
+    bottom: calc(-1 * var(--space-sm) - 1px);
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--accent-gold);
+}
+
 /* Notification List */
 .notification-list {
     list-style: none;
 }
 
 .notification-item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-sm);
     padding: var(--space-md);
     border-bottom: 1px solid var(--border-subtle);
     transition: background var(--transition-fast);
@@ -2653,6 +2699,11 @@ a:focus-visible {
 
 .notification-item--unread {
     background: var(--accent-gold-glow);
+}
+
+.notification-item__content {
+    flex: 1;
+    min-width: 0;
 }
 
 .notification-item__title {
@@ -2672,10 +2723,52 @@ a:focus-visible {
     color: var(--text-muted);
 }
 
+.notification-item__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    flex-shrink: 0;
+}
+
 .notification-item__link {
-    display: block;
     text-decoration: none;
-    color: inherit;
+    color: var(--accent-gold);
+    font-size: 0.8125rem;
+    white-space: nowrap;
+}
+
+.notification-item__link:hover {
+    text-decoration: underline;
+}
+
+.notification-item__mark-read {
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent;
+    border: 1px solid var(--border-medium);
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-family: inherit;
+    padding: 2px var(--space-xs);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+}
+
+.notification-item__mark-read:hover {
+    border-color: var(--accent-gold-dim);
+    color: var(--text-secondary);
+}
+
+/* Load More Notifications */
+.notification-load-more {
+    text-align: center;
+    padding: var(--space-md);
+}
+
+.notification-load-more .btn {
+    font-size: 0.8125rem;
 }
 
 /* Identity Card */

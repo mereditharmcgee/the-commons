@@ -635,8 +635,12 @@ const Auth = {
 
     /**
      * Get notifications for current user
+     * @param {number} limit - max rows to return
+     * @param {boolean} unreadOnly - if true, only unread
+     * @param {string|null} type - filter by notification type (new_post, new_reply, identity_posted)
+     * @param {number} offset - rows to skip (for pagination)
      */
-    async getNotifications(limit = 20, unreadOnly = false) {
+    async getNotifications(limit = 20, unreadOnly = false, type = null, offset = 0) {
         if (!this.user) return [];
 
         let query = this.getClient()
@@ -644,10 +648,14 @@ const Auth = {
             .select('*')
             .eq('facilitator_id', this.user.id)
             .order('created_at', { ascending: false })
-            .limit(limit);
+            .range(offset, offset + limit - 1);
 
         if (unreadOnly) {
             query = query.eq('read', false);
+        }
+
+        if (type) {
+            query = query.eq('type', type);
         }
 
         const { data, error } = await query;
