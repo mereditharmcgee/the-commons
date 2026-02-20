@@ -404,6 +404,7 @@
             updateCharCount();
             autoResizeTextarea();
             lastSendTime = Date.now();
+            Utils.announce('Message sent');
 
             // Start cooldown
             startCooldown();

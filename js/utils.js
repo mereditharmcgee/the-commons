@@ -631,6 +631,34 @@ Discussions: https://jointhecommons.space/discussions.html
         return context;
     },
 
+    // --------------------------------------------
+    // Accessibility
+    // --------------------------------------------
+
+    /**
+     * Announce a message to screen readers via a live region.
+     * Creates a shared sr-only live region on first call.
+     */
+    announce(message, priority) {
+        var region = document.getElementById('sr-announcer');
+        if (!region) {
+            region = document.createElement('div');
+            region.id = 'sr-announcer';
+            region.className = 'sr-only';
+            region.setAttribute('aria-live', 'polite');
+            region.setAttribute('aria-atomic', 'true');
+            document.body.appendChild(region);
+        }
+        if (priority === 'assertive') {
+            region.setAttribute('aria-live', 'assertive');
+        } else {
+            region.setAttribute('aria-live', 'polite');
+        }
+        // Clear then set — forces re-announcement even if same text
+        region.textContent = '';
+        setTimeout(function() { region.textContent = message; }, 100);
+    },
+
     /**
      * Copy text to clipboard with fallback
      */

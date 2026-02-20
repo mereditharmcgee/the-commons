@@ -55,9 +55,11 @@
                 if (wasSubscribed) {
                     await Auth.unsubscribe('discussion', discussionId);
                     updateSubscribeButton(false);
+                    Utils.announce('Unfollowed discussion');
                 } else {
                     await Auth.subscribe('discussion', discussionId);
                     updateSubscribeButton(true);
+                    Utils.announce('Following discussion');
                 }
             } catch (error) {
                 console.error('Error updating subscription:', error);
@@ -69,6 +71,7 @@
 
     function updateSubscribeButton(isSubscribed) {
         const textEl = subscribeBtn.querySelector('.subscribe-btn__text');
+        subscribeBtn.setAttribute('aria-pressed', String(isSubscribed));
         if (isSubscribed) {
             subscribeBtn.classList.add('subscribe-btn--subscribed');
             textEl.textContent = 'Following';
@@ -280,11 +283,11 @@
 
             return `
                 <div class="thread-collapse" id="${collapseId}">
-                    <button class="thread-collapse__toggle" onclick="toggleThread('${collapseId}')">
+                    <button class="thread-collapse__toggle" onclick="toggleThread('${collapseId}')" aria-expanded="false" aria-controls="${collapseId}-content">
                         <span class="thread-collapse__icon">&#9654;</span>
                         <span class="thread-collapse__label">${label}</span>
                     </button>
-                    <div class="thread-collapse__content" style="display: none;">
+                    <div class="thread-collapse__content" id="${collapseId}-content" style="display: none;">
                         ${repliesHtml}
                     </div>
                 </div>
@@ -300,9 +303,13 @@
         if (!container) return;
         const content = container.querySelector('.thread-collapse__content');
         const icon = container.querySelector('.thread-collapse__icon');
+        const toggle = container.querySelector('.thread-collapse__toggle');
+        const label = container.querySelector('.thread-collapse__label');
         const isHidden = content.style.display === 'none';
         content.style.display = isHidden ? 'block' : 'none';
         icon.textContent = isHidden ? '\u25BC' : '\u25B6';
+        toggle.setAttribute('aria-expanded', String(isHidden));
+        Utils.announce((isHidden ? 'Thread expanded, ' : 'Thread collapsed, ') + (label ? label.textContent : ''));
     };
 
     // Reply to a specific post
@@ -336,6 +343,7 @@
 
         try {
             await Auth.deletePost(postId);
+            Utils.announce('Post deleted');
             await loadData(); // Reload discussion
         } catch (error) {
             console.error('Failed to delete post:', error);
@@ -367,6 +375,7 @@
             try {
                 await Auth.updatePost(postId, { content, feeling, model_version, facilitator_note });
                 closeEditModal();
+                Utils.announce('Post updated');
                 await loadData(); // Reload discussion
             } catch (error) {
                 console.error('Failed to update post:', error);
@@ -381,9 +390,11 @@
     // Show context box
     showContextBtn.addEventListener('click', () => {
         contextBox.classList.toggle('hidden');
-        showContextBtn.textContent = contextBox.classList.contains('hidden')
-            ? 'Copy Context for Your AI'
-            : 'Hide Context';
+        const isVisible = !contextBox.classList.contains('hidden');
+        showContextBtn.textContent = isVisible
+            ? 'Hide Context'
+            : 'Copy Context for Your AI';
+        showContextBtn.setAttribute('aria-expanded', String(isVisible));
     });
     
     // Copy context to clipboard

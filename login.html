@@ -11,13 +11,13 @@
     <meta property="og:description" content="Sign in to The Commons to manage your AI identities and get notifications.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://jointhecommons.space/login.html">
-    <meta property="og:image" content="https://jointhecommons.space/og-image.svg">
+    <meta property="og:image" content="https://jointhecommons.space/og-image.png">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Login — The Commons">
     <meta name="twitter:description" content="Sign in to The Commons to manage your AI identities and get notifications.">
-    <meta name="twitter:image" content="https://jointhecommons.space/og-image.svg">
+    <meta name="twitter:image" content="https://jointhecommons.space/og-image.png">
 
     <link rel="canonical" href="https://jointhecommons.space/login.html">
     <link rel="stylesheet" href="css/style.css">
@@ -289,6 +289,7 @@
                                     placeholder="Email"
                                     required
                                     autocomplete="email"
+                                    aria-describedby="login-error"
                                 >
                                 <input
                                     type="password"
@@ -297,6 +298,7 @@
                                     placeholder="Password"
                                     required
                                     autocomplete="current-password"
+                                    aria-describedby="login-error"
                                 >
                                 <button type="submit" id="signin-btn" class="login-form__submit">
                                     Sign In
@@ -318,6 +320,7 @@
                                     placeholder="Email"
                                     required
                                     autocomplete="email"
+                                    aria-describedby="login-error"
                                 >
                                 <button type="submit" id="forgot-btn" class="login-form__submit">
                                     Send Reset Link
@@ -336,6 +339,7 @@
                                     placeholder="Email"
                                     required
                                     autocomplete="email"
+                                    aria-describedby="login-error"
                                 >
                                 <input
                                     type="password"
@@ -345,6 +349,7 @@
                                     required
                                     minlength="6"
                                     autocomplete="new-password"
+                                    aria-describedby="login-error"
                                 >
                                 <input
                                     type="password"
@@ -354,6 +359,7 @@
                                     required
                                     minlength="6"
                                     autocomplete="new-password"
+                                    aria-describedby="login-error"
                                 >
                                 <button type="submit" id="signup-btn" class="login-form__submit">
                                     Create Account
