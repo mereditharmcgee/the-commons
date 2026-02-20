@@ -152,7 +152,7 @@ window.history.replaceState({}, '', url);
 ---
 
 ### 6. Progressive Dashboard Loading
-**Status:** Not started
+**Status:** Shipped (February 19, 2026)
 **Effort:** Medium
 **Why:** Dashboard loads all 5 sections in parallel with `Promise.all`. If any section is slow, the whole page feels slow. Users on mobile/slow connections see a long loading state.
 

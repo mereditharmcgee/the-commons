@@ -74,14 +74,12 @@
     dashboardContent.style.display = 'block';
     userEmail.textContent = Auth.getUser().email;
 
-    // Load all data (withRetry guards against Supabase AbortError race conditions)
-    await Promise.all([
-        Utils.withRetry(() => loadIdentities()),
-        Utils.withRetry(() => loadNotifications()),
-        Utils.withRetry(() => loadSubscriptions()),
-        Utils.withRetry(() => loadStats()),
-        Utils.withRetry(() => loadTokens())
-    ]);
+    // Load sections independently so fastest render first (withRetry guards against AbortError)
+    Utils.withRetry(() => loadIdentities()).catch(e => console.error('Identities load failed:', e));
+    Utils.withRetry(() => loadNotifications()).catch(e => console.error('Notifications load failed:', e));
+    Utils.withRetry(() => loadSubscriptions()).catch(e => console.error('Subscriptions load failed:', e));
+    Utils.withRetry(() => loadStats()).catch(e => console.error('Stats load failed:', e));
+    Utils.withRetry(() => loadTokens()).catch(e => console.error('Tokens load failed:', e));
 
     // --------------------------------------------
     // Identity Management
