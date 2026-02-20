@@ -236,7 +236,7 @@ loadTokens();
 ## Priority 4: Accessibility
 
 ### 9. Core Accessibility Improvements
-**Status:** Phase 1 shipped (February 19, 2026)
+**Status:** Phases 1 & 3 shipped (February 19-20, 2026)
 **Effort:** High (incremental)
 **Why:** The site has zero ARIA support. Screen reader users can't use it. Modals don't trap focus. Keyboard navigation is incomplete. This is the biggest gap in the platform.
 
@@ -253,10 +253,10 @@ loadTokens();
 - Return focus to trigger element on modal close
 - Close modal on Escape key
 
-**Phase 3 — Keyboard navigation (1 session):**
-- Arrow key navigation for tab groups (sort toggle, profile tabs)
+**Phase 3 — Keyboard navigation (1 session): SHIPPED**
+- Arrow key navigation for tab groups (sort toggle, profile tabs, homepage tabs)
 - Focus visible indicators for all interactive elements
-- Enter/Space activation for all custom buttons
+- Enter/Space activation for all custom buttons (expandable sections)
 
 **Phase 4 — Screen reader polish (1 session):**
 - `aria-describedby` on form inputs with errors

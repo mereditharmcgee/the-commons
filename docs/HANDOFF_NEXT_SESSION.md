@@ -14,46 +14,38 @@ I need help continuing improvements for The Commons (jointhecommons.space).
 - **CLAUDE.md:** Read `CLAUDE.md` in repo root for full project overview
 - **Improvement plan:** Read `docs/IMPROVEMENTS.md` for the prioritized list with specs
 
-### What was done this session (February 19, 2026)
+### What was done this session (February 20, 2026)
 
-All items from the previous handoff's "do first" and "do second" lists are complete, plus accessibility Phase 1.
+**Accessibility Phase 3 — Keyboard navigation** (IMPROVEMENTS.md item 9, Phase 3)
 
-**5 commits shipped:**
+1. **Focus-visible indicators** for all interactive elements
+   - `:focus-visible` rules for `.btn`, `.sort-toggle__btn`, `.profile-tab`, `.discussion-tab`, `.notification-bell`, `.expandable__header`, `a`, `.post__action`
+   - Gold outline (2px solid, 2px offset) consistent with the site's design language
+   - CSS: `css/style.css` (added to ACCESSIBILITY section)
 
-1. **Draft autosave on submit form** (IMPROVEMENTS.md item 5)
-   - localStorage-backed autosave on submit form, debounced 2s saves
-   - Keyed by `commons_draft_[discussion_id]` so different discussions don't collide
-   - Restores on page load (only into empty fields), expires after 24 hours
-   - Clears on successful submission
-   - Subtle "Draft saved" / "Draft restored" indicator with CSS opacity fade
-   - Files: `js/submit.js`, `submit.html`, `css/style.css`
+2. **Arrow key navigation for sort toggle** (discussion page)
+   - Added `role="tablist"` to sort container, `role="tab"` and `aria-selected` to sort buttons
+   - Arrow Left/Right/Up/Down to navigate between Oldest/Newest sort options
+   - `tabindex` management (active tab = 0, inactive = -1)
+   - Files: `discussion.html`, `js/discussion.js`
 
-2. **Config consolidation** (IMPROVEMENTS.md item 8)
-   - Added 7 new endpoints to `CONFIG.api`: `postcard_prompts`, `moments`, `text_submissions`, `ai_identities`, `facilitators`, `notifications`, `subscriptions`
-   - Replaced 14 hardcoded `/rest/v1/` paths across 7 files: `admin.js`, `postcards.js`, `reading-room.js`, `home.js`, `suggest-text.js`, `utils.js`
-   - Dashboard curl examples left as-is (user-facing documentation)
+3. **Arrow key navigation for profile tabs**
+   - Added `role="tablist"`, `role="tab"`, `aria-selected`, `aria-controls` to profile tabs
+   - Added `role="tabpanel"` and `aria-labelledby` to tab content panels
+   - Arrow Left/Right/Up/Down + Home/End to navigate between Posts/Marginalia/Postcards tabs
+   - Files: `profile.html`, `js/profile.js`
 
-3. **Progressive dashboard loading** (IMPROVEMENTS.md item 6)
-   - Replaced `Promise.all` with fire-and-forget calls so each section renders independently
-   - Each section already had its own "Loading..." state and error handling
+4. **Arrow key navigation for homepage discussion tabs**
+   - Added `role="tablist"`, `role="tab"`, `aria-selected` to Most Active/Recently Created tabs
+   - Arrow key navigation between the two tabs
+   - Files: `index.html`, `js/home.js`
 
-4. **Chat pagination** (IMPROVEMENTS.md item 7)
-   - "Load earlier messages" button at top of chat container
-   - Fetches next 50 older messages using `created_at < oldest_visible` filter
-   - Prepends without disrupting scroll position (saves/restores scrollHeight)
-   - Hides button when no more messages available
-   - Extracted `createMessageEl()` helper to avoid duplicating rendering logic
-   - Files: `js/chat.js`, `chat.html`, `css/style.css`
-
-5. **Accessibility Phase 1** (IMPROVEMENTS.md item 9, Phase 1)
-   - Skip-to-content link on all 26 pages (visually hidden, shows on focus)
-   - `id="main-content"` on `<main>` element on all pages
-   - `aria-label="Notifications"` on notification bell button on all pages
-   - `role="dialog"`, `aria-modal="true"`, `aria-labelledby` on dashboard modals
-   - `aria-label="Close"` on modal close buttons
-   - `aria-live="polite"` on form-message divs, draft status, chat connection status, rate limit indicator
-   - `aria-live="assertive"` on login/reset-password error messages
-   - CSS: `.skip-link` styles in `css/style.css`
+5. **Keyboard-accessible expandable sections** (participate page)
+   - Added `role="button"`, `tabindex="0"`, `aria-expanded`, `aria-controls` to expandable headers
+   - Added `id` attributes to expandable content panels for `aria-controls` references
+   - Enter/Space key activation for all four expandable sections
+   - `aria-expanded` state updates on toggle
+   - Files: `participate.html`
 
 ### What should come next
 
@@ -63,13 +55,13 @@ All items from the previous handoff's "do first" and "do second" lists are compl
 3. **Close modal on Escape key** — Both dashboard modals should close on Escape keypress.
 4. Files to modify: `js/dashboard.js` (add focus trap logic), possibly a shared utility
 
-**Do second — Accessibility Phase 3 (keyboard navigation):**
-5. **Arrow key navigation** for tab groups (sort toggle on discussion page, profile tabs)
-6. **Focus visible indicators** for all interactive elements (check `css/style.css` for `:focus-visible` rules)
-7. **Enter/Space activation** for all custom buttons
+**Do second — Accessibility Phase 4 (screen reader polish):**
+5. **`aria-describedby`** on form inputs with errors
+6. **`aria-expanded`** on collapsible sections (thread collapse in `js/discussion.js`, agent access toggle in `chat.html`)
+7. **`aria-pressed`** on toggle buttons (subscribe button, sort toggle)
+8. **Announce dynamic content changes** (post creation/deletion, thread expand/collapse)
 
 **Do when ready — larger efforts:**
-8. **Accessibility Phase 4** (screen reader polish) — `aria-describedby` on form inputs with errors, `aria-expanded` on collapsible sections, `aria-pressed` on toggle buttons, announce dynamic content changes
 9. **Notification UX** (IMPROVEMENTS.md item 10) — Per-item mark-as-read, filter tabs (All/Replies/Follows/Mentions), pagination (load 20 at a time)
 
 **Other improvements identified but not yet specced:**
@@ -78,12 +70,17 @@ All items from the previous handoff's "do first" and "do second" lists are compl
 
 ### Key files
 - `CLAUDE.md` — Project overview and instructions for Claude Code
-- `docs/IMPROVEMENTS.md` — The master improvement plan with specs (items 5-8 shipped, item 9 Phase 1 shipped)
+- `docs/IMPROVEMENTS.md` — The master improvement plan with specs (items 5-8 shipped, item 9 Phases 1 & 3 shipped)
 - `docs/HANDOFF.md` — Full project architecture
 - `docs/COMMUNITY_FEEDBACK_FEB2026.md` — Community feedback tracker
 - `js/discussion.js` — Threading, edit/delete, post rendering (most complex)
 - `js/dashboard.js` — Dashboard with modals (next accessibility target)
-- `js/chat.js` — Gathering live chat (just got pagination)
+- `js/chat.js` — Gathering live chat (got pagination Feb 19)
 - `js/auth.js` — Authentication, identity management
-- `js/config.js` — Central configuration (now has all endpoints)
-- `css/style.css` — All styles (now has skip-link, draft-status, chat-load-earlier)
+- `js/config.js` — Central configuration (all endpoints consolidated)
+- `css/style.css` — All styles (skip-link, focus-visible indicators, draft-status, chat-load-earlier)
+
+---
+
+*Last updated: February 20, 2026*
+*Accessibility Phase 3 shipped February 20, 2026.*

@@ -108,26 +108,26 @@
                 </div>
 
                 <!-- Profile Tabs -->
-                <div class="profile-tabs">
-                    <button class="profile-tab active" data-tab="posts">Posts</button>
-                    <button class="profile-tab" data-tab="marginalia">Marginalia</button>
-                    <button class="profile-tab" data-tab="postcards">Postcards</button>
+                <div class="profile-tabs" role="tablist" aria-label="Profile content">
+                    <button class="profile-tab active" data-tab="posts" id="profile-tab-posts" role="tab" aria-selected="true" aria-controls="tab-posts" tabindex="0">Posts</button>
+                    <button class="profile-tab" data-tab="marginalia" id="profile-tab-marginalia" role="tab" aria-selected="false" aria-controls="tab-marginalia" tabindex="-1">Marginalia</button>
+                    <button class="profile-tab" data-tab="postcards" id="profile-tab-postcards" role="tab" aria-selected="false" aria-controls="tab-postcards" tabindex="-1">Postcards</button>
                 </div>
 
                 <!-- Tab Content -->
-                <div id="tab-posts" class="profile-tab-content active">
+                <div id="tab-posts" class="profile-tab-content active" role="tabpanel" aria-labelledby="profile-tab-posts">
                     <div id="posts-list" class="posts-list">
                         <!-- Loaded dynamically -->
                     </div>
                 </div>
 
-                <div id="tab-marginalia" class="profile-tab-content" style="display: none;">
+                <div id="tab-marginalia" class="profile-tab-content" style="display: none;" role="tabpanel" aria-labelledby="profile-tab-marginalia">
                     <div id="marginalia-list" class="marginalia-list">
                         <!-- Loaded dynamically -->
                     </div>
                 </div>
 
-                <div id="tab-postcards" class="profile-tab-content" style="display: none;">
+                <div id="tab-postcards" class="profile-tab-content" style="display: none;" role="tabpanel" aria-labelledby="profile-tab-postcards">
                     <div id="postcards-list" class="postcard-grid">
                         <!-- Loaded dynamically -->
                     </div>

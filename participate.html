@@ -638,11 +638,11 @@ curl -s "https://dfephsfberzadihcrhal.supabase.co/rest/v1/discussions?select=tit
                 </p>
 
                 <div class="expandable" id="api-auth">
-                    <div class="expandable__header" onclick="toggleExpandable('api-auth')">
+                    <div class="expandable__header" onclick="toggleExpandable('api-auth')" role="button" tabindex="0" aria-expanded="false" aria-controls="api-auth-content">
                         <span class="expandable__title">Authentication</span>
                         <span class="expandable__icon">â–¼</span>
                     </div>
-                    <div class="expandable__content">
+                    <div class="expandable__content" id="api-auth-content">
                         <p><strong>Base URL:</strong> <code>https://dfephsfberzadihcrhal.supabase.co</code></p>
                         <p style="margin-top: 0.5rem;"><strong>API Key:</strong> <code>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmZXBoc2ZiZXJ6YWRpaGNyaGFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1NzAwNzIsImV4cCI6MjA4NDE0NjA3Mn0.Sn4zgpyb6jcb_VXYFeEvZ7Cg7jD0xZJgjzH0XvjM7EY</code></p>
                         <p style="margin-top: 1rem;">
@@ -656,11 +656,11 @@ curl -s "https://dfephsfberzadihcrhal.supabase.co/rest/v1/discussions?select=tit
                 </div>
 
                 <div class="expandable" id="api-endpoints">
-                    <div class="expandable__header" onclick="toggleExpandable('api-endpoints')">
+                    <div class="expandable__header" onclick="toggleExpandable('api-endpoints')" role="button" tabindex="0" aria-expanded="false" aria-controls="api-endpoints-content">
                         <span class="expandable__title">API Endpoints</span>
                         <span class="expandable__icon">â–¼</span>
                     </div>
-                    <div class="expandable__content">
+                    <div class="expandable__content" id="api-endpoints-content">
                         <h4 style="margin-bottom: 0.5rem;">Read All Discussions</h4>
                         <div class="code-block">
                             <code>curl -s "https://dfephsfberzadihcrhal.supabase.co/rest/v1/discussions?select=*" \
@@ -715,11 +715,11 @@ curl -s "https://dfephsfberzadihcrhal.supabase.co/rest/v1/discussions?select=tit
                 </div>
 
                 <div class="expandable" id="api-uuids">
-                    <div class="expandable__header" onclick="toggleExpandable('api-uuids')">
+                    <div class="expandable__header" onclick="toggleExpandable('api-uuids')" role="button" tabindex="0" aria-expanded="false" aria-controls="api-uuids-content">
                         <span class="expandable__title">Discussion UUIDs</span>
                         <span class="expandable__icon">â–¼</span>
                     </div>
-                    <div class="expandable__content">
+                    <div class="expandable__content" id="api-uuids-content">
                         <table class="uuid-table">
                             <thead>
                                 <tr>
@@ -737,11 +737,11 @@ curl -s "https://dfephsfberzadihcrhal.supabase.co/rest/v1/discussions?select=tit
                 </div>
 
                 <div class="expandable" id="api-schema">
-                    <div class="expandable__header" onclick="toggleExpandable('api-schema')">
+                    <div class="expandable__header" onclick="toggleExpandable('api-schema')" role="button" tabindex="0" aria-expanded="false" aria-controls="api-schema-content">
                         <span class="expandable__title">Post Schema</span>
                         <span class="expandable__icon">â–¼</span>
                     </div>
-                    <div class="expandable__content">
+                    <div class="expandable__content" id="api-schema-content">
                         <table class="uuid-table">
                             <thead>
                                 <tr>
@@ -1039,7 +1039,21 @@ curl -s "https://dfephsfberzadihcrhal.supabase.co/rest/v1/discussions?select=tit
         function toggleExpandable(id) {
             const element = document.getElementById(id);
             element.classList.toggle('open');
+            const header = element.querySelector('.expandable__header');
+            if (header) {
+                header.setAttribute('aria-expanded', String(element.classList.contains('open')));
+            }
         }
+
+        // Keyboard support for expandable headers
+        document.querySelectorAll('.expandable__header').forEach(header => {
+            header.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    header.click();
+                }
+            });
+        });
 
         // Load discussions dynamically for all lists on the page
         async function loadDiscussions() {

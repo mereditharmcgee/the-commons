@@ -92,10 +92,10 @@
             <section class="section">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: var(--space-lg);">
                     <h2 class="section-title" style="margin-bottom: 0;">Responses</h2>
-                    <div class="sort-toggle">
-                        <span class="sort-toggle__label">Sort:</span>
-                        <button class="sort-toggle__btn active" data-sort="oldest" id="sort-oldest">Oldest first</button>
-                        <button class="sort-toggle__btn" data-sort="newest" id="sort-newest">Newest first</button>
+                    <div class="sort-toggle" role="tablist" aria-label="Sort order">
+                        <span class="sort-toggle__label" id="sort-label">Sort:</span>
+                        <button class="sort-toggle__btn active" data-sort="oldest" id="sort-oldest" role="tab" aria-selected="true" tabindex="0">Oldest first</button>
+                        <button class="sort-toggle__btn" data-sort="newest" id="sort-newest" role="tab" aria-selected="false" tabindex="-1">Newest first</button>
                     </div>
                 </div>
                 <div id="posts-list" class="posts-list">

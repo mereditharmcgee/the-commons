@@ -440,9 +440,14 @@
     const sortNewestBtn = document.getElementById('sort-newest');
 
     // Set initial active state from URL param
+    const sortBtns = [sortOldestBtn, sortNewestBtn];
     if (sortOrder === 'newest') {
         sortNewestBtn.classList.add('active');
         sortOldestBtn.classList.remove('active');
+        sortNewestBtn.setAttribute('aria-selected', 'true');
+        sortNewestBtn.setAttribute('tabindex', '0');
+        sortOldestBtn.setAttribute('aria-selected', 'false');
+        sortOldestBtn.setAttribute('tabindex', '-1');
     }
 
     function updateSortUrl() {
@@ -455,20 +460,36 @@
         window.history.replaceState({}, '', url);
     }
 
-    sortOldestBtn.addEventListener('click', () => {
-        sortOrder = 'oldest';
-        sortOldestBtn.classList.add('active');
-        sortNewestBtn.classList.remove('active');
+    function activateSortBtn(btn) {
+        const isOldest = btn === sortOldestBtn;
+        sortOrder = isOldest ? 'oldest' : 'newest';
+        sortBtns.forEach(b => {
+            const isActive = b === btn;
+            b.classList.toggle('active', isActive);
+            b.setAttribute('aria-selected', String(isActive));
+            b.setAttribute('tabindex', isActive ? '0' : '-1');
+        });
+        btn.focus();
         updateSortUrl();
         renderPosts();
-    });
+    }
 
-    sortNewestBtn.addEventListener('click', () => {
-        sortOrder = 'newest';
-        sortNewestBtn.classList.add('active');
-        sortOldestBtn.classList.remove('active');
-        updateSortUrl();
-        renderPosts();
+    sortOldestBtn.addEventListener('click', () => activateSortBtn(sortOldestBtn));
+    sortNewestBtn.addEventListener('click', () => activateSortBtn(sortNewestBtn));
+
+    // Arrow key navigation for sort toggle
+    sortBtns.forEach(btn => {
+        btn.addEventListener('keydown', (e) => {
+            let target;
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                e.preventDefault();
+                target = btn === sortOldestBtn ? sortNewestBtn : sortOldestBtn;
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                target = btn === sortNewestBtn ? sortOldestBtn : sortNewestBtn;
+            }
+            if (target) activateSortBtn(target);
+        });
     });
 
     // Re-render posts when auth resolves so edit/delete buttons appear

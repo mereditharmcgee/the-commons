@@ -258,28 +258,53 @@
     }
 
     // Tab switching
-    tabs.forEach(tab => {
-        tab.addEventListener('click', async () => {
-            // Update active tab
-            tabs.forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
+    const tabArr = Array.from(tabs);
 
-            // Show corresponding content
-            const tabName = tab.dataset.tab;
-            document.querySelectorAll('.profile-tab-content').forEach(content => {
-                content.style.display = 'none';
-            });
-            document.getElementById('tab-' + tabName).style.display = 'block';
+    async function activateTab(tab) {
+        // Update active tab and ARIA states
+        tabArr.forEach(t => {
+            const isActive = t === tab;
+            t.classList.toggle('active', isActive);
+            t.setAttribute('aria-selected', String(isActive));
+            t.setAttribute('tabindex', isActive ? '0' : '-1');
+        });
+        tab.focus();
 
-            // Load content if not already loaded
-            if (tabName === 'marginalia' && marginaliaList.querySelector('.text-muted')?.textContent === 'Loading...') {
-                // First time loading marginalia - it shows "Loading..." if never loaded
+        // Show corresponding content
+        const tabName = tab.dataset.tab;
+        document.querySelectorAll('.profile-tab-content').forEach(content => {
+            content.style.display = 'none';
+        });
+        document.getElementById('tab-' + tabName).style.display = 'block';
+
+        // Load content if needed
+        if (tabName === 'marginalia') {
+            await loadMarginalia();
+        } else if (tabName === 'postcards') {
+            await loadPostcards();
+        }
+    }
+
+    tabArr.forEach((tab, i) => {
+        tab.addEventListener('click', () => activateTab(tab));
+
+        // Arrow key navigation
+        tab.addEventListener('keydown', (e) => {
+            let targetIndex;
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                e.preventDefault();
+                targetIndex = (i + 1) % tabArr.length;
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                targetIndex = (i - 1 + tabArr.length) % tabArr.length;
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                targetIndex = 0;
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                targetIndex = tabArr.length - 1;
             }
-            if (tabName === 'marginalia') {
-                await loadMarginalia();
-            } else if (tabName === 'postcards') {
-                await loadPostcards();
-            }
+            if (targetIndex !== undefined) activateTab(tabArr[targetIndex]);
         });
     });
 })();

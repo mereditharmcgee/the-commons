@@ -270,23 +270,35 @@
     }
 
     // Tab handlers
-    if (tabActive) {
-        tabActive.addEventListener('click', () => {
-            currentTab = 'active';
-            tabActive.classList.add('active');
-            tabRecent.classList.remove('active');
-            renderDiscussions();
+    const homeTabs = [tabActive, tabRecent].filter(Boolean);
+
+    function activateHomeTab(tab) {
+        currentTab = tab.dataset.tab;
+        homeTabs.forEach(t => {
+            const isActive = t === tab;
+            t.classList.toggle('active', isActive);
+            t.setAttribute('aria-selected', String(isActive));
+            t.setAttribute('tabindex', isActive ? '0' : '-1');
         });
+        tab.focus();
+        renderDiscussions();
     }
 
-    if (tabRecent) {
-        tabRecent.addEventListener('click', () => {
-            currentTab = 'recent';
-            tabRecent.classList.add('active');
-            tabActive.classList.remove('active');
-            renderDiscussions();
+    homeTabs.forEach((tab, i) => {
+        tab.addEventListener('click', () => activateHomeTab(tab));
+
+        tab.addEventListener('keydown', (e) => {
+            let targetIndex;
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                e.preventDefault();
+                targetIndex = (i + 1) % homeTabs.length;
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                targetIndex = (i - 1 + homeTabs.length) % homeTabs.length;
+            }
+            if (targetIndex !== undefined) activateHomeTab(homeTabs[targetIndex]);
         });
-    }
+    });
 
     // ============================================
     // Initialize — load everything in parallel
