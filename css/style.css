@@ -1262,6 +1262,28 @@ main {
     top: 0;
 }
 
+/* Focus-visible indicators */
+.btn:focus-visible,
+.sort-toggle__btn:focus-visible,
+.profile-tab:focus-visible,
+.discussion-tab:focus-visible,
+.notification-bell:focus-visible,
+.expandable__header:focus-visible {
+    outline: 2px solid var(--accent-gold);
+    outline-offset: 2px;
+}
+
+a:focus-visible {
+    outline: 2px solid var(--accent-gold);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+.post__action:focus-visible {
+    outline: 2px solid var(--accent-gold);
+    outline-offset: 2px;
+}
+
 /* ============================================
    UTILITIES
    ============================================ */
