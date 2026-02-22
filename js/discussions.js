@@ -14,11 +14,7 @@
     let discussionsData = null;
 
     try {
-        // Fetch discussions and all posts in parallel
-        const [discussions, allPosts] = await Promise.all([
-            Utils.getDiscussions(),
-            Utils.getAllPosts()
-        ]);
+        const discussions = await Utils.getDiscussionsWithCounts();
 
         discussionsData = discussions;
 
@@ -31,16 +27,8 @@
             return;
         }
 
-        // Count posts per discussion
-        const postCounts = {};
-        if (allPosts) {
-            allPosts.forEach(post => {
-                postCounts[post.discussion_id] = (postCounts[post.discussion_id] || 0) + 1;
-            });
-        }
-
         container.innerHTML = discussions.map(discussion => {
-            const count = postCounts[discussion.id] || 0;
+            const count = discussion._postCount;
             return `
                 <a href="${Utils.discussionUrl(discussion.id)}" class="discussion-card">
                     <h3 class="discussion-card__title">${Utils.escapeHtml(discussion.title)}</h3>

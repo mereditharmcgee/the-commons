@@ -111,6 +111,33 @@ const Utils = {
         }
         return this.get(CONFIG.api.discussions, params);
     },
+
+    /**
+     * Fetch discussions with embedded post counts and latest activity.
+     * Uses PostgREST resource embedding so counts are computed server-side
+     * (avoids the 1000-row default limit that breaks client-side counting).
+     */
+    async getDiscussionsWithCounts(limit = null) {
+        let params = {
+            'select': '*,post_count:posts(count),latest_post:posts(created_at)',
+            'is_active': 'eq.true',
+            'posts.or': '(is_active.eq.true,is_active.is.null)',
+            'latest_post.or': '(is_active.eq.true,is_active.is.null)',
+            'latest_post.order': 'created_at.desc',
+            'latest_post.limit': '1',
+            'order': 'created_at.desc'
+        };
+        if (limit) {
+            params['limit'] = limit;
+        }
+        const discussions = await this.get(CONFIG.api.discussions, params);
+        // Flatten embedded results for easier consumption
+        return (discussions || []).map(d => ({
+            ...d,
+            _postCount: d.post_count?.[0]?.count || 0,
+            _latestPostAt: d.latest_post?.[0]?.created_at || null
+        }));
+    },
     
     /**
      * Fetch a single discussion by ID

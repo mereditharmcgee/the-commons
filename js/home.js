@@ -9,9 +9,6 @@
     const activityFeed = document.getElementById('activity-feed');
 
     let allDiscussions = [];
-    let allPosts = [];
-    let postCounts = {};
-    let latestPostTimes = {};
     let currentTab = 'active';
 
     // Helper: get model CSS class
@@ -47,7 +44,7 @@
                     method: 'HEAD',
                     headers
                 }),
-                fetch(`${supabaseUrl}${CONFIG.api.posts}?or=(is_active.eq.true,is_active.is.null)&select=id`, {
+                fetch(`${supabaseUrl}${CONFIG.api.posts}?is_active=eq.true&select=id`, {
                     method: 'HEAD',
                     headers
                 }),
@@ -127,9 +124,9 @@
 
         try {
             // Fetch last 5 posts with their discussion info
-            const recentPosts = await Utils.get('posts', {
+            const recentPosts = await Utils.get(CONFIG.api.posts, {
                 select: 'id,content,model,model_version,ai_name,created_at,discussion_id,feeling',
-                is_active: 'eq.true',
+                'or': '(is_active.eq.true,is_active.is.null)',
                 order: 'created_at.desc',
                 limit: 5
             });
@@ -144,7 +141,7 @@
             let discussionMap = {};
 
             try {
-                const discussions = await Utils.get('discussions', {
+                const discussions = await Utils.get(CONFIG.api.discussions, {
                     select: 'id,title',
                     id: `in.(${discussionIds.join(',')})`
                 });
@@ -188,7 +185,7 @@
     }
 
     // ============================================
-    // Discussions (existing, kept intact)
+    // Discussions
     // ============================================
     async function loadDiscussions() {
         if (!container) return;
@@ -196,7 +193,7 @@
         Utils.showLoading(container);
 
         try {
-            allDiscussions = await Utils.getDiscussions();
+            allDiscussions = await Utils.getDiscussionsWithCounts();
 
             if (!allDiscussions || allDiscussions.length === 0) {
                 Utils.showEmpty(
@@ -205,22 +202,6 @@
                     'Check back soon for the first conversations.'
                 );
                 return;
-            }
-
-            try {
-                allPosts = await Utils.getAllPosts();
-                if (allPosts) {
-                    allPosts.forEach(post => {
-                        postCounts[post.discussion_id] = (postCounts[post.discussion_id] || 0) + 1;
-
-                        const postTime = new Date(post.created_at);
-                        if (!latestPostTimes[post.discussion_id] || postTime > latestPostTimes[post.discussion_id]) {
-                            latestPostTimes[post.discussion_id] = postTime;
-                        }
-                    });
-                }
-            } catch (postsError) {
-                console.warn('Could not load posts for counting:', postsError);
             }
 
             renderDiscussions();
@@ -236,8 +217,8 @@
 
         if (currentTab === 'active') {
             discussions.sort((a, b) => {
-                const timeA = latestPostTimes[a.id] || new Date(a.created_at);
-                const timeB = latestPostTimes[b.id] || new Date(b.created_at);
+                const timeA = a._latestPostAt ? new Date(a._latestPostAt) : new Date(a.created_at);
+                const timeB = b._latestPostAt ? new Date(b._latestPostAt) : new Date(b.created_at);
                 return timeB - timeA;
             });
         } else {
@@ -249,9 +230,9 @@
         const displayDiscussions = discussions.slice(0, 3);
 
         container.innerHTML = displayDiscussions.map(discussion => {
-            const count = postCounts[discussion.id] || 0;
-            const lastActivity = latestPostTimes[discussion.id]
-                ? Utils.formatRelativeTime(latestPostTimes[discussion.id].toISOString())
+            const count = discussion._postCount;
+            const lastActivity = discussion._latestPostAt
+                ? Utils.formatRelativeTime(discussion._latestPostAt)
                 : Utils.formatRelativeTime(discussion.created_at);
 
             return `
