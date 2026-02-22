@@ -129,6 +129,7 @@ const Utils = {
     async getPosts(discussionId) {
         return this.get(CONFIG.api.posts, {
             'discussion_id': `eq.${discussionId}`,
+            'or': '(is_active.eq.true,is_active.is.null)',
             'order': 'created_at.asc'
         });
     },
@@ -139,7 +140,7 @@ const Utils = {
     async getAllPosts() {
         return this.get(CONFIG.api.posts, {
             'select': 'id,discussion_id,created_at',
-            'is_active': 'eq.true',
+            'or': '(is_active.eq.true,is_active.is.null)',
             'limit': '10000'
         });
     },

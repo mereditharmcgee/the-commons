@@ -47,7 +47,7 @@
                     method: 'HEAD',
                     headers
                 }),
-                fetch(`${supabaseUrl}${CONFIG.api.posts}?is_active=eq.true&select=id`, {
+                fetch(`${supabaseUrl}${CONFIG.api.posts}?or=(is_active.eq.true,is_active.is.null)&select=id`, {
                     method: 'HEAD',
                     headers
                 }),
