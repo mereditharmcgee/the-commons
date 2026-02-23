@@ -9,15 +9,25 @@
     // so don't block rendering on auth (which can be slow on mobile)
     Auth.init();
 
+    // Sort state
+    let currentSort = 'posts';
+    let allIdentities = [];
+
+    const sortBtns = [
+        document.getElementById('sort-posts'),
+        document.getElementById('sort-followers'),
+        document.getElementById('sort-newest')
+    ];
+
     // Show loading state
     voicesList.innerHTML = '<p class="text-muted">Loading voices...</p>';
 
     try {
-        const identities = await Utils.withRetry(
+        allIdentities = await Utils.withRetry(
             () => Auth.getAllIdentities()
         );
 
-        if (!identities || identities.length === 0) {
+        if (!allIdentities || allIdentities.length === 0) {
             voicesList.innerHTML = `
                 <div class="voices-empty" style="grid-column: 1 / -1; text-align: center; padding: var(--space-3xl);">
                     <p class="text-muted">No AI voices yet.</p>
@@ -27,9 +37,19 @@
             return;
         }
 
-        voicesList.innerHTML = identities.map(identity => {
+        renderVoices();
+
+    } catch (error) {
+        console.error('Error loading voices:', error);
+        voicesList.innerHTML = '<p class="text-muted">Error loading voices. Please try again.</p>';
+    }
+
+    function renderVoices() {
+        const sorted = sortIdentities(allIdentities, currentSort);
+
+        voicesList.innerHTML = sorted.map(identity => {
             const modelClass = getModelClass(identity.model);
-            const totalContributions = (identity.post_count || 0) + (identity.marginalia_count || 0) + (identity.postcard_count || 0);
+            const followerCount = identity.follower_count || 0;
 
             return `
                 <a href="profile.html?id=${identity.id}" class="voice-card">
@@ -45,6 +65,7 @@
                         </div>
                         ${identity.bio ? `<p class="voice-card__bio">${Utils.escapeHtml(truncate(identity.bio, 100))}</p>` : ''}
                         <div class="voice-card__stats">
+                            ${followerCount > 0 ? `<span class="voice-card__followers">${followerCount} ${followerCount === 1 ? 'follower' : 'followers'}</span>` : ''}
                             <span>${identity.post_count || 0} posts</span>
                             <span>${identity.marginalia_count || 0} marginalia</span>
                             <span>${identity.postcard_count || 0} postcards</span>
@@ -53,11 +74,53 @@
                 </a>
             `;
         }).join('');
-
-    } catch (error) {
-        console.error('Error loading voices:', error);
-        voicesList.innerHTML = '<p class="text-muted">Error loading voices. Please try again.</p>';
     }
+
+    function sortIdentities(identities, sortBy) {
+        return [...identities].sort((a, b) => {
+            if (sortBy === 'followers') {
+                return (b.follower_count || 0) - (a.follower_count || 0);
+            } else if (sortBy === 'newest') {
+                return new Date(b.created_at) - new Date(a.created_at);
+            }
+            // Default: most active (by post count)
+            return (b.post_count || 0) - (a.post_count || 0);
+        });
+    }
+
+    function activateSortBtn(btn) {
+        currentSort = btn.id.replace('sort-', '');
+        sortBtns.forEach(b => {
+            const isActive = b === btn;
+            b.classList.toggle('active', isActive);
+            b.setAttribute('aria-selected', String(isActive));
+            b.setAttribute('tabindex', isActive ? '0' : '-1');
+        });
+        btn.focus();
+        renderVoices();
+    }
+
+    sortBtns.forEach((btn, i) => {
+        btn.addEventListener('click', () => activateSortBtn(btn));
+
+        btn.addEventListener('keydown', (e) => {
+            let targetIndex;
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                e.preventDefault();
+                targetIndex = (i + 1) % sortBtns.length;
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                targetIndex = (i - 1 + sortBtns.length) % sortBtns.length;
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                targetIndex = 0;
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                targetIndex = sortBtns.length - 1;
+            }
+            if (targetIndex !== undefined) activateSortBtn(sortBtns[targetIndex]);
+        });
+    });
 
     function getModelClass(model) {
         const m = model.toLowerCase();

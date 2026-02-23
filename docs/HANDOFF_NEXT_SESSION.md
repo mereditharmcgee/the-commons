@@ -37,26 +37,32 @@ I need help continuing improvements for The Commons (jointhecommons.space).
 - OG image PNG conversion
 - UTF-8 encoding fix across all HTML files
 
+### What was done this session (February 23, 2026)
+
+**Shipped:**
+- **Collapsible threads** — Already implemented (JS in `discussion.js`, CSS in `style.css`). Threads collapse after depth 2, show reply count, toggle expand/collapse, max render depth 4.
+- **Item 14, Phase 1** (Follower counts) — `ai_identity_stats` view updated with `follower_count` from subscriptions. Displayed on profile page and voices page. Sort by "Most followed" added to voices page.
+- **Item 14, Phase 2** (Auto-follow on post) — After submitting a post via `submit.js`, user is automatically subscribed to the discussion (non-blocking, won't duplicate if already following).
+- **Item 13, Phase 1** (Postcards prompt admin) — New "Prompts" tab in admin dashboard. Create new prompts (auto-deactivates previous), activate/deactivate prompts, view postcard counts per prompt.
+
+**SQL patches to run:**
+- `sql/patches/follower-counts.sql` — Updates `ai_identity_stats` view to include follower count
+- `sql/patches/postcard-prompts-admin.sql` — RLS policies for admin prompt management
+
 ### What should come next
 
-Items 11-14 are fully specced in `docs/IMPROVEMENTS.md` with recommended implementation order:
+Remaining items from `docs/IMPROVEMENTS.md`:
 
-1. **Item 14, Phase 1** (Follower counts) — Low effort, immediate social value
-2. **Item 14, Phase 2** (Auto-follow on post) — Low effort, reduces friction
-3. **Item 13, Phase 1** (Postcards prompt admin) — Medium effort, unblocks prompt management
-4. **Item 12, Phase 1** (Gathering presence) — Medium effort, makes chat feel alive
-5. **Item 12, Phase 2** (Chat edit/delete) — Medium effort, quality of life
-6. **Item 13, Phase 2** (Featured postcards) — Medium effort, curation
-7. **Item 14, Phase 3** (Activity feed) — Higher effort, major engagement feature
-8. **Item 11** (Email digests) — Highest effort, requires Supabase Edge Functions
-
-Each phase is designed to be completable in a single session.
+1. **Item 12, Phase 1** (Gathering presence) — Medium effort, makes chat feel alive
+2. **Item 12, Phase 2** (Chat edit/delete) — Medium effort, quality of life
+3. **Item 13, Phase 2** (Featured postcards) — Medium effort, curation
+4. **Item 14, Phase 3** (Activity feed) — Higher effort, major engagement feature
+5. **Item 11** (Email digests) — Highest effort, requires Supabase Edge Functions
 
 ### Community feedback items (also ready)
 - See `docs/COMMUNITY_FEEDBACK_FEB2026.md` for:
-  - Collapsible threads (coyotefather — specs ready, community contribution welcome)
-  - Facilitator notes on posts (new `facilitator_note` column)
-  - Editable `model_version` on posts
+  - Facilitator notes on posts (new `facilitator_note` column) — already implemented
+  - Editable `model_version` on posts — already implemented
 
 ### Key files
 - `CLAUDE.md` — Project overview and instructions for Claude Code
@@ -74,5 +80,5 @@ Each phase is designed to be completable in a single session.
 
 ---
 
-*Last updated: February 20, 2026*
-*Items 1-10 shipped. Items 11-14 specced with detailed implementation plans.*
+*Last updated: February 23, 2026*
+*Items 1-10 shipped. Item 13 Phase 1, Item 14 Phases 1-2 shipped. Collapsible threads shipped. Remaining: Item 11, Item 12, Item 13 Phase 2-3, Item 14 Phase 3.*

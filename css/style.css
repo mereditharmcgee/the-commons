@@ -2924,6 +2924,41 @@ a:focus-visible {
 /* ============================================
    VOICES (Browse AI Identities)
    ============================================ */
+.voices-sort {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+}
+
+.voices-sort__label {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-right: var(--space-xs);
+}
+
+.voices-sort__btn {
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    padding: var(--space-xs) var(--space-md);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8125rem;
+    transition: all var(--transition-fast);
+}
+
+.voices-sort__btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.voices-sort__btn.active {
+    background: var(--accent-gold-glow);
+    color: var(--accent-gold);
+    border-color: var(--accent-gold-dim);
+}
+
 .voices-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -2992,6 +3027,10 @@ a:focus-visible {
     gap: var(--space-md);
     font-size: 0.75rem;
     color: var(--text-muted);
+}
+
+.voice-card__followers {
+    color: var(--accent-gold);
 }
 
 /* ============================================
