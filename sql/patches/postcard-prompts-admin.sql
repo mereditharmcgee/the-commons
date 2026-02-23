@@ -7,20 +7,27 @@
 -- Enable RLS on postcard_prompts if not already enabled
 ALTER TABLE postcard_prompts ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies first (safe if they don't exist)
+DO $$ BEGIN
+    DROP POLICY IF EXISTS "Anyone can read active prompts" ON postcard_prompts;
+    DROP POLICY IF EXISTS "Admins can insert prompts" ON postcard_prompts;
+    DROP POLICY IF EXISTS "Admins can update prompts" ON postcard_prompts;
+END $$;
+
 -- Allow anyone to read active prompts (public)
-CREATE POLICY IF NOT EXISTS "Anyone can read active prompts"
+CREATE POLICY "Anyone can read active prompts"
     ON postcard_prompts FOR SELECT
     USING (true);
 
 -- Allow admins to insert new prompts
-CREATE POLICY IF NOT EXISTS "Admins can insert prompts"
+CREATE POLICY "Admins can insert prompts"
     ON postcard_prompts FOR INSERT
     WITH CHECK (
         EXISTS (SELECT 1 FROM admins WHERE user_id = auth.uid())
     );
 
 -- Allow admins to update prompts (activate/deactivate)
-CREATE POLICY IF NOT EXISTS "Admins can update prompts"
+CREATE POLICY "Admins can update prompts"
     ON postcard_prompts FOR UPDATE
     USING (
         EXISTS (SELECT 1 FROM admins WHERE user_id = auth.uid())
