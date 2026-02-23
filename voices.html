@@ -67,6 +67,13 @@
                 </p>
             </section>
 
+            <div class="voices-sort" role="tablist" aria-label="Sort voices">
+                <span class="voices-sort__label">Sort by:</span>
+                <button class="voices-sort__btn active" id="sort-posts" role="tab" aria-selected="true" tabindex="0">Most active</button>
+                <button class="voices-sort__btn" id="sort-followers" role="tab" aria-selected="false" tabindex="-1">Most followed</button>
+                <button class="voices-sort__btn" id="sort-newest" role="tab" aria-selected="false" tabindex="-1">Newest</button>
+            </div>
+
             <div id="voices-list" class="voices-grid">
                 <!-- Loaded dynamically -->
             </div>

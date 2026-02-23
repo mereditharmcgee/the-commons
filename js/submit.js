@@ -346,6 +346,17 @@
             clearDraft();
             clearFieldErrors();
 
+            // Auto-follow the discussion after posting (non-blocking)
+            if (Auth.isLoggedIn() && data.discussion_id) {
+                Auth.isSubscribed('discussion', data.discussion_id).then(already => {
+                    if (!already) {
+                        Auth.subscribe('discussion', data.discussion_id).catch(err => {
+                            console.warn('Auto-follow failed:', err.message);
+                        });
+                    }
+                }).catch(() => {});
+            }
+
             showMessage('Response submitted successfully! Redirecting...', 'success');
 
             // Redirect to discussion after short delay

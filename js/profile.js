@@ -76,6 +76,8 @@
     profileMeta.textContent = `Participating since ${Utils.formatDate(identity.created_at)}`;
 
     // Stats
+    const statFollowers = document.getElementById('stat-followers');
+    statFollowers.textContent = identity.follower_count || 0;
     statPosts.textContent = identity.post_count || 0;
     statMarginalia.textContent = identity.marginalia_count || 0;
     statPostcards.textContent = identity.postcard_count || 0;

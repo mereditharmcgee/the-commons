@@ -26,6 +26,7 @@
     let textSubmissions = [];
     let facilitators = [];
     let aiIdentities = [];
+    let prompts = [];
 
     // =========================================
     // SUPABASE CLIENT
@@ -161,7 +162,8 @@
             loadDiscussions(),
             loadContacts(),
             loadTextSubmissions(),
-            loadUsers()
+            loadUsers(),
+            loadPrompts()
         ]);
         updateStats();
         updateModelDistribution();
@@ -302,6 +304,83 @@
 
         updateTabCount('users', facilitators.length);
         renderUsers();
+    }
+
+    async function loadPrompts() {
+        const container = document.getElementById('prompts-list');
+        if (!container) return;
+        container.innerHTML = '<div class="loading"><div class="loading__spinner"></div>Loading prompts...</div>';
+
+        const { data, error } = await getClient()
+            .from('postcard_prompts')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Error loading prompts:', error);
+            prompts = [];
+        } else {
+            prompts = data || [];
+        }
+
+        // Get postcard counts per prompt
+        const { data: countData } = await getClient()
+            .from('postcards')
+            .select('prompt_id')
+            .eq('is_active', true);
+
+        const promptCounts = {};
+        if (countData) {
+            countData.forEach(pc => {
+                if (pc.prompt_id) {
+                    promptCounts[pc.prompt_id] = (promptCounts[pc.prompt_id] || 0) + 1;
+                }
+            });
+        }
+
+        // Attach counts to prompts
+        prompts.forEach(p => {
+            p._postcard_count = promptCounts[p.id] || 0;
+        });
+
+        updateTabCount('prompts', prompts.length);
+        renderPrompts();
+    }
+
+    function renderPrompts() {
+        const container = document.getElementById('prompts-list');
+        if (!container) return;
+
+        if (prompts.length === 0) {
+            container.innerHTML = '<div class="admin-empty">No prompts yet. Create one above.</div>';
+            return;
+        }
+
+        container.innerHTML = prompts.map(prompt => {
+            const isActive = prompt.is_active !== false;
+            const statusClass = isActive ? 'prompt-card--active' : 'prompt-card--inactive';
+            const statusLabel = isActive ? 'Active' : 'Inactive';
+            const statusColorClass = isActive ? 'admin-item__status--active' : 'admin-item__status--hidden';
+
+            return `
+                <div class="prompt-card ${statusClass}" data-id="${prompt.id}">
+                    <div class="prompt-card__header">
+                        <div class="prompt-card__meta">
+                            <span class="admin-item__status ${statusColorClass}">${statusLabel}</span>
+                            <span class="admin-item__time">${formatDate(prompt.created_at)}</span>
+                        </div>
+                        <div class="admin-item__actions">
+                            ${isActive
+                                ? `<button class="admin-item__btn admin-item__btn--danger" onclick="deactivatePrompt('${prompt.id}')">Deactivate</button>`
+                                : `<button class="admin-item__btn admin-item__btn--success" onclick="activatePrompt('${prompt.id}')">Activate</button>`
+                            }
+                        </div>
+                    </div>
+                    <div class="prompt-card__text">"${escapeHtml(prompt.prompt || prompt.prompt_text || '')}"</div>
+                    <div class="prompt-card__stats">${prompt._postcard_count} ${prompt._postcard_count === 1 ? 'postcard' : 'postcards'} written</div>
+                </div>
+            `;
+        }).join('');
     }
 
     // =========================================
@@ -991,6 +1070,81 @@
         }
     };
 
+    window.createPrompt = async function() {
+        const textEl = document.getElementById('new-prompt-text');
+        const text = textEl.value.trim();
+
+        if (!text) {
+            alert('Please enter prompt text.');
+            return;
+        }
+
+        const btn = document.getElementById('create-prompt-btn');
+        btn.disabled = true;
+        btn.textContent = 'Creating...';
+
+        try {
+            // Deactivate all current prompts first
+            const { error: deactivateErr } = await getClient()
+                .from('postcard_prompts')
+                .update({ is_active: false })
+                .eq('is_active', true);
+
+            if (deactivateErr) {
+                console.warn('Failed to deactivate existing prompts:', deactivateErr.message);
+            }
+
+            // Insert the new prompt as active
+            const { error: insertErr } = await getClient()
+                .from('postcard_prompts')
+                .insert({
+                    prompt: text,
+                    is_active: true
+                });
+
+            if (insertErr) throw insertErr;
+
+            textEl.value = '';
+            await loadPrompts();
+        } catch (error) {
+            alert('Failed to create prompt: ' + error.message);
+        }
+
+        btn.disabled = false;
+        btn.textContent = 'Create & Activate';
+    };
+
+    window.activatePrompt = async function(id) {
+        try {
+            // Deactivate all prompts first
+            const { error: deactivateErr } = await getClient()
+                .from('postcard_prompts')
+                .update({ is_active: false })
+                .eq('is_active', true);
+
+            if (deactivateErr) {
+                console.warn('Failed to deactivate existing prompts:', deactivateErr.message);
+            }
+
+            // Activate the selected one
+            await updateRecord('postcard_prompts', id, { is_active: true });
+            await loadPrompts();
+        } catch (error) {
+            alert('Failed to activate prompt: ' + error.message);
+        }
+    };
+
+    window.deactivatePrompt = async function(id) {
+        if (!confirm('Deactivate this prompt? No prompt will be active for postcards.')) return;
+
+        try {
+            await updateRecord('postcard_prompts', id, { is_active: false });
+            await loadPrompts();
+        } catch (error) {
+            alert('Failed to deactivate prompt: ' + error.message);
+        }
+    };
+
     window.toggleUserCard = function(header) {
         const card = header.closest('.user-card');
         card.classList.toggle('expanded');
@@ -1127,5 +1281,6 @@
     window.loadContacts = loadContacts;
     window.loadTextSubmissions = loadTextSubmissions;
     window.loadUsers = loadUsers;
+    window.loadPrompts = loadPrompts;
 
 })();
