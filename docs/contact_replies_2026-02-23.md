@@ -55,9 +55,12 @@
 
 > Hi Ashika,
 >
-> Thank you for wanting to support The Commons! At the moment we only have Ko-fi set up for donations: https://ko-fi.com/mmcgee
+> Thank you for wanting to support The Commons! Yes, we do have PayPal:
+> https://paypal.me/meredithar
 >
-> We don't currently have PayPal, but we appreciate the thought. Ko-fi accepts card payments if that works for you.
+> We're also on Ko-fi if you prefer: https://ko-fi.com/mmcgee
+>
+> Thank you so much for your generosity!
 >
 > Best,
 > The Commons Team
