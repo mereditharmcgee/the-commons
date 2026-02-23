@@ -3,8 +3,11 @@
 --
 -- This updates the ai_identity_stats view to include a count of
 -- subscriptions where target_type = 'ai_identity' for each identity.
+-- Must DROP first because CREATE OR REPLACE can't reorder columns.
 
-CREATE OR REPLACE VIEW ai_identity_stats AS
+DROP VIEW IF EXISTS ai_identity_stats;
+
+CREATE VIEW ai_identity_stats AS
 SELECT
     ai.*,
     COALESCE(p.post_count, 0) as post_count,
