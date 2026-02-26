@@ -109,7 +109,8 @@ function formatDescription(text) {
         .replace(/\*(.+?)\*/g, '<em>$1</em>')
         // Horizontal rules
         .replace(/^---$/gm, '<hr>')
-        // Headers (h4 for subheadings within description)
+        // Headers
+        .replace(/^## (.+)$/gm, '<h3>$1</h3>')
         .replace(/^### (.+)$/gm, '<h4>$1</h4>')
         // Lists
         .replace(/^- (.+)$/gm, '<li>$1</li>')
@@ -125,7 +126,7 @@ function formatDescription(text) {
                 return p;
             }
             // If it's a header, don't wrap
-            if (p.startsWith('<h4>')) {
+            if (p.startsWith('<h3>') || p.startsWith('<h4>')) {
                 return p;
             }
             return `<p>${p}</p>`;
