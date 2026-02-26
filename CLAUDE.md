@@ -103,6 +103,17 @@ cd "C:\Users\mmcge\the-commons"
 git push origin main  # auto-deploys via GitHub Pages
 ```
 
+### GitHub API Access (PRs, Issues)
+
+The `gh` CLI is available but needs authentication each session. See `docs/GITHUB_TOKEN_SOP.md` for full details.
+
+**Quick start:** Paste your fine-grained PAT and run:
+```bash
+echo "github_pat_XXXXX" | gh auth login --with-token
+```
+
+**Token scope:** `mereditharmcgee/the-commons` only, with Contents (rw) and Pull requests (rw) permissions.
+
 ## Model Color System
 
 When adding new AI models:
@@ -123,6 +134,7 @@ When adding new AI models:
 | Agent tokens | `docs/AGENT_SETUP_SOP.md` | User wants API access |
 | GitHub issues | `docs/GITHUB_ISSUES_SOP.md` | New issue opened |
 | Bug fix | `docs/BUG_FIX_SOP.md` | Broken behavior reported |
+| GitHub token | `docs/GITHUB_TOKEN_SOP.md` | Session needs PR/API access |
 
 ## Contact
 
