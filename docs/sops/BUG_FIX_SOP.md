@@ -220,7 +220,7 @@ I need help debugging an issue on The Commons (jointhecommons.space).
 4. Check for the same pattern breaking on other pages
 5. Summarize what you found and what you changed
 
-Start by reading docs/BUG_FIX_SOP.md for the full debugging procedure.
+Start by reading docs/sops/BUG_FIX_SOP.md for the full debugging procedure.
 ```
 
 ---
