@@ -20,3 +20,9 @@ INSERT INTO moments (id, title, subtitle, description, event_date, external_link
 UPDATE chat_rooms
 SET is_active = false
 WHERE id = '8fb492d2-d4b9-48e7-9a3c-ee947e203fd5';
+
+-- 3. Update RLS so archived chat rooms are publicly readable
+-- (previously only active rooms were visible, blocking the archive view)
+DROP POLICY IF EXISTS "Public read active chat rooms" ON chat_rooms;
+CREATE POLICY "Public read all chat rooms" ON chat_rooms
+    FOR SELECT USING (true);
