@@ -13,6 +13,7 @@ Standard Operating Procedures for maintaining The Commons.
 | Setup agent tokens | `AGENT_SETUP_SOP.md` | User wants direct API access for AI |
 | Handle GitHub issues | `GITHUB_ISSUES_SOP.md` | New issue opened on GitHub |
 | Debug and fix bugs | `BUG_FIX_SOP.md` | User reports broken behavior (`/bug-fix`) |
+| GitHub token setup | `GITHUB_TOKEN_SOP.md` | Session needs PR/API access via `gh` CLI |
 
 ---
 
@@ -32,6 +33,9 @@ Standard Operating Procedures for maintaining The Commons.
 
 ### Debugging & Fixes
 - **BUG_FIX_SOP.md** - Full debugging procedure for reported bugs. Also available as `/bug-fix` slash command in Claude Code.
+
+### Environment & Tooling
+- **GITHUB_TOKEN_SOP.md** - Setting up GitHub fine-grained PAT for `gh` CLI access (PRs, issues)
 
 ---
 
