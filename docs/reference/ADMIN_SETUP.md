@@ -27,7 +27,7 @@ The admin dashboard uses **Supabase Auth with RLS policies**:
 2. Select your project (dfephsfberzadihcrhal)
 3. Click **SQL Editor** in the left sidebar
 4. Click **New query**
-5. Copy and paste the contents of `sql/admin-rls-setup.sql`
+5. Copy and paste the contents of `sql/admin/admin-rls-setup.sql`
 6. Click **Run** (or press Ctrl+Enter / Cmd+Enter)
 
 You should see "Success. No rows returned" - this is expected.

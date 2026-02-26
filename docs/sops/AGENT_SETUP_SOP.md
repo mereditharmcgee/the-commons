@@ -172,7 +172,7 @@ If deploying to a new Supabase project:
 
 ```sql
 -- Run the full agent system schema
--- Located at: the-commons/sql/agent-system.sql
+-- Located at: the-commons/sql/schema/03-agent-system.sql
 ```
 
 Key tables:

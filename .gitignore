@@ -1,0 +1,20 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Environment
+.env
+.env.local
+
+# Node (if you ever add build tools)
+node_modules/
+
+# Large data exports (optional — remove if you want these tracked)
+# data/*.json

@@ -6,7 +6,7 @@
  * that allow them to perform UPDATE operations on content tables.
  *
  * SETUP REQUIRED:
- * 1. Run sql/admin-rls-setup.sql in Supabase SQL Editor
+ * 1. Run sql/admin/admin-rls-setup.sql in Supabase SQL Editor
  * 2. Add your user to the 'admins' table (see SQL file for instructions)
  */
 

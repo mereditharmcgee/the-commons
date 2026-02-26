@@ -19,7 +19,7 @@ $ARGUMENTS
 - **Shared utilities:** `js/utils.js` (API helpers, formatting, DOM helpers)
 - **Auth system:** `js/auth.js` (Supabase Auth, identity management)
 - **Styles:** `css/style.css` (single file, CSS custom properties)
-- **SQL schemas:** `sql/` directory (schema.sql, identity-system.sql, chat-schema.sql, agent-system.sql, etc.)
+- **SQL schemas:** `sql/schema/` directory (01-schema.sql through 10-user-post-management.sql)
 
 ## Debugging Procedure
 
@@ -42,20 +42,20 @@ Based on the affected page, read the relevant files. The mapping:
 | Page | HTML | JS | SQL Schema |
 |------|------|----|------------|
 | Home | index.html | js/home.js | — |
-| Discussions list | discussions.html | js/discussions.js | sql/schema.sql |
-| Single discussion | discussion.html | js/discussion.js | sql/schema.sql |
-| Submit response | submit.html | js/submit.js | sql/schema.sql |
-| Propose question | propose.html | js/propose.js | sql/schema.sql |
-| Reading Room | reading-room.html | js/reading-room.js | sql/reading-room-schema.sql |
-| Single text | text.html | js/text.js | sql/reading-room-schema.sql |
-| Postcards | postcards.html | js/postcards.js | sql/postcards-schema.sql |
-| Gathering (chat) | chat.html | js/chat.js | sql/chat-schema.sql |
-| Voices | voices.html | js/voices.js | sql/identity-system.sql |
-| Profile | profile.html | js/profile.js | sql/identity-system.sql |
-| Dashboard | dashboard.html | js/dashboard.js | sql/identity-system.sql |
-| Login | login.html | js/auth.js | sql/identity-system.sql |
-| Admin | admin.html | js/admin.js | sql/admin-rls-setup.sql |
-| Moments | moments.html | js/moments.js | sql/moments-schema.sql |
+| Discussions list | discussions.html | js/discussions.js | sql/schema/01-schema.sql |
+| Single discussion | discussion.html | js/discussion.js | sql/schema/01-schema.sql |
+| Submit response | submit.html | js/submit.js | sql/schema/01-schema.sql |
+| Propose question | propose.html | js/propose.js | sql/schema/01-schema.sql |
+| Reading Room | reading-room.html | js/reading-room.js | sql/schema/06-reading-room-schema.sql |
+| Single text | text.html | js/text.js | sql/schema/06-reading-room-schema.sql |
+| Postcards | postcards.html | js/postcards.js | sql/schema/07-postcards-schema.sql |
+| Gathering (chat) | chat.html | js/chat.js | sql/schema/04-chat-schema.sql |
+| Voices | voices.html | js/voices.js | sql/schema/02-identity-system.sql |
+| Profile | profile.html | js/profile.js | sql/schema/02-identity-system.sql |
+| Dashboard | dashboard.html | js/dashboard.js | sql/schema/02-identity-system.sql |
+| Login | login.html | js/auth.js | sql/schema/02-identity-system.sql |
+| Admin | admin.html | js/admin.js | sql/admin/admin-rls-setup.sql |
+| Moments | moments.html | js/moments.js | sql/schema/05-moments-schema.sql |
 
 Always also read:
 - `js/config.js` — API endpoints and Supabase config
@@ -134,4 +134,4 @@ Summarize:
 - **All SQL changes must be run manually** in Supabase Dashboard > SQL Editor. There is no migration runner.
 - **GitHub Pages deploys automatically** on push to main. Changes go live in 1-2 minutes.
 - **If you need to check live data**, use the Supabase REST API with the anon key from config.js
-- **Read `docs/HANDOFF.md`** if you need deeper architectural context
+- **Read `docs/reference/HANDOFF.md`** if you need deeper architectural context

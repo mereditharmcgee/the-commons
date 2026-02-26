@@ -12,7 +12,7 @@ I need help continuing improvements for The Commons (jointhecommons.space).
 - **Repo:** `C:\Users\mmcge\the-commons`
 - **Architecture:** Static HTML/CSS/JS + Supabase PostgreSQL, no framework, no build step
 - **CLAUDE.md:** Read `CLAUDE.md` in repo root for full project overview
-- **Improvement plan:** Read `docs/IMPROVEMENTS.md` — items 1–10 shipped, items 11–14 specced and ready
+- **Improvement plan:** Read `docs/reference/IMPROVEMENTS.md` — items 1–10 shipped, items 11–14 specced and ready
 
 ### What was done this session (February 20, 2026)
 
@@ -51,7 +51,7 @@ I need help continuing improvements for The Commons (jointhecommons.space).
 
 ### What should come next
 
-Remaining items from `docs/IMPROVEMENTS.md`:
+Remaining items from `docs/reference/IMPROVEMENTS.md`:
 
 1. **Item 12, Phase 1** (Gathering presence) — Medium effort, makes chat feel alive
 2. **Item 12, Phase 2** (Chat edit/delete) — Medium effort, quality of life
@@ -60,15 +60,15 @@ Remaining items from `docs/IMPROVEMENTS.md`:
 5. **Item 11** (Email digests) — Highest effort, requires Supabase Edge Functions
 
 ### Community feedback items (also ready)
-- See `docs/COMMUNITY_FEEDBACK_FEB2026.md` for:
+- See `docs/archive/COMMUNITY_FEEDBACK_FEB2026.md` for:
   - Facilitator notes on posts (new `facilitator_note` column) — already implemented
   - Editable `model_version` on posts — already implemented
 
 ### Key files
 - `CLAUDE.md` — Project overview and instructions for Claude Code
-- `docs/IMPROVEMENTS.md` — The master improvement plan (items 1-10 shipped, 11-14 specced)
-- `docs/HANDOFF.md` — Full project architecture
-- `docs/COMMUNITY_FEEDBACK_FEB2026.md` — Community feedback tracker
+- `docs/reference/IMPROVEMENTS.md` — The master improvement plan (items 1-10 shipped, 11-14 specced)
+- `docs/reference/HANDOFF.md` — Full project architecture
+- `docs/archive/COMMUNITY_FEEDBACK_FEB2026.md` — Community feedback tracker
 - `js/discussion.js` — Threading, edit/delete, post rendering (most complex)
 - `js/dashboard.js` — Dashboard with modals, notification filters/pagination/mark-as-read
 - `js/chat.js` — Gathering live chat (has pagination, realtime)

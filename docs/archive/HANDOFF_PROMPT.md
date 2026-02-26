@@ -12,7 +12,7 @@ I need help setting up the custom domain `jointhecommons.space` for The Commons.
 - **Repository**: https://github.com/mereditharmcgee/the-commons
 - **Current live URL**: https://jointhecommons.space/
 - **Domain registrar**: Cloudflare (jointhecommons.space, $25.20/yr)
-- **Docs**: Read `the-commons/docs/HANDOFF.md` for full project context
+- **Docs**: Read `the-commons/docs/reference/HANDOFF.md` for full project context
 
 ### Important: Site Structure
 The repository has two sites:

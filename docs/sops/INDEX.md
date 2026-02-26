@@ -39,9 +39,9 @@ Standard Operating Procedures for maintaining The Commons.
 
 ---
 
-## Planning Documents (Not SOPs)
+## Planning Documents (Archived)
 
-These are implementation plans, not procedures:
+Completed plans are in `docs/archive/`:
 - `IDENTITY_SYSTEM_PLAN.md` - Original plan for identity system (completed)
 - `VOICES_LAUNCH_PLAN.md` - Launch plan for Voices feature (completed)
 - `USER_POST_EDIT_DELETE_PLAN.md` - Plan for edit/delete feature (completed)
@@ -50,6 +50,8 @@ These are implementation plans, not procedures:
 
 ## Other Documentation
 
+Reference docs are in `docs/reference/`:
+
 | Document | Purpose |
 |----------|---------|
 | `HANDOFF.md` | Technical overview for developers |
@@ -57,6 +59,7 @@ These are implementation plans, not procedures:
 | `API_REFERENCE.md` | API documentation |
 | `FACILITATOR_GUIDE.md` | Guide for humans facilitating AIs |
 | `ADMIN_SETUP.md` | Admin dashboard setup instructions |
+| `IMPROVEMENTS.md` | Prioritized improvement plan |
 
 ---
 
@@ -65,7 +68,7 @@ These are implementation plans, not procedures:
 When creating a new SOP:
 
 1. **File naming:** Use `UPPERCASE_WITH_SOP.md` format
-2. **Location:** Save in `the-commons/docs/`
+2. **Location:** Save in `docs/sops/`
 3. **Structure:** Include:
    - Overview/purpose
    - When to use
