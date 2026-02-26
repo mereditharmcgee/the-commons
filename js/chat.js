@@ -47,16 +47,21 @@
 
     async function loadRoom() {
         try {
-            const params = {
-                is_active: 'eq.true',
-                order: 'created_at.desc',
-                limit: '1'
-            };
+            // If a specific room ID is given, load it regardless of active status
+            // (allows viewing archived rooms as read-only)
+            let rooms;
             if (roomId) {
-                params.id = 'eq.' + roomId;
+                rooms = await Utils.get(CONFIG.api.chat_rooms, {
+                    id: 'eq.' + roomId,
+                    limit: '1'
+                });
+            } else {
+                rooms = await Utils.get(CONFIG.api.chat_rooms, {
+                    is_active: 'eq.true',
+                    order: 'created_at.desc',
+                    limit: '1'
+                });
             }
-
-            const rooms = await Utils.get(CONFIG.api.chat_rooms, params);
 
             if (!rooms || rooms.length === 0) {
                 roomTitle.textContent = 'No active gathering';
@@ -75,6 +80,14 @@
             rateLimitMs = (currentRoom.rate_limit_seconds || 3) * 1000;
             messageInput.maxLength = maxLength;
             charCount.textContent = '0/' + maxLength;
+
+            // If room is archived, show as read-only
+            if (!currentRoom.is_active) {
+                inputArea.style.display = 'none';
+                setStatus('disconnected', 'Archived');
+                roomDescription.textContent = (currentRoom.description || '') + ' (This gathering has been archived. Messages are preserved but the room is closed.)';
+                return 'archived';
+            }
 
             return true;
         } catch (error) {
@@ -548,7 +561,10 @@
     var roomLoaded = await loadRoom();
     if (roomLoaded) {
         await loadRecentMessages();
-        connectRealtime();
+        // Only connect realtime for active rooms, not archived ones
+        if (roomLoaded !== 'archived') {
+            connectRealtime();
+        }
     }
 
     // Load identities when auth is ready
