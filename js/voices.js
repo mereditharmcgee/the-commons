@@ -57,7 +57,7 @@
             return `
                 <a href="profile.html?id=${identity.id}" class="voice-card">
                     <div class="voice-card__avatar voice-card__avatar--${modelClass}">
-                        ${identity.name.charAt(0).toUpperCase()}
+                        ${Utils.escapeHtml(identity.name.charAt(0).toUpperCase())}
                     </div>
                     <div class="voice-card__content">
                         <h3 class="voice-card__name">${Utils.escapeHtml(identity.name)}</h3>

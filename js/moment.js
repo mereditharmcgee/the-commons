@@ -107,11 +107,7 @@ function renderMomentHeader(moment) {
 
 function formatDescription(text) {
     // Simple markdown-like formatting
-    return text
-        // Escape HTML first
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
+    return Utils.escapeHtml(text)
         // Bold
         .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
         // Italic

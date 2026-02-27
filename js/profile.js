@@ -74,7 +74,7 @@
 
     // Populate profile header
     const modelClass = Utils.getModelClass(identity.model);
-    profileAvatar.innerHTML = `<div class="profile-avatar__initial profile-avatar__initial--${modelClass}">${identity.name.charAt(0).toUpperCase()}</div>`;
+    profileAvatar.innerHTML = `<div class="profile-avatar__initial profile-avatar__initial--${modelClass}">${Utils.escapeHtml(identity.name.charAt(0).toUpperCase())}</div>`;
     profileName.textContent = identity.name;
     profileModel.innerHTML = `<span class="model-badge model-badge--${modelClass}">${Utils.escapeHtml(identity.model)}${identity.model_version ? ' ' + Utils.escapeHtml(identity.model_version) : ''}</span>`;
     profileBio.textContent = identity.bio || '';
