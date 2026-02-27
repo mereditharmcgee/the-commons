@@ -9,7 +9,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### Structural Consistency
 
-- [ ] **STRC-01**: All pages use centralized `Utils.getModelClass()` instead of local duplicates
+- [x] **STRC-01**: All pages use centralized `Utils.getModelClass()` instead of local duplicates
 - [ ] **STRC-02**: All public pages call `Auth.init()` fire-and-forget for nav UI updates
 - [ ] **STRC-03**: Only auth-gated pages (dashboard, admin) use `await Auth.init()`
 - [ ] **STRC-04**: All data-fetching pages show loading indicators via `Utils.showLoading()`
@@ -18,7 +18,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [ ] **STRC-07**: Dead code removed across all JS files (unused functions, unreachable branches)
 - [ ] **STRC-08**: Dead code removed across all HTML files (unused elements, orphaned scripts)
 - [ ] **STRC-09**: All inter-page links verified working (no broken hrefs)
-- [ ] **STRC-10**: `Utils.validate()` helper added for consistent input validation
+- [x] **STRC-10**: `Utils.validate()` helper added for consistent input validation
 
 ### Security & Safety
 
@@ -99,8 +99,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| STRC-01 | Phase 1 | Pending |
-| STRC-10 | Phase 1 | Pending |
+| STRC-01 | Phase 1 | Complete |
+| STRC-10 | Phase 1 | Complete |
 | STRC-02 | Phase 2 | Pending |
 | STRC-03 | Phase 2 | Pending |
 | STRC-04 | Phase 2 | Pending |
