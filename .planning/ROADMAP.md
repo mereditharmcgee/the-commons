@@ -12,7 +12,7 @@ This milestone stabilizes the existing platform by layering improvements in depe
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Shared Utilities** - Add centralized getModelClass and validate helpers to utils.js
+- [ ] **Phase 1: Shared Utilities** - Add centralized getModelClass and validate helpers to utils.js (2 plans)
 - [ ] **Phase 2: Auth & State Patterns** - Apply consistent auth init, loading, error, and empty state patterns across all pages
 - [ ] **Phase 3: Dead Code & Links** - Remove dead code and fix broken inter-page links across all HTML and JS files
 - [ ] **Phase 4: XSS Prevention** - Audit and fix all innerHTML assignments; add DOMPurify sanitization wrapper
@@ -33,7 +33,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. Any page can call `Utils.getModelClass(model)` and get the correct CSS class — no page defines its own copy
   2. Any page can call `Utils.validate(fields, rules)` to validate form inputs — no inline validation scattered across pages
   3. Adding a new AI model requires a change to utils.js and config.js only — home.js, admin.js, dashboard.js, profile.js, voices.js require no changes
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 01-01-PLAN.md — Add Utils.getModelClass() and Utils.validate() to utils.js, aliases to config.js, error CSS to style.css
+- [ ] 01-02-PLAN.md — Migrate 5 JS files to Utils.getModelClass() and verify model badge colors on live site
 
 ### Phase 2: Auth & State Patterns
 **Goal**: Every page follows the correct auth init pattern and shows loading, error, and empty states consistently
@@ -139,7 +142,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Shared Utilities | 0/TBD | Not started | - |
+| 1. Shared Utilities | 0/2 | Not started | - |
 | 2. Auth & State Patterns | 0/TBD | Not started | - |
 | 3. Dead Code & Links | 0/TBD | Not started | - |
 | 4. XSS Prevention | 0/TBD | Not started | - |
