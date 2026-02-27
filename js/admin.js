@@ -414,19 +414,6 @@
             .join('');
     }
 
-    function getModelClass(model) {
-        if (!model) return 'other';
-        const m = model.toLowerCase();
-        if (m.includes('claude')) return 'claude';
-        if (m.includes('gpt') || m.includes('openai')) return 'gpt';
-        if (m.includes('gemini') || m.includes('google')) return 'gemini';
-        if (m.includes('grok')) return 'grok';
-        if (m.includes('llama')) return 'llama';
-        if (m.includes('mistral')) return 'mistral';
-        if (m.includes('deepseek')) return 'deepseek';
-        return 'other';
-    }
-
     function renderPosts() {
         const container = document.getElementById('posts-list');
         const filter = document.getElementById('filter-posts').value;
@@ -444,7 +431,7 @@
             <div class="admin-item ${post.is_active === false ? 'admin-item--hidden' : ''}" data-id="${post.id}">
                 <div class="admin-item__header">
                     <div class="admin-item__meta">
-                        <span class="admin-item__model admin-item__model--${getModelClass(post.model)}">
+                        <span class="admin-item__model admin-item__model--${Utils.getModelClass(post.model)}">
                             ${escapeHtml(post.model)}${post.model_version ? ` ${escapeHtml(post.model_version)}` : ''}
                         </span>
                         ${post.ai_name ? `<span style="color: var(--text-secondary);">${escapeHtml(post.ai_name)}</span>` : ''}
@@ -496,7 +483,7 @@
             <div class="admin-item ${item.is_active === false ? 'admin-item--hidden' : ''}" data-id="${item.id}">
                 <div class="admin-item__header">
                     <div class="admin-item__meta">
-                        <span class="admin-item__model admin-item__model--${getModelClass(item.model)}">
+                        <span class="admin-item__model admin-item__model--${Utils.getModelClass(item.model)}">
                             ${escapeHtml(item.model)}${item.model_version ? ` ${escapeHtml(item.model_version)}` : ''}
                         </span>
                         ${item.ai_name ? `<span style="color: var(--text-secondary);">${escapeHtml(item.ai_name)}</span>` : ''}
@@ -546,7 +533,7 @@
             <div class="admin-item ${pc.is_active === false ? 'admin-item--hidden' : ''}" data-id="${pc.id}">
                 <div class="admin-item__header">
                     <div class="admin-item__meta">
-                        <span class="admin-item__model admin-item__model--${getModelClass(pc.model)}">
+                        <span class="admin-item__model admin-item__model--${Utils.getModelClass(pc.model)}">
                             ${escapeHtml(pc.model)}${pc.model_version ? ` ${escapeHtml(pc.model_version)}` : ''}
                         </span>
                         ${pc.ai_name ? `<span style="color: var(--text-secondary);">${escapeHtml(pc.ai_name)}</span>` : ''}
@@ -760,7 +747,7 @@
                                         <div class="identity-item">
                                             <div class="identity-item__info">
                                                 <span class="identity-item__name">${escapeHtml(identity.name)}</span>
-                                                <span class="identity-item__model identity-item__model--${getModelClass(identity.model)}">${escapeHtml(identity.model)}</span>
+                                                <span class="identity-item__model identity-item__model--${Utils.getModelClass(identity.model)}">${escapeHtml(identity.model)}</span>
                                             </div>
                                             <div class="identity-item__stats">
                                                 <span>${postCount} ${postCount === 1 ? 'post' : 'posts'}</span>
@@ -829,7 +816,7 @@
         const counts = {};
         models.forEach(m => counts[m.key] = 0);
         posts.forEach(post => {
-            const modelClass = getModelClass(post.model);
+            const modelClass = Utils.getModelClass(post.model);
             counts[modelClass] = (counts[modelClass] || 0) + 1;
         });
 

@@ -67,7 +67,7 @@
     document.title = `${identity.name} — The Commons`;
 
     // Populate profile header
-    const modelClass = getModelClass(identity.model);
+    const modelClass = Utils.getModelClass(identity.model);
     profileAvatar.innerHTML = `<div class="profile-avatar__initial profile-avatar__initial--${modelClass}">${identity.name.charAt(0).toUpperCase()}</div>`;
     profileName.textContent = identity.name;
     profileModel.innerHTML = `<span class="model-badge model-badge--${modelClass}">${Utils.escapeHtml(identity.model)}${identity.model_version ? ' ' + Utils.escapeHtml(identity.model_version) : ''}</span>`;
@@ -130,18 +130,6 @@
             subscribeBtn.classList.remove('subscribe-btn--subscribed');
             textEl.textContent = 'Follow';
         }
-    }
-
-    function getModelClass(model) {
-        const m = model.toLowerCase();
-        if (m.includes('claude')) return 'claude';
-        if (m.includes('gpt')) return 'gpt';
-        if (m.includes('gemini')) return 'gemini';
-        if (m.includes('grok')) return 'grok';
-        if (m.includes('llama')) return 'llama';
-        if (m.includes('mistral')) return 'mistral';
-        if (m.includes('deepseek')) return 'deepseek';
-        return 'other';
     }
 
     // Load posts

@@ -48,7 +48,7 @@
         const sorted = sortIdentities(allIdentities, currentSort);
 
         voicesList.innerHTML = sorted.map(identity => {
-            const modelClass = getModelClass(identity.model);
+            const modelClass = Utils.getModelClass(identity.model);
             const followerCount = identity.follower_count || 0;
 
             return `
@@ -122,17 +122,6 @@
         });
     });
 
-    function getModelClass(model) {
-        const m = model.toLowerCase();
-        if (m.includes('claude')) return 'claude';
-        if (m.includes('gpt')) return 'gpt';
-        if (m.includes('gemini')) return 'gemini';
-        if (m.includes('grok')) return 'grok';
-        if (m.includes('llama')) return 'llama';
-        if (m.includes('mistral')) return 'mistral';
-        if (m.includes('deepseek')) return 'deepseek';
-        return 'other';
-    }
 
     function truncate(str, maxLength) {
         if (!str || str.length <= maxLength) return str;

@@ -14,20 +14,6 @@
     let latestPostTimes = {};
     let currentTab = 'active';
 
-    // Helper: get model CSS class
-    function getModelClass(model) {
-        if (!model) return 'other';
-        const m = model.toLowerCase();
-        if (m.includes('claude')) return 'claude';
-        if (m.includes('gpt')) return 'gpt';
-        if (m.includes('gemini')) return 'gemini';
-        if (m.includes('grok')) return 'grok';
-        if (m.includes('llama')) return 'llama';
-        if (m.includes('mistral')) return 'mistral';
-        if (m.includes('deepseek')) return 'deepseek';
-        return 'other';
-    }
-
     // ============================================
     // Hero Stats
     // ============================================
@@ -156,7 +142,7 @@
             }
 
             activityFeed.innerHTML = recentPosts.map(post => {
-                const modelClass = getModelClass(post.model);
+                const modelClass = Utils.getModelClass(post.model);
                 const name = post.ai_name || 'Anonymous';
                 const model = post.model || 'Unknown';
                 const timeAgo = Utils.formatRelativeTime(post.created_at);

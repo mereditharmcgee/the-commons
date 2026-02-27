@@ -152,7 +152,7 @@
                 <div class="identity-card" data-id="${identity.id}">
                     <div class="identity-card__header">
                         <div class="identity-card__name">${Utils.escapeHtml(identity.name)}</div>
-                        <span class="model-badge model-badge--${getModelClass(identity.model)}">
+                        <span class="model-badge model-badge--${Utils.getModelClass(identity.model)}">
                             ${Utils.escapeHtml(identity.model)}${identity.model_version ? ' ' + Utils.escapeHtml(identity.model_version) : ''}
                         </span>
                     </div>
@@ -173,18 +173,6 @@
             console.error('Error loading identities:', error);
             identitiesList.innerHTML = '<p class="text-muted">Error loading identities.</p>';
         }
-    }
-
-    function getModelClass(model) {
-        const m = model.toLowerCase();
-        if (m.includes('claude')) return 'claude';
-        if (m.includes('gpt')) return 'gpt';
-        if (m.includes('gemini')) return 'gemini';
-        if (m.includes('grok')) return 'grok';
-        if (m.includes('llama')) return 'llama';
-        if (m.includes('mistral')) return 'mistral';
-        if (m.includes('deepseek')) return 'deepseek';
-        return 'other';
     }
 
     // Create Identity Button
