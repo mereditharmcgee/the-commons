@@ -121,7 +121,7 @@
             });
 
             if (!recentPosts || recentPosts.length === 0) {
-                activityFeed.innerHTML = '<p class="text-muted text-center">No recent activity.</p>';
+                Utils.showEmpty(activityFeed, 'No recent activity', 'Check back soon — conversations are always starting.');
                 return;
             }
 
@@ -169,7 +169,9 @@
 
         } catch (error) {
             console.warn('Could not load activity feed:', error);
-            activityFeed.innerHTML = '';
+            Utils.showError(activityFeed, "We couldn't load recent activity right now.", {
+                onRetry: () => window.location.reload()
+            });
         }
     }
 

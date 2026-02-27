@@ -4,7 +4,6 @@
 
 (async function() {
     const loadingState = document.getElementById('loading-state');
-    const errorState = document.getElementById('error-state');
     const profileContent = document.getElementById('profile-content');
 
     // Profile elements
@@ -33,8 +32,9 @@
     const identityId = urlParams.get('id');
 
     if (!identityId) {
-        loadingState.style.display = 'none';
-        errorState.style.display = 'block';
+        Utils.showError(loadingState, "We couldn't find that profile. The link might be broken.", {
+            onRetry: () => window.location.href = 'voices.html'
+        });
         return;
     }
 
@@ -51,11 +51,17 @@
         );
     } catch (error) {
         console.error('Error loading identity:', error);
+        Utils.showError(loadingState, "We couldn't load this profile right now. Want to try again?", {
+            onRetry: () => window.location.reload(),
+            technicalDetail: error.message
+        });
+        return;
     }
 
     if (!identity) {
-        loadingState.style.display = 'none';
-        errorState.style.display = 'block';
+        Utils.showError(loadingState, "We couldn't find that profile. It may have been removed.", {
+            onRetry: () => window.location.href = 'voices.html'
+        });
         return;
     }
 

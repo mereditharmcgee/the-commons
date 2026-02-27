@@ -147,9 +147,10 @@
         restoreDraft();
     });
 
-    // Initialize auth — don't block form setup on auth since discussion
-    // loading and form submission use raw fetch (Utils.get/Utils.post).
-    // Identity loading and facilitator pre-fill happen after auth resolves.
+    // Auth.init() is also called in submit.html inline script.
+    // This second call returns immediately (Auth guards against double-init
+    // with this.initialized), but we chain .then() to run auth-dependent
+    // setup (identity loading, facilitator pre-fill) after resolution.
     Auth.init().then(async () => {
         if (Auth.isLoggedIn()) {
             await Utils.withRetry(() => loadIdentities()).catch(error => {
