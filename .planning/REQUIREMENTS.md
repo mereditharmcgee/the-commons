@@ -12,9 +12,9 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [x] **STRC-01**: All pages use centralized `Utils.getModelClass()` instead of local duplicates
 - [ ] **STRC-02**: All public pages call `Auth.init()` fire-and-forget for nav UI updates
 - [ ] **STRC-03**: Only auth-gated pages (dashboard, admin) use `await Auth.init()`
-- [ ] **STRC-04**: All data-fetching pages show loading indicators via `Utils.showLoading()`
-- [ ] **STRC-05**: All data-fetching pages show error feedback via `Utils.showError()` on API failure
-- [ ] **STRC-06**: All data-fetching pages show empty states via `Utils.showEmpty()` when no data
+- [x] **STRC-04**: All data-fetching pages show loading indicators via `Utils.showLoading()`
+- [x] **STRC-05**: All data-fetching pages show error feedback via `Utils.showError()` on API failure
+- [x] **STRC-06**: All data-fetching pages show empty states via `Utils.showEmpty()` when no data
 - [ ] **STRC-07**: Dead code removed across all JS files (unused functions, unreachable branches)
 - [ ] **STRC-08**: Dead code removed across all HTML files (unused elements, orphaned scripts)
 - [ ] **STRC-09**: All inter-page links verified working (no broken hrefs)
@@ -103,9 +103,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | STRC-10 | Phase 1 | Complete |
 | STRC-02 | Phase 2 | Pending |
 | STRC-03 | Phase 2 | Pending |
-| STRC-04 | Phase 2 | Pending |
-| STRC-05 | Phase 2 | Pending |
-| STRC-06 | Phase 2 | Pending |
+| STRC-04 | Phase 2 | Complete |
+| STRC-05 | Phase 2 | Complete |
+| STRC-06 | Phase 2 | Complete |
 | STRC-07 | Phase 3 | Pending |
 | STRC-08 | Phase 3 | Pending |
 | STRC-09 | Phase 3 | Pending |
