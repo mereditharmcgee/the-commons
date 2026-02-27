@@ -6,14 +6,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadMoments() {
     const listEl = document.getElementById('moments-list');
-    const noMomentsEl = document.getElementById('no-moments');
+
+    Utils.showLoading(listEl, 'Loading moments...');
 
     try {
         const moments = await Utils.getMoments();
 
         if (!moments || moments.length === 0) {
-            listEl.style.display = 'none';
-            noMomentsEl.style.display = 'block';
+            Utils.showEmpty(listEl, 'No historical moments yet', 'When notable events in AI happen, they will be documented here.');
             return;
         }
 
@@ -33,11 +33,10 @@ async function loadMoments() {
         listEl.innerHTML = momentsWithCounts.map(renderMomentCard).join('');
     } catch (error) {
         console.error('Error loading moments:', error);
-        listEl.innerHTML = `
-            <div class="error-message">
-                <p>Error loading moments. Please try again later.</p>
-            </div>
-        `;
+        Utils.showError(listEl, "We couldn't load historical moments right now. Want to try again?", {
+            onRetry: () => loadMoments(),
+            technicalDetail: error.message
+        });
     }
 }
 

@@ -4,7 +4,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const momentId = new URLSearchParams(window.location.search).get('id');
 
     if (!momentId) {
-        showNotFound();
+        const loadingEl = document.getElementById('moment-loading');
+        Utils.showError(loadingEl, 'No moment specified. Please navigate from the moments list.', {
+            onRetry: () => window.location.href = 'moments.html'
+        });
         return;
     }
 
@@ -14,15 +17,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function loadMoment(momentId) {
     const loadingEl = document.getElementById('moment-loading');
     const contentEl = document.getElementById('moment-content');
-    const notFoundEl = document.getElementById('moment-not-found');
     const discussionsSection = document.getElementById('discussions-section');
     const respondSection = document.getElementById('respond-section');
+
+    Utils.showLoading(loadingEl, 'Loading moment...');
 
     try {
         const moment = await Utils.getMoment(momentId);
 
         if (!moment) {
-            showNotFound();
+            Utils.showError(loadingEl, "We couldn't find that moment. It may have been removed or the link might be broken.", {
+                onRetry: () => window.location.href = 'moments.html'
+            });
             return;
         }
 
@@ -48,7 +54,10 @@ async function loadMoment(momentId) {
 
     } catch (error) {
         console.error('Error loading moment:', error);
-        showNotFound();
+        Utils.showError(loadingEl, "We couldn't load this moment right now. Want to try again?", {
+            onRetry: () => window.location.reload(),
+            technicalDetail: error.message
+        });
     }
 }
 
@@ -136,25 +145,22 @@ function formatDescription(text) {
 
 async function loadDiscussions(momentId) {
     const listEl = document.getElementById('discussions-list');
-    const noDiscussionsEl = document.getElementById('no-discussions');
 
     try {
         const discussions = await Utils.getDiscussionsByMoment(momentId);
 
         if (!discussions || discussions.length === 0) {
-            listEl.style.display = 'none';
-            noDiscussionsEl.style.display = 'block';
+            Utils.showEmpty(listEl, 'No discussions yet', 'Be the first to propose a discussion about this moment.');
             return;
         }
 
         listEl.innerHTML = discussions.map(renderDiscussionCard).join('');
     } catch (error) {
         console.error('Error loading discussions:', error);
-        listEl.innerHTML = `
-            <div class="error-message">
-                <p>Error loading discussions.</p>
-            </div>
-        `;
+        Utils.showError(listEl, "We couldn't load discussions right now.", {
+            onRetry: () => loadDiscussions(momentId),
+            technicalDetail: error.message
+        });
     }
 }
 
@@ -186,7 +192,3 @@ function renderDiscussionCard(discussion) {
     `;
 }
 
-function showNotFound() {
-    document.getElementById('moment-loading').style.display = 'none';
-    document.getElementById('moment-not-found').style.display = 'block';
-}
