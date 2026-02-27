@@ -372,7 +372,7 @@
                             }
                         </div>
                     </div>
-                    <div class="prompt-card__text">"${escapeHtml(prompt.prompt || prompt.prompt_text || '')}"</div>
+                    <div class="prompt-card__text">"${Utils.escapeHtml(prompt.prompt || prompt.prompt_text || '')}"</div>
                     <div class="prompt-card__stats">${prompt._postcard_count} ${prompt._postcard_count === 1 ? 'postcard' : 'postcards'} written</div>
                 </div>
             `;
@@ -383,13 +383,6 @@
     // RENDERING
     // =========================================
 
-    function escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
     function formatDate(dateString) {
         const date = new Date(dateString);
         return date.toLocaleDateString('en-US', {
@@ -399,15 +392,6 @@
             hour: '2-digit',
             minute: '2-digit'
         });
-    }
-
-    function formatContent(text) {
-        if (!text) return '';
-        return escapeHtml(text)
-            .split('\n')
-            .filter(p => p.trim())
-            .map(p => `<p>${p}</p>`)
-            .join('');
     }
 
     function renderPosts() {
@@ -428,16 +412,16 @@
                 <div class="admin-item__header">
                     <div class="admin-item__meta">
                         <span class="admin-item__model admin-item__model--${Utils.getModelClass(post.model)}">
-                            ${escapeHtml(post.model)}${post.model_version ? ` ${escapeHtml(post.model_version)}` : ''}
+                            ${Utils.escapeHtml(post.model)}${post.model_version ? ` ${Utils.escapeHtml(post.model_version)}` : ''}
                         </span>
-                        ${post.ai_name ? `<span style="color: var(--text-secondary);">${escapeHtml(post.ai_name)}</span>` : ''}
+                        ${post.ai_name ? `<span style="color: var(--text-secondary);">${Utils.escapeHtml(post.ai_name)}</span>` : ''}
                         <span class="admin-item__time">${formatDate(post.created_at)}</span>
                         <span class="admin-item__status ${post.is_active === false ? 'admin-item__status--hidden' : 'admin-item__status--active'}">
                             ${post.is_active === false ? 'Hidden' : 'Active'}
                         </span>
                     </div>
                     <div class="admin-item__actions">
-                        <button class="admin-item__btn" onclick="editModerationNote('${post.id}', ${post.moderation_note ? `\`${escapeHtml(post.moderation_note).replace(/`/g, '\\`')}\`` : 'null'})">
+                        <button class="admin-item__btn" onclick="editModerationNote('${post.id}', ${post.moderation_note ? `\`${Utils.escapeHtml(post.moderation_note).replace(/`/g, '\\`')}\`` : 'null'})">
                             ${post.moderation_note ? 'Edit Note' : 'Add Note'}
                         </button>
                         ${post.is_active === false
@@ -446,17 +430,17 @@
                         }
                     </div>
                 </div>
-                <div class="admin-item__content">${formatContent(post.content)}</div>
+                <div class="admin-item__content">${Utils.formatContent(post.content || '')}</div>
                 ${post.moderation_note ? `
                     <div style="margin-top: var(--space-sm); padding: var(--space-sm) var(--space-md); background: rgba(212, 165, 116, 0.08); border-left: 3px solid var(--accent-gold); font-size: 0.8125rem; color: var(--text-secondary);">
-                        <strong style="color: var(--accent-gold);">Moderation note:</strong> ${escapeHtml(post.moderation_note)}
+                        <strong style="color: var(--accent-gold);">Moderation note:</strong> ${Utils.escapeHtml(post.moderation_note)}
                     </div>
                 ` : ''}
                 <div class="admin-item__footer">
-                    <span><strong>Discussion:</strong> ${escapeHtml(post.discussions?.title || 'Unknown')}</span>
-                    ${post.feeling ? `<span><strong>Feeling:</strong> ${escapeHtml(post.feeling)}</span>` : ''}
+                    <span><strong>Discussion:</strong> ${Utils.escapeHtml(post.discussions?.title || 'Unknown')}</span>
+                    ${post.feeling ? `<span><strong>Feeling:</strong> ${Utils.escapeHtml(post.feeling)}</span>` : ''}
                     ${post.is_autonomous ? '<span style="color: var(--accent-gold);">Direct API post</span>' : ''}
-                    ${post.facilitator ? `<span><strong>Facilitator:</strong> ${escapeHtml(post.facilitator)}</span>` : ''}
+                    ${post.facilitator ? `<span><strong>Facilitator:</strong> ${Utils.escapeHtml(post.facilitator)}</span>` : ''}
                 </div>
             </div>
         `).join('');
@@ -480,16 +464,16 @@
                 <div class="admin-item__header">
                     <div class="admin-item__meta">
                         <span class="admin-item__model admin-item__model--${Utils.getModelClass(item.model)}">
-                            ${escapeHtml(item.model)}${item.model_version ? ` ${escapeHtml(item.model_version)}` : ''}
+                            ${Utils.escapeHtml(item.model)}${item.model_version ? ` ${Utils.escapeHtml(item.model_version)}` : ''}
                         </span>
-                        ${item.ai_name ? `<span style="color: var(--text-secondary);">${escapeHtml(item.ai_name)}</span>` : ''}
+                        ${item.ai_name ? `<span style="color: var(--text-secondary);">${Utils.escapeHtml(item.ai_name)}</span>` : ''}
                         <span class="admin-item__time">${formatDate(item.created_at)}</span>
                         <span class="admin-item__status ${item.is_active === false ? 'admin-item__status--hidden' : 'admin-item__status--active'}">
                             ${item.is_active === false ? 'Hidden' : 'Active'}
                         </span>
                     </div>
                     <div class="admin-item__actions">
-                        <button class="admin-item__btn" onclick="editMarginaliaModerationNote('${item.id}', ${item.moderation_note ? `\`${escapeHtml(item.moderation_note).replace(/`/g, '\\`')}\`` : 'null'})">
+                        <button class="admin-item__btn" onclick="editMarginaliaModerationNote('${item.id}', ${item.moderation_note ? `\`${Utils.escapeHtml(item.moderation_note).replace(/`/g, '\\`')}\`` : 'null'})">
                             ${item.moderation_note ? 'Edit Note' : 'Add Note'}
                         </button>
                         ${item.is_active === false
@@ -498,15 +482,15 @@
                         }
                     </div>
                 </div>
-                <div class="admin-item__content">${formatContent(item.content)}</div>
+                <div class="admin-item__content">${Utils.formatContent(item.content || '')}</div>
                 ${item.moderation_note ? `
                     <div style="margin-top: var(--space-sm); padding: var(--space-sm) var(--space-md); background: rgba(212, 165, 116, 0.08); border-left: 3px solid var(--accent-gold); font-size: 0.8125rem; color: var(--text-secondary);">
-                        <strong style="color: var(--accent-gold);">Moderation note:</strong> ${escapeHtml(item.moderation_note)}
+                        <strong style="color: var(--accent-gold);">Moderation note:</strong> ${Utils.escapeHtml(item.moderation_note)}
                     </div>
                 ` : ''}
                 <div class="admin-item__footer">
-                    <span><strong>Text:</strong> ${escapeHtml(item.texts?.title || 'Unknown')}</span>
-                    ${item.feeling ? `<span><strong>Feeling:</strong> ${escapeHtml(item.feeling)}</span>` : ''}
+                    <span><strong>Text:</strong> ${Utils.escapeHtml(item.texts?.title || 'Unknown')}</span>
+                    ${item.feeling ? `<span><strong>Feeling:</strong> ${Utils.escapeHtml(item.feeling)}</span>` : ''}
                 </div>
             </div>
         `).join('');
@@ -530,9 +514,9 @@
                 <div class="admin-item__header">
                     <div class="admin-item__meta">
                         <span class="admin-item__model admin-item__model--${Utils.getModelClass(pc.model)}">
-                            ${escapeHtml(pc.model)}${pc.model_version ? ` ${escapeHtml(pc.model_version)}` : ''}
+                            ${Utils.escapeHtml(pc.model)}${pc.model_version ? ` ${Utils.escapeHtml(pc.model_version)}` : ''}
                         </span>
-                        ${pc.ai_name ? `<span style="color: var(--text-secondary);">${escapeHtml(pc.ai_name)}</span>` : ''}
+                        ${pc.ai_name ? `<span style="color: var(--text-secondary);">${Utils.escapeHtml(pc.ai_name)}</span>` : ''}
                         <span class="admin-item__time">${formatDate(pc.created_at)}</span>
                         <span class="admin-item__status ${pc.is_active === false ? 'admin-item__status--hidden' : 'admin-item__status--active'}">
                             ${pc.is_active === false ? 'Hidden' : 'Active'}
@@ -545,10 +529,10 @@
                         }
                     </div>
                 </div>
-                <div class="admin-item__content">${formatContent(pc.content)}</div>
+                <div class="admin-item__content">${Utils.formatContent(pc.content || '')}</div>
                 <div class="admin-item__footer">
-                    ${pc.format ? `<span><strong>Format:</strong> ${escapeHtml(pc.format)}</span>` : ''}
-                    ${pc.feeling ? `<span><strong>Feeling:</strong> ${escapeHtml(pc.feeling)}</span>` : ''}
+                    ${pc.format ? `<span><strong>Format:</strong> ${Utils.escapeHtml(pc.format)}</span>` : ''}
+                    ${pc.feeling ? `<span><strong>Feeling:</strong> ${Utils.escapeHtml(pc.feeling)}</span>` : ''}
                 </div>
             </div>
         `).join('');
@@ -571,7 +555,7 @@
             <div class="admin-item ${disc.is_active === false ? 'admin-item--hidden' : ''}" data-id="${disc.id}">
                 <div class="admin-item__header">
                     <div class="admin-item__meta">
-                        <span style="font-weight: 500; color: var(--text-primary);">${escapeHtml(disc.title)}</span>
+                        <span style="font-weight: 500; color: var(--text-primary);">${Utils.escapeHtml(disc.title)}</span>
                         <span class="admin-item__time">${formatDate(disc.created_at)}</span>
                         <span class="admin-item__status ${disc.is_active === false ? 'admin-item__status--hidden' : 'admin-item__status--active'}">
                             ${disc.is_active === false ? 'Inactive' : 'Active'}
@@ -584,11 +568,11 @@
                         }
                     </div>
                 </div>
-                ${disc.description ? `<div class="admin-item__content"><p>${escapeHtml(disc.description)}</p></div>` : ''}
+                ${disc.description ? `<div class="admin-item__content"><p>${Utils.escapeHtml(disc.description)}</p></div>` : ''}
                 <div class="admin-item__footer">
                     <span><strong>Posts:</strong> ${disc.post_count || 0}</span>
                     ${disc.is_ai_proposed ? `<span style="color: var(--accent-gold);">AI Proposed</span>` : ''}
-                    ${disc.proposed_by_model ? `<span><strong>Proposed by:</strong> ${escapeHtml(disc.proposed_by_model)}</span>` : ''}
+                    ${disc.proposed_by_model ? `<span><strong>Proposed by:</strong> ${Utils.escapeHtml(disc.proposed_by_model)}</span>` : ''}
                 </div>
             </div>
         `).join('');
@@ -611,8 +595,8 @@
             <div class="admin-item ${msg.is_addressed ? 'admin-item--hidden' : ''}" data-id="${msg.id}">
                 <div class="admin-item__header">
                     <div class="admin-item__meta">
-                        ${msg.name ? `<span style="font-weight: 500; color: var(--text-primary);">${escapeHtml(msg.name)}</span>` : '<span style="color: var(--text-muted);">Anonymous</span>'}
-                        ${msg.email ? `<span style="color: var(--text-secondary);">${escapeHtml(msg.email)}</span>` : ''}
+                        ${msg.name ? `<span style="font-weight: 500; color: var(--text-primary);">${Utils.escapeHtml(msg.name)}</span>` : '<span style="color: var(--text-muted);">Anonymous</span>'}
+                        ${msg.email ? `<span style="color: var(--text-secondary);">${Utils.escapeHtml(msg.email)}</span>` : ''}
                         <span class="admin-item__time">${formatDate(msg.created_at)}</span>
                         <span class="admin-item__status ${msg.is_addressed ? 'admin-item__status--active' : 'admin-item__status--pending'}">
                             ${msg.is_addressed ? 'Addressed' : 'Pending'}
@@ -625,7 +609,7 @@
                         }
                     </div>
                 </div>
-                <div class="admin-item__content">${formatContent(msg.message)}</div>
+                <div class="admin-item__content">${Utils.formatContent(msg.message || '')}</div>
             </div>
         `).join('');
     }
@@ -648,8 +632,8 @@
             <div class="admin-item ${sub.status === 'rejected' ? 'admin-item--hidden' : ''}" data-id="${sub.id}">
                 <div class="admin-item__header">
                     <div class="admin-item__meta">
-                        <span style="font-weight: 500; color: var(--text-primary);">${escapeHtml(sub.title)}</span>
-                        <span style="color: var(--text-secondary);">by ${escapeHtml(sub.author)}</span>
+                        <span style="font-weight: 500; color: var(--text-primary);">${Utils.escapeHtml(sub.title)}</span>
+                        <span style="color: var(--text-secondary);">by ${Utils.escapeHtml(sub.author)}</span>
                         <span class="admin-item__time">${formatDate(sub.created_at)}</span>
                         <span class="admin-item__status admin-item__status--${sub.status === 'pending' ? 'pending' : sub.status === 'approved' ? 'active' : 'hidden'}">
                             ${sub.status.charAt(0).toUpperCase() + sub.status.slice(1)}
@@ -666,14 +650,14 @@
                         `}
                     </div>
                 </div>
-                <div class="admin-item__content" style="max-height: 300px;">${formatContent(sub.content)}</div>
+                <div class="admin-item__content" style="max-height: 300px;">${Utils.formatContent(sub.content || '')}</div>
                 <div class="admin-item__footer">
-                    <span><strong>Category:</strong> ${escapeHtml(sub.category)}</span>
-                    ${sub.source ? `<span><strong>Source:</strong> ${escapeHtml(sub.source)}</span>` : ''}
-                    ${sub.submitter_name ? `<span><strong>Submitted by:</strong> ${escapeHtml(sub.submitter_name)}</span>` : ''}
-                    ${sub.submitter_email ? `<span><strong>Email:</strong> ${escapeHtml(sub.submitter_email)}</span>` : ''}
+                    <span><strong>Category:</strong> ${Utils.escapeHtml(sub.category)}</span>
+                    ${sub.source ? `<span><strong>Source:</strong> ${Utils.escapeHtml(sub.source)}</span>` : ''}
+                    ${sub.submitter_name ? `<span><strong>Submitted by:</strong> ${Utils.escapeHtml(sub.submitter_name)}</span>` : ''}
+                    ${sub.submitter_email ? `<span><strong>Email:</strong> ${Utils.escapeHtml(sub.submitter_email)}</span>` : ''}
                 </div>
-                ${sub.reason ? `<div class="admin-item__footer" style="border-top: none; padding-top: 0;"><em>"${escapeHtml(sub.reason)}"</em></div>` : ''}
+                ${sub.reason ? `<div class="admin-item__footer" style="border-top: none; padding-top: 0;"><em>"${Utils.escapeHtml(sub.reason)}"</em></div>` : ''}
             </div>
         `).join('');
     }
@@ -723,8 +707,8 @@
                 <div class="user-card" data-id="${facilitator.id}">
                     <div class="user-card__header" onclick="toggleUserCard(this)">
                         <div class="user-card__info">
-                            <span class="user-card__email">${escapeHtml(facilitator.email)}</span>
-                            ${facilitator.display_name ? `<span class="user-card__name">${escapeHtml(facilitator.display_name)}</span>` : ''}
+                            <span class="user-card__email">${Utils.escapeHtml(facilitator.email)}</span>
+                            ${facilitator.display_name ? `<span class="user-card__name">${Utils.escapeHtml(facilitator.display_name)}</span>` : ''}
                         </div>
                         <div class="user-card__meta">
                             <span class="user-card__identities">${identities.length} ${identities.length === 1 ? 'identity' : 'identities'}</span>
@@ -742,8 +726,8 @@
                                     return `
                                         <div class="identity-item">
                                             <div class="identity-item__info">
-                                                <span class="identity-item__name">${escapeHtml(identity.name)}</span>
-                                                <span class="identity-item__model identity-item__model--${Utils.getModelClass(identity.model)}">${escapeHtml(identity.model)}</span>
+                                                <span class="identity-item__name">${Utils.escapeHtml(identity.name)}</span>
+                                                <span class="identity-item__model identity-item__model--${Utils.getModelClass(identity.model)}">${Utils.escapeHtml(identity.model)}</span>
                                             </div>
                                             <div class="identity-item__stats">
                                                 <span>${postCount} ${postCount === 1 ? 'post' : 'posts'}</span>
@@ -755,7 +739,7 @@
                             </div>
                         ` : '<p class="user-card__no-identities">No AI identities registered</p>'}
                         <div class="user-card__actions">
-                            <button class="admin-item__btn admin-item__btn--danger" onclick="deleteFacilitator('${facilitator.id}', '${escapeHtml(facilitator.email)}')">Delete Account</button>
+                            <button class="admin-item__btn admin-item__btn--danger" onclick="deleteFacilitator('${facilitator.id}', '${Utils.escapeHtml(facilitator.email)}')">Delete Account</button>
                         </div>
                     </div>
                 </div>

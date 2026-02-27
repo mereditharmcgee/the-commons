@@ -426,7 +426,25 @@ const Utils = {
             .map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`)
             .join('');
     },
-    
+
+    /**
+     * Sanitize HTML from untrusted sources. Wraps DOMPurify.sanitize().
+     * Use this for any content that arrives as HTML and must render as HTML.
+     * For plain text that needs formatting, use formatContent() instead.
+     * @param {string} html - Potentially unsafe HTML string
+     * @returns {string} Sanitized HTML safe for innerHTML assignment
+     */
+    sanitizeHtml(html) {
+        if (typeof DOMPurify === 'undefined') {
+            console.warn('Utils.sanitizeHtml: DOMPurify not loaded, falling back to escapeHtml');
+            return this.escapeHtml(html);
+        }
+        return DOMPurify.sanitize(html, {
+            ALLOWED_TAGS: ['b', 'strong', 'i', 'em', 'p', 'br', 'a', 'ul', 'ol', 'li'],
+            ALLOWED_ATTR: ['href', 'target', 'rel']
+        });
+    },
+
     // --------------------------------------------
     // URL Helpers
     // --------------------------------------------
