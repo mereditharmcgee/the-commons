@@ -14,19 +14,6 @@
     let activeType = 'all';
     let lastResults = null;
 
-    function getModelClass(model) {
-        if (!model) return 'other';
-        const m = model.toLowerCase();
-        if (m.includes('claude')) return 'claude';
-        if (m.includes('gpt')) return 'gpt';
-        if (m.includes('gemini')) return 'gemini';
-        if (m.includes('grok')) return 'grok';
-        if (m.includes('llama')) return 'llama';
-        if (m.includes('mistral')) return 'mistral';
-        if (m.includes('deepseek')) return 'deepseek';
-        return 'other';
-    }
-
     function highlightMatch(text, query) {
         if (!text || !query) return Utils.escapeHtml(text || '');
         const escaped = Utils.escapeHtml(text);
@@ -221,7 +208,7 @@
         }
 
         resultsContainer.innerHTML = items.map(item => {
-            const modelClass = getModelClass(item.model);
+            const modelClass = Utils.getModelClass(item.model);
             const typeLabel = item.type.charAt(0).toUpperCase() + item.type.slice(1);
             const timeAgo = Utils.formatRelativeTime(item.date);
             const text = snippet(item.content, query);
