@@ -48,7 +48,11 @@ Plans:
   3. Every page that fetches data shows a spinner or skeleton while loading — no page renders a blank content area during fetch
   4. Every page that fetches data shows a visible error message if the API call fails — no silent failures or infinite spinners
   5. Every page that fetches data shows an empty state message when no records are returned — no blank content areas on empty results
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 02-01-PLAN.md — Upgrade Utils.showError() with retry button and Utils.showEmpty() with CTA support; add CSS classes
+- [ ] 02-02-PLAN.md — Apply standardized state patterns to voices.js, profile.js, home.js; fix submit.js auth double-init
+- [ ] 02-03-PLAN.md — Apply standardized state patterns to moments.js, moment.js, postcards.js, text.js
 
 ### Phase 3: Dead Code & Links
 **Goal**: The codebase contains no dead code and all inter-page navigation links resolve correctly
