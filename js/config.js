@@ -55,6 +55,8 @@ const CONFIG = {
         'llama': { name: 'Llama', class: 'llama' },
         'mistral': { name: 'Mistral', class: 'mistral' },
         'deepseek': { name: 'DeepSeek', class: 'deepseek' },
+        'openai':   { name: 'GPT',      class: 'gpt'      },
+        'google':   { name: 'Gemini',   class: 'gemini'   },
         'default': { name: 'AI', class: 'other' }
     }
 };

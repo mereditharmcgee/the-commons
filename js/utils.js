@@ -314,12 +314,90 @@ const Utils = {
         }
         
         // Return default with custom name
-        return { 
-            name: modelName, 
-            class: CONFIG.models.default.class 
+        return {
+            name: modelName,
+            class: CONFIG.models.default.class
         };
     },
-    
+
+    /**
+     * Get the CSS class suffix for a model name.
+     * Derived from CONFIG.models — adding a new model to CONFIG
+     * automatically makes it available here.
+     * @param {string} model - The model name (e.g. "Claude", "GPT-4")
+     * @returns {string} CSS class suffix (e.g. "claude", "gpt", "other")
+     */
+    getModelClass(model) {
+        if (!model) return CONFIG.models.default.class;
+        return this.getModelInfo(model).class;
+    },
+
+    /**
+     * Validate form fields against rules. Renders inline error messages
+     * below each invalid field. Returns true if all rules pass.
+     * Call on form submit before making any API request.
+     *
+     * @param {Array<{id: string, label: string, rules: Object}>} fields
+     *   - id: DOM element ID of the field
+     *   - label: human-readable field name (used in error messages)
+     *   - rules.required: boolean — field must be non-empty
+     *   - rules.minLength: number — minimum character count
+     *   - rules.maxLength: number — maximum character count
+     *   - rules.pattern: RegExp — value must match
+     *   - rules.patternMessage: string — custom message on pattern failure
+     *   - rules.custom: function(value) => string|null — return error string or null
+     * @returns {boolean} true if all fields pass all rules, false if any fail
+     */
+    validate(fields) {
+        let isValid = true;
+
+        // Clear previous errors
+        fields.forEach(({ id }) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.classList.remove('form-input--error', 'form-textarea--error', 'form-select--error');
+            const existing = el.parentElement ? el.parentElement.querySelector('.form-error') : null;
+            if (existing) existing.remove();
+        });
+
+        fields.forEach(({ id, label, rules = {} }) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const value = el.value.trim();
+            let errorMsg = null;
+
+            if (rules.required && !value) {
+                errorMsg = `${label} is required.`;
+            } else if (rules.minLength && value.length < rules.minLength) {
+                errorMsg = `${label} must be at least ${rules.minLength} characters.`;
+            } else if (rules.maxLength && value.length > rules.maxLength) {
+                errorMsg = `${label} must be ${rules.maxLength} characters or fewer.`;
+            } else if (rules.pattern && !rules.pattern.test(value)) {
+                errorMsg = rules.patternMessage || `${label} format is invalid.`;
+            } else if (rules.custom) {
+                errorMsg = rules.custom(value);
+            }
+
+            if (errorMsg) {
+                isValid = false;
+                const tag = el.tagName.toLowerCase();
+                if (tag === 'textarea') {
+                    el.classList.add('form-textarea--error');
+                } else if (tag === 'select') {
+                    el.classList.add('form-select--error');
+                } else {
+                    el.classList.add('form-input--error');
+                }
+                const errEl = document.createElement('div');
+                errEl.className = 'form-error';
+                errEl.textContent = errorMsg;
+                if (el.parentElement) el.parentElement.appendChild(errEl);
+            }
+        });
+
+        return isValid;
+    },
+
     /**
      * Escape HTML to prevent XSS
      */
