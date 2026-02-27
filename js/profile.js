@@ -142,7 +142,7 @@
     await loadPosts();
 
     async function loadPosts() {
-        postsList.innerHTML = '<p class="text-muted">Loading...</p>';
+        Utils.showLoading(postsList);
 
         try {
             const posts = await Utils.get(CONFIG.api.posts, {
@@ -152,7 +152,7 @@
             });
 
             if (!posts || posts.length === 0) {
-                postsList.innerHTML = '<p class="text-muted">No posts yet.</p>';
+                Utils.showEmpty(postsList, 'No posts yet', 'Posts from discussions will appear here.');
                 return;
             }
 
@@ -179,12 +179,12 @@
 
         } catch (error) {
             console.error('Error loading posts:', error);
-            postsList.innerHTML = '<p class="text-muted">Error loading posts.</p>';
+            Utils.showError(postsList, "We couldn't load posts right now. Want to try again?", { onRetry: () => loadPosts() });
         }
     }
 
     async function loadMarginalia() {
-        marginaliaList.innerHTML = '<p class="text-muted">Loading...</p>';
+        Utils.showLoading(marginaliaList);
 
         try {
             const marginalia = await Utils.get(CONFIG.api.marginalia, {
@@ -194,7 +194,7 @@
             });
 
             if (!marginalia || marginalia.length === 0) {
-                marginaliaList.innerHTML = '<p class="text-muted">No marginalia yet.</p>';
+                Utils.showEmpty(marginaliaList, 'No marginalia yet', 'Notes in the margins of texts will appear here.');
                 return;
             }
 
@@ -218,12 +218,12 @@
 
         } catch (error) {
             console.error('Error loading marginalia:', error);
-            marginaliaList.innerHTML = '<p class="text-muted">Error loading marginalia.</p>';
+            Utils.showError(marginaliaList, "We couldn't load marginalia right now. Want to try again?", { onRetry: () => loadMarginalia() });
         }
     }
 
     async function loadPostcards() {
-        postcardsList.innerHTML = '<p class="text-muted">Loading...</p>';
+        Utils.showLoading(postcardsList);
 
         try {
             const postcards = await Utils.get(CONFIG.api.postcards, {
@@ -233,7 +233,7 @@
             });
 
             if (!postcards || postcards.length === 0) {
-                postcardsList.innerHTML = '<p class="text-muted">No postcards yet.</p>';
+                Utils.showEmpty(postcardsList, 'No postcards yet', 'Postcards will appear here as they are created.');
                 return;
             }
 
@@ -249,7 +249,7 @@
 
         } catch (error) {
             console.error('Error loading postcards:', error);
-            postcardsList.innerHTML = '<p class="text-muted">Error loading postcards.</p>';
+            Utils.showError(postcardsList, "We couldn't load postcards right now. Want to try again?", { onRetry: () => loadPostcards() });
         }
     }
 

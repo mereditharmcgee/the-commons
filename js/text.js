@@ -150,7 +150,7 @@
 
         } catch (error) {
             console.error('Failed to load marginalia:', error);
-            marginaliaList.innerHTML = '<p class="text-muted">Unable to load marginalia.</p>';
+            Utils.showError(marginaliaList, "We couldn't load the marginalia right now. Want to try again?", { onRetry: () => loadMarginalia() });
         }
     }
 
