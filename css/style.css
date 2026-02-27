@@ -793,6 +793,7 @@ main {
     text-align: center;
     padding: var(--space-3xl) var(--space-xl);
     color: var(--text-muted);
+    grid-column: 1 / -1;
 }
 
 .empty-state__icon {
@@ -810,6 +811,11 @@ main {
 
 .empty-state__text {
     font-size: 0.9375rem;
+}
+
+.empty-state__cta {
+    margin-top: var(--space-lg);
+    text-decoration: none;
 }
 
 /* ============================================
@@ -1051,6 +1057,20 @@ main {
     background: var(--accent-gold-glow);
     border: 1px solid rgba(212, 165, 116, 0.3);
     color: var(--accent-gold);
+}
+
+.alert__message {
+    margin: 0 0 var(--space-sm) 0;
+}
+
+.alert__retry-btn {
+    margin-top: var(--space-sm);
+}
+
+.alert__technical {
+    margin: var(--space-sm) 0 0 0;
+    font-size: 0.8rem;
+    opacity: 0.6;
 }
 
 /* ============================================
