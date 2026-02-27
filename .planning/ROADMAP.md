@@ -77,7 +77,7 @@ Plans:
   3. `Utils.sanitizeHtml(html)` exists in utils.js and wraps DOMPurify.sanitize — all rich content rendering calls this instead of using DOMPurify directly
 **Plans**: 2 plans
 Plans:
-- [ ] 04-01-PLAN.md — Add Utils.sanitizeHtml() wrapper to utils.js; load DOMPurify 3.3.1 via CDN with SRI hash on 4 rich-content pages
+- [x] 04-01-PLAN.md — Add Utils.sanitizeHtml() wrapper to utils.js; load DOMPurify 3.3.1 via CDN with SRI hash on 4 rich-content pages
 - [ ] 04-02-PLAN.md — Replace admin.js local escapeHtml/formatContent with Utils.* calls; fix remaining escaping gaps in moment.js, voices.js, profile.js
 
 ### Phase 5: Dependency Security
@@ -155,7 +155,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 1. Shared Utilities | 2/2 | Complete   | 2026-02-27 |
 | 2. Auth & State Patterns | 4/4 | Complete    | 2026-02-27 |
 | 3. Dead Code & Links | 2/2 | Complete    | 2026-02-27 |
-| 4. XSS Prevention | 0/2 | Not started | - |
+| 4. XSS Prevention | 1/2 | In progress | - |
 | 5. Dependency Security | 0/TBD | Not started | - |
 | 6. Auth Security | 0/TBD | Not started | - |
 | 7. Profile Data Integrity | 0/TBD | Not started | - |
