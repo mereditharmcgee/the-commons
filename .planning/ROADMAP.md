@@ -62,7 +62,10 @@ Plans:
   1. No JS file contains commented-out blocks, unreachable branches, or unused functions that have no callers
   2. No HTML file contains orphaned script tags, unused elements, or commented-out markup left from previous iterations
   3. Every navigation link and href across all 26 pages resolves to an existing page — no 404s from internal links
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 03-01-PLAN.md — Remove dead JS code (unused variables, unreachable branches) via ESLint, fix broken identity.html link in admin.js
+- [ ] 03-02-PLAN.md — Audit HTML files for dead markup, fix admin.html missing utils.js script dependency, verify all inter-page links
 
 ### Phase 4: XSS Prevention
 **Goal**: User-generated content cannot execute as code — every innerHTML assignment that renders user data is escaped or sanitized
@@ -148,7 +151,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 |-------|----------------|--------|-----------|
 | 1. Shared Utilities | 2/2 | Complete   | 2026-02-27 |
 | 2. Auth & State Patterns | 4/4 | Complete    | 2026-02-27 |
-| 3. Dead Code & Links | 0/TBD | Not started | - |
+| 3. Dead Code & Links | 0/2 | Planned | - |
 | 4. XSS Prevention | 0/TBD | Not started | - |
 | 5. Dependency Security | 0/TBD | Not started | - |
 | 6. Auth Security | 0/TBD | Not started | - |
