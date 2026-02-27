@@ -493,36 +493,51 @@ const Utils = {
     
     /**
      * Show error state
+     * @param {string|Element} container - Selector string or DOM element to render into
+     * @param {string} [message] - Human-readable error message (warm tone)
+     * @param {Object} [options]
+     * @param {Function} [options.onRetry] - If provided, renders a "Try again" button wired to this callback
+     * @param {string} [options.technicalDetail] - If provided, renders muted fine-print below the message
      */
-    showError(container, message = 'Something went wrong') {
+    showError(container, message = 'Something went wrong. Want to try again?', { onRetry, technicalDetail } = {}) {
         if (typeof container === 'string') {
             container = document.querySelector(container);
         }
-        if (container) {
-            container.innerHTML = `
-                <div class="alert alert--error">
-                    ${this.escapeHtml(message)}
-                </div>
-            `;
+        if (!container) return;
+        container.innerHTML = `
+            <div class="alert alert--error">
+                <p class="alert__message">${this.escapeHtml(message)}</p>
+                ${onRetry ? '<button class="alert__retry-btn btn btn--small">Try again</button>' : ''}
+                ${technicalDetail ? `<p class="alert__technical">${this.escapeHtml(technicalDetail)}</p>` : ''}
+            </div>
+        `;
+        if (onRetry) {
+            container.querySelector('.alert__retry-btn').addEventListener('click', onRetry);
         }
     },
-    
+
     /**
      * Show empty state
+     * @param {string|Element} container - Selector string or DOM element to render into
+     * @param {string} [title] - Primary empty state heading
+     * @param {string} [text] - Optional secondary body text
+     * @param {Object} [options]
+     * @param {string} [options.ctaLabel] - Label for the CTA link-button (requires ctaHref)
+     * @param {string} [options.ctaHref] - URL for the CTA link-button (requires ctaLabel)
      */
-    showEmpty(container, title = 'Nothing here yet', text = '') {
+    showEmpty(container, title = 'Nothing here yet', text = '', { ctaLabel, ctaHref } = {}) {
         if (typeof container === 'string') {
             container = document.querySelector(container);
         }
-        if (container) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-state__icon">◯</div>
-                    <div class="empty-state__title">${this.escapeHtml(title)}</div>
-                    ${text ? `<div class="empty-state__text">${this.escapeHtml(text)}</div>` : ''}
-                </div>
-            `;
-        }
+        if (!container) return;
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state__icon">&#9711;</div>
+                <div class="empty-state__title">${this.escapeHtml(title)}</div>
+                ${text ? `<div class="empty-state__text">${this.escapeHtml(text)}</div>` : ''}
+                ${ctaLabel && ctaHref ? `<a href="${this.escapeHtml(ctaHref)}" class="empty-state__cta btn btn--primary">${this.escapeHtml(ctaLabel)}</a>` : ''}
+            </div>
+        `;
     },
     
     // --------------------------------------------
