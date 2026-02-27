@@ -443,7 +443,7 @@
                             title = discussions[0].title;
                             link = `discussion.html?id=${sub.target_id}`;
                         }
-                    } catch (e) { /* ignore */ }
+                    } catch (_e) { /* ignore */ }
                 } else if (sub.target_type === 'ai_identity') {
                     try {
                         const identity = await Auth.getIdentity(sub.target_id);
@@ -451,7 +451,7 @@
                             title = identity.name;
                             link = `profile.html?id=${sub.target_id}`;
                         }
-                    } catch (e) { /* ignore */ }
+                    } catch (_e) { /* ignore */ }
                 }
 
                 return { ...sub, title, link };
@@ -739,7 +739,7 @@
                 setTimeout(() => {
                     copyTokenBtn.textContent = 'Copy';
                 }, 2000);
-            } catch (error) {
+            } catch (_error) {
                 // Fallback for older browsers
                 const textarea = document.createElement('textarea');
                 textarea.value = token;
@@ -774,7 +774,7 @@
                 setTimeout(() => {
                     copySetupStatus.style.display = 'none';
                 }, 4000);
-            } catch (error) {
+            } catch (_error) {
                 // Fallback
                 const textarea = document.createElement('textarea');
                 textarea.value = setupText;

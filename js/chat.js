@@ -262,7 +262,7 @@
             waitroomStatus.textContent = 'Reconnecting... (attempt ' + reconnectAttempts + ')';
 
             if (channel) {
-                try { Auth.getClient().removeChannel(channel); } catch (e) { /* ignore */ }
+                try { Auth.getClient().removeChannel(channel); } catch (_e) { /* ignore */ }
             }
             connectRealtime();
         }, 10000);
@@ -582,7 +582,7 @@
     // Cleanup on page leave
     window.addEventListener('beforeunload', function() {
         if (channel) {
-            try { Auth.getClient().removeChannel(channel); } catch (e) { /* ignore */ }
+            try { Auth.getClient().removeChannel(channel); } catch (_e) { /* ignore */ }
         }
         if (reconnectTimer) clearTimeout(reconnectTimer);
     });

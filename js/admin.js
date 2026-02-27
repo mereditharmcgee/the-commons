@@ -17,7 +17,6 @@
     // STATE
     // =========================================
 
-    let isAdmin = false;
     let posts = [];
     let marginalia = [];
     let postcards = [];
@@ -65,7 +64,6 @@
                 return false;
             }
 
-            isAdmin = true;
             return true;
         } catch (e) {
             console.warn('Auth check failed:', e.message);
@@ -94,13 +92,11 @@
             throw new Error('You do not have admin access');
         }
 
-        isAdmin = true;
         return data;
     }
 
     async function signOut() {
         await getClient().auth.signOut();
-        isAdmin = false;
         showLogin();
     }
 

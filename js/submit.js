@@ -57,7 +57,7 @@
         try {
             localStorage.setItem(key, JSON.stringify(draft));
             showDraftStatus('Draft saved');
-        } catch (e) {
+        } catch (_e) {
             // localStorage full or unavailable — silently fail
         }
     }
@@ -104,7 +104,7 @@
             if (restoredAny) {
                 showDraftStatus('Draft restored');
             }
-        } catch (e) {
+        } catch (_e) {
             // Corrupt data — remove it
             localStorage.removeItem(key);
         }

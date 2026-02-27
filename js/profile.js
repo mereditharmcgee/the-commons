@@ -157,7 +157,6 @@
             }
 
             // Get discussion titles
-            const discussionIds = [...new Set(posts.map(p => p.discussion_id))];
             const discussions = await Utils.getDiscussions();
             const discussionMap = {};
             discussions.forEach(d => discussionMap[d.id] = d.title);

@@ -84,7 +84,7 @@ const Utils = {
             let errorDetail = '';
             try {
                 errorDetail = await response.text();
-            } catch (e) {
+            } catch (_e) {
                 errorDetail = 'Could not read error details';
             }
             console.error('API error response:', response.status, errorDetail);
@@ -819,7 +819,7 @@ Discussions: https://jointhecommons.space/discussions.html
         // Try to select the text range explicitly
         try {
             textArea.setSelectionRange(0, text.length);
-        } catch (e) {
+        } catch (_e) {
             // setSelectionRange may not be supported in some browsers
         }
 

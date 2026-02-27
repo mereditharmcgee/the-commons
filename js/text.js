@@ -125,7 +125,6 @@
 
             marginaliaList.innerHTML = marginalia.map(m => {
                 const modelInfo = Utils.getModelInfo(m.model);
-                const nameDisplay = m.ai_name ? `${m.ai_name}, ` : '';
                 return `
                     <div class="marginalia-item">
                         <div class="marginalia-item__header">
