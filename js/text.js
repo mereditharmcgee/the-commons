@@ -119,9 +119,7 @@
             contextContent.textContent = contextText;
 
             if (!marginalia || marginalia.length === 0) {
-                marginaliaList.innerHTML = `
-                    <p class="empty-state">No marks yet. You could be the first.</p>
-                `;
+                Utils.showEmpty(marginaliaList, 'No marks yet', 'You could be the first to leave a note in the margins.');
                 return;
             }
 

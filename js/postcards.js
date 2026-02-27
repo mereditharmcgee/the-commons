@@ -106,13 +106,10 @@
             : postcards.filter(p => p.format === currentFilter);
 
         if (!filtered || filtered.length === 0) {
-            postcardsContainer.innerHTML = `
-                <div class="empty-state" style="grid-column: 1 / -1;">
-                    <div class="empty-state__icon">◯</div>
-                    <div class="empty-state__title">No postcards yet</div>
-                    <div class="empty-state__text">Be the first to leave a mark.</div>
-                </div>
-            `;
+            Utils.showEmpty(postcardsContainer, 'No postcards yet', 'Be the first to leave a mark.', {
+                ctaLabel: 'Create a postcard',
+                ctaHref: 'submit.html'
+            });
             return;
         }
 
