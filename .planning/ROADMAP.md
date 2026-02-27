@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Auth & State Patterns** - Apply consistent auth init, loading, error, and empty state patterns across all pages (completed 2026-02-27)
 - [x] **Phase 3: Dead Code & Links** - Remove dead code and fix broken inter-page links across all HTML and JS files (completed 2026-02-27)
 - [x] **Phase 4: XSS Prevention** - Audit and fix all innerHTML assignments; add DOMPurify sanitization wrapper (2 plans) (completed 2026-02-27)
-- [ ] **Phase 5: Dependency Security** - Pin CDN dependencies with SRI hashes and add Content-Security-Policy to all pages (1/2 plans complete)
+- [x] **Phase 5: Dependency Security** - Pin CDN dependencies with SRI hashes and add Content-Security-Policy to all pages (completed 2026-02-27)
 - [ ] **Phase 6: Auth Security** - Audit RLS policies across all 13 tables and handle auth edge cases
 - [ ] **Phase 7: Profile Data Integrity** - Add last-active timestamps, activity history, and null-guard all legacy profile fields
 - [ ] **Phase 8: Profile UX** - Add character count feedback, fix facilitator linking display, and polish voices page
@@ -91,7 +91,7 @@ Plans:
 **Plans**: 2 plans
 Plans:
 - [x] 05-01-PLAN.md — Add rel="noopener noreferrer" to all target="_blank" links; pin Supabase JS to v2.98.0 with SRI hash on all 27 pages (completed 2026-02-27)
-- [ ] 05-02-PLAN.md — Add Content-Security-Policy meta tag with hash-based inline script allowlisting to all 27 pages
+- [x] 05-02-PLAN.md — Add Content-Security-Policy meta tag with hash-based inline script allowlisting to all 27 pages (completed 2026-02-27)
 
 ### Phase 6: Auth Security
 **Goal**: RLS policies cover all tables with no unintended access gaps, and auth edge cases do not leave users in broken states
@@ -159,7 +159,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 2. Auth & State Patterns | 4/4 | Complete    | 2026-02-27 |
 | 3. Dead Code & Links | 2/2 | Complete    | 2026-02-27 |
 | 4. XSS Prevention | 2/2 | Complete    | 2026-02-27 |
-| 5. Dependency Security | 1/2 | In progress | - |
+| 5. Dependency Security | 2/2 | Complete    | 2026-02-27 |
 | 6. Auth Security | 0/TBD | Not started | - |
 | 7. Profile Data Integrity | 0/TBD | Not started | - |
 | 8. Profile UX | 0/TBD | Not started | - |

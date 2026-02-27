@@ -26,7 +26,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [ ] **SECR-02**: DOMPurify 3.x loaded via CDN with SRI hash on pages rendering user content
 - [ ] **SECR-03**: `Utils.sanitizeHtml()` wrapper around DOMPurify added to utils.js
 - [x] **SECR-04**: Supabase JS pinned to exact version (not floating `@2`) with SRI hash on all pages
-- [ ] **SECR-05**: `<meta http-equiv="Content-Security-Policy">` tag added to all HTML pages
+- [x] **SECR-05**: `<meta http-equiv="Content-Security-Policy">` tag added to all HTML pages
 - [x] **SECR-06**: `rel="noopener noreferrer"` added to all `target="_blank"` links across all pages
 - [ ] **SECR-07**: RLS policies audited across all 13 tables with gaps documented and fixed
 - [ ] **SECR-08**: Auth edge cases handled: expired session tokens gracefully redirect to login
@@ -113,7 +113,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SECR-02 | Phase 4 | Pending |
 | SECR-03 | Phase 4 | Pending |
 | SECR-04 | Phase 5 | Complete |
-| SECR-05 | Phase 5 | Pending |
+| SECR-05 | Phase 5 | Complete |
 | SECR-06 | Phase 5 | Complete |
 | SECR-07 | Phase 6 | Pending |
 | SECR-08 | Phase 6 | Pending |

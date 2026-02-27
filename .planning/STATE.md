@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in-progress
-last_updated: "2026-02-27T20:16:00Z"
+last_updated: "2026-02-27T20:17:00Z"
 progress:
   total_phases: 10
-  completed_phases: 4
-  total_plans: 11
-  completed_plans: 11
+  completed_phases: 5
+  total_plans: 13
+  completed_plans: 13
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 
 ## Current Position
 
-Phase: 5 of 10 (Dependency Security) — IN PROGRESS
-Plan: 1 of 2 in current phase — complete
-Status: 05-01 complete — Supabase pinned to @2.98.0 with SRI on all 27 pages; rel=noopener noreferrer added to all 91 blank-target links across 26 pages
-Last activity: 2026-02-27 — 05-01 complete
+Phase: 5 of 10 (Dependency Security) — COMPLETE
+Plan: 2 of 2 in current phase — complete
+Status: 05-02 complete — CSP meta tag with hash-based inline script allowlisting added to all 27 HTML pages; no unsafe-inline used
+Last activity: 2026-02-27 — 05-02 complete
 
-Progress: [█████░░░░░] 27%
+Progress: [█████░░░░░] 30%
 
 ## Performance Metrics
 
@@ -44,7 +44,7 @@ Progress: [█████░░░░░] 27%
 | 02-auth-state-patterns | 4 | ~16min | ~4min |
 | 03-dead-code-links | 2 | ~23min | ~12min |
 | 04-xss-prevention | 2 | ~5min | ~2.5min |
-| 05-dependency-security | 1/2 | ~6min | ~6min |
+| 05-dependency-security | 2/2 | ~8min | ~4min |
 
 **Recent Trend:**
 - Last 5 plans: 04-01 (~2min), 04-02 (~3min), 05-01 (~6min)
@@ -86,6 +86,9 @@ Recent decisions affecting current work:
 - [Phase 05-dependency-security]: 05-01: Supabase floating @2 URL incompatible with SRI — @2.98.0/dist/umd/supabase.js (static file) required for stable bytes
 - [Phase 05-dependency-security]: 05-01: crossorigin=anonymous required alongside integrity attribute for browser to enforce SRI on cross-origin resources
 - [Phase 05-dependency-security]: 05-01: DOMPurify ordering preserved on 4 rich-content pages — only Supabase tag replaced, DOMPurify before Supabase maintained
+- [Phase 05-dependency-security]: 05-02: Single CSP for all 27 pages — browsers ignore non-matching sha256 hashes; one unified CSP avoids per-page variant maintenance
+- [Phase 05-dependency-security]: 05-02: storage.ko-fi.com added globally — two CSP meta tags have inconsistent cross-browser behavior; global inclusion is the accepted tradeoff
+- [Phase 05-dependency-security]: 05-02: All 10 inline script SHA256 hashes verified against live file content before insertion — all matched 05-RESEARCH.md expected values exactly
 
 ### Pending Todos
 
@@ -99,5 +102,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: Completed 05-01-PLAN.md (Supabase SRI pin + noopener on all blank-target links)
-Resume file: .planning/phases/05-dependency-security/05-02-PLAN.md (CSP meta tag — next plan)
+Stopped at: Completed 05-02-PLAN.md (CSP meta tag with hash-based inline script allowlisting on all 27 pages)
+Resume file: .planning/phases/06-auth-security/ (Phase 6 — Auth Security — next phase)
