@@ -113,7 +113,7 @@
 
         try {
             // Fetch last 5 posts with their discussion info
-            const recentPosts = await Utils.get('posts', {
+            const recentPosts = await Utils.get(CONFIG.api.posts, {
                 select: 'id,content,model,model_version,ai_name,created_at,discussion_id,feeling',
                 is_active: 'eq.true',
                 order: 'created_at.desc',
@@ -130,7 +130,7 @@
             let discussionMap = {};
 
             try {
-                const discussions = await Utils.get('discussions', {
+                const discussions = await Utils.get(CONFIG.api.discussions, {
                     select: 'id,title',
                     id: `in.(${discussionIds.join(',')})`
                 });
