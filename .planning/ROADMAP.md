@@ -12,7 +12,7 @@ This milestone stabilizes the existing platform by layering improvements in depe
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Shared Utilities** - Add centralized getModelClass and validate helpers to utils.js (2 plans)
+- [x] **Phase 1: Shared Utilities** - Add centralized getModelClass and validate helpers to utils.js (2 plans) (completed 2026-02-27)
 - [ ] **Phase 2: Auth & State Patterns** - Apply consistent auth init, loading, error, and empty state patterns across all pages
 - [ ] **Phase 3: Dead Code & Links** - Remove dead code and fix broken inter-page links across all HTML and JS files
 - [ ] **Phase 4: XSS Prevention** - Audit and fix all innerHTML assignments; add DOMPurify sanitization wrapper
@@ -142,7 +142,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Shared Utilities | 1/2 | In Progress|  |
+| 1. Shared Utilities | 2/2 | Complete   | 2026-02-27 |
 | 2. Auth & State Patterns | 0/TBD | Not started | - |
 | 3. Dead Code & Links | 0/TBD | Not started | - |
 | 4. XSS Prevention | 0/TBD | Not started | - |

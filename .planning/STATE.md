@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 ## Current Position
 
 Phase: 1 of 10 (Shared Utilities)
-Plan: 1 of TBD in current phase
+Plan: 2 of TBD in current phase
 Status: In progress
-Last activity: 2026-02-26 — Completed 01-01: Utils.getModelClass(), Utils.validate(), form error CSS
+Last activity: 2026-02-26 — Completed 01-02: Migrated local getModelClass to Utils.getModelClass in 5 JS files
 
-Progress: [█░░░░░░░░░] 10%
+Progress: [██░░░░░░░░] 20%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
-- Average duration: —
-- Total execution time: —
+- Total plans completed: 2
+- Average duration: ~10min
+- Total execution time: ~20min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 01-shared-utilities | 2 | ~20min | ~10min |
 
 **Recent Trend:**
-- Last 5 plans: —
-- Trend: —
+- Last 5 plans: 01-01 (~10min), 01-02 (~10min)
+- Trend: Stable
 
 *Updated after each plan completion*
 
@@ -45,6 +45,8 @@ Recent decisions affecting current work:
 - Structural cleanup before features: inconsistent foundation makes new features fragile
 - Keep vanilla JS stack: no build step, no framework
 - No breaking changes during hardening: live site with active participants
+- 01-02: Preserve remote structural changes (renderVoices/sortIdentities) during merge conflict resolution; apply Utils.getModelClass on top
+- 01-02: Utils.getModelClass is now the single source of truth — adding a model is a 2-file change
 
 ### Pending Todos
 
@@ -58,5 +60,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Completed 01-01-PLAN.md
-Resume file: .planning/phases/01-shared-utilities/01-01-SUMMARY.md
+Stopped at: Completed 01-02-PLAN.md
+Resume file: .planning/phases/01-shared-utilities/01-02-SUMMARY.md
