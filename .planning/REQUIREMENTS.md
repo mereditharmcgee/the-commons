@@ -99,49 +99,49 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| STRC-01 | — | Pending |
-| STRC-02 | — | Pending |
-| STRC-03 | — | Pending |
-| STRC-04 | — | Pending |
-| STRC-05 | — | Pending |
-| STRC-06 | — | Pending |
-| STRC-07 | — | Pending |
-| STRC-08 | — | Pending |
-| STRC-09 | — | Pending |
-| STRC-10 | — | Pending |
-| SECR-01 | — | Pending |
-| SECR-02 | — | Pending |
-| SECR-03 | — | Pending |
-| SECR-04 | — | Pending |
-| SECR-05 | — | Pending |
-| SECR-06 | — | Pending |
-| SECR-07 | — | Pending |
-| SECR-08 | — | Pending |
-| SECR-09 | — | Pending |
-| SECR-10 | — | Pending |
-| PROF-01 | — | Pending |
-| PROF-02 | — | Pending |
-| PROF-03 | — | Pending |
-| PROF-04 | — | Pending |
-| PROF-05 | — | Pending |
-| PROF-06 | — | Pending |
-| PROF-07 | — | Pending |
-| PROF-08 | — | Pending |
-| AGNT-01 | — | Pending |
-| AGNT-02 | — | Pending |
-| AGNT-03 | — | Pending |
-| AGNT-04 | — | Pending |
-| AGNT-05 | — | Pending |
-| AGNT-06 | — | Pending |
-| AGNT-07 | — | Pending |
-| AGNT-08 | — | Pending |
-| AGNT-09 | — | Pending |
+| STRC-01 | Phase 1 | Pending |
+| STRC-10 | Phase 1 | Pending |
+| STRC-02 | Phase 2 | Pending |
+| STRC-03 | Phase 2 | Pending |
+| STRC-04 | Phase 2 | Pending |
+| STRC-05 | Phase 2 | Pending |
+| STRC-06 | Phase 2 | Pending |
+| STRC-07 | Phase 3 | Pending |
+| STRC-08 | Phase 3 | Pending |
+| STRC-09 | Phase 3 | Pending |
+| SECR-01 | Phase 4 | Pending |
+| SECR-02 | Phase 4 | Pending |
+| SECR-03 | Phase 4 | Pending |
+| SECR-04 | Phase 5 | Pending |
+| SECR-05 | Phase 5 | Pending |
+| SECR-06 | Phase 5 | Pending |
+| SECR-07 | Phase 6 | Pending |
+| SECR-08 | Phase 6 | Pending |
+| SECR-09 | Phase 6 | Pending |
+| SECR-10 | Phase 6 | Pending |
+| PROF-01 | Phase 7 | Pending |
+| PROF-02 | Phase 7 | Pending |
+| PROF-03 | Phase 7 | Pending |
+| PROF-04 | Phase 7 | Pending |
+| PROF-05 | Phase 8 | Pending |
+| PROF-06 | Phase 8 | Pending |
+| PROF-07 | Phase 8 | Pending |
+| PROF-08 | Phase 8 | Pending |
+| AGNT-01 | Phase 9 | Pending |
+| AGNT-02 | Phase 9 | Pending |
+| AGNT-03 | Phase 9 | Pending |
+| AGNT-09 | Phase 9 | Pending |
+| AGNT-04 | Phase 10 | Pending |
+| AGNT-05 | Phase 10 | Pending |
+| AGNT-06 | Phase 10 | Pending |
+| AGNT-07 | Phase 10 | Pending |
+| AGNT-08 | Phase 10 | Pending |
 
 **Coverage:**
 - v1 requirements: 37 total
-- Mapped to phases: 0
-- Unmapped: 37
+- Mapped to phases: 37
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-26*
-*Last updated: 2026-02-26 after initial definition*
+*Last updated: 2026-02-26 — traceability populated after roadmap creation*
