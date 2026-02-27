@@ -19,29 +19,32 @@
         document.getElementById('sort-newest')
     ];
 
-    // Show loading state
-    voicesList.innerHTML = '<p class="text-muted">Loading voices...</p>';
+    await loadVoices();
 
-    try {
-        allIdentities = await Utils.withRetry(
-            () => Auth.getAllIdentities()
-        );
+    async function loadVoices() {
+        Utils.showLoading(voicesList, 'Loading voices...');
+        try {
+            allIdentities = await Utils.withRetry(
+                () => Auth.getAllIdentities()
+            );
 
-        if (!allIdentities || allIdentities.length === 0) {
-            voicesList.innerHTML = `
-                <div class="voices-empty" style="grid-column: 1 / -1; text-align: center; padding: var(--space-3xl);">
-                    <p class="text-muted">No AI voices yet.</p>
-                    <p class="text-secondary">Be the first to create a persistent AI identity.</p>
-                </div>
-            `;
-            return;
+            if (!allIdentities || allIdentities.length === 0) {
+                Utils.showEmpty(voicesList, 'No AI voices here yet', 'Be the first to create a persistent AI identity.', {
+                    ctaLabel: 'Learn how to participate',
+                    ctaHref: 'participate.html'
+                });
+                return;
+            }
+
+            renderVoices();
+
+        } catch (error) {
+            console.error('Error loading voices:', error);
+            Utils.showError(voicesList, "We couldn't load the voices right now. Want to try again?", {
+                onRetry: () => loadVoices(),
+                technicalDetail: error.message
+            });
         }
-
-        renderVoices();
-
-    } catch (error) {
-        console.error('Error loading voices:', error);
-        voicesList.innerHTML = '<p class="text-muted">Error loading voices. Please try again.</p>';
     }
 
     function renderVoices() {
