@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in-progress
-last_updated: "2026-02-27T19:19:00Z"
+last_updated: "2026-02-27T19:22:46Z"
 progress:
   total_phases: 10
-  completed_phases: 3
-  total_plans: 9
-  completed_plans: 9
+  completed_phases: 4
+  total_plans: 10
+  completed_plans: 10
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** Anyone — human or AI — should be able to show up and immediately understand how to participate, safely.
-**Current focus:** Phase 4 — XSS Prevention
+**Current focus:** Phase 4 — XSS Prevention (complete)
 
 ## Current Position
 
-Phase: 4 of 10 (XSS Prevention)
-Plan: 1 of 2 in current phase — complete
-Status: 04-01 complete — Utils.sanitizeHtml() added; DOMPurify 3.3.1 CDN with SRI on 4 rich-content pages
-Last activity: 2026-02-27 — 04-01 complete
+Phase: 4 of 10 (XSS Prevention) — COMPLETE
+Plan: 2 of 2 in current phase — complete
+Status: 04-02 complete — all local escapeHtml/formatContent copies removed; 40 calls in admin.js migrated to Utils.*; moment.js manual regex replaced; voices.js and profile.js avatar initials escaped
+Last activity: 2026-02-27 — 04-02 complete
 
-Progress: [████▒░░░░░] 22%
+Progress: [█████░░░░░] 25%
 
 ## Performance Metrics
 
@@ -43,10 +43,10 @@ Progress: [████▒░░░░░] 22%
 | 01-shared-utilities | 2 | ~20min | ~10min |
 | 02-auth-state-patterns | 4 | ~16min | ~4min |
 | 03-dead-code-links | 2 | ~23min | ~12min |
-| 04-xss-prevention | 1 | ~2min | ~2min |
+| 04-xss-prevention | 2 | ~5min | ~2.5min |
 
 **Recent Trend:**
-- Last 5 plans: 02-04 (~4min), 03-01 (~15min), 03-02 (~8min), 04-01 (~2min)
+- Last 5 plans: 03-01 (~15min), 03-02 (~8min), 04-01 (~2min), 04-02 (~3min)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -79,6 +79,9 @@ Recent decisions affecting current work:
 - [Phase 04-xss-prevention]: 04-01: DOMPurify 3.3.1 pinned by version and locked with sha384 SRI hash to prevent supply chain attacks
 - [Phase 04-xss-prevention]: 04-01: sanitizeHtml allowed tags restricted to safe formatting subset: b, strong, i, em, p, br, a, ul, ol, li
 - [Phase 04-xss-prevention]: 04-01: DOMPurify scoped to 4 rich-content pages only (discussion, text, postcards, chat) per SECR-02
+- [Phase 04-xss-prevention]: 04-02: admin.js formatDate() kept — plan said remove only if unused; 8 active call sites confirmed
+- [Phase 04-xss-prevention]: 04-02: Null guards (|| '') added to all 5 Utils.formatContent call sites in admin.js — Utils version lacks if (!text) return '' guard
+- [Phase 04-xss-prevention]: 04-02: SECR-01 satisfied — every innerHTML rendering user-generated content goes through Utils.escapeHtml() or Utils.formatContent()
 
 ### Pending Todos
 
@@ -92,5 +95,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: Completed 04-01-PLAN.md (Utils.sanitizeHtml + DOMPurify CDN with SRI)
-Resume file: .planning/phases/04-xss-prevention/04-02-PLAN.md
+Stopped at: Completed 04-02-PLAN.md (Utils.* consolidation — all local escapeHtml/formatContent removed)
+Resume file: .planning/phases/05-*/05-01-PLAN.md (next phase)

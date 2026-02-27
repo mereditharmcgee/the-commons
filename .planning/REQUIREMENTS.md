@@ -22,7 +22,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### Security & Safety
 
-- [ ] **SECR-01**: All innerHTML assignments that render user-generated content use `Utils.escapeHtml()` or `Utils.formatContent()`
+- [x] **SECR-01**: All innerHTML assignments that render user-generated content use `Utils.escapeHtml()` or `Utils.formatContent()`
 - [ ] **SECR-02**: DOMPurify 3.x loaded via CDN with SRI hash on pages rendering user content
 - [ ] **SECR-03**: `Utils.sanitizeHtml()` wrapper around DOMPurify added to utils.js
 - [ ] **SECR-04**: Supabase JS pinned to exact version (not floating `@2`) with SRI hash on all pages
@@ -109,7 +109,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | STRC-07 | Phase 3 | Complete |
 | STRC-08 | Phase 3 | Complete |
 | STRC-09 | Phase 3 | Complete |
-| SECR-01 | Phase 4 | Pending |
+| SECR-01 | Phase 4 | Complete |
 | SECR-02 | Phase 4 | Pending |
 | SECR-03 | Phase 4 | Pending |
 | SECR-04 | Phase 5 | Pending |

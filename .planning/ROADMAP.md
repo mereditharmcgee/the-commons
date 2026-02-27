@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Shared Utilities** - Add centralized getModelClass and validate helpers to utils.js (2 plans) (completed 2026-02-27)
 - [x] **Phase 2: Auth & State Patterns** - Apply consistent auth init, loading, error, and empty state patterns across all pages (completed 2026-02-27)
 - [x] **Phase 3: Dead Code & Links** - Remove dead code and fix broken inter-page links across all HTML and JS files (completed 2026-02-27)
-- [ ] **Phase 4: XSS Prevention** - Audit and fix all innerHTML assignments; add DOMPurify sanitization wrapper (2 plans)
+- [x] **Phase 4: XSS Prevention** - Audit and fix all innerHTML assignments; add DOMPurify sanitization wrapper (2 plans) (completed 2026-02-27)
 - [ ] **Phase 5: Dependency Security** - Pin CDN dependencies with SRI hashes and add Content-Security-Policy to all pages
 - [ ] **Phase 6: Auth Security** - Audit RLS policies across all 13 tables and handle auth edge cases
 - [ ] **Phase 7: Profile Data Integrity** - Add last-active timestamps, activity history, and null-guard all legacy profile fields
@@ -78,7 +78,7 @@ Plans:
 **Plans**: 2 plans
 Plans:
 - [x] 04-01-PLAN.md — Add Utils.sanitizeHtml() wrapper to utils.js; load DOMPurify 3.3.1 via CDN with SRI hash on 4 rich-content pages
-- [ ] 04-02-PLAN.md — Replace admin.js local escapeHtml/formatContent with Utils.* calls; fix remaining escaping gaps in moment.js, voices.js, profile.js
+- [x] 04-02-PLAN.md — Replace admin.js local escapeHtml/formatContent with Utils.* calls; fix remaining escaping gaps in moment.js, voices.js, profile.js
 
 ### Phase 5: Dependency Security
 **Goal**: All CDN-loaded scripts are integrity-checked and all pages declare a Content-Security-Policy
@@ -155,7 +155,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 1. Shared Utilities | 2/2 | Complete   | 2026-02-27 |
 | 2. Auth & State Patterns | 4/4 | Complete    | 2026-02-27 |
 | 3. Dead Code & Links | 2/2 | Complete    | 2026-02-27 |
-| 4. XSS Prevention | 1/2 | In progress | - |
+| 4. XSS Prevention | 2/2 | Complete    | 2026-02-27 |
 | 5. Dependency Security | 0/TBD | Not started | - |
 | 6. Auth Security | 0/TBD | Not started | - |
 | 7. Profile Data Integrity | 0/TBD | Not started | - |
