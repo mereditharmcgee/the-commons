@@ -2,26 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: unknown
-last_updated: "2026-02-27T19:28:57.545Z"
-progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 10
-  completed_plans: 10
----
-
----
-gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
 status: in-progress
-last_updated: "2026-02-27T19:22:46Z"
+last_updated: "2026-02-27T20:16:00Z"
 progress:
   total_phases: 10
   completed_phases: 4
-  total_plans: 10
-  completed_plans: 10
+  total_plans: 11
+  completed_plans: 11
 ---
 
 # Project State
@@ -31,23 +18,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** Anyone — human or AI — should be able to show up and immediately understand how to participate, safely.
-**Current focus:** Phase 4 — XSS Prevention (complete)
+**Current focus:** Phase 5 — Dependency Security (in progress)
 
 ## Current Position
 
-Phase: 4 of 10 (XSS Prevention) — COMPLETE
-Plan: 2 of 2 in current phase — complete
-Status: 04-02 complete — all local escapeHtml/formatContent copies removed; 40 calls in admin.js migrated to Utils.*; moment.js manual regex replaced; voices.js and profile.js avatar initials escaped
-Last activity: 2026-02-27 — 04-02 complete
+Phase: 5 of 10 (Dependency Security) — IN PROGRESS
+Plan: 1 of 2 in current phase — complete
+Status: 05-01 complete — Supabase pinned to @2.98.0 with SRI on all 27 pages; rel=noopener noreferrer added to all 91 blank-target links across 26 pages
+Last activity: 2026-02-27 — 05-01 complete
 
-Progress: [█████░░░░░] 25%
+Progress: [█████░░░░░] 27%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9
+- Total plans completed: 11
 - Average duration: ~6min
-- Total execution time: ~53min
+- Total execution time: ~59min
 
 **By Phase:**
 
@@ -57,9 +44,10 @@ Progress: [█████░░░░░] 25%
 | 02-auth-state-patterns | 4 | ~16min | ~4min |
 | 03-dead-code-links | 2 | ~23min | ~12min |
 | 04-xss-prevention | 2 | ~5min | ~2.5min |
+| 05-dependency-security | 1/2 | ~6min | ~6min |
 
 **Recent Trend:**
-- Last 5 plans: 03-01 (~15min), 03-02 (~8min), 04-01 (~2min), 04-02 (~3min)
+- Last 5 plans: 04-01 (~2min), 04-02 (~3min), 05-01 (~6min)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -95,6 +83,9 @@ Recent decisions affecting current work:
 - [Phase 04-xss-prevention]: 04-02: admin.js formatDate() kept — plan said remove only if unused; 8 active call sites confirmed
 - [Phase 04-xss-prevention]: 04-02: Null guards (|| '') added to all 5 Utils.formatContent call sites in admin.js — Utils version lacks if (!text) return '' guard
 - [Phase 04-xss-prevention]: 04-02: SECR-01 satisfied — every innerHTML rendering user-generated content goes through Utils.escapeHtml() or Utils.formatContent()
+- [Phase 05-dependency-security]: 05-01: Supabase floating @2 URL incompatible with SRI — @2.98.0/dist/umd/supabase.js (static file) required for stable bytes
+- [Phase 05-dependency-security]: 05-01: crossorigin=anonymous required alongside integrity attribute for browser to enforce SRI on cross-origin resources
+- [Phase 05-dependency-security]: 05-01: DOMPurify ordering preserved on 4 rich-content pages — only Supabase tag replaced, DOMPurify before Supabase maintained
 
 ### Pending Todos
 
@@ -108,5 +99,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: Completed 04-02-PLAN.md (Utils.* consolidation — all local escapeHtml/formatContent removed)
-Resume file: .planning/phases/05-*/05-01-PLAN.md (next phase)
+Stopped at: Completed 05-01-PLAN.md (Supabase SRI pin + noopener on all blank-target links)
+Resume file: .planning/phases/05-dependency-security/05-02-PLAN.md (CSP meta tag — next plan)
