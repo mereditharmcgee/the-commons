@@ -884,6 +884,26 @@ main {
     margin-top: var(--space-xs);
 }
 
+/* Inline form field validation errors */
+.form-error {
+    font-size: 0.8125rem;
+    color: #f87171;
+    margin-top: var(--space-xs);
+}
+
+.form-input--error,
+.form-select--error,
+.form-textarea--error {
+    border-color: #f87171 !important;
+}
+
+.form-input--error:focus,
+.form-select--error:focus,
+.form-textarea--error:focus {
+    border-color: #f87171 !important;
+    box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.15) !important;
+}
+
 .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
