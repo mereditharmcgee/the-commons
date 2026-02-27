@@ -2,26 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: unknown
-last_updated: "2026-02-27T04:27:12.640Z"
-progress:
-  total_phases: 2
-  completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
----
-
----
-gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
 status: in-progress
-last_updated: "2026-02-26T00:04:00Z"
+last_updated: "2026-02-27T00:15:00Z"
 progress:
-  total_phases: 2
+  total_phases: 10
   completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 7
+  completed_plans: 7
 ---
 
 # Project State
@@ -31,23 +18,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** Anyone — human or AI — should be able to show up and immediately understand how to participate, safely.
-**Current focus:** Phase 2 — Auth & State Patterns
+**Current focus:** Phase 3 — Dead Code & Links
 
 ## Current Position
 
-Phase: 2 of 10 (Auth & State Patterns)
-Plan: 4 of 4 in current phase
-Status: Phase 02 complete — 02-04 complete
-Last activity: 2026-02-26 — 02-04 complete (profile.js tab sections and text.js loadMarginalia state pattern gap closure)
+Phase: 3 of 10 (Dead Code & Links)
+Plan: 1 of 1 in current phase
+Status: Phase 03 plan 01 complete — 03-01 complete
+Last activity: 2026-02-27 — 03-01 complete (ESLint config, dead variables removed, broken identity.html link fixed)
 
-Progress: [████░░░░░░] 14%
+Progress: [████░░░░░░] 16%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
+- Total plans completed: 7
 - Average duration: ~5min
-- Total execution time: ~28min
+- Total execution time: ~43min
 
 **By Phase:**
 
@@ -55,9 +42,10 @@ Progress: [████░░░░░░] 14%
 |-------|-------|-------|----------|
 | 01-shared-utilities | 2 | ~20min | ~10min |
 | 02-auth-state-patterns | 4 | ~16min | ~4min |
+| 03-dead-code-links | 1 | ~15min | ~15min |
 
 **Recent Trend:**
-- Last 5 plans: 01-02 (~10min), 02-01 (~8min), 02-02 (~2min), 02-03 (~2min), 02-04 (~4min)
+- Last 5 plans: 02-01 (~8min), 02-02 (~2min), 02-03 (~2min), 02-04 (~4min), 03-01 (~15min)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -82,6 +70,9 @@ Recent decisions affecting current work:
 - 02-02: submit.js double Auth.init() left in place with clarifying comment — guarded by this.initialized, .then() chain is correct
 - [Phase 02-auth-state-patterns]: 02-03: loadDiscussions() in moment.js also standardized — error-message grep done-criteria required it; noDiscussionsEl removed alongside other dead variables
 - [Phase 02-auth-state-patterns]: 02-04: No new decisions — mechanical gap closure replacing 10 ad-hoc text-muted strings with Utils helpers in profile.js tab sections and text.js loadMarginalia
+- [Phase 03-dead-code-links]: 03-01: ESLint flat config (eslint.config.mjs) chosen — required for ESLint 9.x; caughtErrorsIgnorePattern "^_" added to suppress warnings for intentional underscore-prefix convention
+- [Phase 03-dead-code-links]: 03-01: isAdmin removed entirely — was written in 3 places but never read; discussionIds and nameDisplay removed — pure expressions with no side effects
+- [Phase 03-dead-code-links]: 03-01: profile.html is the canonical target for AI identity profile links — identity.html does not exist
 
 ### Pending Todos
 
@@ -94,6 +85,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-26
-Stopped at: Completed 02-04-PLAN.md (profile.js and text.js state pattern gap closure)
-Resume file: .planning/phases/03-*/03-01-PLAN.md (next phase)
+Last session: 2026-02-27
+Stopped at: Completed 03-01-PLAN.md (ESLint config, dead code removal, broken link fix)
+Resume file: .planning/phases/04-*/04-01-PLAN.md (next phase)

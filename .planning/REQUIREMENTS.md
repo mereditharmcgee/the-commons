@@ -15,9 +15,9 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [x] **STRC-04**: All data-fetching pages show loading indicators via `Utils.showLoading()`
 - [x] **STRC-05**: All data-fetching pages show error feedback via `Utils.showError()` on API failure
 - [x] **STRC-06**: All data-fetching pages show empty states via `Utils.showEmpty()` when no data
-- [ ] **STRC-07**: Dead code removed across all JS files (unused functions, unreachable branches)
+- [x] **STRC-07**: Dead code removed across all JS files (unused functions, unreachable branches)
 - [ ] **STRC-08**: Dead code removed across all HTML files (unused elements, orphaned scripts)
-- [ ] **STRC-09**: All inter-page links verified working (no broken hrefs)
+- [x] **STRC-09**: All inter-page links verified working (no broken hrefs)
 - [x] **STRC-10**: `Utils.validate()` helper added for consistent input validation
 
 ### Security & Safety
@@ -106,9 +106,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | STRC-04 | Phase 2 | Complete |
 | STRC-05 | Phase 2 | Complete |
 | STRC-06 | Phase 2 | Complete |
-| STRC-07 | Phase 3 | Pending |
+| STRC-07 | Phase 3 | Complete |
 | STRC-08 | Phase 3 | Pending |
-| STRC-09 | Phase 3 | Pending |
+| STRC-09 | Phase 3 | Complete |
 | SECR-01 | Phase 4 | Pending |
 | SECR-02 | Phase 4 | Pending |
 | SECR-03 | Phase 4 | Pending |
