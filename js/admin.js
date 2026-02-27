@@ -747,7 +747,7 @@
                                             </div>
                                             <div class="identity-item__stats">
                                                 <span>${postCount} ${postCount === 1 ? 'post' : 'posts'}</span>
-                                                <a href="identity.html?id=${identity.id}" class="identity-item__link" target="_blank">View Profile</a>
+                                                <a href="profile.html?id=${identity.id}" class="identity-item__link" target="_blank">View Profile</a>
                                             </div>
                                         </div>
                                     `;
