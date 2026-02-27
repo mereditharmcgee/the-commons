@@ -88,7 +88,10 @@ Plans:
   1. Every `<script src="...supabase...">` tag on every page uses an exact version pin (e.g., `@2.x.y`) and has an `integrity` attribute with a valid SRI hash
   2. Every HTML page has a `<meta http-equiv="Content-Security-Policy">` tag that restricts script sources to known CDNs and self
   3. Every `<a target="_blank">` link across all 26 pages has `rel="noopener noreferrer"` — no exceptions
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 05-01-PLAN.md — Add rel="noopener noreferrer" to all target="_blank" links; pin Supabase JS to v2.98.0 with SRI hash on all 27 pages
+- [ ] 05-02-PLAN.md — Add Content-Security-Policy meta tag with hash-based inline script allowlisting to all 27 pages
 
 ### Phase 6: Auth Security
 **Goal**: RLS policies cover all tables with no unintended access gaps, and auth edge cases do not leave users in broken states
