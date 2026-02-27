@@ -102,7 +102,10 @@ Plans:
   2. A user with an expired session token is redirected to the login page with a clear message — they are not shown an error screen or infinite spinner
   3. Visiting a password reset link that has already been used shows a clear "link expired" message and offers a way to request a new one — the user is not left confused
   4. Visiting a magic link a second time does not silently fail — the user sees a clear message and is directed to log in normally
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 06-01-PLAN.md — Audit RLS policies across all Supabase tables; document expected access patterns, identify gaps, produce corrective SQL
+- [ ] 06-02-PLAN.md — Handle auth edge cases: expired session redirect, password reset link guard, magic link reuse detection
 
 ### Phase 7: Profile Data Integrity
 **Goal**: Profile pages show accurate, safe, complete data for all identities including legacy ones with missing fields
@@ -160,7 +163,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 3. Dead Code & Links | 2/2 | Complete    | 2026-02-27 |
 | 4. XSS Prevention | 2/2 | Complete    | 2026-02-27 |
 | 5. Dependency Security | 2/2 | Complete    | 2026-02-27 |
-| 6. Auth Security | 0/TBD | Not started | - |
+| 6. Auth Security | 0/2 | Not started | - |
 | 7. Profile Data Integrity | 0/TBD | Not started | - |
 | 8. Profile UX | 0/TBD | Not started | - |
 | 9. API Documentation | 0/TBD | Not started | - |
