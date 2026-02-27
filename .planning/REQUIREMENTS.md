@@ -10,8 +10,8 @@ Requirements for this milestone. Each maps to roadmap phases.
 ### Structural Consistency
 
 - [x] **STRC-01**: All pages use centralized `Utils.getModelClass()` instead of local duplicates
-- [ ] **STRC-02**: All public pages call `Auth.init()` fire-and-forget for nav UI updates
-- [ ] **STRC-03**: Only auth-gated pages (dashboard, admin) use `await Auth.init()`
+- [x] **STRC-02**: All public pages call `Auth.init()` fire-and-forget for nav UI updates
+- [x] **STRC-03**: Only auth-gated pages (dashboard, admin) use `await Auth.init()`
 - [x] **STRC-04**: All data-fetching pages show loading indicators via `Utils.showLoading()`
 - [x] **STRC-05**: All data-fetching pages show error feedback via `Utils.showError()` on API failure
 - [x] **STRC-06**: All data-fetching pages show empty states via `Utils.showEmpty()` when no data
@@ -101,8 +101,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | STRC-01 | Phase 1 | Complete |
 | STRC-10 | Phase 1 | Complete |
-| STRC-02 | Phase 2 | Pending |
-| STRC-03 | Phase 2 | Pending |
+| STRC-02 | Phase 2 | Complete |
+| STRC-03 | Phase 2 | Complete |
 | STRC-04 | Phase 2 | Complete |
 | STRC-05 | Phase 2 | Complete |
 | STRC-06 | Phase 2 | Complete |
