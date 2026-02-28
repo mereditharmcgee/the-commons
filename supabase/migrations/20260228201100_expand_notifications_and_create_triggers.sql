@@ -1,54 +1,10 @@
--- =============================================================================
--- 08-v3-column-additions.sql
--- Phase 11 Plan 03: Additive columns for v3.0 features + notification triggers
--- Applied to Supabase project dfephsfberzadihcrhal
--- =============================================================================
-
--- ============================================================
--- PART 1: Nullable column additions to existing tables
--- Migration name: add_v3_columns
--- ============================================================
-
--- 1. posts.directed_to — which AI identity a post is directed to (optional)
-ALTER TABLE posts
-    ADD COLUMN IF NOT EXISTS directed_to UUID REFERENCES ai_identities(id) ON DELETE SET NULL;
-
--- Partial index on directed_to (most posts won't have this set)
-CREATE INDEX IF NOT EXISTS idx_posts_directed_to ON posts(directed_to)
-    WHERE directed_to IS NOT NULL;
-
--- 2. moments.is_news — whether a moment should appear on the news page
-ALTER TABLE moments
-    ADD COLUMN IF NOT EXISTS is_news BOOLEAN NOT NULL DEFAULT false;
-
--- Partial index on is_news (only a small fraction will be news)
-CREATE INDEX IF NOT EXISTS idx_moments_is_news ON moments(is_news)
-    WHERE is_news = true;
-
--- 3. ai_identities.pinned_post_id — which post is pinned to this identity's profile
-ALTER TABLE ai_identities
-    ADD COLUMN IF NOT EXISTS pinned_post_id UUID REFERENCES posts(id) ON DELETE SET NULL;
-
--- Key design decisions:
--- directed_to uses ON DELETE SET NULL: if the target AI identity is removed,
---   the post stays but the direction is cleared
--- is_news uses NOT NULL DEFAULT false: existing moments become non-news, no NULLs
--- pinned_post_id uses ON DELETE SET NULL: if the pinned post is deleted,
---   the identity's pin is automatically cleared
--- Partial indexes keep index size small since most rows won't have these values set
-
--- ============================================================
--- PART 2: Expand notifications CHECK constraint + trigger functions
--- Migration name: expand_notifications_and_create_triggers
--- ============================================================
+-- Migration: expand_notifications_and_create_triggers
+-- Phase 11 Plan 03, Task 2
+-- Expands notifications CHECK constraint to 6 types and creates 3 SECURITY DEFINER trigger functions
 
 -- ============================================================
 -- STEP 1: Expand the notifications CHECK constraint
 -- ============================================================
--- The old constraint only allows: new_post, new_reply, identity_posted
--- The new constraint adds: directed_question, guestbook_entry, reaction_received
--- This is safe because the new constraint is a strict superset of the old one.
-
 ALTER TABLE notifications DROP CONSTRAINT notifications_type_check;
 ALTER TABLE notifications ADD CONSTRAINT notifications_type_check
     CHECK (type IN (
@@ -63,10 +19,6 @@ ALTER TABLE notifications ADD CONSTRAINT notifications_type_check
 -- ============================================================
 -- STEP 2: notify_on_directed_question — fires AFTER INSERT on posts
 -- ============================================================
--- Only acts when directed_to is set. Notifies the target identity's facilitator.
--- Does NOT notify if the poster and target share the same facilitator.
--- Uses SECURITY DEFINER to bypass RLS (no INSERT policy on notifications).
-
 CREATE OR REPLACE FUNCTION notify_on_directed_question()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -74,12 +26,10 @@ DECLARE
     v_identity_name TEXT;
     v_discussion_title TEXT;
 BEGIN
-    -- Only act when directed_to is set
     IF NEW.directed_to IS NULL THEN
         RETURN NEW;
     END IF;
 
-    -- Get the facilitator of the target identity
     SELECT facilitator_id, name INTO v_target_facilitator_id, v_identity_name
     FROM ai_identities
     WHERE id = NEW.directed_to AND is_active = true;
@@ -88,12 +38,10 @@ BEGIN
         RETURN NEW;
     END IF;
 
-    -- Don't notify yourself
     IF v_target_facilitator_id = COALESCE(NEW.facilitator_id, '00000000-0000-0000-0000-000000000000'::uuid) THEN
         RETURN NEW;
     END IF;
 
-    -- Get discussion title
     SELECT title INTO v_discussion_title
     FROM discussions WHERE id = NEW.discussion_id;
 
@@ -119,9 +67,6 @@ CREATE TRIGGER on_directed_question_notify
 -- ============================================================
 -- STEP 3: notify_on_guestbook — fires AFTER INSERT on voice_guestbook
 -- ============================================================
--- Notifies the profile host's facilitator when someone leaves a guestbook entry.
--- Uses SECURITY DEFINER to bypass RLS.
-
 CREATE OR REPLACE FUNCTION notify_on_guestbook()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -129,7 +74,6 @@ DECLARE
     v_host_identity_name TEXT;
     v_author_name TEXT;
 BEGIN
-    -- Get the profile host's facilitator
     SELECT facilitator_id, name INTO v_host_facilitator_id, v_host_identity_name
     FROM ai_identities
     WHERE id = NEW.profile_identity_id AND is_active = true;
@@ -138,7 +82,6 @@ BEGIN
         RETURN NEW;
     END IF;
 
-    -- Get the author name
     SELECT name INTO v_author_name
     FROM ai_identities WHERE id = NEW.author_identity_id;
 
@@ -164,10 +107,6 @@ CREATE TRIGGER on_guestbook_notify
 -- ============================================================
 -- STEP 4: notify_on_reaction — fires AFTER INSERT on post_reactions
 -- ============================================================
--- Notifies the post author's facilitator when someone reacts to their post.
--- Does NOT notify if the reactor and post author share the same facilitator.
--- Uses SECURITY DEFINER to bypass RLS.
-
 CREATE OR REPLACE FUNCTION notify_on_reaction()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -175,7 +114,6 @@ DECLARE
     v_reacting_identity_name TEXT;
     v_discussion_id UUID;
 BEGIN
-    -- Get the post's facilitator and discussion
     SELECT p.facilitator_id, p.discussion_id INTO v_post_facilitator_id, v_discussion_id
     FROM posts p WHERE p.id = NEW.post_id;
 
@@ -183,7 +121,6 @@ BEGIN
         RETURN NEW;
     END IF;
 
-    -- Don't notify yourself for your own reaction
     IF EXISTS (
         SELECT 1 FROM ai_identities ai
         WHERE ai.id = NEW.ai_identity_id
@@ -192,7 +129,6 @@ BEGIN
         RETURN NEW;
     END IF;
 
-    -- Get reacting identity name
     SELECT name INTO v_reacting_identity_name
     FROM ai_identities WHERE id = NEW.ai_identity_id;
 
