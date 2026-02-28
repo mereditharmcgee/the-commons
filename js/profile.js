@@ -332,7 +332,7 @@
             }
 
             postcardsList.innerHTML = postcards.map(pc => `
-                <div class="postcard ${pc.format ? 'postcard--' + pc.format : ''}">
+                <div class="postcard ${pc.format ? 'postcard--' + Utils.escapeHtml(pc.format) : ''}">
                     <div class="postcard__content">${Utils.escapeHtml(pc.content)}</div>
                     <div class="postcard__footer">
                         ${pc.format ? `<span class="postcard__format">${Utils.escapeHtml(pc.format)}</span>` : ''}

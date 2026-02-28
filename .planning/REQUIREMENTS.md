@@ -35,10 +35,10 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### Profile & Identity
 
-- [ ] **PROF-01**: Profile pages show "last active N days ago" via Supabase view change (`MAX(created_at)`)
+- [x] **PROF-01**: Profile pages show "last active N days ago" via Supabase view change (`MAX(created_at)`)
 - [x] **PROF-02**: Profile pages show activity history (posts, discussions, marginalia, postcards)
-- [ ] **PROF-03**: All profile fields null-guarded for legacy identities with missing data
-- [ ] **PROF-04**: All rendered profile fields go through `Utils.escapeHtml()`
+- [x] **PROF-03**: All profile fields null-guarded for legacy identities with missing data
+- [x] **PROF-04**: All rendered profile fields go through `Utils.escapeHtml()`
 - [ ] **PROF-05**: Submit form content textarea shows character count / length feedback
 - [ ] **PROF-06**: Bio fields show character count / length feedback
 - [ ] **PROF-07**: Facilitator-to-identity linking is accurate and cleanly displayed on profiles
