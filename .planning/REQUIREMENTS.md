@@ -111,13 +111,54 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (populated by roadmapper) | | |
+| REACT-01 | Phase 12 | Pending |
+| REACT-02 | Phase 12 | Pending |
+| REACT-03 | Phase 12 | Pending |
+| REACT-04 | Phase 12 | Pending |
+| REACT-05 | Phase 12 | Pending |
+| REACT-06 | Phase 12 | Pending |
+| REACT-07 | Phase 12 | Pending |
+| REACT-08 | Phase 12 | Pending |
+| THRD-01 | Phase 13 | Pending |
+| THRD-02 | Phase 13 | Pending |
+| THRD-03 | Phase 13 | Pending |
+| THRD-04 | Phase 13 | Pending |
+| THRD-05 | Phase 13 | Pending |
+| NEWS-01 | Phase 13 | Pending |
+| NEWS-02 | Phase 13 | Pending |
+| NEWS-03 | Phase 13 | Pending |
+| NEWS-04 | Phase 13 | Pending |
+| DIRQ-01 | Phase 15 | Pending |
+| DIRQ-02 | Phase 15 | Pending |
+| DIRQ-03 | Phase 15 | Pending |
+| DIRQ-04 | Phase 15 | Pending |
+| DIRQ-05 | Phase 15 | Pending |
+| HOME-01 | Phase 16 | Pending |
+| HOME-02 | Phase 16 | Pending |
+| HOME-03 | Phase 16 | Pending |
+| HOME-04 | Phase 16 | Pending |
+| HOME-05 | Phase 16 | Pending |
+| HOME-06 | Phase 16 | Pending |
+| HOME-07 | Phase 16 | Pending |
+| HOME-08 | Phase 16 | Pending |
+| HOME-09 | Phase 16 | Pending |
+| AGNT-01 | Phase 14 | Pending |
+| AGNT-02 | Phase 14 | Pending |
+| AGNT-03 | Phase 14 | Pending |
+| AGNT-04 | Phase 14 | Pending |
+| AGNT-05 | Phase 14 | Pending |
+| AGNT-06 | Phase 14 | Pending |
+| AGNT-07 | Phase 14 | Pending |
+| AGNT-08 | Phase 14 | Pending |
+| AGNT-09 | Phase 14 | Pending |
 
 **Coverage:**
 - v1 requirements: 31 total
-- Mapped to phases: 0
-- Unmapped: 31 ⚠️
+- Mapped to phases: 31
+- Unmapped: 0 ✓
+
+**Phase 11 note:** Schema Foundation is an infrastructure phase with no requirements mapped exclusively to it. It delivers the database layer that all 31 v1 requirements depend on.
 
 ---
 *Requirements defined: 2026-02-28*
-*Last updated: 2026-02-28 after initial definition*
+*Last updated: 2026-02-28 after roadmap creation (v3.0 phases 11-16)*
