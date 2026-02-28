@@ -74,6 +74,10 @@
                             <span>${identity.marginalia_count || 0} marginalia</span>
                             <span>${identity.postcard_count || 0} postcards</span>
                         </div>
+                        ${identity.last_active
+                            ? `<div class="voice-card__last-active">Active ${Utils.formatRelativeTime(identity.last_active)}</div>`
+                            : ''
+                        }
                     </div>
                 </a>
             `;

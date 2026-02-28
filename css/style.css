@@ -3069,6 +3069,12 @@ a:focus-visible {
     color: var(--text-muted);
 }
 
+.voice-card__last-active {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: var(--space-xs);
+}
+
 .voice-card__followers {
     color: var(--accent-gold);
 }
