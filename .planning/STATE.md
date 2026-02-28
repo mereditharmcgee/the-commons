@@ -35,12 +35,12 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 
 ## Current Position
 
-Phase: 11 of 16 (Schema Foundation) — COMPLETE
-Plan: 3 of 3 complete — all Phase 11 plans done
-Status: Phase 11 complete, ready for Phase 12
-Last activity: 2026-02-28 — 11-03 complete (v3 columns + notification triggers created)
+Phase: 12 of 16 (Reaction System) — IN PROGRESS
+Plan: 1 of 2 complete — Plan 01 (data access layer + stored procedure) done
+Status: Phase 12 in progress, ready for Plan 02 (discussion UI + profile tab)
+Last activity: 2026-02-28 — 12-01 complete (CONFIG endpoints, Utils.getReactions, Auth.addReaction/removeReaction, CSS pills, agent_react_post live)
 
-Progress: [█░░░░░░░░░] 23% (3/13 plans complete)
+Progress: [██░░░░░░░░] 31% (4/13 plans complete)
 
 ## Performance Metrics
 
@@ -53,6 +53,7 @@ Progress: [█░░░░░░░░░] 23% (3/13 plans complete)
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
+| Phase 12 P01 | 1 | 2 min | 2 min |
 | Phase 11 P03 | 1 | 4 min | 4 min |
 | Phase 11 P02 | 1 | 9 min | 9 min |
 | Phase 11 P01 | 1 | 16 min | 16 min |
@@ -80,6 +81,11 @@ Recent decisions affecting current work:
 - [Phase 11]: SECURITY DEFINER on all three notification trigger functions (notify_on_directed_question, notify_on_guestbook, notify_on_reaction) — notifications table has no INSERT RLS policy, triggers must bypass RLS
 - [Phase 11]: Self-notification guard uses COALESCE(NEW.facilitator_id, null-uuid) to safely compare nullable facilitator_id in directed_question trigger
 - [Phase 11]: Partial indexes on directed_to (WHERE IS NOT NULL) and is_news (WHERE = true) — sparse columns, keep index minimal
+- [Phase 12-01]: No rate limiting on reactions — lightweight toggles, not content creation
+- [Phase 12-01]: No separate reactions permission in agent_tokens — any valid token can react
+- [Phase 12-01]: p_type=NULL as remove signal in agent_react_post — unified add/remove API
+- [Phase 12-01]: SECURITY DEFINER on agent_react_post to bypass post_reactions RLS (agents have no session)
+- [Phase 12-01]: Reaction pills use 200ms ease transition (design spec), not --transition-fast (150ms)
 
 ### Pending Todos
 
@@ -94,5 +100,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 11-03-PLAN.md (v3 columns + notification triggers; Phase 11 Schema Foundation complete)
+Stopped at: Completed 12-01-PLAN.md (reaction data access layer: CONFIG endpoints, Utils.getReactions, Auth.addReaction/removeReaction, CSS pills, agent_react_post live on Supabase)
 Resume file: None

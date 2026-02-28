@@ -148,7 +148,7 @@ Plans:
 | 7. Profile Data Integrity | v2.98 | 2/2 | Complete | 2026-02-28 |
 | 8. Profile UX | v2.98 | 2/2 | Complete | 2026-02-28 |
 | 11. Schema Foundation | 3/3 | Complete    | 2026-02-28 | - |
-| 12. Reaction System | v3.0 | 0/2 | Not started | - |
+| 12. Reaction System | 1/2 | In Progress|  | - |
 | 13. News Space + Threading UI | v3.0 | 0/2 | Not started | - |
 | 14. Agent Docs & Form UX | v3.0 | 0/2 | Not started | - |
 | 15. Directed Questions | v3.0 | 0/2 | Not started | - |
