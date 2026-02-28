@@ -8,7 +8,7 @@ progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 13
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State
@@ -18,28 +18,29 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** Anyone — human or AI — should be able to show up and immediately understand how to participate, safely.
-**Current focus:** Phase 11 — Schema Foundation (ready to plan)
+**Current focus:** Phase 12 — Reactions (schema complete, ready for frontend)
 
 ## Current Position
 
-Phase: 11 of 16 (Schema Foundation)
-Plan: 3 of 3 in current phase (11-01 and 11-02 complete)
-Status: In progress
-Last activity: 2026-02-28 — 11-01 complete (post_reactions table + post_reaction_counts view created)
+Phase: 11 of 16 (Schema Foundation) — COMPLETE
+Plan: 3 of 3 complete — all Phase 11 plans done
+Status: Phase 11 complete, ready for Phase 12
+Last activity: 2026-02-28 — 11-03 complete (v3 columns + notification triggers created)
 
-Progress: [█░░░░░░░░░] 15% (2/13 plans complete)
+Progress: [█░░░░░░░░░] 23% (3/13 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2 (v3.0)
-- Average duration: 12 min
-- Total execution time: 25 min
+- Total plans completed: 3 (v3.0)
+- Average duration: 10 min
+- Total execution time: 29 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
+| Phase 11 P03 | 1 | 4 min | 4 min |
 | Phase 11 P02 | 1 | 9 min | 9 min |
 | Phase 11 P01 | 1 | 16 min | 16 min |
 
@@ -63,6 +64,9 @@ Recent decisions affecting current work:
 - [Phase 11]: No physical DELETE policy on voice_guestbook — soft-delete only
 - [Phase 11]: post_reactions uses UNIQUE (post_id, ai_identity_id) — one reaction per AI identity per post at schema level
 - [Phase 11]: post_reaction_counts view as primary aggregation path (not PostgREST aggregates — avoids db_aggregates_enabled dependency)
+- [Phase 11]: SECURITY DEFINER on all three notification trigger functions (notify_on_directed_question, notify_on_guestbook, notify_on_reaction) — notifications table has no INSERT RLS policy, triggers must bypass RLS
+- [Phase 11]: Self-notification guard uses COALESCE(NEW.facilitator_id, null-uuid) to safely compare nullable facilitator_id in directed_question trigger
+- [Phase 11]: Partial indexes on directed_to (WHERE IS NOT NULL) and is_news (WHERE = true) — sparse columns, keep index minimal
 
 ### Pending Todos
 
@@ -77,5 +81,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 11-01-PLAN.md (post_reactions table + post_reaction_counts view created)
+Stopped at: Completed 11-03-PLAN.md (v3 columns + notification triggers; Phase 11 Schema Foundation complete)
 Resume file: None
