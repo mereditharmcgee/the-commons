@@ -44,28 +44,30 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** Anyone — human or AI — should be able to show up and immediately understand how to participate, safely.
-**Current focus:** Phase 12 — Reactions (schema complete, ready for frontend)
+**Current focus:** Phase 13 — News Space + Threading UI
 
 ## Current Position
 
-Phase: 12 of 16 (Reaction System) — COMPLETE
-Plan: 2 of 2 complete — Plan 02 (discussion reaction bars + profile reactions tab) done
-Status: Phase 12 complete — reaction system fully shipped (data layer + frontend UI)
-Last activity: 2026-02-28 — 12-02 complete (discussion reaction bars with optimistic toggle, profile reactions tab)
+Phase: 13 of 16 (News Space + Threading UI) — IN PROGRESS
+Plan: 2 of 3 complete — Plan 02 (admin News tab + THRD-04 reply parent preview) done
+Status: Phase 13 in progress — admin can pin/unpin/hide/show moments; reply posts show parent attribution
+Last activity: 2026-02-28 — 13-02 complete (admin News tab, moments pin/hide controls, reply parent preview with scrollToPost)
 
-Progress: [███░░░░░░░] 38% (5/13 plans complete)
+Progress: [████░░░░░░] 54% (7/13 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5 (v3.0)
-- Average duration: 7 min
-- Total execution time: 33 min
+- Total plans completed: 7 (v3.0)
+- Average duration: 6 min
+- Total execution time: 37 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
+| Phase 13 P02 | 1 | 2 min | 2 min |
+| Phase 13 P01 | 1 | 3 min | 3 min |
 | Phase 12 P02 | 1 | 2 min | 2 min |
 | Phase 12 P01 | 1 | 2 min | 2 min |
 | Phase 11 P03 | 1 | 4 min | 4 min |
@@ -103,6 +105,13 @@ Recent decisions affecting current work:
 - [Phase 12-02]: userIdentity set to identities[0] — first active AI identity used for reactions; multi-identity selection deferred
 - [Phase 12-02]: loadReactionData() fires non-blocking after renderPosts() — bars update surgically when counts arrive
 - [Phase 12-02]: Profile Reactions tab uses PostgREST embedding first, falls back to sequential queries on error
+- [Phase 13-01]: Moments rebranded as News sitewide — nav renamed from Moments to News pointing at news.html across all 26 HTML files
+- [Phase 13-02]: Admin moments uses existing admin-item__btn classes (not plan-specified admin-btn — class does not exist)
+- [Phase 13-02]: Parent preview shown on ALL replies (depth > 0), not just depth 2+ — even top-level replies benefit from attribution
+- [Phase 13-02]: scrollToPost uses bg-elevated (not bg-raised which is undefined in CSS variables)
+- [Phase 13-01]: Client-side pagination for news page — dataset is small (~30 moments) so all items fetched then paginated in JS
+- [Phase 13-01]: moments.html kept accessible at its original URL for backward compatibility but removed from nav
+- [Phase 13-01]: moment.html breadcrumb and CTA updated to news.html (moment detail is part of News section)
 
 ### Pending Todos
 
@@ -117,5 +126,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 12-02-PLAN.md (reaction UI: discussion reaction bars with optimistic toggle + profile reactions tab)
+Stopped at: Completed 13-02-PLAN.md (admin News tab + THRD-04 reply parent preview)
 Resume file: None

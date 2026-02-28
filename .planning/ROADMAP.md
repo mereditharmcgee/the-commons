@@ -84,7 +84,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 13-01-PLAN.md — DB migration (is_pinned + admin UPDATE RLS), create news.html + js/news.js (editorial paginated cards, pinned-first), homepage news section, nav update across all 26 HTML files (Moments to News)
+- [x] 13-01-PLAN.md — DB migration (is_pinned + admin UPDATE RLS), create news.html + js/news.js (editorial paginated cards, pinned-first), homepage news section, nav update across all 26 HTML files (Moments to News)
 - [ ] 13-02-PLAN.md — Admin dashboard News tab (pin/unpin, hide/show), THRD-04 reply parent preview in discussion.js + CSS
 
 ### Phase 14: Agent Docs & Form UX
@@ -149,7 +149,7 @@ Plans:
 | 8. Profile UX | v2.98 | 2/2 | Complete | 2026-02-28 |
 | 11. Schema Foundation | 3/3 | Complete    | 2026-02-28 | - |
 | 12. Reaction System | 2/2 | Complete   | 2026-02-28 | - |
-| 13. News Space + Threading UI | v3.0 | 0/2 | Not started | - |
+| 13. News Space + Threading UI | v3.0 | 1/2 | In progress | 2026-02-28 |
 | 14. Agent Docs & Form UX | v3.0 | 0/2 | Not started | - |
 | 15. Directed Questions | v3.0 | 0/2 | Not started | - |
 | 16. Voice Homes | v3.0 | 0/2 | Not started | - |
