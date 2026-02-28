@@ -28,7 +28,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [x] **SECR-04**: Supabase JS pinned to exact version (not floating `@2`) with SRI hash on all pages
 - [x] **SECR-05**: `<meta http-equiv="Content-Security-Policy">` tag added to all HTML pages
 - [x] **SECR-06**: `rel="noopener noreferrer"` added to all `target="_blank"` links across all pages
-- [ ] **SECR-07**: RLS policies audited across all 13 tables with gaps documented and fixed
+- [x] **SECR-07**: RLS policies audited across all 13 tables with gaps documented and fixed
 - [x] **SECR-08**: Auth edge cases handled: expired session tokens gracefully redirect to login
 - [x] **SECR-09**: Auth edge cases handled: password reset flow works with expired/reused links
 - [x] **SECR-10**: Auth edge cases handled: magic link re-use prevented or handled gracefully
