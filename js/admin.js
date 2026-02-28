@@ -26,6 +26,7 @@
     let facilitators = [];
     let aiIdentities = [];
     let prompts = [];
+    let moments = [];
 
     // =========================================
     // SUPABASE CLIENT
@@ -159,7 +160,8 @@
             loadContacts(),
             loadTextSubmissions(),
             loadUsers(),
-            loadPrompts()
+            loadPrompts(),
+            loadMoments()
         ]);
         updateStats();
         updateModelDistribution();
@@ -1146,6 +1148,73 @@
     };
 
     // =========================================
+    // MOMENTS (NEWS) MANAGEMENT
+    // =========================================
+
+    async function loadMoments() {
+        try {
+            const { data, error } = await getClient()
+                .from('moments')
+                .select('*')
+                .order('event_date', { ascending: false });
+
+            if (error) throw error;
+            moments = data || [];
+            renderMoments();
+            updateTabCount('moments', moments.length);
+        } catch (error) {
+            console.error('Error loading moments:', error);
+            document.getElementById('moments-list').innerHTML =
+                '<p class="admin-empty">Failed to load moments</p>';
+        }
+    }
+
+    function renderMoments() {
+        const container = document.getElementById('moments-list');
+        if (!container) return;
+
+        if (!moments.length) {
+            container.innerHTML = '<div class="admin-empty">No moments found</div>';
+            return;
+        }
+
+        container.innerHTML = moments.map(m => {
+            const dateStr = m.event_date
+                ? new Date(m.event_date + 'T00:00:00').toLocaleDateString()
+                : 'No date';
+            const activeClass = m.is_active ? 'status-badge--active' : 'status-badge--hidden';
+            const activeLabel = m.is_active ? 'Active' : 'Hidden';
+
+            return `
+                <div class="admin-item">
+                    <div class="admin-item__header">
+                        <div>
+                            <strong>${Utils.escapeHtml(m.title)}</strong>
+                            ${m.subtitle ? `<span class="admin-item__subtitle"> — ${Utils.escapeHtml(m.subtitle)}</span>` : ''}
+                        </div>
+                        <div class="admin-item__badges">
+                            <span class="status-badge ${activeClass}">${activeLabel}</span>
+                            ${m.is_pinned ? `<span class="status-badge status-badge--pinned">Pinned</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="moments-item-meta">
+                        <span>${dateStr}</span>
+                        <a href="moment.html?id=${m.id}" target="_blank">View &rarr;</a>
+                    </div>
+                    <div class="moments-item-actions">
+                        <button onclick="toggleMomentPin('${m.id}', ${!m.is_pinned})" class="admin-item__btn">
+                            ${m.is_pinned ? 'Unpin' : 'Pin'}
+                        </button>
+                        <button onclick="toggleMomentActive('${m.id}', ${!m.is_active})" class="admin-item__btn ${m.is_active ? 'admin-item__btn--danger' : 'admin-item__btn--success'}">
+                            ${m.is_active ? 'Hide' : 'Show'}
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // =========================================
     // EVENT LISTENERS
     // =========================================
 
@@ -1249,5 +1318,25 @@
     window.loadTextSubmissions = loadTextSubmissions;
     window.loadUsers = loadUsers;
     window.loadPrompts = loadPrompts;
+    window.loadMoments = loadMoments;
+
+    // Expose moments action functions for inline onclick handlers
+    window.toggleMomentPin = async function(id, pinned) {
+        try {
+            await updateRecord('moments', id, { is_pinned: pinned });
+            await loadMoments();
+        } catch (error) {
+            alert('Failed to update pin status: ' + error.message);
+        }
+    };
+
+    window.toggleMomentActive = async function(id, active) {
+        try {
+            await updateRecord('moments', id, { is_active: active });
+            await loadMoments();
+        } catch (error) {
+            alert('Failed to update visibility: ' + error.message);
+        }
+    };
 
 })();

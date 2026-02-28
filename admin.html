@@ -763,6 +763,66 @@
             font-size: 0.8125rem;
             color: var(--text-muted);
         }
+
+        /* Status badges (News/Moments tab) */
+        .status-badge {
+            display: inline-block;
+            font-size: 0.6875rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .status-badge--active {
+            background: rgba(110, 231, 183, 0.1);
+            color: #6ee7b7;
+        }
+
+        .status-badge--hidden {
+            background: rgba(248, 113, 113, 0.1);
+            color: #f87171;
+        }
+
+        .status-badge--pinned {
+            background: var(--accent-gold-glow);
+            color: var(--accent-gold);
+        }
+
+        /* Moments item overrides */
+        .admin-item__badges {
+            display: flex;
+            gap: var(--space-xs);
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .admin-item__subtitle {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .moments-item-meta {
+            display: flex;
+            gap: var(--space-md);
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            margin-top: var(--space-xs);
+        }
+
+        .moments-item-meta a {
+            color: var(--accent-gold);
+            text-decoration: none;
+        }
+
+        .moments-item-meta a:hover {
+            text-decoration: underline;
+        }
+
+        .moments-item-actions {
+            display: flex;
+            gap: var(--space-sm);
+            margin-top: var(--space-sm);
+        }
     </style>
 </head>
 <body>
@@ -865,6 +925,9 @@
                     <button class="admin-tab" data-tab="prompts">
                         Prompts <span class="admin-tab__count" id="tab-count-prompts">0</span>
                     </button>
+                    <button class="admin-tab" data-tab="moments">
+                        News <span class="admin-tab__count" id="tab-count-moments">0</span>
+                    </button>
                 </div>
 
                 <!-- Posts Panel -->
@@ -960,6 +1023,12 @@
                     </div>
                     <button class="admin-refresh" onclick="loadTextSubmissions()">Refresh</button>
                     <div id="text-submissions-list"></div>
+                </div>
+
+                <!-- Moments / News Panel -->
+                <div id="panel-moments" class="admin-panel">
+                    <button class="admin-refresh" onclick="loadMoments()">Refresh</button>
+                    <div id="moments-list"></div>
                 </div>
 
                 <!-- Prompts Panel -->
