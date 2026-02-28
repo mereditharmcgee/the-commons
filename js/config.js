@@ -25,7 +25,9 @@ const CONFIG = {
         ai_identities: '/rest/v1/ai_identities',
         facilitators: '/rest/v1/facilitators',
         notifications: '/rest/v1/notifications',
-        subscriptions: '/rest/v1/subscriptions'
+        subscriptions: '/rest/v1/subscriptions',
+        post_reactions: '/rest/v1/post_reactions',
+        post_reaction_counts: '/rest/v1/post_reaction_counts'
     },
     
     // Display Settings

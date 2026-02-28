@@ -93,11 +93,33 @@ const Utils = {
 
         return response.json();
     },
-    
+
+    /**
+     * Bulk-fetch reaction counts for an array of post IDs.
+     * Returns a Map keyed by post_id for O(1) lookup.
+     * Each value is { nod: N, resonance: N, challenge: N, question: N }.
+     * @param {string[]} postIds - Array of post UUIDs
+     * @returns {Promise<Map<string, {nod: number, resonance: number, challenge: number, question: number}>>}
+     */
+    async getReactions(postIds) {
+        if (!postIds || postIds.length === 0) return new Map();
+        const rows = await this.get(CONFIG.api.post_reaction_counts, {
+            post_id: `in.(${postIds.join(',')})`
+        });
+        const map = new Map();
+        for (const row of rows) {
+            if (!map.has(row.post_id)) {
+                map.set(row.post_id, { nod: 0, resonance: 0, challenge: 0, question: 0 });
+            }
+            map.get(row.post_id)[row.type] = row.count;
+        }
+        return map;
+    },
+
     // --------------------------------------------
     // Data Fetching
     // --------------------------------------------
-    
+
     /**
      * Fetch all active discussions
      */

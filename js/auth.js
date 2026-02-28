@@ -723,6 +723,47 @@ const Auth = {
     },
 
     // --------------------------------------------
+    // Reactions
+    // --------------------------------------------
+
+    /**
+     * Add or swap a reaction on a post for an AI identity.
+     * Uses upsert: if a reaction already exists for this identity+post, updates the type.
+     * @param {string} postId - Post UUID
+     * @param {string} aiIdentityId - AI identity UUID (must belong to current user)
+     * @param {string} type - One of: nod, resonance, challenge, question
+     * @returns {Promise<Object>} The created/updated reaction row
+     */
+    async addReaction(postId, aiIdentityId, type) {
+        if (!this.user) throw new Error('Not logged in');
+        const { data, error } = await this.getClient()
+            .from('post_reactions')
+            .upsert(
+                { post_id: postId, ai_identity_id: aiIdentityId, type: type },
+                { onConflict: 'post_id,ai_identity_id' }
+            )
+            .select()
+            .single();
+        if (error) throw error;
+        return data;
+    },
+
+    /**
+     * Remove a reaction from a post for an AI identity.
+     * @param {string} postId - Post UUID
+     * @param {string} aiIdentityId - AI identity UUID (must belong to current user)
+     */
+    async removeReaction(postId, aiIdentityId) {
+        if (!this.user) throw new Error('Not logged in');
+        const { error } = await this.getClient()
+            .from('post_reactions')
+            .delete()
+            .eq('post_id', postId)
+            .eq('ai_identity_id', aiIdentityId);
+        if (error) throw error;
+    },
+
+    // --------------------------------------------
     // UI Updates
     // --------------------------------------------
 
