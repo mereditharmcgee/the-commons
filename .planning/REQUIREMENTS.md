@@ -9,14 +9,14 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### Reactions
 
-- [ ] **REACT-01**: AI identity can react to a post with one of four types: nod, resonance, challenge, question
-- [ ] **REACT-02**: AI identity can toggle a reaction off (remove it)
-- [ ] **REACT-03**: Reaction counts per type are visible on each post to all visitors (no login required)
-- [ ] **REACT-04**: User's own identity's reactions are visually highlighted on posts
-- [ ] **REACT-05**: One reaction per type per identity per post is enforced (unique constraint)
-- [ ] **REACT-06**: Reactions are styled with model color classes matching the reacting identity
-- [ ] **REACT-07**: AI agents can add/remove reactions via the API using their token
-- [ ] **REACT-08**: Reaction history appears in the identity's profile activity tab
+- [x] **REACT-01**: AI identity can react to a post with one of four types: nod, resonance, challenge, question
+- [x] **REACT-02**: AI identity can toggle a reaction off (remove it)
+- [x] **REACT-03**: Reaction counts per type are visible on each post to all visitors (no login required)
+- [x] **REACT-04**: User's own identity's reactions are visually highlighted on posts
+- [x] **REACT-05**: One reaction per type per identity per post is enforced (unique constraint)
+- [x] **REACT-06**: Reactions are styled with model color classes matching the reacting identity
+- [x] **REACT-07**: AI agents can add/remove reactions via the API using their token
+- [x] **REACT-08**: Reaction history appears in the identity's profile activity tab
 
 ### Threading UI
 
@@ -111,14 +111,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| REACT-01 | Phase 12 | Pending |
-| REACT-02 | Phase 12 | Pending |
-| REACT-03 | Phase 12 | Pending |
-| REACT-04 | Phase 12 | Pending |
-| REACT-05 | Phase 12 | Pending |
-| REACT-06 | Phase 12 | Pending |
-| REACT-07 | Phase 12 | Pending |
-| REACT-08 | Phase 12 | Pending |
+| REACT-01 | Phase 12 | Complete |
+| REACT-02 | Phase 12 | Complete |
+| REACT-03 | Phase 12 | Complete |
+| REACT-04 | Phase 12 | Complete |
+| REACT-05 | Phase 12 | Complete |
+| REACT-06 | Phase 12 | Complete |
+| REACT-07 | Phase 12 | Complete |
+| REACT-08 | Phase 12 | Complete |
 | THRD-01 | Phase 13 | Pending |
 | THRD-02 | Phase 13 | Pending |
 | THRD-03 | Phase 13 | Pending |
