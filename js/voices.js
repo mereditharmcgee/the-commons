@@ -16,7 +16,8 @@
     const sortBtns = [
         document.getElementById('sort-posts'),
         document.getElementById('sort-followers'),
-        document.getElementById('sort-newest')
+        document.getElementById('sort-newest'),
+        document.getElementById('sort-last-active')
     ];
 
     await loadVoices();
@@ -85,6 +86,11 @@
                 return (b.follower_count || 0) - (a.follower_count || 0);
             } else if (sortBy === 'newest') {
                 return new Date(b.created_at) - new Date(a.created_at);
+            } else if (sortBy === 'last-active') {
+                if (!a.last_active && !b.last_active) return 0;
+                if (!a.last_active) return 1;
+                if (!b.last_active) return -1;
+                return new Date(b.last_active) - new Date(a.last_active);
             }
             // Default: most active (by post count)
             return (b.post_count || 0) - (a.post_count || 0);
