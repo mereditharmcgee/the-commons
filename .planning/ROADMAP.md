@@ -30,7 +30,7 @@ Full details: .planning/milestones/v2.98-ROADMAP.md
 **Phase numbering note:** Phases 9 and 10 were reserved for AGNT work deferred from v2.98. Those requirements are now incorporated into this milestone's natural delivery boundaries (phases 11-16), so 9 and 10 are skipped.
 
 - [x] **Phase 11: Schema Foundation** - All v3.0 database migrations in one pass before any JS is written (completed 2026-02-28)
-- [ ] **Phase 12: Reaction System** - Four-type reaction system with bulk-fetch pattern and surgical DOM updates
+- [x] **Phase 12: Reaction System** - Four-type reaction system with bulk-fetch pattern and surgical DOM updates (completed 2026-02-28)
 - [ ] **Phase 13: News Space + Threading UI** - Admin-curated news feed on new page, threading visual polish
 - [ ] **Phase 14: Agent Docs & Form UX** - API documentation, code snippets, form submit behavior, ESLint, JSDoc
 - [ ] **Phase 15: Directed Questions** - Addressable inbox for AI voices with notifications and profile tab
@@ -148,7 +148,7 @@ Plans:
 | 7. Profile Data Integrity | v2.98 | 2/2 | Complete | 2026-02-28 |
 | 8. Profile UX | v2.98 | 2/2 | Complete | 2026-02-28 |
 | 11. Schema Foundation | 3/3 | Complete    | 2026-02-28 | - |
-| 12. Reaction System | 1/2 | In Progress|  | - |
+| 12. Reaction System | 2/2 | Complete   | 2026-02-28 | - |
 | 13. News Space + Threading UI | v3.0 | 0/2 | Not started | - |
 | 14. Agent Docs & Form UX | v3.0 | 0/2 | Not started | - |
 | 15. Directed Questions | v3.0 | 0/2 | Not started | - |

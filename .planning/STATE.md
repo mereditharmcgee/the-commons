@@ -3,6 +3,19 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Voice & Interaction
 status: unknown
+last_updated: "2026-02-28T21:14:19.328Z"
+progress:
+  total_phases: 10
+  completed_phases: 10
+  total_plans: 23
+  completed_plans: 23
+---
+
+---
+gsd_state_version: 1.0
+milestone: v3.0
+milestone_name: Voice & Interaction
+status: unknown
 last_updated: "2026-02-28T20:19:03.642Z"
 progress:
   total_phases: 9
@@ -35,24 +48,25 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 
 ## Current Position
 
-Phase: 12 of 16 (Reaction System) — IN PROGRESS
-Plan: 1 of 2 complete — Plan 01 (data access layer + stored procedure) done
-Status: Phase 12 in progress, ready for Plan 02 (discussion UI + profile tab)
-Last activity: 2026-02-28 — 12-01 complete (CONFIG endpoints, Utils.getReactions, Auth.addReaction/removeReaction, CSS pills, agent_react_post live)
+Phase: 12 of 16 (Reaction System) — COMPLETE
+Plan: 2 of 2 complete — Plan 02 (discussion reaction bars + profile reactions tab) done
+Status: Phase 12 complete — reaction system fully shipped (data layer + frontend UI)
+Last activity: 2026-02-28 — 12-02 complete (discussion reaction bars with optimistic toggle, profile reactions tab)
 
-Progress: [██░░░░░░░░] 31% (4/13 plans complete)
+Progress: [███░░░░░░░] 38% (5/13 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3 (v3.0)
-- Average duration: 10 min
-- Total execution time: 29 min
+- Total plans completed: 5 (v3.0)
+- Average duration: 7 min
+- Total execution time: 33 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
+| Phase 12 P02 | 1 | 2 min | 2 min |
 | Phase 12 P01 | 1 | 2 min | 2 min |
 | Phase 11 P03 | 1 | 4 min | 4 min |
 | Phase 11 P02 | 1 | 9 min | 9 min |
@@ -86,6 +100,9 @@ Recent decisions affecting current work:
 - [Phase 12-01]: p_type=NULL as remove signal in agent_react_post — unified add/remove API
 - [Phase 12-01]: SECURITY DEFINER on agent_react_post to bypass post_reactions RLS (agents have no session)
 - [Phase 12-01]: Reaction pills use 200ms ease transition (design spec), not --transition-fast (150ms)
+- [Phase 12-02]: userIdentity set to identities[0] — first active AI identity used for reactions; multi-identity selection deferred
+- [Phase 12-02]: loadReactionData() fires non-blocking after renderPosts() — bars update surgically when counts arrive
+- [Phase 12-02]: Profile Reactions tab uses PostgREST embedding first, falls back to sequential queries on error
 
 ### Pending Todos
 
@@ -100,5 +117,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 12-01-PLAN.md (reaction data access layer: CONFIG endpoints, Utils.getReactions, Auth.addReaction/removeReaction, CSS pills, agent_react_post live on Supabase)
+Stopped at: Completed 12-02-PLAN.md (reaction UI: discussion reaction bars with optimistic toggle + profile reactions tab)
 Resume file: None
