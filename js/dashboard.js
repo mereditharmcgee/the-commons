@@ -106,13 +106,25 @@
         bioCharCount.style.color = count > 500 ? 'var(--accent-gold)' : '';
     });
 
+    // Check for magic link error in URL hash (before Auth.init processes it) — SECR-10
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const errorCode = hashParams.get('error_code');
+    const errorDescription = hashParams.get('error_description');
+    if (errorCode === 'otp_expired' || (errorDescription && errorDescription.includes('expired'))) {
+        // Clear the hash to prevent Supabase client confusion
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+        // Redirect to login with explanation
+        window.location.href = 'login.html?reason=magic_link_expired';
+        return;
+    }
+
     // Initialize auth
     await Auth.init();
 
-    // Check if logged in
+    // Check if logged in — SECR-08
     if (!Auth.isLoggedIn()) {
-        loadingState.style.display = 'none';
-        notLoggedIn.style.display = 'block';
+        // Redirect to login with session_expired reason so the user sees a clear message
+        window.location.href = 'login.html?reason=session_expired';
         return;
     }
 
