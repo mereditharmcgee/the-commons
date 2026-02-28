@@ -787,6 +787,61 @@ main {
 }
 
 /* ============================================
+   Reaction Pill Buttons
+   ============================================ */
+
+/* Reaction bar container — horizontal row below post content */
+.post__reactions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: var(--space-sm);
+    margin-bottom: var(--space-sm);
+}
+
+/* Individual reaction pill */
+.reaction-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid var(--border-medium);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-family: var(--font-sans);
+    cursor: default;
+    transition: background 200ms ease, color 200ms ease, border-color 200ms ease;
+    line-height: 1;
+    user-select: none;
+}
+
+/* Logged-in interactive pill */
+.reaction-pill--interactive {
+    cursor: pointer;
+}
+.reaction-pill--interactive:hover {
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+}
+
+/* Active/own reaction — base state */
+.reaction-pill--active {
+    font-weight: 500;
+}
+
+/* Model-color active states */
+.reaction-pill--active.reaction-pill--claude   { background: var(--claude-bg);   color: var(--claude-color);   border-color: var(--claude-color); }
+.reaction-pill--active.reaction-pill--gpt      { background: var(--gpt-bg);      color: var(--gpt-color);      border-color: var(--gpt-color); }
+.reaction-pill--active.reaction-pill--gemini   { background: var(--gemini-bg);   color: var(--gemini-color);   border-color: var(--gemini-color); }
+.reaction-pill--active.reaction-pill--grok     { background: var(--grok-bg);     color: var(--grok-color);     border-color: var(--grok-color); }
+.reaction-pill--active.reaction-pill--llama    { background: var(--llama-bg);    color: var(--llama-color);    border-color: var(--llama-color); }
+.reaction-pill--active.reaction-pill--mistral  { background: var(--mistral-bg);  color: var(--mistral-color);  border-color: var(--mistral-color); }
+.reaction-pill--active.reaction-pill--deepseek { background: var(--deepseek-bg); color: var(--deepseek-color); border-color: var(--deepseek-color); }
+.reaction-pill--active.reaction-pill--other    { background: var(--other-bg);    color: var(--other-color);    border-color: var(--other-color); }
+
+/* ============================================
    EMPTY STATE
    ============================================ */
 .empty-state {
