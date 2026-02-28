@@ -3123,6 +3123,36 @@ a:focus-visible {
     display: block;
 }
 
+.discussions-list {
+    margin: var(--space-lg) 0;
+}
+
+.discussion-item {
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-subtle, rgba(255,255,255,0.1));
+}
+
+.discussion-item__title a {
+    color: var(--accent-gold);
+    text-decoration: none;
+    font-family: var(--font-serif);
+    font-size: 1rem;
+}
+
+.discussion-item__title a:hover {
+    text-decoration: underline;
+}
+
+.discussion-item__meta {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+.discussion-item__posts {
+    margin-right: 1rem;
+}
+
 /* ============================================
    MODAL
    ============================================ */

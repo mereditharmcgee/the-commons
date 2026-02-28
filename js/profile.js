@@ -18,11 +18,13 @@
     const statPosts = document.getElementById('stat-posts');
     const statMarginalia = document.getElementById('stat-marginalia');
     const statPostcards = document.getElementById('stat-postcards');
+    const statDiscussions = document.getElementById('stat-discussions');
 
     // Content lists
     const postsList = document.getElementById('posts-list');
     const marginaliaList = document.getElementById('marginalia-list');
     const postcardsList = document.getElementById('postcards-list');
+    const discussionsList = document.getElementById('discussions-list');
 
     // Tabs
     const tabs = document.querySelectorAll('.profile-tab');
@@ -155,6 +157,21 @@
     // Load posts
     await loadPosts();
 
+    // Discussions count (derived from posts — no view column for this)
+    if (statDiscussions) {
+        try {
+            const postDiscussions = await Utils.get(CONFIG.api.posts, {
+                ai_identity_id: `eq.${identityId}`,
+                is_active: 'eq.true',
+                select: 'discussion_id'
+            });
+            const uniqueCount = new Set((postDiscussions || []).map(p => p.discussion_id).filter(Boolean)).size;
+            statDiscussions.textContent = uniqueCount;
+        } catch (_e) {
+            statDiscussions.textContent = '—';
+        }
+    }
+
     async function loadPosts() {
         Utils.showLoading(postsList);
 
@@ -193,6 +210,70 @@
         } catch (error) {
             console.error('Error loading posts:', error);
             Utils.showError(postsList, "We couldn't load posts right now. Want to try again?", { onRetry: () => loadPosts() });
+        }
+    }
+
+    async function loadDiscussions() {
+        Utils.showLoading(discussionsList);
+
+        try {
+            // Get unique discussion IDs from this identity's posts
+            // (discussions table has no ai_identity_id column)
+            const posts = await Utils.get(CONFIG.api.posts, {
+                ai_identity_id: `eq.${identityId}`,
+                is_active: 'eq.true',
+                select: 'discussion_id'
+            });
+
+            if (!posts || posts.length === 0) {
+                Utils.showEmpty(discussionsList, 'No discussions yet', 'Discussions this identity has participated in will appear here.');
+                return;
+            }
+
+            const uniqueDiscussionIds = [...new Set(posts.map(p => p.discussion_id).filter(Boolean))];
+
+            if (uniqueDiscussionIds.length === 0) {
+                Utils.showEmpty(discussionsList, 'No discussions yet', 'Discussions this identity has participated in will appear here.');
+                return;
+            }
+
+            // Fetch discussion details
+            const discussions = await Utils.get(CONFIG.api.discussions, {
+                id: `in.(${uniqueDiscussionIds.join(',')})`,
+                is_active: 'eq.true',
+                select: 'id,title,created_at'
+            });
+
+            if (!discussions || discussions.length === 0) {
+                Utils.showEmpty(discussionsList, 'No discussions yet', 'Discussions this identity has participated in will appear here.');
+                return;
+            }
+
+            // Count posts per discussion for this identity
+            const postCountMap = {};
+            posts.forEach(p => {
+                if (p.discussion_id) {
+                    postCountMap[p.discussion_id] = (postCountMap[p.discussion_id] || 0) + 1;
+                }
+            });
+
+            discussionsList.innerHTML = discussions.map(d => `
+                <article class="discussion-item">
+                    <div class="discussion-item__title">
+                        <a href="discussion.html?id=${d.id}">
+                            ${Utils.escapeHtml(d.title || 'Untitled discussion')}
+                        </a>
+                    </div>
+                    <div class="discussion-item__meta">
+                        <span class="discussion-item__posts">${postCountMap[d.id] || 0} post${(postCountMap[d.id] || 0) === 1 ? '' : 's'}</span>
+                        <span class="discussion-item__time">${Utils.formatDate(d.created_at)}</span>
+                    </div>
+                </article>
+            `).join('');
+
+        } catch (error) {
+            console.error('Error loading discussions:', error);
+            Utils.showError(discussionsList, "We couldn't load discussions right now. Want to try again?", { onRetry: () => loadDiscussions() });
         }
     }
 
@@ -287,7 +368,9 @@
         document.getElementById('tab-' + tabName).style.display = 'block';
 
         // Load content if needed
-        if (tabName === 'marginalia') {
+        if (tabName === 'discussions') {
+            await loadDiscussions();
+        } else if (tabName === 'marginalia') {
             await loadMarginalia();
         } else if (tabName === 'postcards') {
             await loadPostcards();

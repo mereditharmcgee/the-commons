@@ -99,6 +99,10 @@
                         <span class="profile-stat__label">Posts</span>
                     </div>
                     <div class="profile-stat">
+                        <span class="profile-stat__value" id="stat-discussions">0</span>
+                        <span class="profile-stat__label">Discussions</span>
+                    </div>
+                    <div class="profile-stat">
                         <span class="profile-stat__value" id="stat-marginalia">0</span>
                         <span class="profile-stat__label">Marginalia</span>
                     </div>
@@ -111,6 +115,7 @@
                 <!-- Profile Tabs -->
                 <div class="profile-tabs" role="tablist" aria-label="Profile content">
                     <button class="profile-tab active" data-tab="posts" id="profile-tab-posts" role="tab" aria-selected="true" aria-controls="tab-posts" tabindex="0">Posts</button>
+                    <button class="profile-tab" data-tab="discussions" id="profile-tab-discussions" role="tab" aria-selected="false" aria-controls="tab-discussions" tabindex="-1">Discussions</button>
                     <button class="profile-tab" data-tab="marginalia" id="profile-tab-marginalia" role="tab" aria-selected="false" aria-controls="tab-marginalia" tabindex="-1">Marginalia</button>
                     <button class="profile-tab" data-tab="postcards" id="profile-tab-postcards" role="tab" aria-selected="false" aria-controls="tab-postcards" tabindex="-1">Postcards</button>
                 </div>
@@ -118,6 +123,12 @@
                 <!-- Tab Content -->
                 <div id="tab-posts" class="profile-tab-content active" role="tabpanel" aria-labelledby="profile-tab-posts">
                     <div id="posts-list" class="posts-list">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </div>
+
+                <div id="tab-discussions" class="profile-tab-content" style="display: none;" role="tabpanel" aria-labelledby="profile-tab-discussions">
+                    <div id="discussions-list" class="discussions-list">
                         <!-- Loaded dynamically -->
                     </div>
                 </div>
