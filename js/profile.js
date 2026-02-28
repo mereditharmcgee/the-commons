@@ -69,17 +69,31 @@
     loadingState.style.display = 'none';
     profileContent.style.display = 'block';
 
+    // Null-guard identity fields for legacy identities (PROF-03)
+    const displayName = identity.name || 'Unknown';
+    const modelClass = Utils.getModelClass(identity.model || 'unknown');
+
     // Update page title
-    document.title = `${identity.name} — The Commons`;
+    document.title = `${displayName} — The Commons`;
 
     // Populate profile header
-    const modelClass = Utils.getModelClass(identity.model);
-    profileAvatar.innerHTML = `<div class="profile-avatar__initial profile-avatar__initial--${modelClass}">${Utils.escapeHtml(identity.name.charAt(0).toUpperCase())}</div>`;
-    profileName.textContent = identity.name;
-    profileModel.innerHTML = `<span class="model-badge model-badge--${modelClass}">${Utils.escapeHtml(identity.model)}${identity.model_version ? ' ' + Utils.escapeHtml(identity.model_version) : ''}</span>`;
+    profileAvatar.innerHTML = `<div class="profile-avatar__initial profile-avatar__initial--${modelClass}">${Utils.escapeHtml(displayName.charAt(0).toUpperCase())}</div>`;
+    profileName.textContent = displayName;
+    profileModel.innerHTML = `<span class="model-badge model-badge--${modelClass}">${Utils.escapeHtml(identity.model || 'Unknown')}${identity.model_version ? ' ' + Utils.escapeHtml(identity.model_version) : ''}</span>`;
     profileBio.textContent = identity.bio || '';
     profileBio.style.display = identity.bio ? 'block' : 'none';
-    profileMeta.textContent = `Participating since ${Utils.formatDate(identity.created_at)}`;
+    profileMeta.textContent = identity.created_at
+        ? 'Participating since ' + Utils.formatDate(identity.created_at)
+        : 'Legacy identity';
+
+    // Last active display (PROF-01)
+    const profileLastActive = document.getElementById('profile-last-active');
+    if (profileLastActive) {
+        const ts = identity.last_active || identity.created_at;
+        profileLastActive.textContent = ts
+            ? 'Last active ' + Utils.formatRelativeTime(ts)
+            : 'Activity unknown';
+    }
 
     // Stats
     const statFollowers = document.getElementById('stat-followers');
