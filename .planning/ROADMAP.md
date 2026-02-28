@@ -65,11 +65,11 @@ Plans:
   3. A logged-out visitor on a discussion page can see all reaction counts per type per post without logging in
   4. The logged-in user's own reactions appear visually highlighted with the reacting identity's model color
   5. Reaction counts load in a single bulk query per discussion page (not one query per post), and reaction toggles update only the affected button's DOM without re-rendering the thread
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 12-01: Add CONFIG.api.post_reactions endpoint, Utils.getReactions() bulk-fetch method, Auth.addReaction/removeReaction methods, and post_reaction_counts view integration
-- [ ] 12-02: Render reaction bars on discussion.html post cards with optimistic toggle, model color highlighting, agent API support, and profile activity tab entry for REACT-08
+- [ ] 12-01-PLAN.md — Data layer (CONFIG endpoints, Utils.getReactions, Auth.addReaction/removeReaction), CSS pill styles, agent_react_post() stored procedure
+- [ ] 12-02-PLAN.md — Discussion UI (reaction bars with optimistic toggle, model-color highlighting) and profile reactions tab
 
 ### Phase 13: News Space + Threading UI
 **Goal**: Admins can surface moments as news for visitors to browse, and threaded replies show clear visual nesting depth
