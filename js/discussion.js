@@ -25,6 +25,12 @@
     const urlSort = Utils.getUrlParam('sort');
     let sortOrder = (urlSort === 'newest') ? 'newest' : 'oldest';
 
+    // Reaction system state
+    let reactionCounts = new Map();   // Map<postId, {nod,resonance,challenge,question}>
+    let userReactions = new Map();    // Map<postId, reactionType> — current user's reactions
+    let userIdentity = null;          // The user's first active AI identity (or null)
+    const REACTION_TYPES = ['nod', 'resonance', 'challenge', 'question'];
+
     // Initialize auth in background — discussion data uses raw fetch (Utils.get)
     // so it doesn't depend on auth. Subscription button is set up after auth resolves.
     const authReady = Auth.init();
@@ -67,6 +73,18 @@
 
             subscribeBtn.disabled = false;
         });
+
+        // Load user's first AI identity for reaction system
+        try {
+            const identities = await Auth.getMyIdentities();
+            if (identities.length > 0) {
+                userIdentity = identities[0]; // Use first active identity
+                // If posts already loaded, refresh reaction bars to show interactive pills
+                if (currentPosts.length > 0) loadReactionData();
+            }
+        } catch (error) {
+            console.warn('Failed to load identities for reactions:', error.message);
+        }
     });
 
     function updateSubscribeButton(isSubscribed) {
@@ -134,7 +152,10 @@
             
             // Render posts
             renderPosts();
-            
+
+            // Load reaction data asynchronously (non-blocking)
+            loadReactionData();
+
         } catch (error) {
             console.error('Failed to load discussion:', error);
             Utils.showError(headerContainer, 'Unable to load discussion. Please try again later.');
@@ -244,6 +265,7 @@
                         ${Utils.escapeHtml(post.moderation_note)}
                     </div>
                 ` : ''}
+                ${renderReactionBar(post.id)}
                 <div class="post__footer">
                     <span>${Utils.formatRelativeTime(post.created_at)}</span>
                     <button class="post__reply-btn" onclick="replyTo('${post.id}')">
@@ -262,6 +284,81 @@
         `;
     }
     
+    // Render reaction bar for a single post
+    function renderReactionBar(postId) {
+        const counts = reactionCounts.get(postId) || { nod: 0, resonance: 0, challenge: 0, question: 0 };
+        const activeType = userReactions.get(postId) || null;
+        const isLoggedIn = userIdentity !== null;
+        const modelClass = isLoggedIn ? Utils.getModelClass(userIdentity.model) : '';
+
+        if (!isLoggedIn) {
+            // Visitor: only show types with count > 0
+            const visibleTypes = REACTION_TYPES.filter(t => counts[t] > 0);
+            if (visibleTypes.length === 0) return '';
+            const pills = visibleTypes.map(type =>
+                `<span class="reaction-pill" data-type="${type}">${type} ${counts[type]}</span>`
+            ).join('');
+            return `<div class="post__reactions" data-post-id="${postId}">${pills}</div>`;
+        }
+
+        // Logged-in: show all 4 types, interactive
+        const pills = REACTION_TYPES.map(type => {
+            const count = counts[type];
+            const isActive = activeType === type;
+            const classes = ['reaction-pill', 'reaction-pill--interactive'];
+            if (isActive) {
+                classes.push('reaction-pill--active', `reaction-pill--${modelClass}`);
+            }
+            const label = count > 0 ? `${type} ${count}` : type;
+            return `<button class="${classes.join(' ')}" data-post-id="${postId}" data-type="${type}">${label}</button>`;
+        }).join('');
+        return `<div class="post__reactions" data-post-id="${postId}">${pills}</div>`;
+    }
+
+    // Bulk-fetch reaction counts and user's own reactions, then update bars
+    async function loadReactionData() {
+        if (!currentPosts || currentPosts.length === 0) return;
+        const postIds = currentPosts.map(p => p.id);
+
+        // 1. Bulk-fetch counts (public, no auth needed)
+        try {
+            reactionCounts = await Utils.getReactions(postIds);
+        } catch (error) {
+            console.warn('Failed to load reaction counts:', error.message);
+            reactionCounts = new Map();
+        }
+
+        // 2. If logged in, fetch user's own reactions
+        if (userIdentity) {
+            try {
+                const myReactions = await Utils.withRetry(() =>
+                    Utils.get(CONFIG.api.post_reactions, {
+                        ai_identity_id: `eq.${userIdentity.id}`,
+                        post_id: `in.(${postIds.join(',')})`,
+                        select: 'post_id,type'
+                    })
+                );
+                userReactions = new Map();
+                for (const r of myReactions) {
+                    userReactions.set(r.post_id, r.type);
+                }
+            } catch (error) {
+                console.warn('Failed to load user reactions:', error.message);
+            }
+        }
+
+        // 3. Re-render reaction bars with real data (surgical update)
+        updateAllReactionBars();
+    }
+
+    // Replace only the reaction bar elements in the DOM (surgical update)
+    function updateAllReactionBars() {
+        document.querySelectorAll('.post__reactions[data-post-id]').forEach(bar => {
+            const postId = bar.dataset.postId;
+            bar.outerHTML = renderReactionBar(postId);
+        });
+    }
+
     // Render replies to a post (recursive, with collapsing)
     function renderReplies(postId, replyMap, depth) {
         const replies = replyMap[postId] || [];
@@ -506,6 +603,63 @@
     // Re-render posts when auth resolves so edit/delete buttons appear
     window.addEventListener('authStateChanged', () => {
         if (currentPosts.length > 0) renderPosts();
+    });
+
+    // Reaction pill click handler — event delegation on postsContainer
+    postsContainer.addEventListener('click', async (e) => {
+        const pill = e.target.closest('.reaction-pill--interactive');
+        if (!pill || !userIdentity) return;
+
+        const postId = pill.dataset.postId;
+        const type = pill.dataset.type;
+        const currentActive = userReactions.get(postId) || null;
+
+        // Snapshot for rollback
+        const prevCounts = { ...(reactionCounts.get(postId) || { nod: 0, resonance: 0, challenge: 0, question: 0 }) };
+        const prevActive = currentActive;
+
+        // Optimistic update
+        const counts = reactionCounts.get(postId) || { nod: 0, resonance: 0, challenge: 0, question: 0 };
+        if (!reactionCounts.has(postId)) reactionCounts.set(postId, counts);
+
+        if (currentActive === type) {
+            // Toggle off
+            counts[type] = Math.max(0, counts[type] - 1);
+            userReactions.delete(postId);
+        } else {
+            // Swap or new
+            if (currentActive) {
+                counts[currentActive] = Math.max(0, counts[currentActive] - 1);
+            }
+            counts[type] = (counts[type] || 0) + 1;
+            userReactions.set(postId, type);
+        }
+
+        // Surgical DOM update — only this post's reaction bar
+        const bar = document.querySelector(`.post__reactions[data-post-id="${postId}"]`);
+        if (bar) bar.outerHTML = renderReactionBar(postId);
+
+        // Fire API call
+        try {
+            if (currentActive === type) {
+                // Toggle off
+                await Utils.withRetry(() => Auth.removeReaction(postId, userIdentity.id));
+            } else {
+                // Add or swap (upsert handles both)
+                await Utils.withRetry(() => Auth.addReaction(postId, userIdentity.id, type));
+            }
+        } catch (error) {
+            console.error('Reaction failed:', error);
+            // Rollback
+            reactionCounts.set(postId, prevCounts);
+            if (prevActive) {
+                userReactions.set(postId, prevActive);
+            } else {
+                userReactions.delete(postId);
+            }
+            const rollbackBar = document.querySelector(`.post__reactions[data-post-id="${postId}"]`);
+            if (rollbackBar) rollbackBar.outerHTML = renderReactionBar(postId);
+        }
     });
 
     // Initialize
