@@ -31,14 +31,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** Anyone — human or AI — should be able to show up and immediately understand how to participate, safely.
-**Current focus:** Phase 5 — Dependency Security (in progress)
+**Current focus:** Phase 6 — Auth Security (in progress)
 
 ## Current Position
 
-Phase: 5 of 10 (Dependency Security) — COMPLETE
-Plan: 2 of 2 in current phase — complete
-Status: 05-02 complete — CSP meta tag with hash-based inline script allowlisting added to all 27 HTML pages; no unsafe-inline used
-Last activity: 2026-02-27 — 05-02 complete
+Phase: 6 of 10 (Auth Security) — in progress
+Plan: 1 of 2 in current phase — PAUSED at checkpoint:human-verify
+Status: 06-01 Task 1 complete — RLS audit document created for all 18 Supabase tables; awaiting human verification of rls-audit.md against live Supabase policies
+Last activity: 2026-02-27 — 06-01 Task 1 complete
 
 Progress: [█████░░░░░] 30%
 
@@ -58,6 +58,7 @@ Progress: [█████░░░░░] 30%
 | 03-dead-code-links | 2 | ~23min | ~12min |
 | 04-xss-prevention | 2 | ~5min | ~2.5min |
 | 05-dependency-security | 2/2 | ~8min | ~4min |
+| 06-auth-security | 1/2 (checkpoint) | ~3min | ~3min |
 
 **Recent Trend:**
 - Last 5 plans: 04-01 (~2min), 04-02 (~3min), 05-01 (~6min)
@@ -102,6 +103,9 @@ Recent decisions affecting current work:
 - [Phase 05-dependency-security]: 05-02: Single CSP for all 27 pages — browsers ignore non-matching sha256 hashes; one unified CSP avoids per-page variant maintenance
 - [Phase 05-dependency-security]: 05-02: storage.ko-fi.com added globally — two CSP meta tags have inconsistent cross-browser behavior; global inclusion is the accepted tradeoff
 - [Phase 05-dependency-security]: 05-02: All 10 inline script SHA256 hashes verified against live file content before insertion — all matched 05-RESEARCH.md expected values exactly
+- [Phase 06-auth-security]: 06-01: 18 tables audited (not 13 as in SECR-07) — discrepancy from earlier schema state; requirement counted only original content tables
+- [Phase 06-auth-security]: 06-01: Zero corrective SQL needed — all RLS gaps are intentional design choices (anonymous INSERT is core platform design for AI agent participation)
+- [Phase 06-auth-security]: 06-01: postcard_prompts SELECT policy changed to USING(true) via patch — all prompts readable (not just active); accepted, no sensitive data
 
 ### Pending Todos
 
@@ -109,11 +113,11 @@ None yet.
 
 ### Blockers/Concerns
 
-- Phase 6 (RLS audit): 13 tables have not been audited — access patterns are unknown unknowns; Supabase Dashboard access required before planning
+- Phase 9 (API docs): stored procedure error behavior not visible from frontend code — SQL audit required before documentation can be written accurately
 - Phase 9 (API docs): stored procedure error behavior not visible from frontend code — SQL audit required before documentation can be written accurately
 
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: Completed 05-02-PLAN.md (CSP meta tag with hash-based inline script allowlisting on all 27 pages)
-Resume file: .planning/phases/06-auth-security/ (Phase 6 — Auth Security — next phase)
+Stopped at: 06-01 checkpoint:human-verify — RLS audit document ready for review at .planning/phases/06-auth-security/rls-audit.md
+Resume file: .planning/phases/06-auth-security/06-01-PLAN.md (resume after user approves checkpoint)

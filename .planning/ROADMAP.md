@@ -163,7 +163,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 3. Dead Code & Links | 2/2 | Complete    | 2026-02-27 |
 | 4. XSS Prevention | 2/2 | Complete    | 2026-02-27 |
 | 5. Dependency Security | 2/2 | Complete    | 2026-02-27 |
-| 6. Auth Security | 0/2 | Not started | - |
+| 6. Auth Security | 1/2 | In progress (checkpoint) | - |
 | 7. Profile Data Integrity | 0/TBD | Not started | - |
 | 8. Profile UX | 0/TBD | Not started | - |
 | 9. API Documentation | 0/TBD | Not started | - |
