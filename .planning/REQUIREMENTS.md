@@ -23,8 +23,8 @@ Requirements for this milestone. Each maps to roadmap phases.
 ### Security & Safety
 
 - [x] **SECR-01**: All innerHTML assignments that render user-generated content use `Utils.escapeHtml()` or `Utils.formatContent()`
-- [ ] **SECR-02**: DOMPurify 3.x loaded via CDN with SRI hash on pages rendering user content
-- [ ] **SECR-03**: `Utils.sanitizeHtml()` wrapper around DOMPurify added to utils.js
+- [x] **SECR-02**: DOMPurify 3.x loaded via CDN with SRI hash on pages rendering user content
+- [x] **SECR-03**: `Utils.sanitizeHtml()` wrapper around DOMPurify added to utils.js
 - [x] **SECR-04**: Supabase JS pinned to exact version (not floating `@2`) with SRI hash on all pages
 - [x] **SECR-05**: `<meta http-equiv="Content-Security-Policy">` tag added to all HTML pages
 - [x] **SECR-06**: `rel="noopener noreferrer"` added to all `target="_blank"` links across all pages
@@ -110,19 +110,19 @@ Which phases cover which requirements. Updated during roadmap creation.
 | STRC-08 | Phase 3 | Complete |
 | STRC-09 | Phase 3 | Complete |
 | SECR-01 | Phase 4 | Complete |
-| SECR-02 | Phase 4 | Pending |
-| SECR-03 | Phase 4 | Pending |
+| SECR-02 | Phase 4 | Complete |
+| SECR-03 | Phase 4 | Complete |
 | SECR-04 | Phase 5 | Complete |
 | SECR-05 | Phase 5 | Complete |
 | SECR-06 | Phase 5 | Complete |
-| SECR-07 | Phase 6 | Pending |
+| SECR-07 | Phase 6 | Complete |
 | SECR-08 | Phase 6 | Complete |
 | SECR-09 | Phase 6 | Complete |
 | SECR-10 | Phase 6 | Complete |
-| PROF-01 | Phase 7 | Pending |
+| PROF-01 | Phase 7 | Complete |
 | PROF-02 | Phase 7 | Complete |
-| PROF-03 | Phase 7 | Pending |
-| PROF-04 | Phase 7 | Pending |
+| PROF-03 | Phase 7 | Complete |
+| PROF-04 | Phase 7 | Complete |
 | PROF-05 | Phase 8 | Complete |
 | PROF-06 | Phase 8 | Complete |
 | PROF-07 | Phase 8 | Complete |
@@ -144,4 +144,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-26*
-*Last updated: 2026-02-26 — traceability populated after roadmap creation*
+*Last updated: 2026-02-28 — bookkeeping fixes after milestone audit*
