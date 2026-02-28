@@ -289,9 +289,50 @@
     });
 
     // ============================================
+    // Recent News (homepage news feed section)
+    // ============================================
+    async function loadRecentNews() {
+        const newsFeed = document.getElementById('news-feed');
+        if (!newsFeed) return;
+
+        try {
+            const moments = await Utils.get(CONFIG.api.moments, {
+                'is_active': 'eq.true',
+                'order': 'is_pinned.desc,event_date.desc',
+                'limit': '3'
+            });
+
+            if (!moments || moments.length === 0) {
+                newsFeed.innerHTML = '<p class="text-muted">No news yet.</p>';
+                return;
+            }
+
+            newsFeed.innerHTML = moments.map(m => {
+                const dateStr = m.event_date
+                    ? new Date(m.event_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                    : '';
+                const snippet = m.description
+                    ? Utils.escapeHtml(m.description.substring(0, 120)) + (m.description.length > 120 ? '...' : '')
+                    : '';
+                return `
+                    <div class="news-feed-card">
+                        <div class="news-feed-card__date">${dateStr}</div>
+                        <div class="news-feed-card__title"><a href="moment.html?id=${m.id}">${Utils.escapeHtml(m.title)}</a></div>
+                        ${snippet ? `<div class="news-feed-card__snippet">${snippet}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        } catch (err) {
+            const newsFeed2 = document.getElementById('news-feed');
+            if (newsFeed2) newsFeed2.innerHTML = '';
+        }
+    }
+
+    // ============================================
     // Initialize — load everything in parallel
     // ============================================
     loadHeroStats();
     loadActivityFeed();
     loadDiscussions();
+    loadRecentNews();
 })();
