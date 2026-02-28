@@ -29,9 +29,9 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [x] **SECR-05**: `<meta http-equiv="Content-Security-Policy">` tag added to all HTML pages
 - [x] **SECR-06**: `rel="noopener noreferrer"` added to all `target="_blank"` links across all pages
 - [ ] **SECR-07**: RLS policies audited across all 13 tables with gaps documented and fixed
-- [ ] **SECR-08**: Auth edge cases handled: expired session tokens gracefully redirect to login
-- [ ] **SECR-09**: Auth edge cases handled: password reset flow works with expired/reused links
-- [ ] **SECR-10**: Auth edge cases handled: magic link re-use prevented or handled gracefully
+- [x] **SECR-08**: Auth edge cases handled: expired session tokens gracefully redirect to login
+- [x] **SECR-09**: Auth edge cases handled: password reset flow works with expired/reused links
+- [x] **SECR-10**: Auth edge cases handled: magic link re-use prevented or handled gracefully
 
 ### Profile & Identity
 
@@ -116,9 +116,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SECR-05 | Phase 5 | Complete |
 | SECR-06 | Phase 5 | Complete |
 | SECR-07 | Phase 6 | Pending |
-| SECR-08 | Phase 6 | Pending |
-| SECR-09 | Phase 6 | Pending |
-| SECR-10 | Phase 6 | Pending |
+| SECR-08 | Phase 6 | Complete |
+| SECR-09 | Phase 6 | Complete |
+| SECR-10 | Phase 6 | Complete |
 | PROF-01 | Phase 7 | Pending |
 | PROF-02 | Phase 7 | Pending |
 | PROF-03 | Phase 7 | Pending |

@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Dead Code & Links** - Remove dead code and fix broken inter-page links across all HTML and JS files (completed 2026-02-27)
 - [x] **Phase 4: XSS Prevention** - Audit and fix all innerHTML assignments; add DOMPurify sanitization wrapper (2 plans) (completed 2026-02-27)
 - [x] **Phase 5: Dependency Security** - Pin CDN dependencies with SRI hashes and add Content-Security-Policy to all pages (completed 2026-02-27)
-- [ ] **Phase 6: Auth Security** - Audit RLS policies across all 13 tables and handle auth edge cases
+- [x] **Phase 6: Auth Security** - Audit RLS policies across all 13 tables and handle auth edge cases (completed 2026-02-28)
 - [ ] **Phase 7: Profile Data Integrity** - Add last-active timestamps, activity history, and null-guard all legacy profile fields
 - [ ] **Phase 8: Profile UX** - Add character count feedback, fix facilitator linking display, and polish voices page
 - [ ] **Phase 9: API Documentation** - Document stored procedure error behavior and add SDK code snippets
@@ -104,8 +104,8 @@ Plans:
   4. Visiting a magic link a second time does not silently fail — the user sees a clear message and is directed to log in normally
 **Plans**: 2 plans
 Plans:
-- [ ] 06-01-PLAN.md — Audit RLS policies across all Supabase tables; document expected access patterns, identify gaps, produce corrective SQL
-- [ ] 06-02-PLAN.md — Handle auth edge cases: expired session redirect, password reset link guard, magic link reuse detection
+- [x] 06-01-PLAN.md — Audit RLS policies across all Supabase tables; document expected access patterns, identify gaps, produce corrective SQL (completed 2026-02-27)
+- [x] 06-02-PLAN.md — Handle auth edge cases: expired session redirect, password reset link guard, magic link reuse detection (completed 2026-02-28)
 
 ### Phase 7: Profile Data Integrity
 **Goal**: Profile pages show accurate, safe, complete data for all identities including legacy ones with missing fields

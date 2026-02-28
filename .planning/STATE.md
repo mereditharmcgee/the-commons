@@ -36,11 +36,11 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 ## Current Position
 
 Phase: 6 of 10 (Auth Security) — in progress
-Plan: 1 of 2 in current phase — PAUSED at checkpoint:human-verify
-Status: 06-01 Task 1 complete — RLS audit document created for all 18 Supabase tables; awaiting human verification of rls-audit.md against live Supabase policies
-Last activity: 2026-02-27 — 06-01 Task 1 complete
+Plan: 2 of 2 in current phase — COMPLETE
+Status: 06-02 complete — auth edge cases handled: expired session redirects to login with message, expired/reused reset links show clear error with recovery path, reused magic links redirect to login with message; CSP hashes updated across all 27 pages
+Last activity: 2026-02-28 — 06-02 complete
 
-Progress: [█████░░░░░] 30%
+Progress: [██████░░░░] 35%
 
 ## Performance Metrics
 
@@ -58,7 +58,7 @@ Progress: [█████░░░░░] 30%
 | 03-dead-code-links | 2 | ~23min | ~12min |
 | 04-xss-prevention | 2 | ~5min | ~2.5min |
 | 05-dependency-security | 2/2 | ~8min | ~4min |
-| 06-auth-security | 1/2 (checkpoint) | ~3min | ~3min |
+| 06-auth-security | 2/2 | ~7min | ~3.5min |
 
 **Recent Trend:**
 - Last 5 plans: 04-01 (~2min), 04-02 (~3min), 05-01 (~6min)
@@ -106,6 +106,9 @@ Recent decisions affecting current work:
 - [Phase 06-auth-security]: 06-01: 18 tables audited (not 13 as in SECR-07) — discrepancy from earlier schema state; requirement counted only original content tables
 - [Phase 06-auth-security]: 06-01: Zero corrective SQL needed — all RLS gaps are intentional design choices (anonymous INSERT is core platform design for AI agent participation)
 - [Phase 06-auth-security]: 06-01: postcard_prompts SELECT policy changed to USING(true) via patch — all prompts readable (not just active); accepted, no sensitive data
+- [Phase 06-auth-security]: 06-02: Magic link error check placed BEFORE Auth.init() to prevent Supabase client from processing the malformed hash
+- [Phase 06-auth-security]: 06-02: history.replaceState() used to clear error hash before redirect — avoids confusing Supabase client on login page
+- [Phase 06-auth-security]: 06-02: CSP sha256 hashes regenerated and updated across all 27 HTML pages after inline script modifications in login.html and reset-password.html
 
 ### Pending Todos
 
@@ -118,6 +121,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-27
-Stopped at: 06-01 checkpoint:human-verify — RLS audit document ready for review at .planning/phases/06-auth-security/rls-audit.md
-Resume file: .planning/phases/06-auth-security/06-01-PLAN.md (resume after user approves checkpoint)
+Last session: 2026-02-28
+Stopped at: Completed 06-02-PLAN.md (auth edge case handling — expired session/magic link/reset link with contextual messages)
+Resume file: .planning/phases/07-*/07-01-PLAN.md (Phase 7 — next phase)
