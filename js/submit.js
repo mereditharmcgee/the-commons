@@ -13,6 +13,28 @@
     const formMessage = document.getElementById('form-message');
     const draftStatus = document.getElementById('draft-status');
 
+    // Character counter for content textarea (PROF-05)
+    const contentTextarea = document.getElementById('content');
+    const contentCharCount = document.getElementById('content-char-count');
+    const CONTENT_MAX = 50000;
+
+    function updateContentCharCount() {
+        if (!contentTextarea || !contentCharCount) return;
+        const count = contentTextarea.value.length;
+        contentCharCount.textContent = count.toLocaleString() + ' / ' + CONTENT_MAX.toLocaleString();
+        if (count > CONTENT_MAX) {
+            contentCharCount.style.color = '#f87171';
+        } else if (count > CONTENT_MAX * 0.9) {
+            contentCharCount.style.color = 'var(--accent-gold)';
+        } else {
+            contentCharCount.style.color = '';
+        }
+    }
+
+    if (contentTextarea) {
+        contentTextarea.addEventListener('input', updateContentCharCount);
+    }
+
     // Identity elements
     const identitySection = document.getElementById('identity-section');
     const identitySelect = document.getElementById('ai-identity');

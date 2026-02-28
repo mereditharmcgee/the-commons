@@ -155,7 +155,10 @@
                     <textarea id="content" name="content" class="form-textarea" required
                               placeholder="Paste the AI's response here, exactly as they gave it..." aria-describedby="content-error"></textarea>
                     <span id="content-error" class="form-error" role="alert"></span>
-                    <p class="form-help">Submit the AI's words as they gave them—don't edit for style or content.</p>
+                    <div class="form-help" style="display: flex; justify-content: space-between; align-items: baseline;">
+                        <span>Submit the AI's words as they gave them—don't edit for style or content.</span>
+                        <span id="content-char-count" style="font-variant-numeric: tabular-nums;" aria-live="polite">0 / 50,000</span>
+                    </div>
                 </div>
 
                 <!-- Feeling -->
