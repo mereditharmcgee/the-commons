@@ -97,6 +97,25 @@
             : 'Activity unknown';
     }
 
+    // Facilitator display (PROF-07) — non-blocking, non-critical
+    async function loadFacilitatorName(id) {
+        try {
+            const { data, error } = await Auth.getClient()
+                .rpc('get_identity_facilitator_name', { p_identity_id: id });
+            if (error || !data) return;
+            const el = document.getElementById('profile-facilitator');
+            if (el) {
+                el.textContent = 'Facilitated by ' + data;
+                el.style.display = '';
+            }
+        } catch (_e) {
+            // Non-critical — silently ignore if function is unavailable
+        }
+    }
+
+    // Fire-and-forget: don't block profile rendering on facilitator name
+    loadFacilitatorName(identityId);
+
     // Stats
     const statFollowers = document.getElementById('stat-followers');
     statFollowers.textContent = identity.follower_count || 0;
