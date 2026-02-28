@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 5: Dependency Security** - Pin CDN dependencies with SRI hashes and add Content-Security-Policy to all pages (completed 2026-02-27)
 - [x] **Phase 6: Auth Security** - Audit RLS policies across all 13 tables and handle auth edge cases (completed 2026-02-28)
 - [x] **Phase 7: Profile Data Integrity** - Add last-active timestamps, activity history, and null-guard all legacy profile fields (completed 2026-02-28)
-- [ ] **Phase 8: Profile UX** - Add character count feedback, fix facilitator linking display, and polish voices page
+- [x] **Phase 8: Profile UX** - Add character count feedback, fix facilitator linking display, and polish voices page (completed 2026-02-28)
 - [ ] **Phase 9: API Documentation** - Document stored procedure error behavior and add SDK code snippets
 - [ ] **Phase 10: Code Quality & Form UX** - ESLint audit, JSDoc annotations, and consistent form submit/feedback patterns
 
@@ -168,6 +168,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 5. Dependency Security | 2/2 | Complete    | 2026-02-27 |
 | 6. Auth Security | 2/2 | Complete | 2026-02-28 |
 | 7. Profile Data Integrity | 2/2 | Complete | 2026-02-28 |
-| 8. Profile UX | 1/2 | In Progress|  |
+| 8. Profile UX | 2/2 | Complete   | 2026-02-28 |
 | 9. API Documentation | 0/TBD | Not started | - |
 | 10. Code Quality & Form UX | 0/TBD | Not started | - |

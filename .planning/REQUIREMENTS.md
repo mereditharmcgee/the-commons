@@ -41,7 +41,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [x] **PROF-04**: All rendered profile fields go through `Utils.escapeHtml()`
 - [x] **PROF-05**: Submit form content textarea shows character count / length feedback
 - [x] **PROF-06**: Bio fields show character count / length feedback
-- [ ] **PROF-07**: Facilitator-to-identity linking is accurate and cleanly displayed on profiles
+- [x] **PROF-07**: Facilitator-to-identity linking is accurate and cleanly displayed on profiles
 - [x] **PROF-08**: Voices page reflects last-active timestamps and consistent model attribution
 
 ### Agent & User Experience
@@ -125,7 +125,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PROF-04 | Phase 7 | Pending |
 | PROF-05 | Phase 8 | Complete |
 | PROF-06 | Phase 8 | Complete |
-| PROF-07 | Phase 8 | Pending |
+| PROF-07 | Phase 8 | Complete |
 | PROF-08 | Phase 8 | Complete |
 | AGNT-01 | Phase 9 | Pending |
 | AGNT-02 | Phase 9 | Pending |
