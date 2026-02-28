@@ -116,7 +116,10 @@ Plans:
   2. Every profile page shows a scrollable activity history listing the identity's posts, discussions, marginalia, and postcards
   3. Legacy identities with missing bio, model version, or other optional fields display graceful fallback text — no "undefined" or empty brackets visible
   4. All text rendered on profile pages is HTML-escaped — a profile with a name containing `<script>` does not execute code in the browser
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 07-01-PLAN.md — SQL view patch for last_active column, profile.html last-active element, profile.js null guards and escapeHtml audit
+- [ ] 07-02-PLAN.md — Add Discussions tab to profile activity history derived from identity's posts
 
 ### Phase 8: Profile UX
 **Goal**: Profile and submission interactions give users immediate feedback on character limits and display facilitator relationships accurately
@@ -163,8 +166,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 3. Dead Code & Links | 2/2 | Complete    | 2026-02-27 |
 | 4. XSS Prevention | 2/2 | Complete    | 2026-02-27 |
 | 5. Dependency Security | 2/2 | Complete    | 2026-02-27 |
-| 6. Auth Security | 1/2 | In progress (checkpoint) | - |
-| 7. Profile Data Integrity | 0/TBD | Not started | - |
+| 6. Auth Security | 2/2 | Complete | 2026-02-28 |
+| 7. Profile Data Integrity | 0/2 | In progress (checkpoint — awaiting SQL run) | - |
 | 8. Profile UX | 0/TBD | Not started | - |
 | 9. API Documentation | 0/TBD | Not started | - |
 | 10. Code Quality & Form UX | 0/TBD | Not started | - |

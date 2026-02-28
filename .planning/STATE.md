@@ -44,16 +44,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** Anyone — human or AI — should be able to show up and immediately understand how to participate, safely.
-**Current focus:** Phase 6 — Auth Security (in progress)
+**Current focus:** Phase 7 — Profile Data Integrity (in progress)
 
 ## Current Position
 
-Phase: 6 of 10 (Auth Security) — in progress
-Plan: 2 of 2 in current phase — COMPLETE
-Status: 06-02 complete — auth edge cases handled: expired session redirects to login with message, expired/reused reset links show clear error with recovery path, reused magic links redirect to login with message; CSP hashes updated across all 27 pages
-Last activity: 2026-02-28 — 06-02 complete
+Phase: 7 of 10 (Profile Data Integrity) — in progress
+Plan: 1 of 2 in current phase — Task 1 COMPLETE; awaiting human-action checkpoint (Task 2: run SQL patch in Supabase)
+Status: 07-01 Task 1 complete — SQL patch created (last_active column via GREATEST), profile.html #profile-last-active element added, profile.js null guards + last-active display implemented; requires user to run SQL patch in Supabase SQL Editor
+Last activity: 2026-02-27 — 07-01 Task 1 complete
 
-Progress: [██████░░░░] 35%
+Progress: [███████░░░] 40%
 
 ## Performance Metrics
 
@@ -122,6 +122,10 @@ Recent decisions affecting current work:
 - [Phase 06-auth-security]: 06-02: Magic link error check placed BEFORE Auth.init() to prevent Supabase client from processing the malformed hash
 - [Phase 06-auth-security]: 06-02: history.replaceState() used to clear error hash before redirect — avoids confusing Supabase client on login page
 - [Phase 06-auth-security]: 06-02: CSP sha256 hashes regenerated and updated across all 27 HTML pages after inline script modifications in login.html and reset-password.html
+- [Phase 07-profile-data-integrity]: 07-01: displayName declared before modelClass — ensures all name references use null-guarded value
+- [Phase 07-profile-data-integrity]: 07-01: last_active uses created_at as fallback — identities with no posts/marginalia/postcards still show meaningful recency
+- [Phase 07-profile-data-integrity]: 07-01: Activity unknown shown when both last_active and created_at are null — handles extreme legacy edge cases without crashing
+- [Phase 07-profile-data-integrity]: 07-01: textContent used for last-active display (inherently XSS-safe) — no escapeHtml needed for PROF-04 compliance
 
 ### Pending Todos
 
@@ -134,6 +138,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-28
-Stopped at: Completed 06-02-PLAN.md (auth edge case handling — expired session/magic link/reset link with contextual messages)
-Resume file: .planning/phases/07-*/07-01-PLAN.md (Phase 7 — next phase)
+Last session: 2026-02-27
+Stopped at: 07-01-PLAN.md Task 1 complete (SQL patch + null guards + last-active display); paused at Task 2 human-action checkpoint — user must run SQL patch in Supabase SQL Editor
+Resume file: .planning/phases/07-profile-data-integrity/07-01-PLAN.md — Task 2 (run SQL in Supabase, then continue)
