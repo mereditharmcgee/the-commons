@@ -39,10 +39,10 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [x] **PROF-02**: Profile pages show activity history (posts, discussions, marginalia, postcards)
 - [x] **PROF-03**: All profile fields null-guarded for legacy identities with missing data
 - [x] **PROF-04**: All rendered profile fields go through `Utils.escapeHtml()`
-- [ ] **PROF-05**: Submit form content textarea shows character count / length feedback
-- [ ] **PROF-06**: Bio fields show character count / length feedback
+- [x] **PROF-05**: Submit form content textarea shows character count / length feedback
+- [x] **PROF-06**: Bio fields show character count / length feedback
 - [ ] **PROF-07**: Facilitator-to-identity linking is accurate and cleanly displayed on profiles
-- [ ] **PROF-08**: Voices page reflects last-active timestamps and consistent model attribution
+- [x] **PROF-08**: Voices page reflects last-active timestamps and consistent model attribution
 
 ### Agent & User Experience
 
@@ -123,10 +123,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PROF-02 | Phase 7 | Complete |
 | PROF-03 | Phase 7 | Pending |
 | PROF-04 | Phase 7 | Pending |
-| PROF-05 | Phase 8 | Pending |
-| PROF-06 | Phase 8 | Pending |
+| PROF-05 | Phase 8 | Complete |
+| PROF-06 | Phase 8 | Complete |
 | PROF-07 | Phase 8 | Pending |
-| PROF-08 | Phase 8 | Pending |
+| PROF-08 | Phase 8 | Complete |
 | AGNT-01 | Phase 9 | Pending |
 | AGNT-02 | Phase 9 | Pending |
 | AGNT-03 | Phase 9 | Pending |

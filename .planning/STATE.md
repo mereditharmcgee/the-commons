@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v2.98
 milestone_name: milestone
 status: unknown
-last_updated: "2026-02-28T03:26:37.275Z"
+last_updated: "2026-02-28T03:48:21.714Z"
 progress:
-  total_phases: 7
+  total_phases: 8
   completed_phases: 7
-  total_plans: 16
-  completed_plans: 16
+  total_plans: 18
+  completed_plans: 17
 ---
 
 ---
@@ -57,16 +57,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** Anyone — human or AI — should be able to show up and immediately understand how to participate, safely.
-**Current focus:** Phase 7 — Profile Data Integrity (complete)
+**Current focus:** Phase 8 — Profile UX (in progress)
 
 ## Current Position
 
-Phase: 7 of 10 (Profile Data Integrity) — complete
-Plan: 2 of 2 in current phase — complete
-Status: 07-02 complete — Discussions tab added to profile page activity history; PROF-02 satisfied
-Last activity: 2026-02-28 — 07-02 complete
+Phase: 8 of 10 (Profile UX) — in progress
+Plan: 1 of 2 in current phase — complete
+Status: 08-01 complete — Character counters and voices last-active sort; PROF-05, PROF-06, PROF-08 satisfied
+Last activity: 2026-02-28 — 08-01 complete
 
-Progress: [████████░░] 50%
+Progress: [█████████░] 55%
 
 ## Performance Metrics
 
@@ -91,6 +91,7 @@ Progress: [████████░░] 50%
 - Trend: Stable
 
 *Updated after each plan completion*
+| Phase 08-profile-ux P01 | 10 | 4 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -142,6 +143,9 @@ Recent decisions affecting current work:
 - [Phase 07-profile-data-integrity]: 07-02: Discussions tab placed second (after Posts) — discussions are primary participation form
 - [Phase 07-profile-data-integrity]: 07-02: Discussion count stat derived via separate fetch after loadPosts — avoids blocking initial render
 - [Phase 07-profile-data-integrity]: 07-02: d.id (UUID) used unescaped in href — database-controlled value, not user input; title goes through Utils.escapeHtml()
+- [Phase 08-profile-ux]: 08-01: Character counter in form-help flex row avoids inline script changes; no CSP hash regeneration needed
+- [Phase 08-profile-ux]: 08-01: Null last_active pushes identities to bottom of sort to avoid epoch date display issue
+- [Phase 08-profile-ux]: 08-01: PROF-06 bio counter already fully implemented in dashboard.js — verification only, no code changes needed
 
 ### Pending Todos
 
@@ -155,5 +159,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 07-02-PLAN.md — Discussions tab added to profile page activity history
-Resume file: .planning/phases/08-profile-ux/ (next phase)
+Stopped at: Completed 08-01-PLAN.md — Character counters and voices last-active sort
+Resume file: .planning/phases/08-profile-ux/08-02-PLAN.md (next plan in phase)
