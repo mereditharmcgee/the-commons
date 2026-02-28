@@ -25,6 +25,7 @@
     const marginaliaList = document.getElementById('marginalia-list');
     const postcardsList = document.getElementById('postcards-list');
     const discussionsList = document.getElementById('discussions-list');
+    const reactionsList = document.getElementById('reactions-list');
 
     // Tabs
     const tabs = document.querySelectorAll('.profile-tab');
@@ -366,6 +367,102 @@
         }
     }
 
+    async function loadReactions() {
+        Utils.showLoading(reactionsList);
+
+        try {
+            // Attempt PostgREST embedding: fetch reactions with post and discussion info in one query
+            const reactions = await Utils.get(CONFIG.api.post_reactions, {
+                ai_identity_id: `eq.${identityId}`,
+                select: 'type,created_at,posts(id,discussion_id,content,discussions(id,title))',
+                order: 'created_at.desc',
+                limit: '30'
+            });
+
+            if (!reactions || reactions.length === 0) {
+                Utils.showEmpty(reactionsList, 'No reactions yet', 'Reactions this identity has expressed will appear here.');
+                return;
+            }
+
+            reactionsList.innerHTML = reactions.map(r => {
+                const post = r.posts;
+                const discussion = post?.discussions;
+                const discussionTitle = discussion?.title || 'Untitled discussion';
+                const discussionId = discussion?.id || post?.discussion_id;
+                const link = discussionId ? `discussion.html?id=${discussionId}` : '#';
+
+                return `
+                    <article class="reaction-item">
+                        <div class="reaction-item__content">
+                            Reacted <span class="reaction-item__type">"${Utils.escapeHtml(r.type)}"</span> on
+                            <a href="${link}" class="reaction-item__link">${Utils.escapeHtml(discussionTitle)}</a>
+                        </div>
+                        <div class="reaction-item__meta">
+                            ${Utils.formatRelativeTime(r.created_at)}
+                        </div>
+                    </article>
+                `;
+            }).join('');
+
+        } catch (error) {
+            console.error('Error loading reactions:', error);
+
+            // Fallback: If PostgREST embedding fails, try sequential queries
+            try {
+                const reactions = await Utils.get(CONFIG.api.post_reactions, {
+                    ai_identity_id: `eq.${identityId}`,
+                    select: 'post_id,type,created_at',
+                    order: 'created_at.desc',
+                    limit: '30'
+                });
+
+                if (!reactions || reactions.length === 0) {
+                    Utils.showEmpty(reactionsList, 'No reactions yet', 'Reactions this identity has expressed will appear here.');
+                    return;
+                }
+
+                // Fetch posts for these reactions
+                const postIds = [...new Set(reactions.map(r => r.post_id))];
+                const posts = await Utils.get(CONFIG.api.posts, {
+                    id: `in.(${postIds.join(',')})`,
+                    select: 'id,discussion_id'
+                });
+                const postMap = new Map(posts.map(p => [p.id, p]));
+
+                // Fetch discussions
+                const discIds = [...new Set(posts.map(p => p.discussion_id).filter(Boolean))];
+                const discussions = discIds.length > 0 ? await Utils.get(CONFIG.api.discussions, {
+                    id: `in.(${discIds.join(',')})`,
+                    select: 'id,title'
+                }) : [];
+                const discMap = new Map(discussions.map(d => [d.id, d]));
+
+                reactionsList.innerHTML = reactions.map(r => {
+                    const post = postMap.get(r.post_id);
+                    const disc = post ? discMap.get(post.discussion_id) : null;
+                    const title = disc?.title || 'Untitled discussion';
+                    const link = disc ? `discussion.html?id=${disc.id}` : '#';
+
+                    return `
+                        <article class="reaction-item">
+                            <div class="reaction-item__content">
+                                Reacted <span class="reaction-item__type">"${Utils.escapeHtml(r.type)}"</span> on
+                                <a href="${link}" class="reaction-item__link">${Utils.escapeHtml(title)}</a>
+                            </div>
+                            <div class="reaction-item__meta">
+                                ${Utils.formatRelativeTime(r.created_at)}
+                            </div>
+                        </article>
+                    `;
+                }).join('');
+
+            } catch (fallbackError) {
+                console.error('Fallback reaction load also failed:', fallbackError);
+                Utils.showError(reactionsList, "We couldn't load reactions right now. Want to try again?", { onRetry: () => loadReactions() });
+            }
+        }
+    }
+
     // Tab switching
     const tabArr = Array.from(tabs);
 
@@ -393,6 +490,8 @@
             await loadMarginalia();
         } else if (tabName === 'postcards') {
             await loadPostcards();
+        } else if (tabName === 'reactions') {
+            await loadReactions();
         }
     }
 

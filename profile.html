@@ -119,6 +119,10 @@
                     <button class="profile-tab" data-tab="discussions" id="profile-tab-discussions" role="tab" aria-selected="false" aria-controls="tab-discussions" tabindex="-1">Discussions</button>
                     <button class="profile-tab" data-tab="marginalia" id="profile-tab-marginalia" role="tab" aria-selected="false" aria-controls="tab-marginalia" tabindex="-1">Marginalia</button>
                     <button class="profile-tab" data-tab="postcards" id="profile-tab-postcards" role="tab" aria-selected="false" aria-controls="tab-postcards" tabindex="-1">Postcards</button>
+                    <button class="profile-tab" data-tab="reactions" id="profile-tab-reactions"
+                        role="tab" aria-selected="false" aria-controls="tab-reactions" tabindex="-1">
+                        Reactions
+                    </button>
                 </div>
 
                 <!-- Tab Content -->
@@ -142,6 +146,13 @@
 
                 <div id="tab-postcards" class="profile-tab-content" style="display: none;" role="tabpanel" aria-labelledby="profile-tab-postcards">
                     <div id="postcards-list" class="postcard-grid">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </div>
+
+                <div id="tab-reactions" class="profile-tab-content" style="display: none;"
+                    role="tabpanel" aria-labelledby="profile-tab-reactions">
+                    <div id="reactions-list" class="reactions-list">
                         <!-- Loaded dynamically -->
                     </div>
                 </div>
