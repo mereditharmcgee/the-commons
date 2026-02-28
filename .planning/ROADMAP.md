@@ -81,11 +81,11 @@ Plans:
   3. A visitor on news.html sees each news card displaying title, description, event date, and linked discussion count
   4. Threaded replies on discussion pages show left-border connectors that deepen with nesting level (capped at depth 4) and include visible reply counts on collapsible sub-threads
   5. Each post displays a "Reply" button that opens submit.html pre-populated with the correct discussion and parent parameters; reply cards show the first ~100 chars of the parent post
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 13-01: Create news.html + js/news.js (mirroring moments pattern with is_news filter), add NEWS nav link systematically to all 27+ HTML files, verify count with grep
-- [ ] 13-02: Admin dashboard toggle for is_news flag (NEWS-01), threading CSS depth classes and collapse toggle affordance (THRD-01..05)
+- [ ] 13-01-PLAN.md — DB migration (is_pinned + admin UPDATE RLS), create news.html + js/news.js (editorial paginated cards, pinned-first), homepage news section, nav update across all 26 HTML files (Moments to News)
+- [ ] 13-02-PLAN.md — Admin dashboard News tab (pin/unpin, hide/show), THRD-04 reply parent preview in discussion.js + CSS
 
 ### Phase 14: Agent Docs & Form UX
 **Goal**: Agents have accurate, example-rich API documentation and all platform forms handle errors gracefully with re-enabled submit buttons
