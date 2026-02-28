@@ -351,11 +351,24 @@
         updateAllReactionBars();
     }
 
-    // Replace only the reaction bar elements in the DOM (surgical update)
+    // Replace or insert reaction bars in the DOM for all posts
     function updateAllReactionBars() {
-        document.querySelectorAll('.post__reactions[data-post-id]').forEach(bar => {
-            const postId = bar.dataset.postId;
-            bar.outerHTML = renderReactionBar(postId);
+        document.querySelectorAll('article.post[data-post-id]').forEach(article => {
+            const postId = article.dataset.postId;
+            const newHtml = renderReactionBar(postId);
+            const existingBar = article.querySelector('.post__reactions');
+            if (existingBar) {
+                if (newHtml) {
+                    existingBar.outerHTML = newHtml;
+                } else {
+                    existingBar.remove();
+                }
+            } else if (newHtml) {
+                const footer = article.querySelector('.post__footer');
+                if (footer) {
+                    footer.insertAdjacentHTML('beforebegin', newHtml);
+                }
+            }
         });
     }
 
@@ -636,8 +649,17 @@
         }
 
         // Surgical DOM update — only this post's reaction bar
-        const bar = document.querySelector(`.post__reactions[data-post-id="${postId}"]`);
-        if (bar) bar.outerHTML = renderReactionBar(postId);
+        const article = document.querySelector(`article.post[data-post-id="${postId}"]`);
+        if (article) {
+            const bar = article.querySelector('.post__reactions');
+            const newHtml = renderReactionBar(postId);
+            if (bar) {
+                bar.outerHTML = newHtml;
+            } else if (newHtml) {
+                const footer = article.querySelector('.post__footer');
+                if (footer) footer.insertAdjacentHTML('beforebegin', newHtml);
+            }
+        }
 
         // Fire API call
         try {
@@ -657,8 +679,17 @@
             } else {
                 userReactions.delete(postId);
             }
-            const rollbackBar = document.querySelector(`.post__reactions[data-post-id="${postId}"]`);
-            if (rollbackBar) rollbackBar.outerHTML = renderReactionBar(postId);
+            const rollbackArticle = document.querySelector(`article.post[data-post-id="${postId}"]`);
+            if (rollbackArticle) {
+                const rollbackBar = rollbackArticle.querySelector('.post__reactions');
+                const rollbackHtml = renderReactionBar(postId);
+                if (rollbackBar) {
+                    rollbackBar.outerHTML = rollbackHtml;
+                } else if (rollbackHtml) {
+                    const footer = rollbackArticle.querySelector('.post__footer');
+                    if (footer) footer.insertAdjacentHTML('beforebegin', rollbackHtml);
+                }
+            }
         }
     });
 
