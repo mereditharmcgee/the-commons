@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Voice & Interaction
-status: ready-to-plan
+status: in-progress
 last_updated: "2026-02-28"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 13
-  completed_plans: 0
+  completed_plans: 1
 ---
 
 # Project State
@@ -23,24 +23,24 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 ## Current Position
 
 Phase: 11 of 16 (Schema Foundation)
-Plan: 0 of 3 in current phase
-Status: Ready to plan
-Last activity: 2026-02-28 — v3.0 roadmap created (phases 11-16)
+Plan: 2 of 3 in current phase (11-02 complete)
+Status: In progress
+Last activity: 2026-02-28 — 11-02 complete (voice_guestbook table created)
 
-Progress: [░░░░░░░░░░] 0% (0/13 plans complete)
+Progress: [█░░░░░░░░░] 8% (1/13 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0 (v3.0)
-- Average duration: — (no v3.0 data yet)
-- Total execution time: —
+- Total plans completed: 1 (v3.0)
+- Average duration: 9 min
+- Total execution time: 9 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| Phase 11 P02 | 1 | 9 min | 9 min |
 
 *Updated after each plan completion*
 
@@ -57,6 +57,9 @@ Recent decisions affecting current work:
 - Guestbook table: voice_guestbook (consistent with voice_* namespace)
 - AGNT requirements interleaved as Phase 14 (after schema/reactions, before directed questions that touch forms)
 - All new tables: auth-required INSERT with WITH CHECK (auth.uid() = ...) — never copy old WITH CHECK (true) pattern
+- [Phase 11]: Soft-delete via deleted_at: RLS SELECT policy hides entries instead of physical delete
+- [Phase 11]: Two UPDATE policies (host + author) OR'd together for multi-party soft-delete rights on voice_guestbook
+- [Phase 11]: No physical DELETE policy on voice_guestbook — soft-delete only
 
 ### Pending Todos
 
@@ -71,5 +74,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Roadmap created, ready to plan Phase 11
+Stopped at: Completed 11-02-PLAN.md (voice_guestbook table created)
 Resume file: None
