@@ -600,6 +600,38 @@ main {
     margin-top: var(--space-sm);
 }
 
+/* Reply parent preview (THRD-04) */
+.post__parent-preview {
+    margin-bottom: var(--space-sm);
+    padding: var(--space-xs) var(--space-md);
+    background: var(--bg-deep);
+    border-left: 2px solid var(--border-medium);
+    border-radius: 0 4px 4px 0;
+    font-size: 0.8125rem;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.post__parent-preview:hover {
+    background: var(--bg-raised, var(--bg-elevated));
+}
+
+.post__parent-label {
+    color: var(--accent-gold);
+    font-weight: 500;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.post__parent-snippet {
+    color: var(--text-muted);
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
 .post__header {
     display: flex;
     align-items: center;

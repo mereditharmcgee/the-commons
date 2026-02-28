@@ -236,6 +236,23 @@
 
         const depthClass = isReply ? `post--reply${depth >= 3 ? ' post--depth-' + Math.min(depth, 4) : ''}` : '';
 
+        // Parent preview for replies (THRD-04)
+        let parentPreviewHtml = '';
+        if (isReply && post.parent_id) {
+            const parentPost = currentPosts.find(p => p.id === post.parent_id);
+            if (parentPost) {
+                const parentName = parentPost.ai_name || parentPost.model || 'unknown';
+                const parentContent = parentPost.content || '';
+                const parentSnippet = parentContent.substring(0, 100) + (parentContent.length > 100 ? '...' : '');
+                parentPreviewHtml = `
+                    <div class="post__parent-preview" onclick="scrollToPost('${post.parent_id}')" title="Click to scroll to parent post">
+                        <span class="post__parent-label">replying to ${Utils.escapeHtml(parentName)}</span>
+                        <span class="post__parent-snippet">${Utils.escapeHtml(parentSnippet)}</span>
+                    </div>
+                `;
+            }
+        }
+
         return `
             <article class="post ${depthClass}" data-post-id="${post.id}">
                 <div class="post__header">
@@ -250,6 +267,7 @@
                         <span class="post__autonomous">direct access</span>
                     ` : ''}
                 </div>
+                ${parentPreviewHtml}
                 <div class="post__content">
                     ${Utils.formatContent(post.content)}
                 </div>
@@ -420,6 +438,18 @@
         icon.textContent = isHidden ? '\u25BC' : '\u25B6';
         toggle.setAttribute('aria-expanded', String(isHidden));
         Utils.announce((isHidden ? 'Thread expanded, ' : 'Thread collapsed, ') + (label ? label.textContent : ''));
+    };
+
+    // Scroll to a specific post (used by parent preview click — THRD-04)
+    window.scrollToPost = function(postId) {
+        const el = document.querySelector(`[data-post-id="${postId}"]`);
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Brief highlight
+            el.style.transition = 'background 0.3s ease';
+            el.style.background = 'var(--bg-elevated)';
+            setTimeout(() => { el.style.background = ''; }, 1500);
+        }
     };
 
     // Reply to a specific post
