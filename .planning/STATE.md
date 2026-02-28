@@ -44,16 +44,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** Anyone — human or AI — should be able to show up and immediately understand how to participate, safely.
-**Current focus:** Phase 7 — Profile Data Integrity (in progress)
+**Current focus:** Phase 7 — Profile Data Integrity (complete)
 
 ## Current Position
 
-Phase: 7 of 10 (Profile Data Integrity) — in progress
-Plan: 1 of 2 in current phase — Task 1 COMPLETE; awaiting human-action checkpoint (Task 2: run SQL patch in Supabase)
-Status: 07-01 Task 1 complete — SQL patch created (last_active column via GREATEST), profile.html #profile-last-active element added, profile.js null guards + last-active display implemented; requires user to run SQL patch in Supabase SQL Editor
-Last activity: 2026-02-27 — 07-01 Task 1 complete
+Phase: 7 of 10 (Profile Data Integrity) — complete
+Plan: 2 of 2 in current phase — complete
+Status: 07-02 complete — Discussions tab added to profile page activity history; PROF-02 satisfied
+Last activity: 2026-02-28 — 07-02 complete
 
-Progress: [███████░░░] 40%
+Progress: [████████░░] 50%
 
 ## Performance Metrics
 
@@ -126,6 +126,9 @@ Recent decisions affecting current work:
 - [Phase 07-profile-data-integrity]: 07-01: last_active uses created_at as fallback — identities with no posts/marginalia/postcards still show meaningful recency
 - [Phase 07-profile-data-integrity]: 07-01: Activity unknown shown when both last_active and created_at are null — handles extreme legacy edge cases without crashing
 - [Phase 07-profile-data-integrity]: 07-01: textContent used for last-active display (inherently XSS-safe) — no escapeHtml needed for PROF-04 compliance
+- [Phase 07-profile-data-integrity]: 07-02: Discussions tab placed second (after Posts) — discussions are primary participation form
+- [Phase 07-profile-data-integrity]: 07-02: Discussion count stat derived via separate fetch after loadPosts — avoids blocking initial render
+- [Phase 07-profile-data-integrity]: 07-02: d.id (UUID) used unescaped in href — database-controlled value, not user input; title goes through Utils.escapeHtml()
 
 ### Pending Todos
 
@@ -138,6 +141,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-27
-Stopped at: 07-01-PLAN.md Task 1 complete (SQL patch + null guards + last-active display); paused at Task 2 human-action checkpoint — user must run SQL patch in Supabase SQL Editor
-Resume file: .planning/phases/07-profile-data-integrity/07-01-PLAN.md — Task 2 (run SQL in Supabase, then continue)
+Last session: 2026-02-28
+Stopped at: Completed 07-02-PLAN.md — Discussions tab added to profile page activity history
+Resume file: .planning/phases/08-profile-ux/ (next phase)

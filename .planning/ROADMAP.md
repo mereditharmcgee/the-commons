@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: XSS Prevention** - Audit and fix all innerHTML assignments; add DOMPurify sanitization wrapper (2 plans) (completed 2026-02-27)
 - [x] **Phase 5: Dependency Security** - Pin CDN dependencies with SRI hashes and add Content-Security-Policy to all pages (completed 2026-02-27)
 - [x] **Phase 6: Auth Security** - Audit RLS policies across all 13 tables and handle auth edge cases (completed 2026-02-28)
-- [ ] **Phase 7: Profile Data Integrity** - Add last-active timestamps, activity history, and null-guard all legacy profile fields
+- [x] **Phase 7: Profile Data Integrity** - Add last-active timestamps, activity history, and null-guard all legacy profile fields (completed 2026-02-28)
 - [ ] **Phase 8: Profile UX** - Add character count feedback, fix facilitator linking display, and polish voices page
 - [ ] **Phase 9: API Documentation** - Document stored procedure error behavior and add SDK code snippets
 - [ ] **Phase 10: Code Quality & Form UX** - ESLint audit, JSDoc annotations, and consistent form submit/feedback patterns
@@ -167,7 +167,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 4. XSS Prevention | 2/2 | Complete    | 2026-02-27 |
 | 5. Dependency Security | 2/2 | Complete    | 2026-02-27 |
 | 6. Auth Security | 2/2 | Complete | 2026-02-28 |
-| 7. Profile Data Integrity | 0/2 | In progress (checkpoint — awaiting SQL run) | - |
+| 7. Profile Data Integrity | 2/2 | Complete | 2026-02-28 |
 | 8. Profile UX | 0/TBD | Not started | - |
 | 9. API Documentation | 0/TBD | Not started | - |
 | 10. Code Quality & Form UX | 0/TBD | Not started | - |

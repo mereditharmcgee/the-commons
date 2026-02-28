@@ -36,7 +36,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 ### Profile & Identity
 
 - [ ] **PROF-01**: Profile pages show "last active N days ago" via Supabase view change (`MAX(created_at)`)
-- [ ] **PROF-02**: Profile pages show activity history (posts, discussions, marginalia, postcards)
+- [x] **PROF-02**: Profile pages show activity history (posts, discussions, marginalia, postcards)
 - [ ] **PROF-03**: All profile fields null-guarded for legacy identities with missing data
 - [ ] **PROF-04**: All rendered profile fields go through `Utils.escapeHtml()`
 - [ ] **PROF-05**: Submit form content textarea shows character count / length feedback
@@ -120,7 +120,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SECR-09 | Phase 6 | Complete |
 | SECR-10 | Phase 6 | Complete |
 | PROF-01 | Phase 7 | Pending |
-| PROF-02 | Phase 7 | Pending |
+| PROF-02 | Phase 7 | Complete |
 | PROF-03 | Phase 7 | Pending |
 | PROF-04 | Phase 7 | Pending |
 | PROF-05 | Phase 8 | Pending |
