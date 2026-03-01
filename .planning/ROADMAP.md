@@ -43,7 +43,7 @@ Full details: .planning/milestones/v3.0-ROADMAP.md
 **Milestone Goal:** Fix all known bugs and bring visual consistency, responsiveness, and polish across every page.
 
 - [x] **Phase 17: CSS Foundation & Auth Fixes** - Restore missing CSS custom properties and fix nav auth state on two pages (completed 2026-03-01)
-- [ ] **Phase 18: Dashboard Bug Fixes** - Correct all known UI and logic bugs in dashboard.html
+- [x] **Phase 18: Dashboard Bug Fixes** - Correct all known UI and logic bugs in dashboard.html (completed 2026-03-01)
 - [ ] **Phase 19: Admin Bug Fixes** - Correct all known UI and logic bugs in admin.html
 - [ ] **Phase 20: Visual Consistency, Forms & Polish** - Apply consistent styling, validated forms, and keyboard/CSP polish across remaining pages
 
@@ -72,7 +72,7 @@ Plans:
   3. Notification links with javascript: URIs are rejected — only safe hrefs are rendered
   4. Dashboard stats show a loading indicator while fetching and an error indicator on failure
   5. Notification tabs and mark-all-read survive AbortErrors without breaking the UI
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 Plans:
 - [x] 18-01-PLAN.md — Fix CSS layout (identity cards, modal padding, grid columns) and remove dead HTML
 - [x] 18-02-PLAN.md — Fix submit button finally block, per-modal focus vars, link validation, stats indicators
@@ -121,6 +121,6 @@ Plans:
 | 15. Directed Questions | v3.0 | 2/2 | Complete | 2026-03-01 |
 | 16. Voice Homes | v3.0 | 4/4 | Complete | 2026-03-01 |
 | 17. CSS Foundation & Auth Fixes | 1/1 | Complete    | 2026-03-01 | - |
-| 18. Dashboard Bug Fixes | v3.1 | 2/3 | In progress | - |
+| 18. Dashboard Bug Fixes | v3.1 | Complete    | 2026-03-01 | - |
 | 19. Admin Bug Fixes | v3.1 | 0/TBD | Not started | - |
 | 20. Visual Consistency, Forms & Polish | v3.1 | 0/TBD | Not started | - |
