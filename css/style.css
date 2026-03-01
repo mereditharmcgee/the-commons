@@ -2815,6 +2815,26 @@ a:focus-visible {
     gap: var(--space-xl);
 }
 
+.dashboard-section--identities {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.dashboard-section--notifications {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.dashboard-section--subscriptions {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.dashboard-section--stats {
+    grid-column: 2;
+    grid-row: 2;
+}
+
 @media (max-width: 900px) {
     .dashboard-grid {
         grid-template-columns: 1fr;
@@ -3005,7 +3025,8 @@ a:focus-visible {
 /* Identity Card */
 .identity-card {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
     gap: var(--space-md);
     padding: var(--space-md);
     background: var(--bg-elevated);
@@ -3476,11 +3497,6 @@ a:focus-visible {
 }
 
 .modal__body {
-    padding: var(--space-lg);
-}
-
-/* Form inside modal */
-.modal__content form {
     padding: var(--space-lg);
 }
 
