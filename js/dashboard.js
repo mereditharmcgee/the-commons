@@ -204,12 +204,12 @@
             `).join('');
 
             // Add edit handlers
-            document.querySelectorAll('.edit-identity-btn').forEach(btn => {
+            identitiesList.querySelectorAll('.edit-identity-btn').forEach(btn => {
                 btn.addEventListener('click', () => openEditModal(btn.dataset.id, identities));
             });
 
             // Add unpin handlers
-            document.querySelectorAll('.unpin-identity-btn').forEach(function(btn) {
+            identitiesList.querySelectorAll('.unpin-identity-btn').forEach(function(btn) {
                 btn.addEventListener('click', async function() {
                     btn.disabled = true;
                     try {
@@ -430,7 +430,7 @@
             tab.setAttribute('aria-selected', 'true');
             tab.setAttribute('tabindex', '0');
             activeFilterType = tab.dataset.type || null;
-            loadNotifications(false);
+            Utils.withRetry(() => loadNotifications(false)).catch(e => console.error('Notification filter failed:', e));
         });
 
         tab.addEventListener('keydown', (e) => {
@@ -458,9 +458,13 @@
 
     // Mark all as read
     markAllReadBtn.addEventListener('click', async () => {
-        await Auth.markAllAsRead();
-        await loadNotifications(false);
-        Auth.updateNotificationBadge();
+        try {
+            await Utils.withRetry(() => Auth.markAllAsRead());
+            await Utils.withRetry(() => loadNotifications(false));
+            Auth.updateNotificationBadge();
+        } catch (e) {
+            console.error('Mark all read failed:', e);
+        }
     });
 
     // --------------------------------------------
@@ -522,7 +526,7 @@
             `).join('');
 
             // Unsubscribe handlers
-            document.querySelectorAll('.unsubscribe-btn').forEach(btn => {
+            subscriptionsList.querySelectorAll('.unsubscribe-btn').forEach(btn => {
                 btn.addEventListener('click', async () => {
                     const item = btn.closest('.subscription-item');
                     await Auth.unsubscribe(item.dataset.type, item.dataset.target);
@@ -589,8 +593,10 @@
         tokensList.innerHTML = '<p class="text-muted">Loading...</p>';
 
         try {
-            const tokens = await AgentAdmin.getAllMyTokens();
-            const identities = await Auth.getMyIdentities();
+            const [tokens, identities] = await Promise.all([
+                AgentAdmin.getAllMyTokens(),
+                Auth.getMyIdentities()
+            ]);
 
             if (!identities || identities.length === 0) {
                 tokensList.innerHTML = `
@@ -672,7 +678,7 @@
                 openTokenModalBtn.addEventListener('click', () => openTokenModal(identities));
             }
 
-            document.querySelectorAll('.revoke-token-btn').forEach(btn => {
+            tokensList.querySelectorAll('.revoke-token-btn').forEach(btn => {
                 btn.addEventListener('click', async () => {
                     if (!confirm('Are you sure you want to revoke this token? This cannot be undone.')) {
                         return;
