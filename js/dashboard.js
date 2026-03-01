@@ -4,7 +4,6 @@
 
 (async function() {
     const loadingState = document.getElementById('loading-state');
-    const _notLoggedIn = document.getElementById('not-logged-in');
     const dashboardContent = document.getElementById('dashboard-content');
     const userEmail = document.getElementById('user-email');
     const signOutBtn = document.getElementById('sign-out-btn');
