@@ -93,56 +93,56 @@ Requirements for bug fix & visual polish milestone. Each maps to roadmap phases.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CSS-01 | Pending | Pending |
-| CSS-02 | Pending | Pending |
-| CSS-03 | Pending | Pending |
-| CSS-04 | Pending | Pending |
-| CSS-05 | Pending | Pending |
-| CSS-06 | Pending | Pending |
-| AUTH-01 | Pending | Pending |
-| AUTH-02 | Pending | Pending |
-| DASH-01 | Pending | Pending |
-| DASH-02 | Pending | Pending |
-| DASH-03 | Pending | Pending |
-| DASH-04 | Pending | Pending |
-| DASH-05 | Pending | Pending |
-| DASH-06 | Pending | Pending |
-| DASH-07 | Pending | Pending |
-| DASH-08 | Pending | Pending |
-| DASH-09 | Pending | Pending |
-| DASH-10 | Pending | Pending |
-| DASH-11 | Pending | Pending |
-| ADM-01 | Pending | Pending |
-| ADM-02 | Pending | Pending |
-| ADM-03 | Pending | Pending |
-| ADM-04 | Pending | Pending |
-| ADM-05 | Pending | Pending |
-| ADM-06 | Pending | Pending |
-| ADM-07 | Pending | Pending |
-| ADM-08 | Pending | Pending |
-| ADM-09 | Pending | Pending |
-| ADM-10 | Pending | Pending |
-| FORM-01 | Pending | Pending |
-| FORM-02 | Pending | Pending |
-| FORM-03 | Pending | Pending |
-| VIS-01 | Pending | Pending |
-| VIS-02 | Pending | Pending |
-| VIS-03 | Pending | Pending |
-| VIS-04 | Pending | Pending |
-| VIS-05 | Pending | Pending |
-| VIS-06 | Pending | Pending |
-| VIS-07 | Pending | Pending |
-| VIS-08 | Pending | Pending |
-| VIS-09 | Pending | Pending |
-| RESP-01 | Pending | Pending |
-| RESP-02 | Pending | Pending |
-| RESP-03 | Pending | Pending |
+| CSS-01 | Phase 17 | Pending |
+| CSS-02 | Phase 17 | Pending |
+| CSS-03 | Phase 17 | Pending |
+| CSS-04 | Phase 17 | Pending |
+| CSS-05 | Phase 17 | Pending |
+| CSS-06 | Phase 17 | Pending |
+| AUTH-01 | Phase 17 | Pending |
+| AUTH-02 | Phase 17 | Pending |
+| DASH-01 | Phase 18 | Pending |
+| DASH-02 | Phase 18 | Pending |
+| DASH-03 | Phase 18 | Pending |
+| DASH-04 | Phase 18 | Pending |
+| DASH-05 | Phase 18 | Pending |
+| DASH-06 | Phase 18 | Pending |
+| DASH-07 | Phase 18 | Pending |
+| DASH-08 | Phase 18 | Pending |
+| DASH-09 | Phase 18 | Pending |
+| DASH-10 | Phase 18 | Pending |
+| DASH-11 | Phase 18 | Pending |
+| ADM-01 | Phase 19 | Pending |
+| ADM-02 | Phase 19 | Pending |
+| ADM-03 | Phase 19 | Pending |
+| ADM-04 | Phase 19 | Pending |
+| ADM-05 | Phase 19 | Pending |
+| ADM-06 | Phase 19 | Pending |
+| ADM-07 | Phase 19 | Pending |
+| ADM-08 | Phase 19 | Pending |
+| ADM-09 | Phase 19 | Pending |
+| ADM-10 | Phase 19 | Pending |
+| VIS-01 | Phase 20 | Pending |
+| VIS-02 | Phase 20 | Pending |
+| VIS-03 | Phase 20 | Pending |
+| VIS-04 | Phase 20 | Pending |
+| VIS-05 | Phase 20 | Pending |
+| VIS-06 | Phase 20 | Pending |
+| VIS-07 | Phase 20 | Pending |
+| VIS-08 | Phase 20 | Pending |
+| VIS-09 | Phase 20 | Pending |
+| FORM-01 | Phase 20 | Pending |
+| FORM-02 | Phase 20 | Pending |
+| FORM-03 | Phase 20 | Pending |
+| RESP-01 | Phase 20 | Pending |
+| RESP-02 | Phase 20 | Pending |
+| RESP-03 | Phase 20 | Pending |
 
 **Coverage:**
-- v3.1 requirements: 42 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 42 ⚠️
+- v3.1 requirements: 44 total
+- Mapped to phases: 44
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-01*
-*Last updated: 2026-03-01 after audit investigation*
+*Last updated: 2026-03-01 — traceability updated after roadmap creation*
