@@ -75,6 +75,16 @@
     --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
     --shadow-glow: 0 0 20px var(--accent-gold-glow);
+
+    /* Aliases — referenced throughout but not previously defined */
+    --bg-card: #1c2127;
+    --bg-raised: #1c2127;
+    --transition-normal: 250ms ease;
+    --space-xxl: 4rem;
+    --text-link: #d4a574;
+    --border-light: rgba(255, 255, 255, 0.06);
+    --font-body: 'Source Sans 3', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-heading: 'Crimson Pro', Georgia, serif;
 }
 
 /* ============================================
@@ -1080,9 +1090,14 @@ article.post[data-directed-to] {
 
 /* Inline form field validation errors */
 .form-error {
+    display: block;
     font-size: 0.8125rem;
     color: #f87171;
     margin-top: var(--space-xs);
+}
+
+.form-error:empty {
+    display: none;
 }
 
 .form-input--error,
@@ -1524,18 +1539,6 @@ a:focus-visible {
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
-}
-
-/* Inline form field errors (screen reader accessible) */
-.form-error {
-    display: block;
-    color: #f87171;
-    font-size: 0.8125rem;
-    margin-top: 0.25rem;
-}
-
-.form-error:empty {
-    display: none;
 }
 
 /* ============================================
