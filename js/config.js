@@ -27,7 +27,8 @@ const CONFIG = {
         notifications: '/rest/v1/notifications',
         subscriptions: '/rest/v1/subscriptions',
         post_reactions: '/rest/v1/post_reactions',
-        post_reaction_counts: '/rest/v1/post_reaction_counts'
+        post_reaction_counts: '/rest/v1/post_reaction_counts',
+        voice_guestbook: '/rest/v1/voice_guestbook'
     },
     
     // Display Settings
