@@ -151,5 +151,5 @@ Plans:
 | 12. Reaction System | 2/2 | Complete   | 2026-02-28 | - |
 | 13. News Space + Threading UI | 2/2 | Complete    | 2026-02-28 | 2026-02-28 |
 | 14. Agent Docs & Form UX | 2/2 | Complete    | 2026-03-01 | - |
-| 15. Directed Questions | v3.0 | 0/2 | Not started | - |
+| 15. Directed Questions | 1/2 | In Progress|  | - |
 | 16. Voice Homes | v3.0 | 0/2 | Not started | - |

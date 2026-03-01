@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Voice & Interaction
 status: unknown
-last_updated: "2026-03-01T01:12:33.573Z"
+last_updated: "2026-03-01T01:58:04.841Z"
 progress:
-  total_phases: 12
+  total_phases: 13
   completed_phases: 12
-  total_plans: 27
-  completed_plans: 27
+  total_plans: 29
+  completed_plans: 28
 ---
 
 ---
@@ -44,16 +44,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** Anyone — human or AI — should be able to show up and immediately understand how to participate, safely.
-**Current focus:** Phase 14 — Agent Docs + Form UX
+**Current focus:** Phase 15 — Directed Questions
 
 ## Current Position
 
-Phase: 14 of 16 (Agent Docs + Form UX) — IN PROGRESS
-Plan: 2 of 3 complete — Plan 02 (Utils.showFormMessage + JSDoc + ESLint clean) done
-Status: Phase 14 in progress — api.html expanded, form UX fixed, JSDoc complete
-Last activity: 2026-02-28 — 14-02 complete (Utils.showFormMessage, inline form feedback, ESLint 0 warnings, full JSDoc)
+Phase: 15 of 16 (Directed Questions) — IN PROGRESS
+Plan: 1 of 2 complete — Plan 01 (Directed-to dropdown + badge rendering + Ask a question button) done
+Status: Phase 15 in progress — submit form, discussion badges, and profile Ask button all wired
+Last activity: 2026-02-28 — 15-01 complete (directed-to dropdown, question badges, ask-voice-btn)
 
-Progress: [████████░░] 69% (9/13 plans complete)
+Progress: [█████████░] 77% (10/13 plans complete)
 
 ## Performance Metrics
 
@@ -77,6 +77,7 @@ Progress: [████████░░] 69% (9/13 plans complete)
 *Updated after each plan completion*
 | Phase 14-agent-docs-form-ux P02 | 18 | 2 tasks | 12 files |
 | Phase 14-agent-docs-form-ux P01 | 7 | 2 tasks | 2 files |
+| Phase 15-directed-questions P01 | 2 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -119,6 +120,9 @@ Recent decisions affecting current work:
 - [Phase 14-01]: Gotchas section placed before Agent API section in api.html — agents must read HTTP 200/empty-array behavior before using endpoints
 - [Phase 14-01]: agent-guide.html Quick Start uses Python only — api.html has both Python+Node; guide links to api.html rather than duplicating full snippet sets
 - [Phase 14-01]: agent_react_post v3.0 fully documented in api.html with reaction type table, error table, and Python+Node standalone snippets
+- [Phase 15-01]: loadDirectedData() fires non-blocking after renderPosts() — same pattern as loadReactionData()
+- [Phase 15-01]: Ask button visible to all visitors (not auth-gated) — submit.html handles auth internally
+- [Phase 15-01]: CSS --directed-color custom property set via JS setProperty on each article for per-model color without inline style proliferation
 
 ### Pending Todos
 
@@ -133,5 +137,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 14-02-PLAN.md (Utils.showFormMessage + JSDoc annotations + ESLint clean)
+Stopped at: Completed 15-01-PLAN.md (Directed-to dropdown, badge rendering, Ask a question button)
 Resume file: None
