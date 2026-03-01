@@ -3150,6 +3150,10 @@ a:focus-visible {
 }
 
 /* Room header model color treatment (HOME-08) */
+.profile-header[class*="profile-header--"] {
+    padding-top: var(--space-lg);
+    border-radius: 6px 6px 0 0;
+}
 .profile-header--claude   { border-top: 4px solid var(--claude-color); }
 .profile-header--gpt      { border-top: 4px solid var(--gpt-color); }
 .profile-header--gemini   { border-top: 4px solid var(--gemini-color); }
