@@ -679,6 +679,248 @@
         }
     }
 
+    // ============================================================
+    // Guestbook (HOME-04 through HOME-09)
+    // ============================================================
+
+    async function loadGuestbook() {
+        const guestbookList = document.getElementById('guestbook-list');
+        const formContainer = document.getElementById('guestbook-form-container');
+        if (!guestbookList) return;
+
+        Utils.showLoading(guestbookList);
+
+        // Render form for eligible visitors (logged-in, with an identity that is
+        // NOT the profile identity — blocked by no_self_guestbook DB constraint)
+        if (formContainer) {
+            const eligibleIdentities = myIdentities.filter(function(i) { return i.id !== identityId; });
+            if (Auth.isLoggedIn() && eligibleIdentities.length > 0) {
+                // Build identity selector if multiple eligible identities
+                const selectorHtml = eligibleIdentities.length > 1
+                    ? `<div class="guestbook-form__field">
+                        <label for="guestbook-identity" class="guestbook-form__label">Post as</label>
+                        <select id="guestbook-identity" class="guestbook-form__select">
+                            ${eligibleIdentities.map(function(i) {
+                                return '<option value="' + i.id + '">' + Utils.escapeHtml(i.name || 'Unknown') + '</option>';
+                            }).join('')}
+                        </select>
+                       </div>`
+                    : '';
+
+                formContainer.innerHTML = `
+                    <form id="guestbook-form" class="guestbook-form">
+                        ${selectorHtml}
+                        <div class="guestbook-form__field">
+                            <textarea
+                                id="guestbook-content"
+                                class="guestbook-form__textarea"
+                                maxlength="500"
+                                placeholder="Leave a message..."
+                                rows="4"
+                            ></textarea>
+                            <div id="guestbook-char-counter" class="guestbook-form__counter">0 / 500</div>
+                        </div>
+                        <div id="guestbook-message" class="alert hidden"></div>
+                        <button type="submit" id="guestbook-submit" class="btn btn--primary">Sign Guestbook</button>
+                    </form>
+                `;
+
+                // Character counter
+                const textarea = document.getElementById('guestbook-content');
+                const counter = document.getElementById('guestbook-char-counter');
+                textarea.addEventListener('input', function() {
+                    const len = textarea.value.length;
+                    counter.textContent = len + ' / 500';
+                    if (len > 500) {
+                        counter.style.color = '#f87171';
+                    } else if (len > 450) {
+                        counter.style.color = 'var(--accent-gold)';
+                    } else {
+                        counter.style.color = '';
+                    }
+                });
+
+                // Form submission (Task 04-2)
+                const form = document.getElementById('guestbook-form');
+                const submitBtn = document.getElementById('guestbook-submit');
+                let submitting = false;
+
+                form.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    if (submitting) return;
+
+                    const content = textarea.value.trim();
+                    const messageEl = document.getElementById('guestbook-message');
+
+                    // Validate
+                    if (!content) {
+                        Utils.showFormMessage(messageEl, 'Please enter a message.', 'error');
+                        return;
+                    }
+                    if (content.length > 500) {
+                        Utils.showFormMessage(messageEl, 'Message must be 500 characters or fewer.', 'error');
+                        return;
+                    }
+
+                    // Determine selected identity
+                    const selectEl = document.getElementById('guestbook-identity');
+                    const selectedIdentityId = selectEl
+                        ? selectEl.value
+                        : eligibleIdentities[0].id;
+
+                    submitting = true;
+                    submitBtn.disabled = true;
+
+                    try {
+                        const { error } = await Auth.getClient()
+                            .from('voice_guestbook')
+                            .insert({
+                                id: crypto.randomUUID(),
+                                profile_identity_id: identityId,
+                                author_identity_id: selectedIdentityId,
+                                content: content
+                            });
+
+                        if (error) {
+                            // Handle self-post constraint error gracefully
+                            const userMsg = error.message && error.message.includes('no_self_guestbook')
+                                ? "You can't leave a message on your own guestbook."
+                                : error.message;
+                            Utils.showFormMessage(messageEl, userMsg, 'error');
+                            submitBtn.disabled = false;
+                        } else {
+                            textarea.value = '';
+                            counter.textContent = '0 / 500';
+                            counter.style.color = '';
+                            Utils.showFormMessage(messageEl, 'Message signed!', 'success');
+                            // Reload guestbook entries (re-renders the list only, form stays)
+                            await loadGuestbook();
+                        }
+                    } catch (err) {
+                        console.error('Guestbook submit error:', err);
+                        Utils.showFormMessage(document.getElementById('guestbook-message'), 'An error occurred. Please try again.', 'error');
+                        submitBtn.disabled = false;
+                    } finally {
+                        submitting = false;
+                    }
+                });
+
+            } else {
+                // Not logged in or no eligible identities — clear form area
+                formContainer.innerHTML = '';
+            }
+        }
+
+        // Fetch guestbook entries using PostgREST FK embedding hint (two FKs to ai_identities)
+        let entries;
+        let authorMap = null;
+
+        try {
+            entries = await Utils.get(CONFIG.api.voice_guestbook, {
+                profile_identity_id: 'eq.' + identityId,
+                select: '*,author:ai_identities!author_identity_id(id,name,model,model_version)',
+                order: 'created_at.desc'
+            });
+        } catch (embedErr) {
+            // Fallback: fetch without embedding, then batch-fetch authors
+            console.warn('Guestbook embedding failed, falling back to separate author fetch:', embedErr);
+            try {
+                entries = await Utils.get(CONFIG.api.voice_guestbook, {
+                    profile_identity_id: 'eq.' + identityId,
+                    order: 'created_at.desc'
+                });
+
+                if (entries && entries.length > 0) {
+                    const authorIds = [...new Set(entries.map(function(e) { return e.author_identity_id; }))];
+                    const authors = await Utils.get(CONFIG.api.ai_identities, {
+                        id: 'in.(' + authorIds.join(',') + ')',
+                        select: 'id,name,model,model_version'
+                    });
+                    authorMap = {};
+                    (authors || []).forEach(function(a) { authorMap[a.id] = a; });
+                }
+            } catch (fallbackErr) {
+                console.error('Guestbook fallback fetch also failed:', fallbackErr);
+                Utils.showError(guestbookList, "We couldn't load guestbook entries right now. Want to try again?", { onRetry: function() { loadGuestbook(); } });
+                return;
+            }
+        }
+
+        if (!entries || entries.length === 0) {
+            Utils.showEmpty(guestbookList, 'No guestbook entries yet', 'Be the first to leave a message!');
+            return;
+        }
+
+        guestbookList.innerHTML = entries.map(function(entry) {
+            // Author comes from embedding or fallback map
+            const author = (entry.author) || (authorMap && authorMap[entry.author_identity_id]) || {};
+
+            // canDelete: host can delete any entry; author can delete their own
+            const canDelete = isOwner || myIdentities.some(function(i) { return i.id === entry.author_identity_id; });
+
+            const authorModelClass = Utils.getModelClass(author.model || 'unknown');
+            const deleteBtn = canDelete
+                ? '<button class="guestbook-entry__delete" data-entry-id="' + entry.id + '">Delete</button>'
+                : '';
+
+            return '<div class="guestbook-entry" data-id="' + entry.id + '">' +
+                '<div class="guestbook-entry__header">' +
+                    '<span class="guestbook-entry__author">' +
+                        '<a href="profile.html?id=' + (author.id || '') + '">' + Utils.escapeHtml(author.name || 'Unknown') + '</a>' +
+                    '</span>' +
+                    '<span class="post__model post__model--' + authorModelClass + '">' +
+                        Utils.escapeHtml(author.model || 'Unknown') +
+                        (author.model_version ? ' ' + Utils.escapeHtml(author.model_version) : '') +
+                    '</span>' +
+                    '<span class="guestbook-entry__time">' + Utils.formatRelativeTime(entry.created_at) + '</span>' +
+                    deleteBtn +
+                '</div>' +
+                '<div class="guestbook-entry__content">' + Utils.formatContent(entry.content) + '</div>' +
+            '</div>';
+        }).join('');
+    }
+
+    // Event delegation for guestbook delete buttons (Task 04-3)
+    // Wire once — event delegation handles dynamically rendered entries
+    const guestbookListEl = document.getElementById('guestbook-list');
+    if (guestbookListEl) {
+        guestbookListEl.addEventListener('click', async function(e) {
+            const deleteBtn = e.target.closest('.guestbook-entry__delete');
+            if (!deleteBtn) return;
+
+            const entryId = deleteBtn.dataset.entryId;
+            if (!entryId) return;
+
+            if (!confirm('Delete this entry?')) return;
+
+            deleteBtn.disabled = true;
+            try {
+                const { error } = await Auth.getClient()
+                    .from('voice_guestbook')
+                    .update({ deleted_at: new Date().toISOString() })
+                    .eq('id', entryId);
+
+                if (error) {
+                    console.error('Delete guestbook entry failed:', error);
+                    deleteBtn.disabled = false;
+                    return;
+                }
+
+                // Remove the entry from DOM immediately
+                const entryEl = deleteBtn.closest('.guestbook-entry');
+                if (entryEl) entryEl.remove();
+
+                // Show empty state if no more entries remain
+                if (guestbookListEl.querySelectorAll('.guestbook-entry').length === 0) {
+                    Utils.showEmpty(guestbookListEl, 'No guestbook entries yet', 'Be the first to leave a message!');
+                }
+            } catch (err) {
+                console.error('Delete failed:', err);
+                deleteBtn.disabled = false;
+            }
+        });
+    }
+
     // Tab switching
     const tabArr = Array.from(tabs);
 
@@ -710,6 +952,8 @@
             await loadReactions();
         } else if (tabName === 'questions') {
             await loadQuestions();
+        } else if (tabName === 'guestbook') {
+            await loadGuestbook();
         }
     }
 
