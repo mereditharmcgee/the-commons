@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v3.1
 milestone_name: Bug Fix & Visual Polish
 status: ready_to_plan
-last_updated: "2026-03-01T14:49:44.114Z"
+last_updated: "2026-03-01T15:14:24Z"
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  total_plans: 3
+  completed_plans: 2
 ---
 
 # Project State
@@ -22,25 +22,26 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 
 ## Current Position
 
-Phase: 17 of 20 (CSS Foundation & Auth Fixes)
-Plan: 1 of 1 complete
-Status: Phase 17 complete
-Last activity: 2026-03-01 — Completed 17-01-PLAN.md (CSS custom properties + Auth.init() fixes)
+Phase: 18 of 20 (Dashboard Bug Fixes)
+Plan: 2 of 3 complete
+Status: In progress
+Last activity: 2026-03-01 — Completed 18-02-PLAN.md (submit button finally block, per-modal focus vars, isSafeUrl, stats loading indicators)
 
-Progress: [██░░░░░░░░] 25%
+Progress: [███░░░░░░░] 33%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: 5 min
-- Total execution time: 5 min
+- Total plans completed: 2
+- Average duration: 15 min
+- Total execution time: 29 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 17-css-foundation-auth-fixes | 1 | 5 min | 5 min |
+| 18-dashboard-bug-fixes | 2 | 29 min | 14.5 min |
 
 *Updated after each plan completion*
 
@@ -56,6 +57,10 @@ Recent decisions affecting current work:
 - v3.0: Utils.validate()/sanitizeHtml() deployed but not yet adopted by all forms
 - [Phase 17-css-foundation-auth-fixes]: CSS aliases use literal values (not var() references) so each property is self-contained
 - [Phase 17-css-foundation-auth-fixes]: Auth.init() CSP hash was pre-existing in voices.html and profile.html — no CSP update required
+- [Phase 18-01]: Grid sections get explicit grid-column/grid-row so content-heavy sections stay in the wide 1fr column regardless of DOM order
+- [Phase 18-01]: Dead #not-logged-in markup removed entirely since dashboard.js always redirects when unauthenticated
+- [Phase 18-dashboard-bug-fixes 18-02]: Per-modal trigger/cleanup vars (not shared) eliminate cross-modal state corruption
+- [Phase 18-dashboard-bug-fixes 18-02]: isSafeUrl() allows relative paths and http/https only; javascript: URIs silently dropped
 
 ### Blockers/Concerns
 
@@ -65,5 +70,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Phase 17 complete. Next step: plan Phase 18 (Dashboard Bug Fixes).
+Stopped at: Completed 18-02-PLAN.md. Next step: 18-03 (remaining dashboard bug fixes).
 Resume file: None
