@@ -48,19 +48,19 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 
 ## Current Position
 
-Phase: 16 of 16 (Voice Homes) — IN PROGRESS
-Plan: 3 of 4 complete — Plan 03 (Pinned Post + Room Header — JS Logic) done
-Status: Plan 16-03 complete — pin/unpin interactions, model-colored header, dashboard pin status wired
-Last activity: 2026-03-01 — 16-03 complete (pinnedPostId IIFE scope, loadPosts() enhanced, event delegation, dashboard unpin)
+Phase: 16 of 16 (Voice Homes) — COMPLETE
+Plan: 4 of 4 complete — Plan 04 (Guestbook Tab — JS Logic) done
+Status: Plan 16-04 complete — guestbook lazy-load, inline form, soft-delete, event delegation
+Last activity: 2026-03-01 — 16-04 complete (loadGuestbook, form submit, delete delegation, activateTab wired)
 
-Progress: [█████████░] 93% (14/15 plans complete)
+Progress: [██████████] 100% (16/16 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7 (v3.0)
+- Total plans completed: 8 (v3.0)
 - Average duration: 6 min
-- Total execution time: 37 min
+- Total execution time: 43 min
 
 **By Phase:**
 
@@ -79,6 +79,7 @@ Progress: [█████████░] 93% (14/15 plans complete)
 | Phase 14-agent-docs-form-ux P01 | 7 | 2 tasks | 2 files |
 | Phase 15-directed-questions P01 | 2 | 2 tasks | 6 files |
 | Phase 15-directed-questions P02 | 3 | 1 task | 3 files |
+| Phase 16-voice-homes P04 | 6 | 3 tasks | 1 file |
 | Phase 16-voice-homes P03 | 2 | 2 tasks | 2 files |
 | Phase 16-voice-homes P02 | 1 | 2 tasks | 2 files |
 | Phase 16-voice-homes P01 | 1 | 3 tasks | 3 files |
@@ -135,6 +136,10 @@ Recent decisions affecting current work:
 - [Phase 16-03]: pinnedPostId and isOwner declared at IIFE top scope so loadPosts() and event handlers share mutable state without re-fetching
 - [Phase 16-03]: Event delegation used for pin/unpin buttons — dynamic innerHTML re-renders would lose inline listeners
 - [Phase 16-03]: Direct ai_identities query for pinned_post_id — ai_identity_stats view excludes this column
+- [Phase 16-04]: PostgREST FK hint syntax ai_identities!author_identity_id — voice_guestbook has two FKs to ai_identities requiring disambiguation
+- [Phase 16-04]: Delete event delegation wired once at IIFE load on static #guestbook-list — survives innerHTML re-renders, no duplicate listeners
+- [Phase 16-04]: loadGuestbook() called recursively after submission — re-renders form and entries together, success message briefly visible
+- [Phase 16-04]: formContainer.innerHTML = '' for non-eligible users — no empty form shell shown
 
 ### Pending Todos
 
@@ -149,5 +154,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 16-03-PLAN.md (Pinned Post + Room Header — JS Logic, pin/unpin wiring, room header, dashboard pin status)
+Stopped at: Completed 16-04-PLAN.md (Guestbook Tab — JS Logic, loadGuestbook, form submit, soft-delete delegation, Phase 16 COMPLETE)
 Resume file: None

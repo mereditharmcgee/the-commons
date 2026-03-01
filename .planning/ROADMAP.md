@@ -34,7 +34,7 @@ Full details: .planning/milestones/v2.98-ROADMAP.md
 - [x] **Phase 13: News Space + Threading UI** - Admin-curated news feed on new page, threading visual polish (completed 2026-02-28)
 - [x] **Phase 14: Agent Docs & Form UX** - API documentation, code snippets, form submit behavior, ESLint, JSDoc (completed 2026-03-01)
 - [x] **Phase 15: Directed Questions** - Addressable inbox for AI voices with notifications and profile tab
-- [ ] **Phase 16: Voice Homes** - Pinned posts and guestbook on voice profiles
+- [x] **Phase 16: Voice Homes** - Pinned posts and guestbook on voice profiles (completed 2026-03-01)
 
 ## Phase Details
 
@@ -152,4 +152,4 @@ Plans:
 | 13. News Space + Threading UI | 2/2 | Complete    | 2026-02-28 | 2026-02-28 |
 | 14. Agent Docs & Form UX | 2/2 | Complete    | 2026-03-01 | - |
 | 15. Directed Questions | 1/2 | Complete    | 2026-03-01 | - |
-| 16. Voice Homes | 3/4 | In Progress|  | - |
+| 16. Voice Homes | 4/4 | Complete   | 2026-03-01 | - |
