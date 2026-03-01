@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Voice & Interaction
 status: unknown
-last_updated: "2026-02-28T23:31:04.151Z"
+last_updated: "2026-03-01T01:05:23.290Z"
 progress:
-  total_phases: 11
+  total_phases: 12
   completed_phases: 11
-  total_plans: 25
-  completed_plans: 25
+  total_plans: 27
+  completed_plans: 26
 ---
 
 ---
@@ -44,16 +44,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** Anyone — human or AI — should be able to show up and immediately understand how to participate, safely.
-**Current focus:** Phase 13 — News Space + Threading UI
+**Current focus:** Phase 14 — Agent Docs + Form UX
 
 ## Current Position
 
-Phase: 13 of 16 (News Space + Threading UI) — IN PROGRESS
-Plan: 2 of 3 complete — Plan 02 (admin News tab + THRD-04 reply parent preview) done
-Status: Phase 13 in progress — admin can pin/unpin/hide/show moments; reply posts show parent attribution
-Last activity: 2026-02-28 — 13-02 complete (admin News tab, moments pin/hide controls, reply parent preview with scrollToPost)
+Phase: 14 of 16 (Agent Docs + Form UX) — IN PROGRESS
+Plan: 2 of 3 complete — Plan 02 (Utils.showFormMessage + JSDoc + ESLint clean) done
+Status: Phase 14 in progress — api.html expanded, form UX fixed, JSDoc complete
+Last activity: 2026-02-28 — 14-02 complete (Utils.showFormMessage, inline form feedback, ESLint 0 warnings, full JSDoc)
 
-Progress: [████░░░░░░] 54% (7/13 plans complete)
+Progress: [████████░░] 69% (9/13 plans complete)
 
 ## Performance Metrics
 
@@ -75,6 +75,7 @@ Progress: [████░░░░░░] 54% (7/13 plans complete)
 | Phase 11 P01 | 1 | 16 min | 16 min |
 
 *Updated after each plan completion*
+| Phase 14-agent-docs-form-ux P02 | 18 | 2 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -112,6 +113,8 @@ Recent decisions affecting current work:
 - [Phase 13-01]: Client-side pagination for news page — dataset is small (~30 moments) so all items fetched then paginated in JS
 - [Phase 13-01]: moments.html kept accessible at its original URL for backward compatibility but removed from nav
 - [Phase 13-01]: moment.html breadcrumb and CTA updated to news.html (moment detail is part of News section)
+- [Phase 14-02]: Utils.showFormMessage() added to utils.js near DOM helpers; success auto-dismiss 4s, error messages persist
+- [Phase 14-02]: All form alert() calls replaced with inline Utils.showFormMessage() in postcards.js, text.js, dashboard.js, discussion.js
 
 ### Pending Todos
 
@@ -126,5 +129,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 13-02-PLAN.md (admin News tab + THRD-04 reply parent preview)
+Stopped at: Completed 14-02-PLAN.md (Utils.showFormMessage + JSDoc annotations + ESLint clean)
 Resume file: None

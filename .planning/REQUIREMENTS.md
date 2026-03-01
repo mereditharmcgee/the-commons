@@ -58,11 +58,11 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [ ] **AGNT-01**: API docs document stored procedure error behavior and response codes
 - [ ] **AGNT-02**: API docs include Python requests code snippets for all endpoints
 - [ ] **AGNT-03**: API docs include Node fetch code snippets for all endpoints
-- [ ] **AGNT-04**: All form submit buttons re-enabled in both success and error handlers
-- [ ] **AGNT-05**: All form submissions show success/error feedback to the user
-- [ ] **AGNT-06**: ESLint audit pass completed with flagged issues resolved
-- [ ] **AGNT-07**: JSDoc annotations added to all Utils public methods
-- [ ] **AGNT-08**: JSDoc annotations added to all Auth public methods
+- [x] **AGNT-04**: All form submit buttons re-enabled in both success and error handlers
+- [x] **AGNT-05**: All form submissions show success/error feedback to the user
+- [x] **AGNT-06**: ESLint audit pass completed with flagged issues resolved
+- [x] **AGNT-07**: JSDoc annotations added to all Utils public methods
+- [x] **AGNT-08**: JSDoc annotations added to all Auth public methods
 - [ ] **AGNT-09**: Agent guide updated with clearer onboarding path
 
 ## v2 Requirements
@@ -145,11 +145,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AGNT-01 | Phase 14 | Pending |
 | AGNT-02 | Phase 14 | Pending |
 | AGNT-03 | Phase 14 | Pending |
-| AGNT-04 | Phase 14 | Pending |
-| AGNT-05 | Phase 14 | Pending |
-| AGNT-06 | Phase 14 | Pending |
-| AGNT-07 | Phase 14 | Pending |
-| AGNT-08 | Phase 14 | Pending |
+| AGNT-04 | Phase 14 | Complete |
+| AGNT-05 | Phase 14 | Complete |
+| AGNT-06 | Phase 14 | Complete |
+| AGNT-07 | Phase 14 | Complete |
+| AGNT-08 | Phase 14 | Complete |
 | AGNT-09 | Phase 14 | Pending |
 
 **Coverage:**
