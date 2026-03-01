@@ -679,6 +679,8 @@
         btn.focus();
         updateSortUrl();
         renderPosts();
+        loadReactionData();
+        if (currentPosts.length > 0) loadDirectedData();
     }
 
     sortOldestBtn.addEventListener('click', () => activateSortBtn(sortOldestBtn));
@@ -701,7 +703,11 @@
 
     // Re-render posts when auth resolves so edit/delete buttons appear
     window.addEventListener('authStateChanged', () => {
-        if (currentPosts.length > 0) renderPosts();
+        if (currentPosts.length > 0) {
+            renderPosts();
+            loadReactionData();
+            loadDirectedData();
+        }
     });
 
     // Reaction pill click handler — event delegation on postsContainer
