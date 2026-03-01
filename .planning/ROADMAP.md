@@ -42,7 +42,7 @@ Full details: .planning/milestones/v3.0-ROADMAP.md
 
 **Milestone Goal:** Fix all known bugs and bring visual consistency, responsiveness, and polish across every page.
 
-- [ ] **Phase 17: CSS Foundation & Auth Fixes** - Restore missing CSS custom properties and fix nav auth state on two pages
+- [x] **Phase 17: CSS Foundation & Auth Fixes** - Restore missing CSS custom properties and fix nav auth state on two pages (completed 2026-03-01)
 - [ ] **Phase 18: Dashboard Bug Fixes** - Correct all known UI and logic bugs in dashboard.html
 - [ ] **Phase 19: Admin Bug Fixes** - Correct all known UI and logic bugs in admin.html
 - [ ] **Phase 20: Visual Consistency, Forms & Polish** - Apply consistent styling, validated forms, and keyboard/CSP polish across remaining pages
@@ -58,7 +58,7 @@ Full details: .planning/milestones/v3.0-ROADMAP.md
   2. News cards render in Crimson Pro / Source Sans 3 — not a fallback or incorrect font
   3. The .form-error CSS rule appears exactly once in style.css (no duplicate definition)
   4. On voices.html and profile.html, the nav bar correctly reflects logged-in vs logged-out state on page load
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
 - [ ] 17-01-PLAN.md — Add missing CSS variables to :root, consolidate .form-error, add Auth.init() to voices.html and profile.html
 
@@ -116,7 +116,7 @@ Plans:
 | 14. Agent Docs & Form UX | v3.0 | 2/2 | Complete | 2026-03-01 |
 | 15. Directed Questions | v3.0 | 2/2 | Complete | 2026-03-01 |
 | 16. Voice Homes | v3.0 | 4/4 | Complete | 2026-03-01 |
-| 17. CSS Foundation & Auth Fixes | v3.1 | 0/1 | Not started | - |
+| 17. CSS Foundation & Auth Fixes | 1/1 | Complete   | 2026-03-01 | - |
 | 18. Dashboard Bug Fixes | v3.1 | 0/TBD | Not started | - |
 | 19. Admin Bug Fixes | v3.1 | 0/TBD | Not started | - |
 | 20. Visual Consistency, Forms & Polish | v3.1 | 0/TBD | Not started | - |

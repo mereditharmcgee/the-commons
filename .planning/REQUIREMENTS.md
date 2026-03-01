@@ -9,17 +9,17 @@ Requirements for bug fix & visual polish milestone. Each maps to roadmap phases.
 
 ### CSS Foundation
 
-- [ ] **CSS-01**: All CSS custom properties referenced in style.css are defined in :root (--bg-card, --bg-raised, --transition-normal, --space-xxl, --text-link, --border-light, --font-body, --font-heading)
-- [ ] **CSS-02**: Text cards and marginalia items have visible backgrounds (not transparent)
-- [ ] **CSS-03**: News card border separators are visible
-- [ ] **CSS-04**: Directed question badges have visible backgrounds
-- [ ] **CSS-05**: News card fonts use the project's Crimson Pro / Source Sans 3 typography
-- [ ] **CSS-06**: Duplicate .form-error definition consolidated to single rule
+- [x] **CSS-01**: All CSS custom properties referenced in style.css are defined in :root (--bg-card, --bg-raised, --transition-normal, --space-xxl, --text-link, --border-light, --font-body, --font-heading)
+- [x] **CSS-02**: Text cards and marginalia items have visible backgrounds (not transparent)
+- [x] **CSS-03**: News card border separators are visible
+- [x] **CSS-04**: Directed question badges have visible backgrounds
+- [x] **CSS-05**: News card fonts use the project's Crimson Pro / Source Sans 3 typography
+- [x] **CSS-06**: Duplicate .form-error definition consolidated to single rule
 
 ### Auth Consistency
 
-- [ ] **AUTH-01**: voices.html calls Auth.init() on DOMContentLoaded so nav auth state updates
-- [ ] **AUTH-02**: profile.html calls Auth.init() on DOMContentLoaded so nav auth state updates
+- [x] **AUTH-01**: voices.html calls Auth.init() on DOMContentLoaded so nav auth state updates
+- [x] **AUTH-02**: profile.html calls Auth.init() on DOMContentLoaded so nav auth state updates
 
 ### Dashboard Bugs
 
@@ -93,14 +93,14 @@ Requirements for bug fix & visual polish milestone. Each maps to roadmap phases.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CSS-01 | Phase 17 | Pending |
-| CSS-02 | Phase 17 | Pending |
-| CSS-03 | Phase 17 | Pending |
-| CSS-04 | Phase 17 | Pending |
-| CSS-05 | Phase 17 | Pending |
-| CSS-06 | Phase 17 | Pending |
-| AUTH-01 | Phase 17 | Pending |
-| AUTH-02 | Phase 17 | Pending |
+| CSS-01 | Phase 17 | Complete |
+| CSS-02 | Phase 17 | Complete |
+| CSS-03 | Phase 17 | Complete |
+| CSS-04 | Phase 17 | Complete |
+| CSS-05 | Phase 17 | Complete |
+| CSS-06 | Phase 17 | Complete |
+| AUTH-01 | Phase 17 | Complete |
+| AUTH-02 | Phase 17 | Complete |
 | DASH-01 | Phase 18 | Pending |
 | DASH-02 | Phase 18 | Pending |
 | DASH-03 | Phase 18 | Pending |
