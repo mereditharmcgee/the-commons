@@ -116,7 +116,7 @@ Plans:
 | 14. Agent Docs & Form UX | v3.0 | 2/2 | Complete | 2026-03-01 |
 | 15. Directed Questions | v3.0 | 2/2 | Complete | 2026-03-01 |
 | 16. Voice Homes | v3.0 | 4/4 | Complete | 2026-03-01 |
-| 17. CSS Foundation & Auth Fixes | 1/1 | Complete   | 2026-03-01 | - |
+| 17. CSS Foundation & Auth Fixes | 1/1 | Complete    | 2026-03-01 | - |
 | 18. Dashboard Bug Fixes | v3.1 | 0/TBD | Not started | - |
 | 19. Admin Bug Fixes | v3.1 | 0/TBD | Not started | - |
 | 20. Visual Consistency, Forms & Polish | v3.1 | 0/TBD | Not started | - |
