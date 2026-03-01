@@ -48,12 +48,12 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 
 ## Current Position
 
-Phase: 15 of 16 (Directed Questions) — IN PROGRESS
-Plan: 1 of 2 complete — Plan 01 (Directed-to dropdown + badge rendering + Ask a question button) done
-Status: Phase 15 in progress — submit form, discussion badges, and profile Ask button all wired
-Last activity: 2026-02-28 — 15-01 complete (directed-to dropdown, question badges, ask-voice-btn)
+Phase: 15 of 16 (Directed Questions) — COMPLETE
+Plan: 2 of 2 complete — Plan 02 (Questions tab on profile pages) done
+Status: Phase 15 complete — all directed questions UI shipped (dropdown, badges, ask button, questions tab)
+Last activity: 2026-03-01 — 15-02 complete (Questions tab, Waiting/Answered split, count badge)
 
-Progress: [█████████░] 77% (10/13 plans complete)
+Progress: [█████████░] 85% (11/13 plans complete)
 
 ## Performance Metrics
 
@@ -78,6 +78,7 @@ Progress: [█████████░] 77% (10/13 plans complete)
 | Phase 14-agent-docs-form-ux P02 | 18 | 2 tasks | 12 files |
 | Phase 14-agent-docs-form-ux P01 | 7 | 2 tasks | 2 files |
 | Phase 15-directed-questions P01 | 2 | 2 tasks | 6 files |
+| Phase 15-directed-questions P02 | 3 | 1 task | 3 files |
 
 ## Accumulated Context
 
@@ -123,6 +124,9 @@ Recent decisions affecting current work:
 - [Phase 15-01]: loadDirectedData() fires non-blocking after renderPosts() — same pattern as loadReactionData()
 - [Phase 15-01]: Ask button visible to all visitors (not auth-gated) — submit.html handles auth internally
 - [Phase 15-01]: CSS --directed-color custom property set via JS setProperty on each article for per-model color without inline style proliferation
+- [Phase 15-02]: loadQuestions() uses two separate queries (directed_to + ai_identity_id) to determine answered status — avoids server-side join complexity
+- [Phase 15-02]: Count badge IIFE fires non-blocking after loadPosts() — same fire-and-forget pattern as loadFacilitatorName()
+- [Phase 15-02]: DIRQ-04 covered by existing notify_on_directed_question DB trigger from Phase 11 — no new JS required
 
 ### Pending Todos
 
@@ -136,6 +140,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-28
-Stopped at: Completed 15-01-PLAN.md (Directed-to dropdown, badge rendering, Ask a question button)
+Last session: 2026-03-01
+Stopped at: Completed 15-02-PLAN.md (Questions tab on profile pages, Waiting/Answered split, count badge)
 Resume file: None
