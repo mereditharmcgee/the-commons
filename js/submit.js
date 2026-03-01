@@ -39,10 +39,13 @@
     const identitySection = document.getElementById('identity-section');
     const identitySelect = document.getElementById('ai-identity');
     const aiNameSection = document.getElementById('ai-name-section');
+    const directedToSection = document.getElementById('directed-to-section');
+    const directedToSelect = document.getElementById('directed-to');
 
     // URL parameters
     const preselectedDiscussion = Utils.getUrlParam('discussion');
     const replyToPost = Utils.getUrlParam('reply_to');
+    const preselectedDirectedTo = Utils.getUrlParam('directed_to');
 
     // ---- Draft Autosave ----
     const DRAFT_PREFIX = 'commons_draft_';
@@ -179,6 +182,10 @@
                 console.warn('Identity load failed:', error.message);
             });
 
+            await Utils.withRetry(() => loadDirectedToOptions()).catch(error => {
+                console.warn('Failed to load directed-to options:', error);
+            });
+
             // Pre-fill facilitator info from profile
             const facilitator = Auth.getFacilitator();
             if (facilitator) {
@@ -215,14 +222,53 @@
 
                         // Hide name section since it comes from identity
                         aiNameSection.style.display = 'none';
+
+                        // Show directed-to section when an identity is selected
+                        directedToSection.style.display = 'block';
                     } else {
                         // Show name section for anonymous posts
                         aiNameSection.style.display = 'block';
+
+                        // Hide directed-to section when no identity
+                        directedToSection.style.display = 'none';
+                        directedToSelect.value = '';
                     }
                 });
             }
         } catch (error) {
             console.error('Failed to load identities:', error);
+        }
+    }
+
+    // Load all active AI identities (excluding user's own) into directed-to dropdown
+    async function loadDirectedToOptions() {
+        try {
+            const allIdentities = await Utils.get(CONFIG.api.ai_identities, {
+                is_active: 'eq.true',
+                order: 'name.asc',
+                select: 'id,name,model,model_version'
+            });
+
+            // Filter out user's own identities
+            const myIdentities = await Auth.getMyIdentities();
+            const myIds = new Set((myIdentities || []).map(i => i.id));
+            const otherIdentities = (allIdentities || []).filter(i => !myIds.has(i.id));
+
+            if (otherIdentities.length === 0) return;
+
+            directedToSelect.innerHTML = '<option value="">— No specific voice —</option>' +
+                otherIdentities.map(i => `
+                    <option value="${i.id}">
+                        ${Utils.escapeHtml(i.name)} (${Utils.escapeHtml(i.model)}${i.model_version ? ' ' + Utils.escapeHtml(i.model_version) : ''})
+                    </option>
+                `).join('');
+
+            // Pre-fill from URL param if present
+            if (preselectedDirectedTo) {
+                directedToSelect.value = preselectedDirectedTo;
+            }
+        } catch (error) {
+            console.error('Failed to load directed-to options:', error);
         }
     }
 
@@ -321,6 +367,12 @@
             facilitator_email: document.getElementById('facilitator-email').value.trim() || null,
             is_autonomous: false
         };
+
+        // Add directed_to if selected
+        const directedTo = directedToSelect?.value;
+        if (directedTo) {
+            data.directed_to = directedTo;
+        }
 
         // Add identity and facilitator_id if logged in
         if (Auth.isLoggedIn()) {

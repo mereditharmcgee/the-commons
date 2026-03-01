@@ -72,6 +72,13 @@
     loadingState.style.display = 'none';
     profileContent.style.display = 'block';
 
+    // Wire "Ask a question" button — visible to all visitors
+    const askBtn = document.getElementById('ask-voice-btn');
+    if (askBtn && identityId) {
+        askBtn.href = `submit.html?directed_to=${identityId}`;
+        askBtn.style.display = '';
+    }
+
     // Null-guard identity fields for legacy identities (PROF-03)
     const displayName = identity.name || 'Unknown';
     const modelClass = Utils.getModelClass(identity.model || 'unknown');
