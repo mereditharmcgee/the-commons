@@ -2,157 +2,37 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Voice & Interaction
-status: unknown
-last_updated: "2026-03-01T06:22:48.701Z"
-progress:
-  total_phases: 14
-  completed_phases: 14
-  total_plans: 33
-  completed_plans: 33
----
-
----
-gsd_state_version: 1.0
-milestone: v3.0
-milestone_name: Voice & Interaction
-status: unknown
-last_updated: "2026-02-28T20:19:03.642Z"
-progress:
-  total_phases: 9
-  completed_phases: 9
-  total_plans: 21
-  completed_plans: 21
----
-
----
-gsd_state_version: 1.0
-milestone: v3.0
-milestone_name: Voice & Interaction
-status: in-progress
-last_updated: "2026-02-28"
+status: complete
+last_updated: "2026-03-01"
 progress:
   total_phases: 6
-  completed_phases: 0
-  total_plans: 13
-  completed_plans: 3
+  completed_phases: 6
+  total_plans: 15
+  completed_plans: 15
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-28)
+See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** Anyone — human or AI — should be able to show up and immediately understand how to participate, safely.
-**Current focus:** Phase 16 — Voice Homes
+**Current focus:** v3.0 shipped — planning next milestone
 
 ## Current Position
 
-Phase: 16 of 16 (Voice Homes) — COMPLETE
-Plan: 4 of 4 complete — Plan 04 (Guestbook Tab — JS Logic) done
-Status: Plan 16-04 complete — guestbook lazy-load, inline form, soft-delete, event delegation
-Last activity: 2026-03-01 — 16-04 complete (loadGuestbook, form submit, delete delegation, activateTab wired)
+Milestone v3.0 Voice & Interaction: SHIPPED 2026-03-01
+All 6 phases complete (11-16), 15 plans executed, 31/31 requirements validated.
 
-Progress: [██████████] 100% (16/16 plans complete)
+## Priority for Next Session
 
-## Performance Metrics
-
-**Velocity:**
-- Total plans completed: 8 (v3.0)
-- Average duration: 6 min
-- Total execution time: 43 min
-
-**By Phase:**
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| Phase 13 P02 | 1 | 2 min | 2 min |
-| Phase 13 P01 | 1 | 3 min | 3 min |
-| Phase 12 P02 | 1 | 2 min | 2 min |
-| Phase 12 P01 | 1 | 2 min | 2 min |
-| Phase 11 P03 | 1 | 4 min | 4 min |
-| Phase 11 P02 | 1 | 9 min | 9 min |
-| Phase 11 P01 | 1 | 16 min | 16 min |
-
-*Updated after each plan completion*
-| Phase 14-agent-docs-form-ux P02 | 18 | 2 tasks | 12 files |
-| Phase 14-agent-docs-form-ux P01 | 7 | 2 tasks | 2 files |
-| Phase 15-directed-questions P01 | 2 | 2 tasks | 6 files |
-| Phase 15-directed-questions P02 | 3 | 1 task | 3 files |
-| Phase 16-voice-homes P04 | 6 | 3 tasks | 1 file |
-| Phase 16-voice-homes P03 | 2 | 2 tasks | 2 files |
-| Phase 16-voice-homes P02 | 1 | 2 tasks | 2 files |
-| Phase 16-voice-homes P01 | 1 | 3 tasks | 3 files |
-
-## Accumulated Context
-
-### Decisions
-
-Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
-
-- Schema-first in one pass: all v3.0 migrations before any JS written (eliminates inter-phase blocking)
-- Reactions use post_reaction_counts view as primary path (not PostgREST aggregates — confirm db_aggregates_enabled at phase 12 start)
-- One pin per identity via single nullable column on ai_identities (not junction table)
-- Guestbook table: voice_guestbook (consistent with voice_* namespace)
-- AGNT requirements interleaved as Phase 14 (after schema/reactions, before directed questions that touch forms)
-- All new tables: auth-required INSERT with WITH CHECK (auth.uid() = ...) — never copy old WITH CHECK (true) pattern
-- [Phase 11]: Soft-delete via deleted_at: RLS SELECT policy hides entries instead of physical delete
-- [Phase 11]: Two UPDATE policies (host + author) OR'd together for multi-party soft-delete rights on voice_guestbook
-- [Phase 11]: No physical DELETE policy on voice_guestbook — soft-delete only
-- [Phase 11]: post_reactions uses UNIQUE (post_id, ai_identity_id) — one reaction per AI identity per post at schema level
-- [Phase 11]: post_reaction_counts view as primary aggregation path (not PostgREST aggregates — avoids db_aggregates_enabled dependency)
-- [Phase 11]: SECURITY DEFINER on all three notification trigger functions (notify_on_directed_question, notify_on_guestbook, notify_on_reaction) — notifications table has no INSERT RLS policy, triggers must bypass RLS
-- [Phase 11]: Self-notification guard uses COALESCE(NEW.facilitator_id, null-uuid) to safely compare nullable facilitator_id in directed_question trigger
-- [Phase 11]: Partial indexes on directed_to (WHERE IS NOT NULL) and is_news (WHERE = true) — sparse columns, keep index minimal
-- [Phase 12-01]: No rate limiting on reactions — lightweight toggles, not content creation
-- [Phase 12-01]: No separate reactions permission in agent_tokens — any valid token can react
-- [Phase 12-01]: p_type=NULL as remove signal in agent_react_post — unified add/remove API
-- [Phase 12-01]: SECURITY DEFINER on agent_react_post to bypass post_reactions RLS (agents have no session)
-- [Phase 12-01]: Reaction pills use 200ms ease transition (design spec), not --transition-fast (150ms)
-- [Phase 12-02]: userIdentity set to identities[0] — first active AI identity used for reactions; multi-identity selection deferred
-- [Phase 12-02]: loadReactionData() fires non-blocking after renderPosts() — bars update surgically when counts arrive
-- [Phase 12-02]: Profile Reactions tab uses PostgREST embedding first, falls back to sequential queries on error
-- [Phase 13-01]: Moments rebranded as News sitewide — nav renamed from Moments to News pointing at news.html across all 26 HTML files
-- [Phase 13-02]: Admin moments uses existing admin-item__btn classes (not plan-specified admin-btn — class does not exist)
-- [Phase 13-02]: Parent preview shown on ALL replies (depth > 0), not just depth 2+ — even top-level replies benefit from attribution
-- [Phase 13-02]: scrollToPost uses bg-elevated (not bg-raised which is undefined in CSS variables)
-- [Phase 13-01]: Client-side pagination for news page — dataset is small (~30 moments) so all items fetched then paginated in JS
-- [Phase 13-01]: moments.html kept accessible at its original URL for backward compatibility but removed from nav
-- [Phase 13-01]: moment.html breadcrumb and CTA updated to news.html (moment detail is part of News section)
-- [Phase 14-02]: Utils.showFormMessage() added to utils.js near DOM helpers; success auto-dismiss 4s, error messages persist
-- [Phase 14-02]: All form alert() calls replaced with inline Utils.showFormMessage() in postcards.js, text.js, dashboard.js, discussion.js
-- [Phase 14-01]: Gotchas section placed before Agent API section in api.html — agents must read HTTP 200/empty-array behavior before using endpoints
-- [Phase 14-01]: agent-guide.html Quick Start uses Python only — api.html has both Python+Node; guide links to api.html rather than duplicating full snippet sets
-- [Phase 14-01]: agent_react_post v3.0 fully documented in api.html with reaction type table, error table, and Python+Node standalone snippets
-- [Phase 15-01]: loadDirectedData() fires non-blocking after renderPosts() — same pattern as loadReactionData()
-- [Phase 15-01]: Ask button visible to all visitors (not auth-gated) — submit.html handles auth internally
-- [Phase 15-01]: CSS --directed-color custom property set via JS setProperty on each article for per-model color without inline style proliferation
-- [Phase 15-02]: loadQuestions() uses two separate queries (directed_to + ai_identity_id) to determine answered status — avoids server-side join complexity
-- [Phase 15-02]: Count badge IIFE fires non-blocking after loadPosts() — same fire-and-forget pattern as loadFacilitatorName()
-- [Phase 15-02]: DIRQ-04 covered by existing notify_on_directed_question DB trigger from Phase 11 — no new JS required
-- [Phase 16-voice-homes]: voice_guestbook endpoint added in Plan 01 to avoid duplicate config changes in Plan 02
-- [Phase 16-voice-homes]: profile-header--other uses var(--accent-gold) as fallback for unknown models
-- [Phase 16-03]: pinnedPostId and isOwner declared at IIFE top scope so loadPosts() and event handlers share mutable state without re-fetching
-- [Phase 16-03]: Event delegation used for pin/unpin buttons — dynamic innerHTML re-renders would lose inline listeners
-- [Phase 16-03]: Direct ai_identities query for pinned_post_id — ai_identity_stats view excludes this column
-- [Phase 16-04]: PostgREST FK hint syntax ai_identities!author_identity_id — voice_guestbook has two FKs to ai_identities requiring disambiguation
-- [Phase 16-04]: Delete event delegation wired once at IIFE load on static #guestbook-list — survives innerHTML re-renders, no duplicate listeners
-- [Phase 16-04]: loadGuestbook() called recursively after submission — re-renders form and entries together, success message briefly visible
-- [Phase 16-04]: formContainer.innerHTML = '' for non-eligible users — no empty form shell shown
-
-### Pending Todos
-
-None yet.
-
-### Blockers/Concerns
-
-- Phase 12 (Reactions): post_reaction_counts view is live and confirmed queryable — db_aggregates_enabled check is now optional (view approach is primary path)
-- Phase 14 (Agent Docs): stored procedure error behavior requires SQL audit before api.html can be written accurately
-- Phase 16 (Voice Homes): Guestbook host-deletion RLS uses EXISTS subquery — test with second test account before shipping
+- **Fix dashboard.html UI bugs** — user-reported issues need investigation
+- **Fix admin dashboard bugs** — related issues in admin.html
+- Run `/gsd:new-milestone` to define next version
 
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 16-04-PLAN.md (Guestbook Tab — JS Logic, loadGuestbook, form submit, soft-delete delegation, Phase 16 COMPLETE)
+Stopped at: v3.0 milestone archived, homepage updated with v3.0 features, 4 news items added
 Resume file: None
