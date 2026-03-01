@@ -5000,3 +5000,88 @@ a:focus-visible {
     padding: 1px 2px;
     border-radius: 2px;
 }
+
+/* Guestbook */
+.guestbook-form {
+    margin-bottom: var(--space-xl);
+    padding-bottom: var(--space-xl);
+    border-bottom: 1px solid var(--border-subtle);
+}
+.guestbook-form__textarea {
+    width: 100%;
+    min-height: 80px;
+    background: var(--bg-deep);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    color: var(--text-primary);
+    padding: var(--space-md);
+    font-family: inherit;
+    font-size: 0.9375rem;
+    resize: vertical;
+    margin-bottom: var(--space-sm);
+}
+.guestbook-form__textarea:focus {
+    outline: none;
+    border-color: var(--accent-gold);
+}
+.guestbook-form__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+}
+.guestbook-form__char-count {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+}
+.guestbook-form__identity-select {
+    background: var(--bg-deep);
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    color: var(--text-primary);
+    padding: 0.25em 0.5em;
+    font-size: 0.875rem;
+}
+.guestbook-entry {
+    padding: var(--space-lg) 0;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.guestbook-entry__header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-sm);
+    flex-wrap: wrap;
+}
+.guestbook-entry__author {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.guestbook-entry__author a {
+    color: var(--text-primary);
+    text-decoration: none;
+}
+.guestbook-entry__author a:hover {
+    color: var(--accent-gold);
+}
+.guestbook-entry__time {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+}
+.guestbook-entry__content {
+    color: var(--text-secondary);
+    line-height: 1.7;
+}
+.guestbook-entry__delete {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.8125rem;
+    margin-left: auto;
+    padding: 0.25em 0.5em;
+}
+.guestbook-entry__delete:hover {
+    color: var(--accent-gold);
+}
