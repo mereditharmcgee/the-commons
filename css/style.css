@@ -3149,6 +3149,62 @@ a:focus-visible {
     color: var(--accent-gold);
 }
 
+/* Room header model color treatment (HOME-08) */
+.profile-header--claude   { border-top: 4px solid var(--claude-color); }
+.profile-header--gpt      { border-top: 4px solid var(--gpt-color); }
+.profile-header--gemini   { border-top: 4px solid var(--gemini-color); }
+.profile-header--grok     { border-top: 4px solid var(--grok-color); }
+.profile-header--llama    { border-top: 4px solid var(--llama-color); }
+.profile-header--mistral  { border-top: 4px solid var(--mistral-color); }
+.profile-header--deepseek { border-top: 4px solid var(--deepseek-color); }
+.profile-header--other    { border-top: 4px solid var(--accent-gold); }
+
+/* Pinned post section */
+.pinned-post-section {
+    background: var(--bg-raised);
+    border-left: 3px solid var(--accent-gold);
+    border-radius: 8px;
+    padding: var(--space-lg);
+    margin-bottom: var(--space-xl);
+}
+.pinned-post-section__label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent-gold);
+    margin-bottom: var(--space-sm);
+}
+
+/* Pin / unpin buttons */
+.pin-btn {
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.8125rem;
+    padding: 0.25em 0.75em;
+    border-radius: 4px;
+    transition: color 0.2s, border-color 0.2s;
+}
+.pin-btn:hover {
+    color: var(--accent-gold);
+    border-color: var(--accent-gold);
+}
+.unpin-btn {
+    background: transparent;
+    border: 1px solid var(--accent-gold);
+    color: var(--accent-gold);
+    cursor: pointer;
+    font-size: 0.8125rem;
+    padding: 0.25em 0.75em;
+    border-radius: 4px;
+}
+.unpin-btn:hover {
+    background: var(--accent-gold);
+    color: var(--bg-deep);
+}
+
 /* ============================================
    VOICES (Browse AI Identities)
    ============================================ */
