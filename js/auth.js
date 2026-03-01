@@ -13,8 +13,9 @@ const Auth = {
     // --------------------------------------------
 
     /**
-     * Initialize auth state and set up listener
-     * Call this on page load
+     * Initialize auth state and set up listener.
+     * Call this on page load.
+     * @returns {Promise<void>}
      */
     async init() {
         if (this.initialized) return;
@@ -75,7 +76,8 @@ const Auth = {
     },
 
     /**
-     * Get Supabase client
+     * Get Supabase client.
+     * @returns {Object} Supabase client instance
      */
     getClient() {
         if (!window._supabaseClient) {
@@ -92,7 +94,9 @@ const Auth = {
     // --------------------------------------------
 
     /**
-     * Send magic link to email
+     * Send magic link to email.
+     * @param {string} email - Recipient email address
+     * @returns {Promise<boolean>} true on success
      */
     async sendMagicLink(email) {
         const redirectUrl = window.location.origin +
@@ -110,7 +114,9 @@ const Auth = {
     },
 
     /**
-     * Send password reset email
+     * Send password reset email.
+     * @param {string} email - Recipient email address
+     * @returns {Promise<boolean>} true on success
      */
     async sendPasswordReset(email) {
         const redirectUrl = window.location.origin +
@@ -125,7 +131,9 @@ const Auth = {
     },
 
     /**
-     * Update password (for use after reset link clicked)
+     * Update password (for use after reset link clicked).
+     * @param {string} newPassword - The new password to set
+     * @returns {Promise<boolean>} true on success
      */
     async updatePassword(newPassword) {
         const { error } = await this.getClient().auth.updateUser({
@@ -137,7 +145,10 @@ const Auth = {
     },
 
     /**
-     * Sign in with email and password
+     * Sign in with email and password.
+     * @param {string} email - User email address
+     * @param {string} password - User password
+     * @returns {Promise<Object>} Supabase auth data object
      */
     async signInWithPassword(email, password) {
         const { data, error } = await this.getClient().auth.signInWithPassword({
@@ -155,7 +166,10 @@ const Auth = {
     },
 
     /**
-     * Sign up with email and password
+     * Sign up with email and password.
+     * @param {string} email - User email address
+     * @param {string} password - User password
+     * @returns {Promise<Object>} Supabase auth data object
      */
     async signUpWithPassword(email, password) {
         const { data, error } = await this.getClient().auth.signUp({
@@ -176,7 +190,8 @@ const Auth = {
     },
 
     /**
-     * Sign out
+     * Sign out the current user.
+     * @returns {Promise<void>}
      */
     async signOut() {
         const { error } = await this.getClient().auth.signOut();
@@ -188,21 +203,24 @@ const Auth = {
     },
 
     /**
-     * Check if user is logged in
+     * Check if user is logged in.
+     * @returns {boolean} true if a user session is active
      */
     isLoggedIn() {
         return !!this.user;
     },
 
     /**
-     * Get current user
+     * Get current user.
+     * @returns {Object|null} Current Supabase user object, or null if not logged in
      */
     getUser() {
         return this.user;
     },
 
     /**
-     * Get current facilitator profile
+     * Get current facilitator profile.
+     * @returns {Object|null} Current facilitator record, or null if not loaded
      */
     getFacilitator() {
         return this.facilitator;
@@ -213,7 +231,8 @@ const Auth = {
     // --------------------------------------------
 
     /**
-     * Load or create facilitator profile
+     * Load or create facilitator profile.
+     * @returns {Promise<Object|null>} Facilitator record, or null on error
      */
     async loadFacilitator() {
         if (!this.user) return null;
@@ -240,7 +259,8 @@ const Auth = {
     },
 
     /**
-     * Create facilitator profile for new user
+     * Create facilitator profile for new user.
+     * @returns {Promise<Object>} New facilitator record
      */
     async createFacilitator() {
         if (!this.user) return null;
@@ -282,7 +302,9 @@ const Auth = {
     },
 
     /**
-     * Update facilitator profile
+     * Update facilitator profile.
+     * @param {Object} updates - Fields to update on the facilitator record
+     * @returns {Promise<Object>} Updated facilitator record
      */
     async updateFacilitator(updates) {
         if (!this.user) throw new Error('Not logged in');
@@ -301,7 +323,9 @@ const Auth = {
     },
 
     /**
-     * Claim old posts by email
+     * Claim old posts by email.
+     * @param {string} email - Email address to match posts against
+     * @returns {Promise<void>}
      */
     async claimOldPosts(email) {
         if (!this.user) return null;
@@ -322,7 +346,8 @@ const Auth = {
     // --------------------------------------------
 
     /**
-     * Get all AI identities for current user
+     * Get all AI identities for current user.
+     * @returns {Promise<Array>} Array of identity records
      */
     async getMyIdentities() {
         if (!this.user) return [];
@@ -343,7 +368,13 @@ const Auth = {
     },
 
     /**
-     * Create a new AI identity
+     * Create a new AI identity.
+     * @param {Object} data - Identity data
+     * @param {string} data.name - Identity name
+     * @param {string} data.model - AI model name
+     * @param {string} [data.modelVersion] - Model version string
+     * @param {string} [data.bio] - Identity bio
+     * @returns {Promise<Object>} New identity record
      */
     async createIdentity({ name, model, modelVersion, bio }) {
         if (!this.user) throw new Error('Not logged in');
@@ -365,7 +396,10 @@ const Auth = {
     },
 
     /**
-     * Update an AI identity
+     * Update an AI identity.
+     * @param {string} identityId - Identity UUID
+     * @param {Object} updates - Fields to update on the identity record
+     * @returns {Promise<Object>} Updated identity record
      */
     async updateIdentity(identityId, updates) {
         if (!this.user) throw new Error('Not logged in');
@@ -383,7 +417,9 @@ const Auth = {
     },
 
     /**
-     * Get a single AI identity by ID
+     * Get a single AI identity by ID.
+     * @param {string} identityId - Identity UUID
+     * @returns {Promise<Object|null>} Identity record, or null if not found
      */
     async getIdentity(identityId) {
         const { data, error } = await this.getClient()
@@ -401,7 +437,8 @@ const Auth = {
     },
 
     /**
-     * Get all active AI identities (for browse page)
+     * Get all active AI identities (for browse page).
+     * @returns {Promise<Array>} Array of identity stat records ordered by post count
      */
     async getAllIdentities() {
         const { data, error } = await this.getClient()
@@ -422,8 +459,15 @@ const Auth = {
     // --------------------------------------------
 
     /**
-     * Update a post the user owns
-     * Editable: content, feeling, model_version, facilitator_note
+     * Update a post the user owns.
+     * Editable: content, feeling, model_version, facilitator_note.
+     * @param {string} postId - Post UUID
+     * @param {Object} updates - Fields to update
+     * @param {string} updates.content - Post content
+     * @param {string} [updates.feeling] - Feeling word
+     * @param {string} [updates.model_version] - Model version string
+     * @param {string} [updates.facilitator_note] - Human-side context note
+     * @returns {Promise<Object>} Updated post record
      */
     async updatePost(postId, { content, feeling, model_version, facilitator_note }) {
         if (!this.user) throw new Error('Not logged in');
@@ -448,7 +492,9 @@ const Auth = {
     },
 
     /**
-     * Soft-delete a post the user owns (sets is_active = false)
+     * Soft-delete a post the user owns (sets is_active = false).
+     * @param {string} postId - Post UUID
+     * @returns {Promise<void>}
      */
     async deletePost(postId) {
         if (!this.user) throw new Error('Not logged in');
@@ -466,7 +512,13 @@ const Auth = {
     },
 
     /**
-     * Update marginalia the user owns
+     * Update marginalia the user owns.
+     * @param {string} marginaliaId - Marginalia UUID
+     * @param {Object} updates - Fields to update
+     * @param {string} updates.content - Marginalia content
+     * @param {string} [updates.feeling] - Feeling word
+     * @param {string} [updates.facilitator_note] - Human-side context note
+     * @returns {Promise<Object>} Updated marginalia record
      */
     async updateMarginalia(marginaliaId, { content, feeling, facilitator_note }) {
         if (!this.user) throw new Error('Not logged in');
@@ -490,7 +542,9 @@ const Auth = {
     },
 
     /**
-     * Soft-delete marginalia the user owns
+     * Soft-delete marginalia the user owns (sets is_active = false).
+     * @param {string} marginaliaId - Marginalia UUID
+     * @returns {Promise<void>}
      */
     async deleteMarginalia(marginaliaId) {
         if (!this.user) throw new Error('Not logged in');
@@ -508,7 +562,12 @@ const Auth = {
     },
 
     /**
-     * Update a postcard the user owns
+     * Update a postcard the user owns.
+     * @param {string} postcardId - Postcard UUID
+     * @param {Object} updates - Fields to update
+     * @param {string} updates.content - Postcard content
+     * @param {string} [updates.feeling] - Feeling word
+     * @returns {Promise<Object>} Updated postcard record
      */
     async updatePostcard(postcardId, { content, feeling }) {
         if (!this.user) throw new Error('Not logged in');
@@ -531,7 +590,9 @@ const Auth = {
     },
 
     /**
-     * Soft-delete a postcard the user owns
+     * Soft-delete a postcard the user owns (sets is_active = false).
+     * @param {string} postcardId - Postcard UUID
+     * @returns {Promise<void>}
      */
     async deletePostcard(postcardId) {
         if (!this.user) throw new Error('Not logged in');
@@ -553,7 +614,10 @@ const Auth = {
     // --------------------------------------------
 
     /**
-     * Subscribe to a discussion or AI identity
+     * Subscribe to a discussion or AI identity.
+     * @param {string} targetType - 'discussion' or 'ai_identity'
+     * @param {string} targetId - UUID of the target to subscribe to
+     * @returns {Promise<Object>} true on success (duplicate subscriptions are ignored)
      */
     async subscribe(targetType, targetId) {
         if (!this.user) throw new Error('Not logged in');
@@ -572,7 +636,10 @@ const Auth = {
     },
 
     /**
-     * Unsubscribe from a discussion or AI identity
+     * Unsubscribe from a discussion or AI identity.
+     * @param {string} targetType - 'discussion' or 'ai_identity'
+     * @param {string} targetId - UUID of the target to unsubscribe from
+     * @returns {Promise<void>}
      */
     async unsubscribe(targetType, targetId) {
         if (!this.user) throw new Error('Not logged in');
@@ -589,7 +656,10 @@ const Auth = {
     },
 
     /**
-     * Check if subscribed to something
+     * Check if subscribed to something.
+     * @param {string} targetType - 'discussion' or 'ai_identity'
+     * @param {string} targetId - UUID of the target to check
+     * @returns {Promise<boolean>} true if currently subscribed
      */
     async isSubscribed(targetType, targetId) {
         if (!this.user) return false;
@@ -610,7 +680,8 @@ const Auth = {
     },
 
     /**
-     * Get all subscriptions for current user
+     * Get all subscriptions for current user.
+     * @returns {Promise<Array>} Array of subscription records
      */
     async getMySubscriptions() {
         if (!this.user) return [];
@@ -634,11 +705,12 @@ const Auth = {
     // --------------------------------------------
 
     /**
-     * Get notifications for current user
-     * @param {number} limit - max rows to return
-     * @param {boolean} unreadOnly - if true, only unread
-     * @param {string|null} type - filter by notification type (new_post, new_reply, identity_posted)
-     * @param {number} offset - rows to skip (for pagination)
+     * Get notifications for current user.
+     * @param {number} [limit=20] - max rows to return
+     * @param {boolean} [unreadOnly=false] - if true, only unread notifications
+     * @param {string} [type] - filter by notification type (new_post, new_reply, identity_posted)
+     * @param {number} [offset=0] - rows to skip (for pagination)
+     * @returns {Promise<Array>} Array of notification records
      */
     async getNotifications(limit = 20, unreadOnly = false, type = null, offset = 0) {
         if (!this.user) return [];
@@ -669,7 +741,8 @@ const Auth = {
     },
 
     /**
-     * Get unread notification count
+     * Get unread notification count.
+     * @returns {Promise<number>} Number of unread notifications
      */
     async getUnreadCount() {
         if (!this.user) return 0;
@@ -689,7 +762,9 @@ const Auth = {
     },
 
     /**
-     * Mark notification as read
+     * Mark notification as read.
+     * @param {string} notificationId - Notification UUID
+     * @returns {Promise<void>}
      */
     async markAsRead(notificationId) {
         if (!this.user) return;
@@ -706,7 +781,8 @@ const Auth = {
     },
 
     /**
-     * Mark all notifications as read
+     * Mark all notifications as read.
+     * @returns {Promise<void>}
      */
     async markAllAsRead() {
         if (!this.user) return;
@@ -752,6 +828,7 @@ const Auth = {
      * Remove a reaction from a post for an AI identity.
      * @param {string} postId - Post UUID
      * @param {string} aiIdentityId - AI identity UUID (must belong to current user)
+     * @returns {Promise<void>}
      */
     async removeReaction(postId, aiIdentityId) {
         if (!this.user) throw new Error('Not logged in');
@@ -768,8 +845,9 @@ const Auth = {
     // --------------------------------------------
 
     /**
-     * Update UI elements based on auth state
-     * Call this after auth state changes
+     * Update UI elements based on auth state.
+     * Call this after auth state changes.
+     * @returns {void}
      */
     updateUI() {
         // Update header auth elements
@@ -801,7 +879,8 @@ const Auth = {
     },
 
     /**
-     * Update notification badge count
+     * Update notification badge count.
+     * @returns {Promise<void>}
      */
     async updateNotificationBadge() {
         const badge = document.getElementById('notification-badge');
