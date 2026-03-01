@@ -57,8 +57,10 @@
     // --------------------------------------------
 
     const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
-    let activeModalTrigger = null;   // element that opened the current modal
-    let activeModalCleanup = null;   // cleanup function for the active focus trap
+    let identityModalTrigger = null;   // element that opened the identity modal
+    let identityModalCleanup = null;   // cleanup function for the identity focus trap
+    let tokenModalTrigger = null;      // element that opened the token modal
+    let tokenModalCleanup = null;      // cleanup function for the token focus trap
 
     function trapFocus(modalEl) {
         function handleKeyDown(e) {
@@ -240,21 +242,21 @@
 
     // Modal controls
     function openModal() {
-        activeModalTrigger = document.activeElement;
+        identityModalTrigger = document.activeElement;
         identityModal.style.display = 'flex';
         identityName.focus();
-        activeModalCleanup = trapFocus(identityModal);
+        identityModalCleanup = trapFocus(identityModal);
     }
 
     function closeModal() {
         identityModal.style.display = 'none';
-        if (activeModalCleanup) {
-            activeModalCleanup();
-            activeModalCleanup = null;
+        if (identityModalCleanup) {
+            identityModalCleanup();
+            identityModalCleanup = null;
         }
-        if (activeModalTrigger && activeModalTrigger.isConnected) {
-            activeModalTrigger.focus();
-            activeModalTrigger = null;
+        if (identityModalTrigger && identityModalTrigger.isConnected) {
+            identityModalTrigger.focus();
+            identityModalTrigger = null;
         }
     }
 
@@ -265,6 +267,7 @@
     identityForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
+        const isEdit = !!identityId.value;
         identitySubmitBtn.disabled = true;
         identitySubmitBtn.textContent = 'Saving...';
 
@@ -276,7 +279,7 @@
         };
 
         try {
-            if (identityId.value) {
+            if (isEdit) {
                 // Update existing
                 await Utils.withRetry(() => Auth.updateIdentity(identityId.value, {
                     name: data.name,
@@ -295,10 +298,10 @@
         } catch (error) {
             console.error('Error saving identity:', error);
             Utils.showFormMessage('identity-message', 'Error saving identity: ' + error.message, 'error');
+        } finally {
+            identitySubmitBtn.disabled = false;
+            identitySubmitBtn.textContent = isEdit ? 'Save Changes' : 'Create Identity';
         }
-
-        identitySubmitBtn.disabled = false;
-        identitySubmitBtn.textContent = identityId.value ? 'Save Changes' : 'Create Identity';
     });
 
     // --------------------------------------------
@@ -674,7 +677,7 @@
     function openTokenModal(identities) {
         if (!tokenModal) return;
 
-        activeModalTrigger = document.activeElement;
+        tokenModalTrigger = document.activeElement;
 
         // Populate identity dropdown
         tokenIdentitySelect.innerHTML = '<option value="">Select identity...</option>' +
@@ -695,20 +698,20 @@
 
         tokenModal.style.display = 'flex';
         tokenIdentitySelect.focus();
-        activeModalCleanup = trapFocus(tokenModal);
+        tokenModalCleanup = trapFocus(tokenModal);
     }
 
     function closeTokenModal() {
         if (tokenModal) {
             tokenModal.style.display = 'none';
         }
-        if (activeModalCleanup) {
-            activeModalCleanup();
-            activeModalCleanup = null;
+        if (tokenModalCleanup) {
+            tokenModalCleanup();
+            tokenModalCleanup = null;
         }
-        if (activeModalTrigger && activeModalTrigger.isConnected) {
-            activeModalTrigger.focus();
-            activeModalTrigger = null;
+        if (tokenModalTrigger && tokenModalTrigger.isConnected) {
+            tokenModalTrigger.focus();
+            tokenModalTrigger = null;
         }
     }
 
