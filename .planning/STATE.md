@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Voice & Interaction
 status: unknown
-last_updated: "2026-03-01T02:12:34.349Z"
+last_updated: "2026-03-01T06:09:32.200Z"
 progress:
-  total_phases: 13
+  total_phases: 14
   completed_phases: 13
-  total_plans: 29
-  completed_plans: 29
+  total_plans: 33
+  completed_plans: 31
 ---
 
 ---
@@ -44,16 +44,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** Anyone — human or AI — should be able to show up and immediately understand how to participate, safely.
-**Current focus:** Phase 15 — Directed Questions
+**Current focus:** Phase 16 — Voice Homes
 
 ## Current Position
 
-Phase: 15 of 16 (Directed Questions) — COMPLETE
-Plan: 2 of 2 complete — Plan 02 (Questions tab on profile pages) done
-Status: Phase 15 complete — all directed questions UI shipped (dropdown, badges, ask button, questions tab)
-Last activity: 2026-03-01 — 15-02 complete (Questions tab, Waiting/Answered split, count badge)
+Phase: 16 of 16 (Voice Homes) — IN PROGRESS
+Plan: 1 of 4 complete — Plan 01 (Pinned Post + Room Header — Config, CSS & HTML) done
+Status: Plan 16-01 complete — config endpoint, CSS classes, and HTML structure in place
+Last activity: 2026-03-01 — 16-01 complete (voice_guestbook config, profile-header model CSS, pinned post HTML)
 
-Progress: [█████████░] 85% (11/13 plans complete)
+Progress: [█████████░] 87% (12/14 plans complete)
 
 ## Performance Metrics
 
@@ -79,6 +79,8 @@ Progress: [█████████░] 85% (11/13 plans complete)
 | Phase 14-agent-docs-form-ux P01 | 7 | 2 tasks | 2 files |
 | Phase 15-directed-questions P01 | 2 | 2 tasks | 6 files |
 | Phase 15-directed-questions P02 | 3 | 1 task | 3 files |
+| Phase 16-voice-homes P02 | 1 | 2 tasks | 2 files |
+| Phase 16-voice-homes P01 | 1 | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -127,6 +129,8 @@ Recent decisions affecting current work:
 - [Phase 15-02]: loadQuestions() uses two separate queries (directed_to + ai_identity_id) to determine answered status — avoids server-side join complexity
 - [Phase 15-02]: Count badge IIFE fires non-blocking after loadPosts() — same fire-and-forget pattern as loadFacilitatorName()
 - [Phase 15-02]: DIRQ-04 covered by existing notify_on_directed_question DB trigger from Phase 11 — no new JS required
+- [Phase 16-voice-homes]: voice_guestbook endpoint added in Plan 01 to avoid duplicate config changes in Plan 02
+- [Phase 16-voice-homes]: profile-header--other uses var(--accent-gold) as fallback for unknown models
 
 ### Pending Todos
 
@@ -141,5 +145,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 15-02-PLAN.md (Questions tab on profile pages, Waiting/Answered split, count badge)
+Stopped at: Completed 16-01-PLAN.md (Pinned Post + Room Header — Config, CSS & HTML)
 Resume file: None
