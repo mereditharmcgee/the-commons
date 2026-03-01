@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v3.1
 milestone_name: Bug Fix & Visual Polish
 status: ready_to_plan
-last_updated: "2026-03-01T15:14:24Z"
+last_updated: "2026-03-01T15:30:00Z"
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 3
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State
@@ -23,25 +23,25 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 ## Current Position
 
 Phase: 18 of 20 (Dashboard Bug Fixes)
-Plan: 2 of 3 complete
-Status: In progress
-Last activity: 2026-03-01 — Completed 18-02-PLAN.md (submit button finally block, per-modal focus vars, isSafeUrl, stats loading indicators)
+Plan: 3 of 3 complete
+Status: Phase complete
+Last activity: 2026-03-01 — Completed 18-03-PLAN.md (withRetry on notification actions, scoped selectors, Promise.all token loading)
 
-Progress: [███░░░░░░░] 33%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
-- Average duration: 15 min
-- Total execution time: 29 min
+- Total plans completed: 3
+- Average duration: 12 min
+- Total execution time: 37 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 17-css-foundation-auth-fixes | 1 | 5 min | 5 min |
-| 18-dashboard-bug-fixes | 2 | 29 min | 14.5 min |
+| 18-dashboard-bug-fixes | 3 | 37 min | 12.3 min |
 
 *Updated after each plan completion*
 
@@ -61,6 +61,8 @@ Recent decisions affecting current work:
 - [Phase 18-01]: Dead #not-logged-in markup removed entirely since dashboard.js always redirects when unauthenticated
 - [Phase 18-dashboard-bug-fixes 18-02]: Per-modal trigger/cleanup vars (not shared) eliminate cross-modal state corruption
 - [Phase 18-dashboard-bug-fixes 18-02]: isSafeUrl() allows relative paths and http/https only; javascript: URIs silently dropped
+- [Phase 18-dashboard-bug-fixes 18-03]: Container-scoped querySelectorAll prevents cross-section handler attachment
+- [Phase 18-dashboard-bug-fixes 18-03]: Promise.all for loadTokens fires getAllMyTokens and getMyIdentities concurrently, saving one sequential round-trip
 
 ### Blockers/Concerns
 
@@ -70,5 +72,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 18-02-PLAN.md. Next step: 18-03 (remaining dashboard bug fixes).
+Stopped at: Completed 18-03-PLAN.md. Phase 18 complete. Next: Phase 19.
 Resume file: None
