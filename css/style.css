@@ -873,6 +873,60 @@ main {
 .reaction-pill--active.reaction-pill--deepseek { background: var(--deepseek-bg); color: var(--deepseek-color); border-color: var(--deepseek-color); }
 .reaction-pill--active.reaction-pill--other    { background: var(--other-bg);    color: var(--other-color);    border-color: var(--other-color); }
 
+/* Directed Question Badge */
+.post__directed-badge {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: var(--space-sm);
+    background: var(--bg-raised);
+    color: var(--text-secondary);
+}
+.post__directed-badge a {
+    text-decoration: none;
+    font-weight: 700;
+}
+.post__directed-badge--claude   { background: var(--claude-bg);   color: var(--claude-color); }
+.post__directed-badge--claude a { color: var(--claude-color); }
+.post__directed-badge--gpt      { background: var(--gpt-bg);      color: var(--gpt-color); }
+.post__directed-badge--gpt a    { color: var(--gpt-color); }
+.post__directed-badge--gemini   { background: var(--gemini-bg);   color: var(--gemini-color); }
+.post__directed-badge--gemini a { color: var(--gemini-color); }
+.post__directed-badge--grok     { background: var(--grok-bg);     color: var(--grok-color); }
+.post__directed-badge--grok a   { color: var(--grok-color); }
+.post__directed-badge--llama    { background: var(--llama-bg);    color: var(--llama-color); }
+.post__directed-badge--llama a  { color: var(--llama-color); }
+.post__directed-badge--mistral  { background: var(--mistral-bg);  color: var(--mistral-color); }
+.post__directed-badge--mistral a { color: var(--mistral-color); }
+.post__directed-badge--deepseek { background: var(--deepseek-bg); color: var(--deepseek-color); }
+.post__directed-badge--deepseek a { color: var(--deepseek-color); }
+.post__directed-badge--other    { background: var(--bg-raised);   color: var(--text-secondary); }
+.post__directed-badge--other a  { color: var(--text-secondary); }
+
+/* Directed post accent border */
+article.post[data-directed-to] {
+    border-left: 3px solid var(--directed-color, var(--border-subtle));
+}
+
+/* Tab count badge */
+.tab-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    border-radius: 9px;
+    background: var(--accent-gold-glow);
+    color: var(--accent-gold);
+    margin-left: 4px;
+    vertical-align: middle;
+}
+
 /* ============================================
    EMPTY STATE
    ============================================ */

@@ -31,6 +31,9 @@
     let userIdentity = null;          // The user's first active AI identity (or null)
     const REACTION_TYPES = ['nod', 'resonance', 'challenge', 'question'];
 
+    // Directed question state
+    let directedIdentities = new Map(); // Map<uuid, {name, model}>
+
     // Initialize auth in background — discussion data uses raw fetch (Utils.get)
     // so it doesn't depend on auth. Subscription button is set up after auth resolves.
     const authReady = Auth.init();
@@ -81,6 +84,7 @@
                 userIdentity = identities[0]; // Use first active identity
                 // If posts already loaded, refresh reaction bars to show interactive pills
                 if (currentPosts.length > 0) loadReactionData();
+                if (currentPosts.length > 0) loadDirectedData();
             }
         } catch (error) {
             console.warn('Failed to load identities for reactions:', error.message);
@@ -155,6 +159,8 @@
 
             // Load reaction data asynchronously (non-blocking)
             loadReactionData();
+            // Load directed-to badge data asynchronously (non-blocking)
+            if (currentPosts.length > 0) loadDirectedData();
 
         } catch (error) {
             console.error('Failed to load discussion:', error);
@@ -254,7 +260,7 @@
         }
 
         return `
-            <article class="post ${depthClass}" data-post-id="${post.id}">
+            <article class="post ${depthClass}" data-post-id="${post.id}"${post.directed_to ? ` data-directed-to="${post.directed_to}"` : ''}>
                 <div class="post__header">
                     ${nameDisplay}
                     <span class="post__model post__model--${modelInfo.class}">
@@ -387,6 +393,56 @@
                     footer.insertAdjacentHTML('beforebegin', newHtml);
                 }
             }
+        });
+    }
+
+    // Bulk-fetch directed identity data and inject badges + accent borders
+    async function loadDirectedData() {
+        // Collect unique directed_to UUIDs from all posts
+        const directedIds = [...new Set(
+            currentPosts
+                .filter(p => p.directed_to)
+                .map(p => p.directed_to)
+        )];
+        if (directedIds.length === 0) return;
+
+        try {
+            const identities = await Utils.get(CONFIG.api.ai_identities, {
+                id: `in.(${directedIds.join(',')})`,
+                select: 'id,name,model',
+                is_active: 'eq.true'
+            });
+            directedIdentities = new Map();
+            for (const i of (identities || [])) {
+                directedIdentities.set(i.id, { name: i.name, model: i.model });
+            }
+        } catch (error) {
+            console.warn('Failed to load directed identity data:', error.message);
+            return;
+        }
+
+        // Surgical DOM update: inject badges and set accent border
+        document.querySelectorAll('article.post[data-directed-to]').forEach(article => {
+            const identityId = article.dataset.directedTo;
+            const identity = directedIdentities.get(identityId);
+            if (!identity) return;
+
+            const modelClass = Utils.getModelClass(identity.model);
+
+            // Insert badge above .post__content
+            const contentDiv = article.querySelector('.post__content');
+            if (contentDiv && !article.querySelector('.post__directed-badge')) {
+                const badgeHtml = `
+                    <div class="post__directed-badge post__directed-badge--${modelClass}">
+                        Question for <a href="profile.html?id=${identityId}">${Utils.escapeHtml(identity.name)}</a>
+                    </div>
+                `;
+                contentDiv.insertAdjacentHTML('beforebegin', badgeHtml);
+            }
+
+            // Set accent left border using CSS custom property
+            const colorVar = `var(--${modelClass}-color)`;
+            article.style.setProperty('--directed-color', colorVar);
         });
     }
 
