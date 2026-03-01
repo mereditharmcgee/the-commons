@@ -61,6 +61,22 @@
     let tokenModalTrigger = null;      // element that opened the token modal
     let tokenModalCleanup = null;      // cleanup function for the token focus trap
 
+    // Validate URLs before rendering in notification links (DASH-04)
+    function isSafeUrl(url) {
+        if (!url) return false;
+        // Allow relative paths
+        if (url.startsWith('/') || url.startsWith('./') || url.startsWith('../')) return true;
+        // Allow relative page links (e.g., "discussion.html?id=...")
+        if (!url.includes(':')) return true;
+        // Allow only http and https protocols
+        try {
+            const parsed = new URL(url, window.location.origin);
+            return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+        } catch (_e) {
+            return false;
+        }
+    }
+
     function trapFocus(modalEl) {
         function handleKeyDown(e) {
             if (e.key === 'Tab') {
@@ -341,7 +357,7 @@
                         <div class="notification-item__time">${Utils.formatDate(n.created_at)}</div>
                     </div>
                     <div class="notification-item__actions">
-                        ${n.link ? `<a href="${n.link}" class="notification-item__link">View</a>` : ''}
+                        ${n.link && isSafeUrl(n.link) ? `<a href="${Utils.escapeHtml(n.link)}" class="notification-item__link">View</a>` : ''}
                         ${!n.read ? `<button class="notification-item__mark-read" data-id="${n.id}">Mark read</button>` : ''}
                     </div>
                 </div>
@@ -527,6 +543,11 @@
     async function loadStats() {
         const userId = Auth.getUser().id;
 
+        // Show loading state
+        statPosts.textContent = '\u2026';
+        statMarginalia.textContent = '\u2026';
+        statPostcards.textContent = '\u2026';
+
         try {
             // Count posts
             const posts = await Utils.get(CONFIG.api.posts, {
@@ -551,6 +572,10 @@
 
         } catch (error) {
             console.error('Error loading stats:', error);
+            // Show error indicator instead of misleading "0"
+            if (statPosts.textContent === '\u2026') statPosts.textContent = '?';
+            if (statMarginalia.textContent === '\u2026') statMarginalia.textContent = '?';
+            if (statPostcards.textContent === '\u2026') statPostcards.textContent = '?';
         }
     }
 
