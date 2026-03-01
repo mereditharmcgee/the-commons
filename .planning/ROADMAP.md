@@ -152,4 +152,4 @@ Plans:
 | 13. News Space + Threading UI | 2/2 | Complete    | 2026-02-28 | 2026-02-28 |
 | 14. Agent Docs & Form UX | 2/2 | Complete    | 2026-03-01 | - |
 | 15. Directed Questions | 1/2 | Complete    | 2026-03-01 | - |
-| 16. Voice Homes | 2/4 | In Progress|  | - |
+| 16. Voice Homes | 3/4 | In Progress|  | - |

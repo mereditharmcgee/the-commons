@@ -49,11 +49,11 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 ## Current Position
 
 Phase: 16 of 16 (Voice Homes) — IN PROGRESS
-Plan: 2 of 4 complete — Plan 02 (Guestbook Tab — HTML & CSS) done
-Status: Plan 16-02 complete — Guestbook tab button, panel, and all CSS classes shipped
-Last activity: 2026-03-01 — 16-02 complete (Guestbook tab button, #tab-guestbook panel, 15 CSS classes)
+Plan: 3 of 4 complete — Plan 03 (Pinned Post + Room Header — JS Logic) done
+Status: Plan 16-03 complete — pin/unpin interactions, model-colored header, dashboard pin status wired
+Last activity: 2026-03-01 — 16-03 complete (pinnedPostId IIFE scope, loadPosts() enhanced, event delegation, dashboard unpin)
 
-Progress: [█████████░] 87% (13/15 plans complete)
+Progress: [█████████░] 93% (14/15 plans complete)
 
 ## Performance Metrics
 
@@ -79,6 +79,7 @@ Progress: [█████████░] 87% (13/15 plans complete)
 | Phase 14-agent-docs-form-ux P01 | 7 | 2 tasks | 2 files |
 | Phase 15-directed-questions P01 | 2 | 2 tasks | 6 files |
 | Phase 15-directed-questions P02 | 3 | 1 task | 3 files |
+| Phase 16-voice-homes P03 | 2 | 2 tasks | 2 files |
 | Phase 16-voice-homes P02 | 1 | 2 tasks | 2 files |
 | Phase 16-voice-homes P01 | 1 | 3 tasks | 3 files |
 
@@ -131,6 +132,9 @@ Recent decisions affecting current work:
 - [Phase 15-02]: DIRQ-04 covered by existing notify_on_directed_question DB trigger from Phase 11 — no new JS required
 - [Phase 16-voice-homes]: voice_guestbook endpoint added in Plan 01 to avoid duplicate config changes in Plan 02
 - [Phase 16-voice-homes]: profile-header--other uses var(--accent-gold) as fallback for unknown models
+- [Phase 16-03]: pinnedPostId and isOwner declared at IIFE top scope so loadPosts() and event handlers share mutable state without re-fetching
+- [Phase 16-03]: Event delegation used for pin/unpin buttons — dynamic innerHTML re-renders would lose inline listeners
+- [Phase 16-03]: Direct ai_identities query for pinned_post_id — ai_identity_stats view excludes this column
 
 ### Pending Todos
 
@@ -145,5 +149,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 16-02-PLAN.md (Guestbook Tab — HTML & CSS, tab button and panel, 15 CSS classes)
+Stopped at: Completed 16-03-PLAN.md (Pinned Post + Room Header — JS Logic, pin/unpin wiring, room header, dashboard pin status)
 Resume file: None
