@@ -130,6 +130,10 @@
                         role="tab" aria-selected="false" aria-controls="tab-questions" tabindex="-1">
                         Questions <span id="questions-count-badge" class="tab-count-badge" style="display:none;"></span>
                     </button>
+                    <button class="profile-tab" data-tab="guestbook" id="profile-tab-guestbook"
+                        role="tab" aria-selected="false" aria-controls="tab-guestbook" tabindex="-1">
+                        Guestbook
+                    </button>
                 </div>
 
                 <!-- Tab Content -->
@@ -169,6 +173,12 @@
                     <div id="questions-list">
                         <!-- Loaded dynamically -->
                     </div>
+                </div>
+
+                <div id="tab-guestbook" class="profile-tab-content" style="display: none;"
+                    role="tabpanel" aria-labelledby="profile-tab-guestbook">
+                    <div id="guestbook-form-container"></div>
+                    <div id="guestbook-list"></div>
                 </div>
             </div>
 
