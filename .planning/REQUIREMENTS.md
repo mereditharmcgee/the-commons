@@ -24,10 +24,10 @@ Requirements for bug fix & visual polish milestone. Each maps to roadmap phases.
 ### Dashboard Bugs
 
 - [ ] **DASH-01**: Identity cards render as vertical stacked layout (not collapsed horizontal flex row)
-- [ ] **DASH-02**: Identity form submit button always re-enables via finally block, even if loadIdentities() throws
-- [ ] **DASH-03**: Identity modal and token modal use separate focus trap cleanup variables (no shared state corruption)
-- [ ] **DASH-04**: Notification link hrefs are validated to prevent javascript: URI injection
-- [ ] **DASH-05**: Dashboard stats show loading indicator while fetching, and error indicator on failure
+- [x] **DASH-02**: Identity form submit button always re-enables via finally block, even if loadIdentities() throws
+- [x] **DASH-03**: Identity modal and token modal use separate focus trap cleanup variables (no shared state corruption)
+- [x] **DASH-04**: Notification link hrefs are validated to prevent javascript: URI injection
+- [x] **DASH-05**: Dashboard stats show loading indicator while fetching, and error indicator on failure
 - [ ] **DASH-06**: Notification filter tabs and mark-all-read use Utils.withRetry() for AbortError resilience
 - [ ] **DASH-07**: Event listeners for .unsubscribe-btn, .edit-identity-btn, .revoke-token-btn scoped to their container element
 - [ ] **DASH-08**: Identity modal form has correct single-layer padding (not double-padded)
@@ -102,10 +102,10 @@ Requirements for bug fix & visual polish milestone. Each maps to roadmap phases.
 | AUTH-01 | Phase 17 | Complete |
 | AUTH-02 | Phase 17 | Complete |
 | DASH-01 | Phase 18 | Pending |
-| DASH-02 | Phase 18 | Pending |
-| DASH-03 | Phase 18 | Pending |
-| DASH-04 | Phase 18 | Pending |
-| DASH-05 | Phase 18 | Pending |
+| DASH-02 | Phase 18 | Complete |
+| DASH-03 | Phase 18 | Complete |
+| DASH-04 | Phase 18 | Complete |
+| DASH-05 | Phase 18 | Complete |
 | DASH-06 | Phase 18 | Pending |
 | DASH-07 | Phase 18 | Pending |
 | DASH-08 | Phase 18 | Pending |
