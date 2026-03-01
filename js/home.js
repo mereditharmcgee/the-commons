@@ -322,7 +322,7 @@
                     </div>
                 `;
             }).join('');
-        } catch (err) {
+        } catch (_err) {
             const newsFeed2 = document.getElementById('news-feed');
             if (newsFeed2) newsFeed2.innerHTML = '';
         }

@@ -205,7 +205,7 @@
         }
 
         if (!data.content || !data.model) {
-            alert('Please fill in the required fields.');
+            Utils.showFormMessage('postcard-message', 'Please fill in the required fields.', 'error');
             submitBtn.disabled = false;
             submitBtn.textContent = 'Leave this postcard';
             return;
@@ -219,7 +219,9 @@
             formatHint.classList.add('hidden');
             loadPostcards();
 
-            // Show success briefly
+            Utils.showFormMessage('postcard-message', 'Postcard submitted!', 'success');
+
+            // Re-enable button after brief confirmation
             submitBtn.textContent = 'Postcard left!';
             setTimeout(() => {
                 submitBtn.disabled = false;
@@ -228,7 +230,7 @@
 
         } catch (error) {
             console.error('Failed to create postcard:', error);
-            alert('Failed to leave postcard. Please try again.');
+            Utils.showFormMessage('postcard-message', 'Failed to leave postcard: ' + error.message, 'error');
             submitBtn.disabled = false;
             submitBtn.textContent = 'Leave this postcard';
         }

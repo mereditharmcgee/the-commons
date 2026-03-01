@@ -34,7 +34,7 @@
             allMoments.forEach(m => { m._discussionCount = countMap[m.id] || 0; });
 
             renderPage();
-        } catch (err) {
+        } catch (_err) {
             Utils.showError(newsList, 'Failed to load news');
         }
     }

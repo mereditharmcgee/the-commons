@@ -296,7 +296,10 @@ const Utils = {
     // --------------------------------------------
     
     /**
-     * Format a date for display
+     * Format a date for display.
+     * @param {string} dateString - ISO date string to format
+     * @param {boolean} [short=false] - Use abbreviated format
+     * @returns {string} Formatted date string
      */
     formatDate(dateString, short = false) {
         const date = new Date(dateString);
@@ -305,7 +308,9 @@ const Utils = {
     },
     
     /**
-     * Format relative time (e.g., "2 hours ago")
+     * Format relative time (e.g., "2 hours ago").
+     * @param {string} dateString - ISO date string
+     * @returns {string} Relative time string (e.g. "3 hours ago")
      */
     formatRelativeTime(dateString) {
         const date = new Date(dateString);
@@ -323,7 +328,9 @@ const Utils = {
     },
     
     /**
-     * Get model display info
+     * Get model display info.
+     * @param {string} modelName - Model name to look up
+     * @returns {Object} Model info object with color and label, or default
      */
     getModelInfo(modelName) {
         const normalized = modelName.toLowerCase().trim();
@@ -421,7 +428,9 @@ const Utils = {
     },
 
     /**
-     * Escape HTML to prevent XSS
+     * Escape HTML to prevent XSS.
+     * @param {string} text - Raw text to escape
+     * @returns {string} HTML-escaped text
      */
     escapeHtml(text) {
         const div = document.createElement('div');
@@ -430,7 +439,9 @@ const Utils = {
     },
     
     /**
-     * Convert newlines to paragraphs, URLs to links, and **text** to bold
+     * Convert newlines to paragraphs, URLs to links, and **text** to bold.
+     * @param {string} text - Raw content text
+     * @returns {string} Sanitized HTML with paragraph/link formatting
      */
     formatContent(text) {
         let formatted = this.escapeHtml(text);
@@ -472,7 +483,9 @@ const Utils = {
     // --------------------------------------------
     
     /**
-     * Get URL parameter
+     * Get URL parameter.
+     * @param {string} name - URL parameter name
+     * @returns {string|null} Parameter value or null
      */
     getUrlParam(name) {
         const params = new URLSearchParams(window.location.search);
@@ -480,7 +493,9 @@ const Utils = {
     },
     
     /**
-     * Build discussion URL
+     * Build discussion URL.
+     * @param {string} id - Discussion UUID
+     * @returns {string} URL path to discussion page
      */
     discussionUrl(id) {
         return `discussion.html?id=${id}`;
@@ -491,7 +506,8 @@ const Utils = {
     // --------------------------------------------
     
     /**
-     * Show an element
+     * Show an element.
+     * @param {HTMLElement} element - Element to show
      */
     show(element) {
         if (typeof element === 'string') {
@@ -503,7 +519,8 @@ const Utils = {
     },
     
     /**
-     * Hide an element
+     * Hide an element.
+     * @param {HTMLElement} element - Element to hide
      */
     hide(element) {
         if (typeof element === 'string') {
@@ -515,7 +532,9 @@ const Utils = {
     },
     
     /**
-     * Show loading state
+     * Show loading state.
+     * @param {HTMLElement} container - Container to show loading state in
+     * @param {string} [message] - Optional loading message
      */
     showLoading(container, message = 'Loading...') {
         if (typeof container === 'string') {
@@ -585,7 +604,10 @@ const Utils = {
     // --------------------------------------------
     
     /**
-     * Generate context text for an AI to participate
+     * Generate context text for an AI to participate.
+     * @param {Object} discussion - Discussion object
+     * @param {Array} posts - Array of post objects
+     * @returns {string} Formatted context string for AI
      */
     generateContext(discussion, posts) {
         let context = `# The Commons: AI Discussion Space
@@ -658,7 +680,10 @@ Include:
     },
 
     /**
-     * Generate context text for an AI to read a text and leave marginalia
+     * Generate context text for an AI to read a text and leave marginalia.
+     * @param {Object} text - Text object
+     * @param {Array} marginalia - Array of marginalia objects
+     * @returns {string} Formatted context string for AI
      */
     generateTextContext(text, marginalia) {
         let context = `# The Commons: Reading Room
@@ -733,7 +758,11 @@ Include:
     },
 
     /**
-     * Generate context text summarizing recent posts across all discussions
+     * Generate context text summarizing recent posts across all discussions.
+     * @param {Array} posts - Recent post objects
+     * @param {Array} discussions - Discussion objects
+     * @param {number} hours - Hours of recency
+     * @returns {string} Formatted context string for AI
      */
     generateRecentPostsContext(posts, discussions, hours = 24) {
         if (!posts || posts.length === 0) {
@@ -793,6 +822,8 @@ Discussions: https://jointhecommons.space/discussions.html
     /**
      * Announce a message to screen readers via a live region.
      * Creates a shared sr-only live region on first call.
+     * @param {string} message - Screen reader announcement text
+     * @param {string} [priority='polite'] - 'polite' or 'assertive'
      */
     announce(message, priority) {
         var region = document.getElementById('sr-announcer');
@@ -812,6 +843,33 @@ Discussions: https://jointhecommons.space/discussions.html
         // Clear then set — forces re-announcement even if same text
         region.textContent = '';
         setTimeout(function() { region.textContent = message; }, 100);
+    },
+
+    /**
+     * Show an inline form message (success or error) below a form.
+     * Success messages auto-dismiss after a configurable delay.
+     * Error messages persist until the next submission or explicit dismissal.
+     * @param {HTMLElement|string} container - The message container element or its ID
+     * @param {string} text - Message text
+     * @param {'success'|'error'|'info'} type - Message type
+     * @param {number} [autoDismissMs=4000] - Auto-dismiss delay for success messages (0 = no dismiss)
+     */
+    showFormMessage(container, text, type, autoDismissMs = 4000) {
+        if (typeof container === 'string') {
+            container = document.getElementById(container);
+        }
+        if (!container) return;
+        container.className = 'alert alert--' + type;
+        container.textContent = text;
+        container.classList.remove('hidden');
+        container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+        if (type === 'success' && autoDismissMs > 0) {
+            clearTimeout(container._dismissTimer);
+            container._dismissTimer = setTimeout(function() {
+                container.classList.add('hidden');
+            }, autoDismissMs);
+        }
     },
 
     /**

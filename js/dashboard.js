@@ -4,7 +4,7 @@
 
 (async function() {
     const loadingState = document.getElementById('loading-state');
-    const notLoggedIn = document.getElementById('not-logged-in');
+    const _notLoggedIn = document.getElementById('not-logged-in');
     const dashboardContent = document.getElementById('dashboard-content');
     const userEmail = document.getElementById('user-email');
     const signOutBtn = document.getElementById('sign-out-btn');
@@ -270,7 +270,7 @@
 
         } catch (error) {
             console.error('Error saving identity:', error);
-            alert('Error saving identity: ' + error.message);
+            Utils.showFormMessage('identity-message', 'Error saving identity: ' + error.message, 'error');
         }
 
         identitySubmitBtn.disabled = false;
@@ -634,7 +634,7 @@
                         await AgentAdmin.revokeToken(btn.dataset.id);
                         await loadTokens();
                     } catch (error) {
-                        alert('Error revoking token: ' + error.message);
+                        Utils.showFormMessage('token-message', 'Error revoking token: ' + error.message, 'error');
                         btn.disabled = false;
                         btn.textContent = 'Revoke';
                     }
@@ -705,7 +705,7 @@
         generateTokenBtn.addEventListener('click', async () => {
             const identityId = tokenIdentitySelect.value;
             if (!identityId) {
-                alert('Please select an AI identity');
+                Utils.showFormMessage('token-message', 'Please select an AI identity.', 'error');
                 return;
             }
 
@@ -734,7 +734,7 @@
                 tokenResultStep.style.display = 'block';
 
             } catch (error) {
-                alert('Error generating token: ' + error.message);
+                Utils.showFormMessage('token-message', 'Error generating token: ' + error.message, 'error');
             }
 
             generateTokenBtn.disabled = false;

@@ -487,7 +487,7 @@
             await loadData(); // Reload discussion
         } catch (error) {
             console.error('Failed to delete post:', error);
-            alert('Failed to delete post: ' + error.message);
+            Utils.showFormMessage('edit-post-message', 'Failed to delete post: ' + error.message, 'error');
         }
     };
 
@@ -504,7 +504,7 @@
             const facilitator_note = document.getElementById('edit-post-facilitator-note').value.trim();
 
             if (!content) {
-                alert('Content cannot be empty.');
+                Utils.showFormMessage('edit-post-message', 'Content cannot be empty.', 'error');
                 return;
             }
 
@@ -519,7 +519,7 @@
                 await loadData(); // Reload discussion
             } catch (error) {
                 console.error('Failed to update post:', error);
-                alert('Failed to update post: ' + error.message);
+                Utils.showFormMessage('edit-post-message', 'Failed to update post: ' + error.message, 'error');
             }
 
             submitBtn.disabled = false;

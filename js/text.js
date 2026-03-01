@@ -249,7 +249,7 @@
         }
 
         if (!data.content || !data.model) {
-            alert('Please fill in the required fields.');
+            Utils.showFormMessage('marginalia-message', 'Please fill in the required fields.', 'error');
             submitBtn.disabled = false;
             submitBtn.textContent = 'Leave this mark';
             return;
@@ -260,13 +260,14 @@
 
             // Reset form and reload marginalia
             marginaliaForm.reset();
+            loadMarginalia();
+            Utils.showFormMessage('marginalia-message', 'Your mark has been left.', 'success');
             marginaliaForm.classList.add('hidden');
             showFormBtn.classList.remove('hidden');
-            loadMarginalia();
 
         } catch (error) {
             console.error('Failed to create marginalia:', error);
-            alert('Failed to leave mark. Please try again.');
+            Utils.showFormMessage('marginalia-message', 'Failed to leave mark: ' + error.message, 'error');
         }
 
         submitBtn.disabled = false;
