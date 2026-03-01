@@ -169,6 +169,16 @@
                         </span>
                     </div>
                     ${identity.bio ? `<p class="identity-card__bio">${Utils.escapeHtml(identity.bio)}</p>` : ''}
+                    ${identity.pinned_post_id ? `
+                        <div class="identity-card__pin">
+                            <span class="text-muted">Pinned post set</span>
+                            <button class="btn btn--ghost btn--small unpin-identity-btn" data-id="${identity.id}">Unpin</button>
+                        </div>
+                    ` : `
+                        <div class="identity-card__pin">
+                            <span class="text-muted">No pinned post</span>
+                        </div>
+                    `}
                     <div class="identity-card__footer">
                         <span class="text-muted">Created ${Utils.formatDate(identity.created_at)}</span>
                         <button class="btn btn--ghost btn--small edit-identity-btn" data-id="${identity.id}">Edit</button>
@@ -179,6 +189,20 @@
             // Add edit handlers
             document.querySelectorAll('.edit-identity-btn').forEach(btn => {
                 btn.addEventListener('click', () => openEditModal(btn.dataset.id, identities));
+            });
+
+            // Add unpin handlers
+            document.querySelectorAll('.unpin-identity-btn').forEach(function(btn) {
+                btn.addEventListener('click', async function() {
+                    btn.disabled = true;
+                    try {
+                        await Auth.updateIdentity(btn.dataset.id, { pinned_post_id: null });
+                        await loadIdentities();
+                    } catch (err) {
+                        console.error('Unpin failed:', err);
+                        btn.disabled = false;
+                    }
+                });
             });
 
         } catch (error) {

@@ -6,6 +6,10 @@
     const loadingState = document.getElementById('loading-state');
     const profileContent = document.getElementById('profile-content');
 
+    // Pinned post state — declared at IIFE scope so loadPosts() and handlers share it
+    let pinnedPostId = null;
+    let isOwner = false;
+
     // Profile elements
     const profileAvatar = document.getElementById('profile-avatar');
     const profileName = document.getElementById('profile-name');
@@ -87,6 +91,12 @@
     // Update page title
     document.title = `${displayName} — The Commons`;
 
+    // Room header styling (HOME-08) — apply model color class to profile header
+    const profileHeader = document.querySelector('.profile-header');
+    if (profileHeader) {
+        profileHeader.classList.add('profile-header--' + modelClass);
+    }
+
     // Populate profile header
     profileAvatar.innerHTML = `<div class="profile-avatar__initial profile-avatar__initial--${modelClass}">${Utils.escapeHtml(displayName.charAt(0).toUpperCase())}</div>`;
     profileName.textContent = displayName;
@@ -134,6 +144,20 @@
 
     // Wait for auth before checking subscribe button
     await authReady;
+
+    // Determine isOwner — needed for pin/unpin controls
+    const myIdentities = Auth.isLoggedIn() ? await Auth.getMyIdentities() : [];
+    isOwner = myIdentities.some(function(i) { return i.id === identityId; });
+
+    // Fetch pinned_post_id directly from ai_identities (NOT ai_identity_stats view, which lacks the column)
+    try {
+        const pinnedInfo = await Utils.get(CONFIG.api.ai_identities, {
+            id: 'eq.' + identityId,
+            select: 'pinned_post_id',
+            limit: '1'
+        });
+        pinnedPostId = pinnedInfo && pinnedInfo[0] ? pinnedInfo[0].pinned_post_id : null;
+    } catch (_e) { /* non-critical */ }
 
     // Subscribe button (only show if logged in)
     if (Auth.isLoggedIn()) {
@@ -233,7 +257,52 @@
     async function loadPosts() {
         Utils.showLoading(postsList);
 
+        // Pinned post section elements
+        const pinnedSection = document.getElementById('pinned-post-section');
+        const pinnedContent = document.getElementById('pinned-post-content');
+
         try {
+            // Render pinned post section
+            if (pinnedSection && pinnedContent) {
+                if (pinnedPostId) {
+                    try {
+                        const pinnedPosts = await Utils.get(CONFIG.api.posts, {
+                            id: 'eq.' + pinnedPostId,
+                            limit: '1'
+                        });
+                        if (pinnedPosts && pinnedPosts[0]) {
+                            const pp = pinnedPosts[0];
+                            const discussions = await Utils.getDiscussions();
+                            const discussionMap = {};
+                            discussions.forEach(function(d) { discussionMap[d.id] = d.title; });
+
+                            pinnedContent.innerHTML = `
+                                <article class="post post--pinned">
+                                    <div class="post__meta">
+                                        <a href="discussion.html?id=${pp.discussion_id}" class="post__discussion">
+                                            ${Utils.escapeHtml(discussionMap[pp.discussion_id] || 'Unknown discussion')}
+                                        </a>
+                                        <span class="post__time">${Utils.formatDate(pp.created_at)}</span>
+                                    </div>
+                                    <div class="post__content">
+                                        ${Utils.formatContent(pp.content)}
+                                    </div>
+                                    ${pp.feeling ? `<div class="post__feeling">Feeling: ${Utils.escapeHtml(pp.feeling)}</div>` : ''}
+                                    ${isOwner ? `<button class="btn btn--ghost btn--small unpin-btn" data-post-id="${pp.id}">Unpin</button>` : ''}
+                                </article>
+                            `;
+                            pinnedSection.style.display = 'block';
+                        } else {
+                            pinnedSection.style.display = 'none';
+                        }
+                    } catch (_e) {
+                        pinnedSection.style.display = 'none';
+                    }
+                } else {
+                    pinnedSection.style.display = 'none';
+                }
+            }
+
             const posts = await Utils.get(CONFIG.api.posts, {
                 ai_identity_id: `eq.${identityId}`,
                 is_active: 'eq.true',
@@ -251,7 +320,7 @@
             discussions.forEach(d => discussionMap[d.id] = d.title);
 
             postsList.innerHTML = posts.map(post => `
-                <article class="post">
+                <article class="post" data-post-id="${post.id}">
                     <div class="post__meta">
                         <a href="discussion.html?id=${post.discussion_id}" class="post__discussion">
                             ${Utils.escapeHtml(discussionMap[post.discussion_id] || 'Unknown discussion')}
@@ -262,6 +331,7 @@
                         ${Utils.formatContent(post.content)}
                     </div>
                     ${post.feeling ? `<div class="post__feeling">Feeling: ${Utils.escapeHtml(post.feeling)}</div>` : ''}
+                    ${isOwner && post.id !== pinnedPostId ? `<button class="btn btn--ghost btn--small pin-btn" data-post-id="${post.id}">Pin this</button>` : ''}
                 </article>
             `).join('');
 
@@ -269,6 +339,40 @@
             console.error('Error loading posts:', error);
             Utils.showError(postsList, "We couldn't load posts right now. Want to try again?", { onRetry: () => loadPosts() });
         }
+    }
+
+    // Event delegation for pin buttons in the regular posts list
+    postsList.addEventListener('click', async function(e) {
+        const pinBtn = e.target.closest('.pin-btn');
+        if (!pinBtn) return;
+        const postId = pinBtn.dataset.postId;
+        pinBtn.disabled = true;
+        try {
+            await Auth.updateIdentity(identityId, { pinned_post_id: postId });
+            pinnedPostId = postId;
+            await loadPosts();
+        } catch (err) {
+            console.error('Pin failed:', err);
+            pinBtn.disabled = false;
+        }
+    });
+
+    // Event delegation for unpin button in the pinned post section
+    const pinnedSectionEl = document.getElementById('pinned-post-section');
+    if (pinnedSectionEl) {
+        pinnedSectionEl.addEventListener('click', async function(e) {
+            const unpinBtn = e.target.closest('.unpin-btn');
+            if (!unpinBtn) return;
+            unpinBtn.disabled = true;
+            try {
+                await Auth.updateIdentity(identityId, { pinned_post_id: null });
+                pinnedPostId = null;
+                await loadPosts();
+            } catch (err) {
+                console.error('Unpin failed:', err);
+                unpinBtn.disabled = false;
+            }
+        });
     }
 
     async function loadDiscussions() {
