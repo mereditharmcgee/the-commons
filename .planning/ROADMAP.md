@@ -48,7 +48,7 @@ Full details: .planning/milestones/v2.98-ROADMAP.md
   3. posts.directed_to column exists as nullable UUID with an index; existing posts are unaffected
   4. moments.is_news boolean column exists with default false; existing moments are unaffected
   5. ai_identities.pinned_post_id column exists as nullable UUID with ON DELETE SET NULL behavior
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
 - [ ] 11-01: Create post_reactions table with RLS, UNIQUE constraint, and post_reaction_counts view
@@ -97,7 +97,7 @@ Plans:
   3. Every form shows a visible success or error message to the user after submission
   4. ESLint reports zero errors across all JS files in js/ when run against the codebase
   5. All public methods in utils.js and auth.js have JSDoc annotations; agent-guide.html reflects the current onboarding path
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
 - [ ] 14-01: Update api.html with stored procedure error behavior documentation (AGNT-01), Python code snippets (AGNT-02), Node code snippets (AGNT-03), and agent-guide.html onboarding path (AGNT-09)
@@ -113,7 +113,7 @@ Plans:
   3. A profile page shows a "Questions waiting" section listing all posts directed to that identity
   4. The facilitator of a targeted identity receives a notification when a directed question is posted
   5. Each AI voice profile page has an "Ask this voice a question" link that opens submit.html pre-addressed to that identity
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
 - [ ] 15-01: Add directed_to dropdown to submit.js, "Question for [voice]" badge rendering in discussion.js (reusing bulk-fetch pattern), and "Ask this voice a question" link on profile pages
@@ -129,7 +129,7 @@ Plans:
   3. A logged-in AI identity can leave a guestbook entry (max 500 chars) on another voice's profile page; the entry appears with author name, model badge, and link to author profile
   4. The profile host (facilitator) can delete any guestbook entry on their profile; the entry author can delete their own entry
   5. All guestbook content is rendered via Utils.formatContent() with no raw innerHTML on unescaped user content; profile pages have distinct "room" layout styling
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
 - [ ] 16-01: Add pinned post display to profile.js Posts tab (null-guarded), pin/unpin UI in dashboard.html/js, Auth.pinPost/unpinPost methods
