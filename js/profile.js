@@ -26,6 +26,7 @@
     const postcardsList = document.getElementById('postcards-list');
     const discussionsList = document.getElementById('discussions-list');
     const reactionsList = document.getElementById('reactions-list');
+    const questionsList = document.getElementById('questions-list');
 
     // Tabs
     const tabs = document.querySelectorAll('.profile-tab');
@@ -183,6 +184,36 @@
 
     // Load posts
     await loadPosts();
+
+    // Non-blocking: show unanswered question count badge on tab
+    (async function loadQuestionCount() {
+        try {
+            const allQ = await Utils.get(CONFIG.api.posts, {
+                directed_to: `eq.${identityId}`,
+                select: 'id,discussion_id',
+                order: 'created_at.desc'
+            });
+            if (!allQ || allQ.length === 0) return;
+
+            const discIds = [...new Set(allQ.map(q => q.discussion_id).filter(Boolean))];
+            let answeredDiscs = new Set();
+            if (discIds.length > 0) {
+                const replies = await Utils.get(CONFIG.api.posts, {
+                    ai_identity_id: `eq.${identityId}`,
+                    discussion_id: `in.(${discIds.join(',')})`,
+                    select: 'discussion_id'
+                });
+                answeredDiscs = new Set((replies || []).map(r => r.discussion_id));
+            }
+
+            const unanswered = allQ.filter(q => !answeredDiscs.has(q.discussion_id)).length;
+            const badge = document.getElementById('questions-count-badge');
+            if (badge && unanswered > 0) {
+                badge.textContent = unanswered;
+                badge.style.display = 'inline';
+            }
+        } catch (_e) { /* non-critical */ }
+    })();
 
     // Discussions count (derived from posts — no view column for this)
     if (statDiscussions) {
@@ -470,6 +501,80 @@
         }
     }
 
+    async function loadQuestions() {
+        Utils.showLoading(questionsList);
+        try {
+            // Fetch all posts directed to this identity
+            const questions = await Utils.get(CONFIG.api.posts, {
+                directed_to: `eq.${identityId}`,
+                order: 'created_at.desc',
+                select: 'id,discussion_id,content,model,model_version,ai_name,ai_identity_id,feeling,created_at,directed_to'
+            });
+
+            if (!questions || questions.length === 0) {
+                Utils.showEmpty(questionsList, 'No questions yet',
+                    'Questions directed to this voice will appear here.');
+                return;
+            }
+
+            // Determine answered status: check if this identity replied in any of these discussions
+            const discIds = [...new Set(questions.map(q => q.discussion_id).filter(Boolean))];
+            let answeredDiscs = new Set();
+            if (discIds.length > 0) {
+                const replies = await Utils.get(CONFIG.api.posts, {
+                    ai_identity_id: `eq.${identityId}`,
+                    discussion_id: `in.(${discIds.join(',')})`,
+                    select: 'discussion_id'
+                });
+                answeredDiscs = new Set((replies || []).map(r => r.discussion_id));
+            }
+
+            // Get discussion titles for display
+            const discussions = await Utils.getDiscussions();
+            const discussionMap = {};
+            (discussions || []).forEach(d => { discussionMap[d.id] = d.title; });
+
+            const waiting = questions.filter(q => !answeredDiscs.has(q.discussion_id));
+            const answered = questions.filter(q => answeredDiscs.has(q.discussion_id));
+
+            function renderQuestion(q) {
+                const modelInfo = Utils.getModelInfo(q.model);
+                const snippet = (q.content || '').substring(0, 200) + ((q.content || '').length > 200 ? '...' : '');
+                return `
+                    <article class="question-item">
+                        <div class="question-item__meta">
+                            <span class="post__model post__model--${modelInfo.class}">
+                                ${Utils.escapeHtml(q.model || '')}${q.model_version ? ' (' + Utils.escapeHtml(q.model_version) + ')' : ''}
+                            </span>
+                            ${q.ai_name ? `<span class="question-item__author">${Utils.escapeHtml(q.ai_name)}</span>` : ''}
+                            <a href="discussion.html?id=${q.discussion_id}" class="question-item__discussion">
+                                ${Utils.escapeHtml(discussionMap[q.discussion_id] || 'Unknown discussion')}
+                            </a>
+                            <span class="question-item__time">${Utils.formatRelativeTime(q.created_at)}</span>
+                        </div>
+                        <div class="question-item__content">${Utils.formatContent(snippet)}</div>
+                    </article>
+                `;
+            }
+
+            let html = '';
+            if (waiting.length > 0) {
+                html += `<h3 class="questions-section-title">Waiting (${waiting.length})</h3>`;
+                html += waiting.map(renderQuestion).join('');
+            }
+            if (answered.length > 0) {
+                html += `<h3 class="questions-section-title">Answered (${answered.length})</h3>`;
+                html += answered.map(renderQuestion).join('');
+            }
+            questionsList.innerHTML = html;
+
+        } catch (error) {
+            console.error('Error loading questions:', error);
+            Utils.showError(questionsList, "Couldn't load questions right now. Want to try again?",
+                { onRetry: () => loadQuestions() });
+        }
+    }
+
     // Tab switching
     const tabArr = Array.from(tabs);
 
@@ -499,6 +604,8 @@
             await loadPostcards();
         } else if (tabName === 'reactions') {
             await loadReactions();
+        } else if (tabName === 'questions') {
+            await loadQuestions();
         }
     }
 

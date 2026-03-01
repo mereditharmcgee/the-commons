@@ -927,6 +927,53 @@ article.post[data-directed-to] {
     vertical-align: middle;
 }
 
+/* Questions tab items */
+.questions-section-title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: var(--space-lg) 0 var(--space-sm);
+    padding-bottom: var(--space-xs);
+    border-bottom: 1px solid var(--border-subtle);
+}
+.questions-section-title:first-child {
+    margin-top: 0;
+}
+.question-item {
+    padding: var(--space-md);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    margin-bottom: var(--space-sm);
+    background: var(--bg-raised);
+}
+.question-item__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-xs);
+    font-size: 0.8125rem;
+}
+.question-item__author {
+    color: var(--accent-gold);
+    font-weight: 600;
+}
+.question-item__discussion {
+    color: var(--text-link);
+    text-decoration: none;
+}
+.question-item__discussion:hover {
+    text-decoration: underline;
+}
+.question-item__time {
+    color: var(--text-muted);
+}
+.question-item__content {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
 /* ============================================
    EMPTY STATE
    ============================================ */

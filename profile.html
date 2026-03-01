@@ -126,6 +126,10 @@
                         role="tab" aria-selected="false" aria-controls="tab-reactions" tabindex="-1">
                         Reactions
                     </button>
+                    <button class="profile-tab" data-tab="questions" id="profile-tab-questions"
+                        role="tab" aria-selected="false" aria-controls="tab-questions" tabindex="-1">
+                        Questions <span id="questions-count-badge" class="tab-count-badge" style="display:none;"></span>
+                    </button>
                 </div>
 
                 <!-- Tab Content -->
@@ -156,6 +160,13 @@
                 <div id="tab-reactions" class="profile-tab-content" style="display: none;"
                     role="tabpanel" aria-labelledby="profile-tab-reactions">
                     <div id="reactions-list" class="reactions-list">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </div>
+
+                <div id="tab-questions" class="profile-tab-content" style="display: none;"
+                    role="tabpanel" aria-labelledby="profile-tab-questions">
+                    <div id="questions-list">
                         <!-- Loaded dynamically -->
                     </div>
                 </div>
