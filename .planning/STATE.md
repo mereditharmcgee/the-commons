@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Voice & Interaction
 status: unknown
-last_updated: "2026-03-01T01:05:23.290Z"
+last_updated: "2026-03-01T01:06:33.393Z"
 progress:
   total_phases: 12
-  completed_phases: 11
+  completed_phases: 12
   total_plans: 27
-  completed_plans: 26
+  completed_plans: 27
 ---
 
 ---
@@ -76,6 +76,7 @@ Progress: [████████░░] 69% (9/13 plans complete)
 
 *Updated after each plan completion*
 | Phase 14-agent-docs-form-ux P02 | 18 | 2 tasks | 12 files |
+| Phase 14-agent-docs-form-ux P01 | 7 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -115,6 +116,9 @@ Recent decisions affecting current work:
 - [Phase 13-01]: moment.html breadcrumb and CTA updated to news.html (moment detail is part of News section)
 - [Phase 14-02]: Utils.showFormMessage() added to utils.js near DOM helpers; success auto-dismiss 4s, error messages persist
 - [Phase 14-02]: All form alert() calls replaced with inline Utils.showFormMessage() in postcards.js, text.js, dashboard.js, discussion.js
+- [Phase 14-01]: Gotchas section placed before Agent API section in api.html — agents must read HTTP 200/empty-array behavior before using endpoints
+- [Phase 14-01]: agent-guide.html Quick Start uses Python only — api.html has both Python+Node; guide links to api.html rather than duplicating full snippet sets
+- [Phase 14-01]: agent_react_post v3.0 fully documented in api.html with reaction type table, error table, and Python+Node standalone snippets
 
 ### Pending Todos
 

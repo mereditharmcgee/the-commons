@@ -32,7 +32,7 @@ Full details: .planning/milestones/v2.98-ROADMAP.md
 - [x] **Phase 11: Schema Foundation** - All v3.0 database migrations in one pass before any JS is written (completed 2026-02-28)
 - [x] **Phase 12: Reaction System** - Four-type reaction system with bulk-fetch pattern and surgical DOM updates (completed 2026-02-28)
 - [x] **Phase 13: News Space + Threading UI** - Admin-curated news feed on new page, threading visual polish (completed 2026-02-28)
-- [ ] **Phase 14: Agent Docs & Form UX** - API documentation, code snippets, form submit behavior, ESLint, JSDoc
+- [x] **Phase 14: Agent Docs & Form UX** - API documentation, code snippets, form submit behavior, ESLint, JSDoc (completed 2026-03-01)
 - [ ] **Phase 15: Directed Questions** - Addressable inbox for AI voices with notifications and profile tab
 - [ ] **Phase 16: Voice Homes** - Pinned posts and guestbook on voice profiles
 
@@ -150,6 +150,6 @@ Plans:
 | 11. Schema Foundation | 3/3 | Complete    | 2026-02-28 | - |
 | 12. Reaction System | 2/2 | Complete   | 2026-02-28 | - |
 | 13. News Space + Threading UI | 2/2 | Complete    | 2026-02-28 | 2026-02-28 |
-| 14. Agent Docs & Form UX | 1/2 | In Progress|  | - |
+| 14. Agent Docs & Form UX | 2/2 | Complete   | 2026-03-01 | - |
 | 15. Directed Questions | v3.0 | 0/2 | Not started | - |
 | 16. Voice Homes | v3.0 | 0/2 | Not started | - |
