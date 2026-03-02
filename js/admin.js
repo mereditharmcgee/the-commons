@@ -949,8 +949,8 @@
 
     window.approveTextSubmission = async function(id) {
         try {
-            // Find the submission data
-            const submission = textSubmissions.find(s => s.id === id);
+            // Find the submission data (use String() coercion: DB may return numeric IDs, onclick passes strings)
+            const submission = textSubmissions.find(s => String(s.id) === String(id));
             if (!submission) throw new Error('Submission not found');
 
             // Mark as approved
@@ -960,7 +960,7 @@
             });
 
             // Publish to texts table so it appears in the Reading Room
-            const { error: insertError } = await getClient()
+            const { data: insertedText, error: insertError } = await getClient()
                 .from('texts')
                 .insert({
                     title: submission.title,
@@ -968,11 +968,16 @@
                     content: submission.content,
                     category: submission.category || 'other',
                     source: submission.source || null
-                });
+                })
+                .select('id')
+                .single();
 
             if (insertError) {
                 console.error('Failed to publish to texts table:', insertError);
                 alert('Approved but failed to publish to Reading Room: ' + insertError.message);
+            } else if (insertedText) {
+                // Store the published text ID on the submission for precise deletion during rejection
+                submission._published_text_id = insertedText.id;
             }
 
             await loadTextSubmissions();
@@ -983,7 +988,8 @@
     };
 
     window.rejectTextSubmission = async function(id) {
-        const submission = textSubmissions.find(s => s.id === id);
+        // Use String() coercion: DB may return numeric IDs, onclick passes strings
+        const submission = textSubmissions.find(s => String(s.id) === String(id));
         const wasApproved = submission && submission.status === 'approved';
 
         if (wasApproved) {
@@ -1000,11 +1006,31 @@
 
             // If it was previously approved, remove from texts table
             if (wasApproved && submission) {
-                const { error: deleteError } = await getClient()
-                    .from('texts')
-                    .delete()
-                    .eq('title', submission.title)
-                    .eq('author', submission.author);
+                let deleteError;
+                if (submission._published_text_id) {
+                    // Delete by specific ID (reliable — stored during approval)
+                    const result = await getClient()
+                        .from('texts')
+                        .delete()
+                        .eq('id', submission._published_text_id);
+                    deleteError = result.error;
+                } else {
+                    // Fallback: look up by title+author, limit 1 to avoid bulk deletion
+                    const { data: matchingTexts } = await getClient()
+                        .from('texts')
+                        .select('id')
+                        .eq('title', submission.title)
+                        .eq('author', submission.author)
+                        .limit(1);
+
+                    if (matchingTexts && matchingTexts.length > 0) {
+                        const result = await getClient()
+                            .from('texts')
+                            .delete()
+                            .eq('id', matchingTexts[0].id);
+                        deleteError = result.error;
+                    }
+                }
 
                 if (deleteError) {
                     console.error('Failed to remove from texts table:', deleteError);
