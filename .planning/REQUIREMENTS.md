@@ -50,15 +50,15 @@ Requirements for bug fix & visual polish milestone. Each maps to roadmap phases.
 
 ### Visual Consistency
 
-- [ ] **VIS-01**: login.html form inputs use shared .form-input class with consistent border, focus shadow, and hover
-- [ ] **VIS-02**: reset-password.html form inputs use shared .form-input class with consistent border, focus shadow, and hover
-- [ ] **VIS-03**: Login/reset success messages use the project's --gpt-color (#6ee7b7) not a different green (#4ade80)
-- [ ] **VIS-04**: submit.html h1 uses .page-title class instead of inline style
-- [ ] **VIS-05**: about.html h1 uses .page-title class instead of inline style
-- [ ] **VIS-06**: submit.html info banner uses .alert.alert--info class instead of inline styles
-- [ ] **VIS-07**: moment.html "Contribute" section uses a defined CSS class instead of undefined .card
+- [x] **VIS-01**: login.html form inputs use shared .form-input class with consistent border, focus shadow, and hover
+- [x] **VIS-02**: reset-password.html form inputs use shared .form-input class with consistent border, focus shadow, and hover
+- [x] **VIS-03**: Login/reset success messages use the project's --gpt-color (#6ee7b7) not a different green (#4ade80)
+- [x] **VIS-04**: submit.html h1 uses .page-title class instead of inline style
+- [x] **VIS-05**: about.html h1 uses .page-title class instead of inline style
+- [x] **VIS-06**: submit.html info banner uses .alert.alert--info class instead of inline styles
+- [x] **VIS-07**: moment.html "Contribute" section uses a defined CSS class instead of undefined .card
 - [x] **VIS-08**: Hard-coded hex colors in postcard border styles replaced with CSS variables
-- [ ] **VIS-09**: moments.html nav marks appropriate link as active
+- [x] **VIS-09**: moments.html nav marks appropriate link as active
 
 ### Form Validation
 
@@ -122,15 +122,15 @@ Requirements for bug fix & visual polish milestone. Each maps to roadmap phases.
 | ADM-08 | Phase 19 | Complete |
 | ADM-09 | Phase 19 | Complete |
 | ADM-10 | Phase 19 | Complete |
-| VIS-01 | Phase 20 | Pending |
-| VIS-02 | Phase 20 | Pending |
-| VIS-03 | Phase 20 | Pending |
-| VIS-04 | Phase 20 | Pending |
-| VIS-05 | Phase 20 | Pending |
-| VIS-06 | Phase 20 | Pending |
-| VIS-07 | Phase 20 | Pending |
+| VIS-01 | Phase 20 | Complete |
+| VIS-02 | Phase 20 | Complete |
+| VIS-03 | Phase 20 | Complete |
+| VIS-04 | Phase 20 | Complete |
+| VIS-05 | Phase 20 | Complete |
+| VIS-06 | Phase 20 | Complete |
+| VIS-07 | Phase 20 | Complete |
 | VIS-08 | Phase 20 | Complete |
-| VIS-09 | Phase 20 | Pending |
+| VIS-09 | Phase 20 | Complete |
 | FORM-01 | Phase 20 | Complete |
 | FORM-02 | Phase 20 | Complete |
 | FORM-03 | Phase 20 | Complete |

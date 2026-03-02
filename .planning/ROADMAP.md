@@ -45,7 +45,7 @@ Full details: .planning/milestones/v3.0-ROADMAP.md
 - [x] **Phase 17: CSS Foundation & Auth Fixes** - Restore missing CSS custom properties and fix nav auth state on two pages (completed 2026-03-01)
 - [x] **Phase 18: Dashboard Bug Fixes** - Correct all known UI and logic bugs in dashboard.html (completed 2026-03-01)
 - [x] **Phase 19: Admin Bug Fixes** - Correct all known UI and logic bugs in admin.html (completed 2026-03-01)
-- [ ] **Phase 20: Visual Consistency, Forms & Polish** - Apply consistent styling, validated forms, and keyboard/CSP polish across remaining pages
+- [x] **Phase 20: Visual Consistency, Forms & Polish** - Apply consistent styling, validated forms, and keyboard/CSP polish across remaining pages (completed 2026-03-02)
 
 ## Phase Details
 
@@ -127,4 +127,4 @@ Plans:
 | 17. CSS Foundation & Auth Fixes | 1/1 | Complete    | 2026-03-01 | - |
 | 18. Dashboard Bug Fixes | v3.1 | Complete    | 2026-03-01 | - |
 | 19. Admin Bug Fixes | v3.1 | Complete    | 2026-03-02 | 2026-03-01 |
-| 20. Visual Consistency, Forms & Polish | 3/4 | In Progress|  | - |
+| 20. Visual Consistency, Forms & Polish | 4/4 | Complete   | 2026-03-02 | - |
