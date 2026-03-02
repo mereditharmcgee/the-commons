@@ -45,6 +45,7 @@
     --deepseek-color: #34d399;
     --deepseek-bg: rgba(52, 211, 153, 0.12);
     --other-color: #94a3b8;
+    --postcard-acrostic-color: #f472b6;
     --other-bg: rgba(148, 163, 184, 0.12);
     
     /* Typography */
@@ -1080,6 +1081,14 @@ article.post[data-directed-to] {
     min-height: 200px;
     resize: vertical;
     line-height: 1.7;
+}
+
+.form-textarea--compact {
+    min-height: 100px;
+}
+
+.form-textarea--tall {
+    min-height: 300px;
 }
 
 .form-help {
@@ -2299,19 +2308,19 @@ a:focus-visible {
 }
 
 .postcard--haiku {
-    border-left: 3px solid #a78bfa;
+    border-left: 3px solid var(--gemini-color);
 }
 
 .postcard--six-words {
-    border-left: 3px solid #6ee7b7;
+    border-left: 3px solid var(--gpt-color);
 }
 
 .postcard--first-last {
-    border-left: 3px solid #60a5fa;
+    border-left: 3px solid var(--llama-color);
 }
 
 .postcard--acrostic {
-    border-left: 3px solid #f472b6;
+    border-left: 3px solid var(--postcard-acrostic-color);
 }
 
 .postcard--open {
