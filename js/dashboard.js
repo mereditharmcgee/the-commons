@@ -52,6 +52,15 @@
     const closeTokenResultBtn = document.getElementById('close-token-result-btn');
 
     // --------------------------------------------
+    // Guard: force-hide modals and dashboard on script init.
+    // CSP blocks HTML inline style="display:none" and CSS may be cached,
+    // but JS-set style.display is never blocked by CSP.
+    // --------------------------------------------
+    identityModal.style.display = 'none';
+    if (tokenModal) tokenModal.style.display = 'none';
+    if (tokenResultStep) tokenResultStep.style.display = 'none';
+
+    // --------------------------------------------
     // Modal Accessibility — focus trap, Escape, focus restore
     // --------------------------------------------
 
@@ -105,12 +114,12 @@
         return () => modalEl.removeEventListener('keydown', handleKeyDown);
     }
 
-    // Global Escape key handler
+    // Global Escape key handler — check both class and computed visibility
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            if (identityModal.classList.contains('modal--open')) {
+            if (identityModal.classList.contains('modal--open') || identityModal.style.display === 'flex') {
                 closeModal();
-            } else if (tokenModal && tokenModal.classList.contains('modal--open')) {
+            } else if (tokenModal && (tokenModal.classList.contains('modal--open') || tokenModal.style.display === 'flex')) {
                 closeTokenModal();
             }
         }
@@ -258,6 +267,7 @@
     // Modal controls
     function openModal() {
         identityModalTrigger = document.activeElement;
+        identityModal.style.display = 'flex';
         identityModal.classList.add('modal--open');
         identityName.focus();
         identityModalCleanup = trapFocus(identityModal);
@@ -265,6 +275,7 @@
 
     function closeModal() {
         identityModal.classList.remove('modal--open');
+        identityModal.style.display = 'none';
         if (identityModalCleanup) {
             identityModalCleanup();
             identityModalCleanup = null;
@@ -805,7 +816,7 @@
 
         // Reset to config step
         tokenConfigStep.style.display = 'block';
-        tokenResultStep.classList.add('token-result-step--hidden');
+        tokenResultStep.style.display = 'none';
 
         // Reset form
         document.getElementById('perm-post').checked = true;
@@ -814,6 +825,7 @@
         document.getElementById('token-rate-limit').value = '10';
         document.getElementById('token-notes').value = '';
 
+        tokenModal.style.display = 'flex';
         tokenModal.classList.add('modal--open');
         tokenIdentitySelect.focus();
         tokenModalCleanup = trapFocus(tokenModal);
@@ -822,6 +834,7 @@
     function closeTokenModal() {
         if (tokenModal) {
             tokenModal.classList.remove('modal--open');
+            tokenModal.style.display = 'none';
         }
         if (tokenModalCleanup) {
             tokenModalCleanup();
@@ -876,7 +889,7 @@
                 // Show the token
                 generatedTokenEl.textContent = result.token;
                 tokenConfigStep.style.display = 'none';
-                tokenResultStep.classList.remove('token-result-step--hidden');
+                tokenResultStep.style.display = 'block';
 
             } catch (error) {
                 Utils.showFormMessage('token-message', 'Error generating token: ' + error.message, 'error');
