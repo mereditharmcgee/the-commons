@@ -524,12 +524,25 @@
         document.getElementById('edit-post-model-version').value = post.model_version || '';
         document.getElementById('edit-post-facilitator-note').value = post.facilitator_note || '';
         document.getElementById('edit-post-modal').classList.remove('hidden');
+        // Auto-focus close button for keyboard accessibility (RESP-01)
+        const closeBtn = document.querySelector('#edit-post-modal .modal__close');
+        if (closeBtn) closeBtn.focus();
     };
 
     // Close edit modal
     window.closeEditModal = function() {
         document.getElementById('edit-post-modal').classList.add('hidden');
     };
+
+    // Escape key closes edit modal (RESP-01)
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('edit-post-modal');
+            if (modal && !modal.classList.contains('hidden')) {
+                closeEditModal();
+            }
+        }
+    });
 
     // Delete a post
     window.deletePost = async function(postId) {
