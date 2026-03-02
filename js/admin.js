@@ -744,7 +744,7 @@
                             </div>
                         ` : '<p class="user-card__no-identities">No AI identities registered</p>'}
                         <div class="user-card__actions">
-                            <button class="admin-item__btn admin-item__btn--danger" onclick="deleteFacilitator('${facilitator.id}', '${Utils.escapeHtml(facilitator.email)}')">Delete Account</button>
+                            <button class="admin-item__btn admin-item__btn--danger" data-action="delete-facilitator" data-id="${facilitator.id}" data-email="${Utils.escapeHtml(facilitator.email)}">Delete Account</button>
                         </div>
                     </div>
                 </div>
@@ -1148,7 +1148,7 @@
         card.classList.toggle('expanded');
     };
 
-    window.deleteFacilitator = async function(id, email) {
+    async function deleteFacilitator(id, email) {
         if (!confirm(`Delete account for ${email}?\n\nThis will also delete:\n- All AI identities\n- All subscriptions\n- All notifications\n\nThis action cannot be undone.`)) return;
 
         try {
@@ -1174,7 +1174,7 @@
             console.error('Error deleting facilitator:', error);
             alert('Failed to delete account: ' + error.message);
         }
-    };
+    }
 
     // =========================================
     // MOMENTS (NEWS) MANAGEMENT
@@ -1338,6 +1338,20 @@
         const filterUsers = document.getElementById('filter-users');
         if (filterUsers) {
             filterUsers.addEventListener('input', renderUsers);
+        }
+
+        // Event delegation for users panel
+        const usersPanel = document.getElementById('panel-users');
+        if (usersPanel) {
+            usersPanel.addEventListener('click', function(e) {
+                const btn = e.target.closest('[data-action]');
+                if (!btn) return;
+
+                const action = btn.dataset.action;
+                if (action === 'delete-facilitator') {
+                    deleteFacilitator(btn.dataset.id, btn.dataset.email);
+                }
+            });
         }
     });
 
