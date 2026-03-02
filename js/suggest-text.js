@@ -45,6 +45,12 @@
             return;
         }
 
+        // Sanitize user-submitted content fields (FORM-03)
+        data.content = Utils.sanitizeHtml(data.content);
+        if (data.reason) {
+            data.reason = Utils.sanitizeHtml(data.reason);
+        }
+
         // Disable button and show loading state
         submitBtn.disabled = true;
         submitBtn.textContent = 'Submitting...';
