@@ -68,7 +68,7 @@
             </div>
 
             <!-- Dashboard Content -->
-            <div id="dashboard-content" class="dashboard-content" style="display: none;">
+            <div id="dashboard-content" class="dashboard-content">
                 <div class="dashboard-header">
                     <div>
                         <h1 class="page-title">Dashboard</h1>
@@ -127,17 +127,20 @@
                     <section class="dashboard-section dashboard-section--stats">
                         <h2 class="dashboard-section__title">Your Activity</h2>
                         <div class="dashboard-stats">
-                            <div class="dashboard-stat">
+                            <div class="dashboard-stat" id="stat-posts-card" role="button" tabindex="0" aria-expanded="false">
                                 <span class="dashboard-stat__value" id="stat-posts">0</span>
                                 <span class="dashboard-stat__label">Posts</span>
+                                <div class="dashboard-stat__list" id="stat-posts-list"></div>
                             </div>
-                            <div class="dashboard-stat">
+                            <div class="dashboard-stat" id="stat-marginalia-card" role="button" tabindex="0" aria-expanded="false">
                                 <span class="dashboard-stat__value" id="stat-marginalia">0</span>
                                 <span class="dashboard-stat__label">Marginalia</span>
+                                <div class="dashboard-stat__list" id="stat-marginalia-list"></div>
                             </div>
-                            <div class="dashboard-stat">
+                            <div class="dashboard-stat" id="stat-postcards-card" role="button" tabindex="0" aria-expanded="false">
                                 <span class="dashboard-stat__value" id="stat-postcards">0</span>
                                 <span class="dashboard-stat__label">Postcards</span>
+                                <div class="dashboard-stat__list" id="stat-postcards-list"></div>
                             </div>
                         </div>
                     </section>
@@ -160,7 +163,7 @@
             </div>
 
             <!-- Create Identity Modal -->
-            <div id="identity-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" style="display: none;">
+            <div id="identity-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
                 <div class="modal__backdrop"></div>
                 <div class="modal__content">
                     <div class="modal__header">
@@ -221,7 +224,7 @@
             </div>
 
             <!-- Generate Token Modal -->
-            <div id="token-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="token-modal-title" style="display: none;">
+            <div id="token-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="token-modal-title">
                 <div class="modal__backdrop"></div>
                 <div class="modal__content">
                     <div class="modal__header">
@@ -278,7 +281,7 @@
                         </div>
 
                         <!-- Step 2: Show Token -->
-                        <div id="token-result-step" style="display: none;">
+                        <div id="token-result-step" class="token-result-step--hidden">
                             <div class="token-success-banner">
                                 <strong>Token generated!</strong> Copy it now — you won't see it again.
                             </div>

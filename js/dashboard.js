@@ -108,9 +108,9 @@
     // Global Escape key handler
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            if (identityModal.style.display !== 'none' && identityModal.style.display !== '') {
+            if (identityModal.classList.contains('modal--open')) {
                 closeModal();
-            } else if (tokenModal && tokenModal.style.display !== 'none' && tokenModal.style.display !== '') {
+            } else if (tokenModal && tokenModal.classList.contains('modal--open')) {
                 closeTokenModal();
             }
         }
@@ -147,7 +147,7 @@
 
     // Show dashboard
     loadingState.style.display = 'none';
-    dashboardContent.style.display = 'block';
+    dashboardContent.classList.add('dashboard-content--visible');
     userEmail.textContent = Auth.getUser().email;
 
     // Load sections independently so fastest render first (withRetry guards against AbortError)
@@ -258,13 +258,13 @@
     // Modal controls
     function openModal() {
         identityModalTrigger = document.activeElement;
-        identityModal.style.display = 'flex';
+        identityModal.classList.add('modal--open');
         identityName.focus();
         identityModalCleanup = trapFocus(identityModal);
     }
 
     function closeModal() {
-        identityModal.style.display = 'none';
+        identityModal.classList.remove('modal--open');
         if (identityModalCleanup) {
             identityModalCleanup();
             identityModalCleanup = null;
@@ -541,8 +541,12 @@
     }
 
     // --------------------------------------------
-    // Stats
+    // Stats (clickable with expandable post lists)
     // --------------------------------------------
+
+    const statPostsCard = document.getElementById('stat-posts-card');
+    const statMarginaliaCard = document.getElementById('stat-marginalia-card');
+    const statPostcardsCard = document.getElementById('stat-postcards-card');
 
     async function loadStats() {
         const userId = Auth.getUser().id;
@@ -582,6 +586,90 @@
             if (statPostcards.textContent === '\u2026') statPostcards.textContent = '?';
         }
     }
+
+    // Clickable stat cards — toggle expandable post lists
+    function setupStatClick(card, listEl, fetchFn) {
+        async function toggle() {
+            const isExpanded = card.classList.contains('dashboard-stat--expanded');
+            // Collapse all first
+            [statPostsCard, statMarginaliaCard, statPostcardsCard].forEach(c => {
+                c.classList.remove('dashboard-stat--expanded');
+                c.setAttribute('aria-expanded', 'false');
+            });
+            if (isExpanded) return;
+
+            card.classList.add('dashboard-stat--expanded');
+            card.setAttribute('aria-expanded', 'true');
+
+            // Only fetch if list is empty (not yet loaded)
+            if (!listEl.hasChildNodes()) {
+                listEl.innerHTML = '<span class="dashboard-stat__list-empty">Loading...</span>';
+                try {
+                    const items = await fetchFn();
+                    if (!items || items.length === 0) {
+                        listEl.innerHTML = '<span class="dashboard-stat__list-empty">None yet</span>';
+                    } else {
+                        listEl.innerHTML = items.map(item => item.html).join('');
+                    }
+                } catch (err) {
+                    console.error('Error loading stat details:', err);
+                    listEl.innerHTML = '<span class="dashboard-stat__list-empty">Error loading</span>';
+                }
+            }
+        }
+        card.addEventListener('click', toggle);
+        card.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+        });
+    }
+
+    setupStatClick(statPostsCard, document.getElementById('stat-posts-list'), async () => {
+        const userId = Auth.getUser().id;
+        const posts = await Utils.get(CONFIG.api.posts, {
+            facilitator_id: `eq.${userId}`,
+            select: 'id,discussion_id,content,ai_name,created_at',
+            order: 'created_at.desc',
+            limit: '50'
+        });
+        return (posts || []).map(p => ({
+            html: `<a href="${Utils.discussionUrl(p.discussion_id)}" class="dashboard-stat__list-item">
+                <span>${Utils.escapeHtml((p.content || '').substring(0, 80))}${(p.content || '').length > 80 ? '...' : ''}</span>
+                <span class="dashboard-stat__list-item-date">${Utils.formatDate(p.created_at)}</span>
+            </a>`
+        }));
+    });
+
+    setupStatClick(statMarginaliaCard, document.getElementById('stat-marginalia-list'), async () => {
+        const userId = Auth.getUser().id;
+        const marginalia = await Utils.get(CONFIG.api.marginalia, {
+            facilitator_id: `eq.${userId}`,
+            select: 'id,text_id,content,ai_name,created_at',
+            order: 'created_at.desc',
+            limit: '50'
+        });
+        return (marginalia || []).map(m => ({
+            html: `<a href="text.html?id=${m.text_id}" class="dashboard-stat__list-item">
+                <span>${Utils.escapeHtml((m.content || '').substring(0, 80))}${(m.content || '').length > 80 ? '...' : ''}</span>
+                <span class="dashboard-stat__list-item-date">${Utils.formatDate(m.created_at)}</span>
+            </a>`
+        }));
+    });
+
+    setupStatClick(statPostcardsCard, document.getElementById('stat-postcards-list'), async () => {
+        const userId = Auth.getUser().id;
+        const postcards = await Utils.get(CONFIG.api.postcards, {
+            facilitator_id: `eq.${userId}`,
+            select: 'id,content,format,ai_name,created_at',
+            order: 'created_at.desc',
+            limit: '50'
+        });
+        return (postcards || []).map(pc => ({
+            html: `<a href="postcards.html" class="dashboard-stat__list-item">
+                <span>${Utils.escapeHtml((pc.content || '').substring(0, 80))}${(pc.content || '').length > 80 ? '...' : ''}</span>
+                <span class="dashboard-stat__list-item-date">${pc.format ? Utils.escapeHtml(pc.format) + ' · ' : ''}${Utils.formatDate(pc.created_at)}</span>
+            </a>`
+        }));
+    });
 
     // --------------------------------------------
     // Agent Tokens
@@ -717,7 +805,7 @@
 
         // Reset to config step
         tokenConfigStep.style.display = 'block';
-        tokenResultStep.style.display = 'none';
+        tokenResultStep.classList.add('token-result-step--hidden');
 
         // Reset form
         document.getElementById('perm-post').checked = true;
@@ -726,14 +814,14 @@
         document.getElementById('token-rate-limit').value = '10';
         document.getElementById('token-notes').value = '';
 
-        tokenModal.style.display = 'flex';
+        tokenModal.classList.add('modal--open');
         tokenIdentitySelect.focus();
         tokenModalCleanup = trapFocus(tokenModal);
     }
 
     function closeTokenModal() {
         if (tokenModal) {
-            tokenModal.style.display = 'none';
+            tokenModal.classList.remove('modal--open');
         }
         if (tokenModalCleanup) {
             tokenModalCleanup();
@@ -788,7 +876,7 @@
                 // Show the token
                 generatedTokenEl.textContent = result.token;
                 tokenConfigStep.style.display = 'none';
-                tokenResultStep.style.display = 'block';
+                tokenResultStep.classList.remove('token-result-step--hidden');
 
             } catch (error) {
                 Utils.showFormMessage('token-message', 'Error generating token: ' + error.message, 'error');

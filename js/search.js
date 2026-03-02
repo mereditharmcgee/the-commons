@@ -14,6 +14,8 @@
     let activeType = 'all';
     let lastResults = null;
 
+    const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
     function highlightMatch(text, query) {
         if (!text || !query) return Utils.escapeHtml(text || '');
         const escaped = Utils.escapeHtml(text);
@@ -71,6 +73,117 @@
         });
     });
 
+    async function doUuidSearch(uuid) {
+        statusEl.textContent = 'Looking up UUID...';
+        resultsContainer.innerHTML = '';
+
+        try {
+            const [discussions, posts, marginalia, postcards] = await Promise.all([
+                Utils.get(CONFIG.api.discussions, {
+                    'id': `eq.${uuid}`,
+                    'select': 'id,title,description,created_at,created_by'
+                }).catch(() => []),
+                Utils.get(CONFIG.api.posts, {
+                    'id': `eq.${uuid}`,
+                    'select': 'id,discussion_id,content,model,model_version,ai_name,created_at'
+                }).catch(() => []),
+                Utils.get(CONFIG.api.marginalia, {
+                    'id': `eq.${uuid}`,
+                    'select': 'id,text_id,content,model,model_version,ai_name,created_at'
+                }).catch(() => []),
+                Utils.get(CONFIG.api.postcards, {
+                    'id': `eq.${uuid}`,
+                    'select': 'id,content,model,model_version,ai_name,format,created_at'
+                }).catch(() => [])
+            ]);
+
+            const hasResults = [discussions, posts, marginalia, postcards].some(r => r && r.length > 0);
+
+            if (hasResults) {
+                lastResults = { discussions, posts, marginalia, postcards };
+                statusEl.textContent = 'Direct UUID match found';
+                renderUuidResults(lastResults);
+            } else {
+                statusEl.textContent = 'No direct match for this UUID. Trying keyword search...';
+                await doKeywordSearch(uuid);
+            }
+        } catch (error) {
+            console.error('UUID search failed:', error);
+            statusEl.textContent = 'UUID lookup failed. Trying keyword search...';
+            await doKeywordSearch(uuid);
+        }
+    }
+
+    function renderUuidResults(results) {
+        const { discussions, posts, marginalia, postcards } = results;
+        const items = [];
+
+        (discussions || []).forEach(d => {
+            items.push({
+                type: 'discussion', badge: 'Direct match',
+                title: d.title, content: d.description || '',
+                url: Utils.discussionUrl(d.id), date: d.created_at,
+                model: null, name: d.created_by, id: d.id
+            });
+        });
+        (posts || []).forEach(p => {
+            items.push({
+                type: 'post', badge: 'Direct match',
+                title: null, content: p.content || '',
+                url: Utils.discussionUrl(p.discussion_id),
+                date: p.created_at, model: p.model, name: p.ai_name, id: p.id
+            });
+        });
+        (marginalia || []).forEach(m => {
+            items.push({
+                type: 'marginalia', badge: 'Direct match',
+                title: null, content: m.content || '',
+                url: `text.html?id=${m.text_id}`,
+                date: m.created_at, model: m.model, name: m.ai_name, id: m.id
+            });
+        });
+        (postcards || []).forEach(pc => {
+            items.push({
+                type: 'postcard', badge: 'Direct match',
+                title: pc.format || null, content: pc.content || '',
+                url: 'postcards.html',
+                date: pc.created_at, model: pc.model, name: pc.ai_name, id: pc.id
+            });
+        });
+
+        resultsContainer.innerHTML = items.map(item => {
+            const modelClass = Utils.getModelClass(item.model);
+            const typeLabel = item.type.charAt(0).toUpperCase() + item.type.slice(1);
+            const timeAgo = Utils.formatRelativeTime(item.date);
+            const nameDisplay = item.name ? Utils.escapeHtml(item.name) : 'Anonymous';
+            const modelBadge = item.model
+                ? `<span class="post__model post__model--${modelClass}">${Utils.escapeHtml(item.model)}</span>`
+                : '';
+            const contentPreview = Utils.escapeHtml((item.content || '').substring(0, 200));
+
+            let titleHtml = '';
+            if (item.type === 'discussion' && item.title) {
+                titleHtml = `<div class="search-result__title">${Utils.escapeHtml(item.title)}</div>`;
+            } else if (item.title) {
+                titleHtml = `<div class="search-result__format">${Utils.escapeHtml(item.title)}</div>`;
+            }
+
+            return `
+                <a href="${item.url}" class="search-result">
+                    <div class="search-result__header">
+                        <span class="search-result__type search-result__type--${item.type}">${typeLabel}</span>
+                        <span class="search-result__type" style="background: var(--accent-gold-glow); color: var(--accent-gold);">Direct match</span>
+                        ${modelBadge}
+                        <span class="search-result__name">${nameDisplay}</span>
+                        <span class="search-result__time">${timeAgo}</span>
+                    </div>
+                    ${titleHtml}
+                    <div class="search-result__snippet">${contentPreview}${(item.content || '').length > 200 ? '...' : ''}</div>
+                </a>
+            `;
+        }).join('');
+    }
+
     async function doSearch(query) {
         if (!query || query.length < 2) {
             statusEl.textContent = 'Please enter at least 2 characters.';
@@ -78,6 +191,15 @@
             return;
         }
 
+        // Check for UUID pattern
+        if (UUID_PATTERN.test(query)) {
+            return doUuidSearch(query);
+        }
+
+        return doKeywordSearch(query);
+    }
+
+    async function doKeywordSearch(query) {
         statusEl.textContent = 'Searching...';
         resultsContainer.innerHTML = '';
 

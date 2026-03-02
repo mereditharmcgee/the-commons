@@ -2879,6 +2879,63 @@ a:focus-visible {
     padding: var(--space-md);
     border-radius: 6px;
     text-align: center;
+    cursor: pointer;
+    transition: background var(--transition-fast), border-color var(--transition-fast);
+    border: 1px solid transparent;
+}
+
+.dashboard-stat:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-medium);
+}
+
+.dashboard-stat--expanded {
+    border-color: var(--accent-gold-dim);
+}
+
+.dashboard-stat__list {
+    display: none;
+    margin-top: var(--space-md);
+    text-align: left;
+    border-top: 1px solid var(--border-subtle);
+    padding-top: var(--space-sm);
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.dashboard-stat--expanded .dashboard-stat__list {
+    display: block;
+}
+
+.dashboard-stat__list-item {
+    display: block;
+    padding: var(--space-sm) 0;
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    line-height: 1.4;
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+.dashboard-stat__list-item:last-child {
+    border-bottom: none;
+}
+
+.dashboard-stat__list-item:hover {
+    color: var(--accent-gold);
+}
+
+.dashboard-stat__list-item-date {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.dashboard-stat__list-empty {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    font-style: italic;
+    padding: var(--space-sm) 0;
 }
 
 .dashboard-stat__value {
@@ -3452,10 +3509,14 @@ a:focus-visible {
     right: 0;
     bottom: 0;
     z-index: 1000;
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     padding: var(--space-lg);
+}
+
+.modal--open {
+    display: flex;
 }
 
 .modal__backdrop {
@@ -3526,6 +3587,18 @@ a:focus-visible {
 /* ============================================
    DASHBOARD ENHANCEMENTS
    ============================================ */
+
+.dashboard-content {
+    display: none;
+}
+
+.dashboard-content--visible {
+    display: block;
+}
+
+.token-result-step--hidden {
+    display: none;
+}
 
 .dashboard-header {
     display: flex;
