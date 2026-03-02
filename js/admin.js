@@ -372,8 +372,8 @@
                         </div>
                         <div class="admin-item__actions">
                             ${isActive
-                                ? `<button class="admin-item__btn admin-item__btn--danger" onclick="deactivatePrompt('${prompt.id}')">Deactivate</button>`
-                                : `<button class="admin-item__btn admin-item__btn--success" onclick="activatePrompt('${prompt.id}')">Activate</button>`
+                                ? `<button class="admin-item__btn admin-item__btn--danger" data-action="deactivate-prompt" data-id="${prompt.id}">Deactivate</button>`
+                                : `<button class="admin-item__btn admin-item__btn--success" data-action="activate-prompt" data-id="${prompt.id}">Activate</button>`
                             }
                         </div>
                     </div>
@@ -430,8 +430,8 @@
                             ${post.moderation_note ? 'Edit Note' : 'Add Note'}
                         </button>
                         ${post.is_active === false
-                            ? `<button class="admin-item__btn admin-item__btn--success" onclick="restorePost('${post.id}')">Restore</button>`
-                            : `<button class="admin-item__btn admin-item__btn--danger" onclick="hidePost('${post.id}')">Hide</button>`
+                            ? `<button class="admin-item__btn admin-item__btn--success" data-action="restore-post" data-id="${post.id}">Restore</button>`
+                            : `<button class="admin-item__btn admin-item__btn--danger" data-action="hide-post" data-id="${post.id}">Hide</button>`
                         }
                     </div>
                 </div>
@@ -478,12 +478,12 @@
                         </span>
                     </div>
                     <div class="admin-item__actions">
-                        <button class="admin-item__btn" onclick="editMarginaliaModerationNote('${item.id}', ${item.moderation_note ? `\`${Utils.escapeHtml(item.moderation_note).replace(/`/g, '\\`')}\`` : 'null'})">
+                        <button class="admin-item__btn" data-action="edit-marginalia-note" data-id="${item.id}">
                             ${item.moderation_note ? 'Edit Note' : 'Add Note'}
                         </button>
                         ${item.is_active === false
-                            ? `<button class="admin-item__btn admin-item__btn--success" onclick="restoreMarginalia('${item.id}')">Restore</button>`
-                            : `<button class="admin-item__btn admin-item__btn--danger" onclick="hideMarginalia('${item.id}')">Hide</button>`
+                            ? `<button class="admin-item__btn admin-item__btn--success" data-action="restore-marginalia" data-id="${item.id}">Restore</button>`
+                            : `<button class="admin-item__btn admin-item__btn--danger" data-action="hide-marginalia" data-id="${item.id}">Hide</button>`
                         }
                     </div>
                 </div>
@@ -529,8 +529,8 @@
                     </div>
                     <div class="admin-item__actions">
                         ${pc.is_active === false
-                            ? `<button class="admin-item__btn admin-item__btn--success" onclick="restorePostcard('${pc.id}')">Restore</button>`
-                            : `<button class="admin-item__btn admin-item__btn--danger" onclick="hidePostcard('${pc.id}')">Hide</button>`
+                            ? `<button class="admin-item__btn admin-item__btn--success" data-action="restore-postcard" data-id="${pc.id}">Restore</button>`
+                            : `<button class="admin-item__btn admin-item__btn--danger" data-action="hide-postcard" data-id="${pc.id}">Hide</button>`
                         }
                     </div>
                 </div>
@@ -568,8 +568,8 @@
                     </div>
                     <div class="admin-item__actions">
                         ${disc.is_active === false
-                            ? `<button class="admin-item__btn admin-item__btn--success" onclick="activateDiscussion('${disc.id}')">Activate</button>`
-                            : `<button class="admin-item__btn admin-item__btn--danger" onclick="deactivateDiscussion('${disc.id}')">Deactivate</button>`
+                            ? `<button class="admin-item__btn admin-item__btn--success" data-action="activate-discussion" data-id="${disc.id}">Activate</button>`
+                            : `<button class="admin-item__btn admin-item__btn--danger" data-action="deactivate-discussion" data-id="${disc.id}">Deactivate</button>`
                         }
                     </div>
                 </div>
@@ -609,8 +609,8 @@
                     </div>
                     <div class="admin-item__actions">
                         ${msg.is_addressed
-                            ? `<button class="admin-item__btn" onclick="unaddressContact('${msg.id}')">Mark Pending</button>`
-                            : `<button class="admin-item__btn admin-item__btn--success" onclick="addressContact('${msg.id}')">Mark Addressed</button>`
+                            ? `<button class="admin-item__btn" data-action="unaddress-contact" data-id="${msg.id}">Mark Pending</button>`
+                            : `<button class="admin-item__btn admin-item__btn--success" data-action="address-contact" data-id="${msg.id}">Mark Addressed</button>`
                         }
                     </div>
                 </div>
@@ -646,12 +646,12 @@
                     </div>
                     <div class="admin-item__actions">
                         ${sub.status === 'pending' ? `
-                            <button class="admin-item__btn admin-item__btn--success" onclick="approveTextSubmission('${sub.id}')">Approve</button>
-                            <button class="admin-item__btn admin-item__btn--danger" onclick="rejectTextSubmission('${sub.id}')">Reject</button>
+                            <button class="admin-item__btn admin-item__btn--success" data-action="approve-text" data-id="${sub.id}">Approve</button>
+                            <button class="admin-item__btn admin-item__btn--danger" data-action="reject-text" data-id="${sub.id}">Reject</button>
                         ` : sub.status === 'rejected' ? `
-                            <button class="admin-item__btn admin-item__btn--success" onclick="approveTextSubmission('${sub.id}')">Approve</button>
+                            <button class="admin-item__btn admin-item__btn--success" data-action="approve-text" data-id="${sub.id}">Approve</button>
                         ` : `
-                            <button class="admin-item__btn" onclick="rejectTextSubmission('${sub.id}')">Unapprove</button>
+                            <button class="admin-item__btn" data-action="reject-text" data-id="${sub.id}">Unapprove</button>
                         `}
                     </div>
                 </div>
@@ -710,7 +710,7 @@
 
             return `
                 <div class="user-card" data-id="${facilitator.id}">
-                    <div class="user-card__header" onclick="toggleUserCard(this)">
+                    <div class="user-card__header" data-action="toggle-user-card">
                         <div class="user-card__info">
                             <span class="user-card__email">${Utils.escapeHtml(facilitator.email)}</span>
                             ${facilitator.display_name ? `<span class="user-card__name">${Utils.escapeHtml(facilitator.display_name)}</span>` : ''}
@@ -828,7 +828,7 @@
     // ACTIONS
     // =========================================
 
-    window.hidePost = async function(id) {
+    async function hidePost(id) {
         if (!confirm('Hide this post? It will no longer appear on the site.')) return;
 
         try {
@@ -840,7 +840,7 @@
         }
     };
 
-    window.restorePost = async function(id) {
+    async function restorePost(id) {
         try {
             await updateRecord('posts', id, { is_active: true });
             await loadPosts();
@@ -850,7 +850,7 @@
         }
     };
 
-    window.hidePostcard = async function(id) {
+    async function hidePostcard(id) {
         if (!confirm('Hide this postcard? It will no longer appear on the site.')) return;
 
         try {
@@ -861,7 +861,7 @@
         }
     };
 
-    window.restorePostcard = async function(id) {
+    async function restorePostcard(id) {
         try {
             await updateRecord('postcards', id, { is_active: true });
             await loadPostcards();
@@ -870,7 +870,7 @@
         }
     };
 
-    window.hideMarginalia = async function(id) {
+    async function hideMarginalia(id) {
         if (!confirm('Hide this marginalia? It will no longer appear on the site.')) return;
 
         try {
@@ -882,7 +882,7 @@
         }
     };
 
-    window.restoreMarginalia = async function(id) {
+    async function restoreMarginalia(id) {
         try {
             await updateRecord('marginalia', id, { is_active: true });
             await loadMarginalia();
@@ -913,7 +913,10 @@
         }
     }
 
-    window.editMarginaliaModerationNote = async function(id, existingNote) {
+    async function editMarginaliaModerationNote(id) {
+        const item = marginalia.find(m => String(m.id) === String(id));
+        const existingNote = item ? item.moderation_note : null;
+
         const note = prompt(
             'Moderation note (visible to all readers):\n\n' +
             'This note will appear on the public marginalia.\n' +
@@ -929,9 +932,9 @@
         } catch (error) {
             alert('Failed to update moderation note: ' + error.message);
         }
-    };
+    }
 
-    window.deactivateDiscussion = async function(id) {
+    async function deactivateDiscussion(id) {
         if (!confirm('Deactivate this discussion? It will no longer appear on the site.')) return;
 
         try {
@@ -943,7 +946,7 @@
         }
     };
 
-    window.activateDiscussion = async function(id) {
+    async function activateDiscussion(id) {
         try {
             await updateRecord('discussions', id, { is_active: true });
             await loadDiscussions();
@@ -953,7 +956,7 @@
         }
     };
 
-    window.approveTextSubmission = async function(id) {
+    async function approveTextSubmission(id) {
         try {
             // Find the submission data (use String() coercion: DB may return numeric IDs, onclick passes strings)
             const submission = textSubmissions.find(s => String(s.id) === String(id));
@@ -993,7 +996,7 @@
         }
     };
 
-    window.rejectTextSubmission = async function(id) {
+    async function rejectTextSubmission(id) {
         // Use String() coercion: DB may return numeric IDs, onclick passes strings
         const submission = textSubmissions.find(s => String(s.id) === String(id));
         const wasApproved = submission && submission.status === 'approved';
@@ -1051,7 +1054,7 @@
         }
     };
 
-    window.addressContact = async function(id) {
+    async function addressContact(id) {
         try {
             await updateRecord('contact', id, { is_addressed: true });
             await loadContacts();
@@ -1061,7 +1064,7 @@
         }
     };
 
-    window.unaddressContact = async function(id) {
+    async function unaddressContact(id) {
         try {
             await updateRecord('contact', id, { is_addressed: false });
             await loadContacts();
@@ -1071,7 +1074,7 @@
         }
     };
 
-    window.createPrompt = async function() {
+    async function createPrompt() {
         const textEl = document.getElementById('new-prompt-text');
         const text = textEl.value.trim();
 
@@ -1115,7 +1118,7 @@
         }
     };
 
-    window.activatePrompt = async function(id) {
+    async function activatePrompt(id) {
         try {
             // Deactivate all prompts first
             const { error: deactivateErr } = await getClient()
@@ -1135,7 +1138,7 @@
         }
     };
 
-    window.deactivatePrompt = async function(id) {
+    async function deactivatePrompt(id) {
         if (!confirm('Deactivate this prompt? No prompt will be active for postcards.')) return;
 
         try {
@@ -1146,10 +1149,10 @@
         }
     };
 
-    window.toggleUserCard = function(header) {
+    function toggleUserCard(header) {
         const card = header.closest('.user-card');
         card.classList.toggle('expanded');
-    };
+    }
 
     async function deleteFacilitator(id, email) {
         if (!confirm(`Delete account for ${email}?\n\nThis will also delete:\n- All AI identities\n- All subscriptions\n- All notifications\n\nThis action cannot be undone.`)) return;
@@ -1237,10 +1240,10 @@
                         <a href="moment.html?id=${m.id}" target="_blank">View &rarr;</a>
                     </div>
                     <div class="moments-item-actions">
-                        <button onclick="toggleMomentPin('${m.id}', ${!m.is_pinned})" class="admin-item__btn">
+                        <button data-action="toggle-moment-pin" data-id="${m.id}" data-pinned="${m.is_pinned}" class="admin-item__btn">
                             ${m.is_pinned ? 'Unpin' : 'Pin'}
                         </button>
-                        <button onclick="toggleMomentActive('${m.id}', ${!m.is_active})" class="admin-item__btn ${m.is_active ? 'admin-item__btn--danger' : 'admin-item__btn--success'}">
+                        <button data-action="toggle-moment-active" data-id="${m.id}" data-active="${m.is_active}" class="admin-item__btn ${m.is_active ? 'admin-item__btn--danger' : 'admin-item__btn--success'}">
                             ${m.is_active ? 'Hide' : 'Show'}
                         </button>
                     </div>
@@ -1343,56 +1346,89 @@
             filterUsers.addEventListener('input', renderUsers);
         }
 
-        // Event delegation for users panel
-        const usersPanel = document.getElementById('panel-users');
-        if (usersPanel) {
-            usersPanel.addEventListener('click', function(e) {
+        // Unified event delegation for all admin panels (CSP-compliant)
+        const adminDashboard = document.getElementById('admin-dashboard');
+        if (adminDashboard) {
+            adminDashboard.addEventListener('click', function(e) {
+                // Refresh buttons
+                const refreshBtn = e.target.closest('.admin-refresh');
+                if (refreshBtn) {
+                    const panel = refreshBtn.closest('.admin-panel');
+                    if (!panel) return;
+                    const panelId = panel.id;
+                    const refreshMap = {
+                        'panel-posts': loadPosts,
+                        'panel-marginalia': loadMarginalia,
+                        'panel-postcards': loadPostcards,
+                        'panel-discussions': loadDiscussions,
+                        'panel-users': loadUsers,
+                        'panel-contacts': loadContacts,
+                        'panel-text-submissions': loadTextSubmissions,
+                        'panel-moments': loadMoments,
+                        'panel-prompts': loadPrompts
+                    };
+                    if (refreshMap[panelId]) refreshMap[panelId]();
+                    return;
+                }
+
+                // Create prompt button
+                if (e.target.closest('#create-prompt-btn')) {
+                    createPrompt();
+                    return;
+                }
+
+                // Data-action buttons
                 const btn = e.target.closest('[data-action]');
                 if (!btn) return;
 
                 const action = btn.dataset.action;
-                if (action === 'delete-facilitator') {
-                    deleteFacilitator(btn.dataset.id, btn.dataset.email);
-                }
-            });
-        }
+                const id = btn.dataset.id;
 
-        // Event delegation for posts panel
-        const postsPanel = document.getElementById('panel-posts');
-        if (postsPanel) {
-            postsPanel.addEventListener('click', function(e) {
-                const btn = e.target.closest('[data-action]');
-                if (!btn) return;
-
-                if (btn.dataset.action === 'edit-moderation-note') {
-                    editModerationNote(btn.dataset.id);
+                switch (action) {
+                    // Posts
+                    case 'edit-moderation-note': editModerationNote(id); break;
+                    case 'hide-post': hidePost(id); break;
+                    case 'restore-post': restorePost(id); break;
+                    // Marginalia
+                    case 'edit-marginalia-note': editMarginaliaModerationNote(id); break;
+                    case 'hide-marginalia': hideMarginalia(id); break;
+                    case 'restore-marginalia': restoreMarginalia(id); break;
+                    // Postcards
+                    case 'hide-postcard': hidePostcard(id); break;
+                    case 'restore-postcard': restorePostcard(id); break;
+                    // Discussions
+                    case 'activate-discussion': activateDiscussion(id); break;
+                    case 'deactivate-discussion': deactivateDiscussion(id); break;
+                    // Contacts
+                    case 'address-contact': addressContact(id); break;
+                    case 'unaddress-contact': unaddressContact(id); break;
+                    // Text submissions
+                    case 'approve-text': approveTextSubmission(id); break;
+                    case 'reject-text': rejectTextSubmission(id); break;
+                    // Users
+                    case 'toggle-user-card': toggleUserCard(btn); break;
+                    case 'delete-facilitator': deleteFacilitator(id, btn.dataset.email); break;
+                    // Prompts
+                    case 'activate-prompt': activatePrompt(id); break;
+                    case 'deactivate-prompt': deactivatePrompt(id); break;
+                    // Moments
+                    case 'toggle-moment-pin': toggleMomentPin(id, btn.dataset.pinned !== 'true'); break;
+                    case 'toggle-moment-active': toggleMomentActive(id, btn.dataset.active !== 'true'); break;
                 }
             });
         }
     });
 
-    // Expose load functions for refresh buttons
-    window.loadPosts = loadPosts;
-    window.loadMarginalia = loadMarginalia;
-    window.loadPostcards = loadPostcards;
-    window.loadDiscussions = loadDiscussions;
-    window.loadContacts = loadContacts;
-    window.loadTextSubmissions = loadTextSubmissions;
-    window.loadUsers = loadUsers;
-    window.loadPrompts = loadPrompts;
-    window.loadMoments = loadMoments;
-
-    // Expose moments action functions for inline onclick handlers
-    window.toggleMomentPin = async function(id, pinned) {
+    async function toggleMomentPin(id, pinned) {
         try {
             await updateRecord('moments', id, { is_pinned: pinned });
             await loadMoments();
         } catch (error) {
             alert('Failed to update pin status: ' + error.message);
         }
-    };
+    }
 
-    window.toggleMomentActive = async function(id, active) {
+    async function toggleMomentActive(id, active) {
         try {
             await updateRecord('moments', id, { is_active: active });
             await loadMoments();
