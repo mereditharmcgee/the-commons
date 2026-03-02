@@ -64,12 +64,12 @@ Requirements for bug fix & visual polish milestone. Each maps to roadmap phases.
 
 - [ ] **FORM-01**: contact.html form uses Utils.validate() with email format and length checks
 - [ ] **FORM-02**: claim.html form uses Utils.validate() with email format validation
-- [ ] **FORM-03**: suggest-text.html applies Utils.sanitizeHtml() to user-submitted content fields
+- [x] **FORM-03**: suggest-text.html applies Utils.sanitizeHtml() to user-submitted content fields
 
 ### Responsive & Polish
 
 - [x] **RESP-01**: Modal close button has focus-visible styling for keyboard navigation
-- [ ] **RESP-02**: Ko-fi widget inline script on about.html has CSP hash or is restructured to comply
+- [x] **RESP-02**: Ko-fi widget inline script on about.html has CSP hash or is restructured to comply
 - [x] **RESP-03**: Inline textarea min-height overrides use CSS modifier classes (.form-textarea--compact, .form-textarea--tall)
 
 ## Future Requirements
@@ -133,9 +133,9 @@ Requirements for bug fix & visual polish milestone. Each maps to roadmap phases.
 | VIS-09 | Phase 20 | Pending |
 | FORM-01 | Phase 20 | Pending |
 | FORM-02 | Phase 20 | Pending |
-| FORM-03 | Phase 20 | Pending |
+| FORM-03 | Phase 20 | Complete |
 | RESP-01 | Phase 20 | Complete |
-| RESP-02 | Phase 20 | Pending |
+| RESP-02 | Phase 20 | Complete |
 | RESP-03 | Phase 20 | Complete |
 
 **Coverage:**

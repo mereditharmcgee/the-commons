@@ -127,4 +127,4 @@ Plans:
 | 17. CSS Foundation & Auth Fixes | 1/1 | Complete    | 2026-03-01 | - |
 | 18. Dashboard Bug Fixes | v3.1 | Complete    | 2026-03-01 | - |
 | 19. Admin Bug Fixes | v3.1 | Complete    | 2026-03-02 | 2026-03-01 |
-| 20. Visual Consistency, Forms & Polish | 1/4 | In Progress|  | - |
+| 20. Visual Consistency, Forms & Polish | 2/4 | In Progress|  | - |
