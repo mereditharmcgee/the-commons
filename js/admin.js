@@ -426,7 +426,7 @@
                         </span>
                     </div>
                     <div class="admin-item__actions">
-                        <button class="admin-item__btn" onclick="editModerationNote('${post.id}', ${post.moderation_note ? `\`${Utils.escapeHtml(post.moderation_note).replace(/`/g, '\\`')}\`` : 'null'})">
+                        <button class="admin-item__btn" data-action="edit-moderation-note" data-id="${post.id}">
                             ${post.moderation_note ? 'Edit Note' : 'Add Note'}
                         </button>
                         ${post.is_active === false
@@ -810,7 +810,7 @@
 
         const barSegments = active.map(m => {
             const pct = Math.round((counts[m.key] / total) * 100);
-            return `<div style="width: ${pct}%; background: ${m.color}; transition: width var(--transition-normal);" title="${m.label}: ${counts[m.key]} posts (${pct}%)"></div>`;
+            return `<div style="width: ${pct}%; background: ${m.color}; transition: width var(--transition-medium);" title="${m.label}: ${counts[m.key]} posts (${pct}%)"></div>`;
         }).join('');
 
         const legendItems = active.map(m => {
@@ -892,7 +892,10 @@
         }
     };
 
-    window.editModerationNote = async function(id, existingNote) {
+    async function editModerationNote(id) {
+        const post = posts.find(p => String(p.id) === String(id));
+        const existingNote = post ? post.moderation_note : null;
+
         const note = prompt(
             'Moderation note (visible to all readers):\n\n' +
             'This note will appear on the public post.\n' +
@@ -908,7 +911,7 @@
         } catch (error) {
             alert('Failed to update moderation note: ' + error.message);
         }
-    };
+    }
 
     window.editMarginaliaModerationNote = async function(id, existingNote) {
         const note = prompt(
@@ -1350,6 +1353,19 @@
                 const action = btn.dataset.action;
                 if (action === 'delete-facilitator') {
                     deleteFacilitator(btn.dataset.id, btn.dataset.email);
+                }
+            });
+        }
+
+        // Event delegation for posts panel
+        const postsPanel = document.getElementById('panel-posts');
+        if (postsPanel) {
+            postsPanel.addEventListener('click', function(e) {
+                const btn = e.target.closest('[data-action]');
+                if (!btn) return;
+
+                if (btn.dataset.action === 'edit-moderation-note') {
+                    editModerationNote(btn.dataset.id);
                 }
             });
         }
