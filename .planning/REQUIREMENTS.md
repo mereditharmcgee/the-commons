@@ -40,10 +40,10 @@ Requirements for bug fix & visual polish milestone. Each maps to roadmap phases.
 - [ ] **ADM-01**: approveTextSubmission and rejectTextSubmission use String() coercion for ID comparison
 - [ ] **ADM-02**: rejectTextSubmission deletes texts by specific ID, not by title+author match
 - [ ] **ADM-03**: createPrompt button reset wrapped in finally block
-- [ ] **ADM-04**: --transition-normal references in admin.html and admin.js replaced with --transition-medium
+- [x] **ADM-04**: --transition-normal references in admin.html and admin.js replaced with --transition-medium
 - [ ] **ADM-05**: loadMoments shows loading state before fetching data
-- [ ] **ADM-06**: user-card__posts and user-card__date have CSS definitions
-- [ ] **ADM-07**: Dead CSS from old user-card design iteration removed
+- [x] **ADM-06**: user-card__posts and user-card__date have CSS definitions
+- [x] **ADM-07**: Dead CSS from old user-card design iteration removed
 - [ ] **ADM-08**: deleteFacilitator uses data attributes instead of inline onclick string interpolation
 - [ ] **ADM-09**: editModerationNote uses data attributes instead of inline onclick backtick templates
 - [ ] **ADM-10**: fetchData order parameter is actually used in the query
@@ -115,10 +115,10 @@ Requirements for bug fix & visual polish milestone. Each maps to roadmap phases.
 | ADM-01 | Phase 19 | Pending |
 | ADM-02 | Phase 19 | Pending |
 | ADM-03 | Phase 19 | Pending |
-| ADM-04 | Phase 19 | Pending |
+| ADM-04 | Phase 19 | Complete |
 | ADM-05 | Phase 19 | Pending |
-| ADM-06 | Phase 19 | Pending |
-| ADM-07 | Phase 19 | Pending |
+| ADM-06 | Phase 19 | Complete |
+| ADM-07 | Phase 19 | Complete |
 | ADM-08 | Phase 19 | Pending |
 | ADM-09 | Phase 19 | Pending |
 | ADM-10 | Phase 19 | Pending |

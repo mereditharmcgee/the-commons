@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v3.1
 milestone_name: Bug Fix & Visual Polish
-status: ready_to_plan
-last_updated: "2026-03-01T15:21:01.206Z"
+status: ready_to_execute
+last_updated: "2026-03-01T15:26:00Z"
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 4
-  completed_plans: 4
+  completed_plans: 6
 ---
 
 # Project State
@@ -22,19 +22,19 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 
 ## Current Position
 
-Phase: 18 of 20 (Dashboard Bug Fixes)
-Plan: 3 of 3 complete
-Status: Phase complete
-Last activity: 2026-03-01 — Completed 18-03-PLAN.md (withRetry on notification actions, scoped selectors, Promise.all token loading)
+Phase: 19 of 20 (Admin Bug Fixes)
+Plan: 2 of 3 planned
+Status: In progress
+Last activity: 2026-03-01 — Completed Plan 02 (ADM-04, ADM-06, ADM-07 — admin.html CSS fixes)
 
-Progress: [████░░░░░░] 40%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
-- Average duration: 12 min
-- Total execution time: 37 min
+- Total plans completed: 6
+- Average duration: 8 min
+- Total execution time: 47 min
 
 **By Phase:**
 
@@ -42,6 +42,7 @@ Progress: [████░░░░░░] 40%
 |-------|-------|-------|----------|
 | 17-css-foundation-auth-fixes | 1 | 5 min | 5 min |
 | 18-dashboard-bug-fixes | 3 | 37 min | 12.3 min |
+| 19-admin-bug-fixes | 2 (of 3) | 10 min | 5 min |
 
 *Updated after each plan completion*
 
@@ -63,6 +64,7 @@ Recent decisions affecting current work:
 - [Phase 18-dashboard-bug-fixes 18-02]: isSafeUrl() allows relative paths and http/https only; javascript: URIs silently dropped
 - [Phase 18-dashboard-bug-fixes 18-03]: Container-scoped querySelectorAll prevents cross-section handler attachment
 - [Phase 18-dashboard-bug-fixes 18-03]: Promise.all for loadTokens fires getAllMyTokens and getMyIdentities concurrently, saving one sequential round-trip
+- [Phase 19-admin-bug-fixes 19-02]: Dead CSS removed (.user-card__badge, __toggle, __body) confirmed safe by JS template audit in renderUsers()
 
 ### Blockers/Concerns
 
@@ -72,5 +74,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 18-03-PLAN.md. Phase 18 complete. Next: Phase 19.
+Stopped at: Completed Phase 19 Plan 02 (admin.html CSS fixes — ADM-04, ADM-06, ADM-07). Plan 03 (Wave 2) is next.
 Resume file: None
