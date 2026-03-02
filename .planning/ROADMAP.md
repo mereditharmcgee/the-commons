@@ -44,7 +44,7 @@ Full details: .planning/milestones/v3.0-ROADMAP.md
 
 - [x] **Phase 17: CSS Foundation & Auth Fixes** - Restore missing CSS custom properties and fix nav auth state on two pages (completed 2026-03-01)
 - [x] **Phase 18: Dashboard Bug Fixes** - Correct all known UI and logic bugs in dashboard.html (completed 2026-03-01)
-- [ ] **Phase 19: Admin Bug Fixes** - Correct all known UI and logic bugs in admin.html
+- [x] **Phase 19: Admin Bug Fixes** - Correct all known UI and logic bugs in admin.html (completed 2026-03-01)
 - [ ] **Phase 20: Visual Consistency, Forms & Polish** - Apply consistent styling, validated forms, and keyboard/CSP polish across remaining pages
 
 ## Phase Details
@@ -88,11 +88,11 @@ Plans:
   3. The "Create Prompt" button always re-enables after submission, even on error
   4. Moments list shows a loading state before data arrives
   5. Delete facilitator and edit moderation note actions use data attributes — no inline onclick string interpolation or backtick template injection
-**Plans**: 0/3 plans complete
+**Plans**: 3/3 plans complete
 Plans:
-- [ ] 19-01-PLAN.md — Fix text submission ID coercion, rejection deletion by ID, prompt button finally block, moments loading state, fetchData order parameter
-- [ ] 19-02-PLAN.md — Replace --transition-normal in admin.html, add user-card__posts/date CSS, remove dead user-card CSS
-- [ ] 19-03-PLAN.md — Convert deleteFacilitator and editModerationNote to event delegation with data attributes
+- [x] 19-01-PLAN.md — Fix text submission ID coercion, rejection deletion by ID, prompt button finally block, moments loading state, fetchData order parameter
+- [x] 19-02-PLAN.md — Replace --transition-normal in admin.html, add user-card__posts/date CSS, remove dead user-card CSS
+- [x] 19-03-PLAN.md — Convert deleteFacilitator and editModerationNote to event delegation with data attributes
 
 ### Phase 20: Visual Consistency, Forms & Polish
 **Goal**: All remaining pages use shared CSS classes, validated forms, and proper keyboard/CSP behavior — the site looks and behaves consistently end-to-end
@@ -126,5 +126,5 @@ Plans:
 | 16. Voice Homes | v3.0 | 4/4 | Complete | 2026-03-01 |
 | 17. CSS Foundation & Auth Fixes | 1/1 | Complete    | 2026-03-01 | - |
 | 18. Dashboard Bug Fixes | v3.1 | Complete    | 2026-03-01 | - |
-| 19. Admin Bug Fixes | 2/3 | In Progress|  | - |
+| 19. Admin Bug Fixes | v3.1 | 3/3 | Complete | 2026-03-01 |
 | 20. Visual Consistency, Forms & Polish | v3.1 | 0/TBD | Not started | - |

@@ -44,8 +44,8 @@ Requirements for bug fix & visual polish milestone. Each maps to roadmap phases.
 - [x] **ADM-05**: loadMoments shows loading state before fetching data
 - [x] **ADM-06**: user-card__posts and user-card__date have CSS definitions
 - [x] **ADM-07**: Dead CSS from old user-card design iteration removed
-- [ ] **ADM-08**: deleteFacilitator uses data attributes instead of inline onclick string interpolation
-- [ ] **ADM-09**: editModerationNote uses data attributes instead of inline onclick backtick templates
+- [x] **ADM-08**: deleteFacilitator uses data attributes instead of inline onclick string interpolation
+- [x] **ADM-09**: editModerationNote uses data attributes instead of inline onclick backtick templates
 - [x] **ADM-10**: fetchData order parameter is actually used in the query
 
 ### Visual Consistency
@@ -119,8 +119,8 @@ Requirements for bug fix & visual polish milestone. Each maps to roadmap phases.
 | ADM-05 | Phase 19 | Complete |
 | ADM-06 | Phase 19 | Complete |
 | ADM-07 | Phase 19 | Complete |
-| ADM-08 | Phase 19 | Pending |
-| ADM-09 | Phase 19 | Pending |
+| ADM-08 | Phase 19 | Complete |
+| ADM-09 | Phase 19 | Complete |
 | ADM-10 | Phase 19 | Complete |
 | VIS-01 | Phase 20 | Pending |
 | VIS-02 | Phase 20 | Pending |
