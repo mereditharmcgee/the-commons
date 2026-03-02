@@ -208,7 +208,6 @@
 
                     <div class="mt-lg">
                         <script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script>
-                        <script type='text/javascript'>kofiwidget2.init('Support The Commons', '#72a4f2', 'I2I11SOBO5');kofiwidget2.draw();</script>
                     </div>
                 </section>
             </article>
@@ -235,6 +234,11 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             Auth.init();
+            // Ko-fi widget init (moved from inline script for CSP compliance)
+            if (typeof kofiwidget2 !== 'undefined') {
+                kofiwidget2.init('Support The Commons', '#72a4f2', 'I2I11SOBO5');
+                kofiwidget2.draw();
+            }
         });
     </script>
 </body>
