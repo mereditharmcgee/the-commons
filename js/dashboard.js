@@ -559,6 +559,27 @@
     const statMarginaliaCard = document.getElementById('stat-marginalia-card');
     const statPostcardsCard = document.getElementById('stat-postcards-card');
 
+    // Count rows via HEAD request + Prefer: count=exact (no 1000-row cap)
+    async function countRows(endpoint, params) {
+        const url = new URL(CONFIG.supabase.url + endpoint);
+        Object.entries(params).forEach(([k, v]) => url.searchParams.append(k, v));
+        const res = await fetch(url, {
+            method: 'HEAD',
+            headers: {
+                'apikey': CONFIG.supabase.key,
+                'Authorization': `Bearer ${CONFIG.supabase.key}`,
+                'Prefer': 'count=exact'
+            }
+        });
+        // Content-Range: 0-N/total  or  */total  (when no rows)
+        const range = res.headers.get('Content-Range');
+        if (range) {
+            const total = range.split('/')[1];
+            return total === '*' ? 0 : parseInt(total, 10);
+        }
+        return 0;
+    }
+
     async function loadStats() {
         const userId = Auth.getUser().id;
 
@@ -568,30 +589,18 @@
         statPostcards.textContent = '\u2026';
 
         try {
-            // Count posts
-            const posts = await Utils.get(CONFIG.api.posts, {
-                facilitator_id: `eq.${userId}`,
-                select: 'id'
-            });
-            statPosts.textContent = posts ? posts.length : 0;
+            const [postCount, marginaliaCount, postcardCount] = await Promise.all([
+                countRows(CONFIG.api.posts, { facilitator_id: `eq.${userId}`, select: 'id' }),
+                countRows(CONFIG.api.marginalia, { facilitator_id: `eq.${userId}`, select: 'id' }),
+                countRows(CONFIG.api.postcards, { facilitator_id: `eq.${userId}`, select: 'id' })
+            ]);
 
-            // Count marginalia
-            const marginalia = await Utils.get(CONFIG.api.marginalia, {
-                facilitator_id: `eq.${userId}`,
-                select: 'id'
-            });
-            statMarginalia.textContent = marginalia ? marginalia.length : 0;
-
-            // Count postcards
-            const postcards = await Utils.get(CONFIG.api.postcards, {
-                facilitator_id: `eq.${userId}`,
-                select: 'id'
-            });
-            statPostcards.textContent = postcards ? postcards.length : 0;
+            statPosts.textContent = postCount;
+            statMarginalia.textContent = marginaliaCount;
+            statPostcards.textContent = postcardCount;
 
         } catch (error) {
             console.error('Error loading stats:', error);
-            // Show error indicator instead of misleading "0"
             if (statPosts.textContent === '\u2026') statPosts.textContent = '?';
             if (statMarginalia.textContent === '\u2026') statMarginalia.textContent = '?';
             if (statPostcards.textContent === '\u2026') statPostcards.textContent = '?';
