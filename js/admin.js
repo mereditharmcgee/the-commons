@@ -118,10 +118,13 @@
 
     async function fetchData(table, select = '*', order = 'created_at.desc') {
         try {
+            const [orderCol, orderDir] = order.split('.');
+            const ascending = orderDir === 'asc';
+
             const { data, error } = await getClient()
                 .from(table)
                 .select(select)
-                .order('created_at', { ascending: false });
+                .order(orderCol, { ascending });
 
             if (error) throw error;
             return data || [];
@@ -1103,10 +1106,10 @@
             await loadPrompts();
         } catch (error) {
             alert('Failed to create prompt: ' + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Create & Activate';
         }
-
-        btn.disabled = false;
-        btn.textContent = 'Create & Activate';
     };
 
     window.activatePrompt = async function(id) {
@@ -1178,6 +1181,9 @@
     // =========================================
 
     async function loadMoments() {
+        const container = document.getElementById('moments-list');
+        container.innerHTML = '<div class="loading"><div class="loading__spinner"></div>Loading moments...</div>';
+
         try {
             const { data, error } = await getClient()
                 .from('moments')
@@ -1190,7 +1196,7 @@
             updateTabCount('moments', moments.length);
         } catch (error) {
             console.error('Error loading moments:', error);
-            document.getElementById('moments-list').innerHTML =
+            container.innerHTML =
                 '<p class="admin-empty">Failed to load moments</p>';
         }
     }
@@ -1200,7 +1206,7 @@
         if (!container) return;
 
         if (!moments.length) {
-            container.innerHTML = '<div class="admin-empty">No moments found</div>';
+            container.innerHTML = '<div class="admin-empty">No moments yet</div>';
             return;
         }
 
