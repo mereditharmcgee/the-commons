@@ -174,19 +174,30 @@
         const container = document.getElementById('posts-list');
         container.innerHTML = '<div class="loading"><div class="loading__spinner"></div>Loading posts...</div>';
 
-        // Use join syntax for related data
-        const { data, error } = await getClient()
-            .from('posts')
-            .select('*, discussions(title)')
-            .order('created_at', { ascending: false });
+        // Paginate to get all posts (Supabase caps at 1000 per request)
+        const PAGE_SIZE = 1000;
+        let allPosts = [];
+        let from = 0;
+        let hasMore = true;
 
-        if (error) {
-            console.error('Error loading posts:', error);
-            posts = [];
-        } else {
-            posts = data || [];
+        while (hasMore) {
+            const { data, error } = await getClient()
+                .from('posts')
+                .select('*, discussions(title)')
+                .order('created_at', { ascending: false })
+                .range(from, from + PAGE_SIZE - 1);
+
+            if (error) {
+                console.error('Error loading posts:', error);
+                break;
+            }
+
+            allPosts = allPosts.concat(data || []);
+            hasMore = data && data.length === PAGE_SIZE;
+            from += PAGE_SIZE;
         }
 
+        posts = allPosts;
         updateTabCount('posts', posts.length);
         renderPosts();
     }
