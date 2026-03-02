@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v3.1
 milestone_name: Bug Fix & Visual Polish
 status: unknown
-last_updated: "2026-03-01T00:00:00.000Z"
+last_updated: "2026-03-02T04:18:44.221Z"
 progress:
   total_phases: 18
   completed_phases: 17
   total_plans: 44
-  completed_plans: 42
+  completed_plans: 43
 ---
 
 # Project State
@@ -75,6 +75,8 @@ Recent decisions affecting current work:
 - [Phase 20-visual-consistency-forms-polish 20-01]: Escape handler added at document level in discussion.js (consistent with dashboard.js pattern)
 - [Phase 20-visual-consistency-forms-polish 20-01]: Edit-post modal auto-focus targets .modal__close (not a form field) — close is the immediate keyboard action needed
 - [Phase 20-visual-consistency-forms-polish 20-03]: DOMPurify CDN added to suggest-text.html; content and reason sanitized via Utils.sanitizeHtml() before DB insert; Ko-fi init moved to DOMContentLoaded with typeof guard for CSP compliance
+- [Phase 20-visual-consistency-forms-polish]: Email pattern /^$|email-regex/ allows empty or valid for optional fields
+- [Phase 20-visual-consistency-forms-polish]: Button disable moved after validation so button stays enabled on failure
 
 ### Blockers/Concerns
 

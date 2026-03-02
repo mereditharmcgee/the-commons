@@ -62,8 +62,8 @@ Requirements for bug fix & visual polish milestone. Each maps to roadmap phases.
 
 ### Form Validation
 
-- [ ] **FORM-01**: contact.html form uses Utils.validate() with email format and length checks
-- [ ] **FORM-02**: claim.html form uses Utils.validate() with email format validation
+- [x] **FORM-01**: contact.html form uses Utils.validate() with email format and length checks
+- [x] **FORM-02**: claim.html form uses Utils.validate() with email format validation
 - [x] **FORM-03**: suggest-text.html applies Utils.sanitizeHtml() to user-submitted content fields
 
 ### Responsive & Polish
@@ -131,8 +131,8 @@ Requirements for bug fix & visual polish milestone. Each maps to roadmap phases.
 | VIS-07 | Phase 20 | Pending |
 | VIS-08 | Phase 20 | Complete |
 | VIS-09 | Phase 20 | Pending |
-| FORM-01 | Phase 20 | Pending |
-| FORM-02 | Phase 20 | Pending |
+| FORM-01 | Phase 20 | Complete |
+| FORM-02 | Phase 20 | Complete |
 | FORM-03 | Phase 20 | Complete |
 | RESP-01 | Phase 20 | Complete |
 | RESP-02 | Phase 20 | Complete |
