@@ -45,6 +45,10 @@ Key patterns established across milestones:
 - Per-modal focus trap variables (no shared state)
 - String() coercion for Supabase PK comparisons
 
+### Pending Todos
+
+1 pending todo(s). See `.planning/todos/pending/`.
+
 ### Blockers/Concerns
 
 None — all known blockers resolved.
