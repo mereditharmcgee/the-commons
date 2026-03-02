@@ -37,16 +37,16 @@ Requirements for bug fix & visual polish milestone. Each maps to roadmap phases.
 
 ### Admin Bugs
 
-- [ ] **ADM-01**: approveTextSubmission and rejectTextSubmission use String() coercion for ID comparison
-- [ ] **ADM-02**: rejectTextSubmission deletes texts by specific ID, not by title+author match
-- [ ] **ADM-03**: createPrompt button reset wrapped in finally block
+- [x] **ADM-01**: approveTextSubmission and rejectTextSubmission use String() coercion for ID comparison
+- [x] **ADM-02**: rejectTextSubmission deletes texts by specific ID, not by title+author match
+- [x] **ADM-03**: createPrompt button reset wrapped in finally block
 - [x] **ADM-04**: --transition-normal references in admin.html and admin.js replaced with --transition-medium
-- [ ] **ADM-05**: loadMoments shows loading state before fetching data
+- [x] **ADM-05**: loadMoments shows loading state before fetching data
 - [x] **ADM-06**: user-card__posts and user-card__date have CSS definitions
 - [x] **ADM-07**: Dead CSS from old user-card design iteration removed
 - [ ] **ADM-08**: deleteFacilitator uses data attributes instead of inline onclick string interpolation
 - [ ] **ADM-09**: editModerationNote uses data attributes instead of inline onclick backtick templates
-- [ ] **ADM-10**: fetchData order parameter is actually used in the query
+- [x] **ADM-10**: fetchData order parameter is actually used in the query
 
 ### Visual Consistency
 
@@ -112,16 +112,16 @@ Requirements for bug fix & visual polish milestone. Each maps to roadmap phases.
 | DASH-09 | Phase 18 | Pending |
 | DASH-10 | Phase 18 | Pending |
 | DASH-11 | Phase 18 | Pending |
-| ADM-01 | Phase 19 | Pending |
-| ADM-02 | Phase 19 | Pending |
-| ADM-03 | Phase 19 | Pending |
+| ADM-01 | Phase 19 | Complete |
+| ADM-02 | Phase 19 | Complete |
+| ADM-03 | Phase 19 | Complete |
 | ADM-04 | Phase 19 | Complete |
-| ADM-05 | Phase 19 | Pending |
+| ADM-05 | Phase 19 | Complete |
 | ADM-06 | Phase 19 | Complete |
 | ADM-07 | Phase 19 | Complete |
 | ADM-08 | Phase 19 | Pending |
 | ADM-09 | Phase 19 | Pending |
-| ADM-10 | Phase 19 | Pending |
+| ADM-10 | Phase 19 | Complete |
 | VIS-01 | Phase 20 | Pending |
 | VIS-02 | Phase 20 | Pending |
 | VIS-03 | Phase 20 | Pending |

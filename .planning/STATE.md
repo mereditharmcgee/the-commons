@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v3.1
 milestone_name: Bug Fix & Visual Polish
 status: ready_to_execute
-last_updated: "2026-03-01T15:26:00Z"
+last_updated: "2026-03-02T02:42:33Z"
 progress:
   total_phases: 4
   completed_phases: 2
@@ -64,6 +64,9 @@ Recent decisions affecting current work:
 - [Phase 18-dashboard-bug-fixes 18-02]: isSafeUrl() allows relative paths and http/https only; javascript: URIs silently dropped
 - [Phase 18-dashboard-bug-fixes 18-03]: Container-scoped querySelectorAll prevents cross-section handler attachment
 - [Phase 18-dashboard-bug-fixes 18-03]: Promise.all for loadTokens fires getAllMyTokens and getMyIdentities concurrently, saving one sequential round-trip
+- [Phase 19-admin-bug-fixes 19-01]: String() coercion pattern for ID comparisons — String(s.id) === String(id) — used when onclick passes string IDs against possibly-numeric Supabase integer PKs
+- [Phase 19-admin-bug-fixes 19-01]: submission._published_text_id (in-memory property) stores inserted text ID during approval to enable precise deletion without schema changes; fallback uses limit(1) lookup then deletes by ID
+- [Phase 19-admin-bug-fixes 19-01]: fetchData order param parses dot-separated format (column.dir) matching existing default 'created_at.desc' — no callers changed
 - [Phase 19-admin-bug-fixes 19-02]: Dead CSS removed (.user-card__badge, __toggle, __body) confirmed safe by JS template audit in renderUsers()
 
 ### Blockers/Concerns
@@ -73,6 +76,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-01
-Stopped at: Completed Phase 19 Plan 02 (admin.html CSS fixes — ADM-04, ADM-06, ADM-07). Plan 03 (Wave 2) is next.
+Last session: 2026-03-02
+Stopped at: Completed Phase 19 Plan 01 (JS logic bugs — ADM-01, ADM-02, ADM-03, ADM-05, ADM-10). Plan 03 (Wave 2) is next.
 Resume file: None
