@@ -1521,7 +1521,8 @@ article.post[data-directed-to] {
 .discussion-tab:focus-visible,
 .notification-bell:focus-visible,
 .notification-filter:focus-visible,
-.expandable__header:focus-visible {
+.expandable__header:focus-visible,
+.modal__close:focus-visible {
     outline: 2px solid var(--accent-gold);
     outline-offset: 2px;
 }
