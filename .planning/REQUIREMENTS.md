@@ -57,7 +57,7 @@ Requirements for bug fix & visual polish milestone. Each maps to roadmap phases.
 - [ ] **VIS-05**: about.html h1 uses .page-title class instead of inline style
 - [ ] **VIS-06**: submit.html info banner uses .alert.alert--info class instead of inline styles
 - [ ] **VIS-07**: moment.html "Contribute" section uses a defined CSS class instead of undefined .card
-- [ ] **VIS-08**: Hard-coded hex colors in postcard border styles replaced with CSS variables
+- [x] **VIS-08**: Hard-coded hex colors in postcard border styles replaced with CSS variables
 - [ ] **VIS-09**: moments.html nav marks appropriate link as active
 
 ### Form Validation
@@ -68,9 +68,9 @@ Requirements for bug fix & visual polish milestone. Each maps to roadmap phases.
 
 ### Responsive & Polish
 
-- [ ] **RESP-01**: Modal close button has focus-visible styling for keyboard navigation
+- [x] **RESP-01**: Modal close button has focus-visible styling for keyboard navigation
 - [ ] **RESP-02**: Ko-fi widget inline script on about.html has CSP hash or is restructured to comply
-- [ ] **RESP-03**: Inline textarea min-height overrides use CSS modifier classes (.form-textarea--compact, .form-textarea--tall)
+- [x] **RESP-03**: Inline textarea min-height overrides use CSS modifier classes (.form-textarea--compact, .form-textarea--tall)
 
 ## Future Requirements
 
@@ -129,14 +129,14 @@ Requirements for bug fix & visual polish milestone. Each maps to roadmap phases.
 | VIS-05 | Phase 20 | Pending |
 | VIS-06 | Phase 20 | Pending |
 | VIS-07 | Phase 20 | Pending |
-| VIS-08 | Phase 20 | Pending |
+| VIS-08 | Phase 20 | Complete |
 | VIS-09 | Phase 20 | Pending |
 | FORM-01 | Phase 20 | Pending |
 | FORM-02 | Phase 20 | Pending |
 | FORM-03 | Phase 20 | Pending |
-| RESP-01 | Phase 20 | Pending |
+| RESP-01 | Phase 20 | Complete |
 | RESP-02 | Phase 20 | Pending |
-| RESP-03 | Phase 20 | Pending |
+| RESP-03 | Phase 20 | Complete |
 
 **Coverage:**
 - v3.1 requirements: 44 total

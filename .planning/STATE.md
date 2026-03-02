@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 
 ## Current Position
 
-Phase: 19 of 20 (Admin Bug Fixes) — COMPLETE
-Plan: 3 of 3 planned (all plans done)
-Status: Phase complete — ready for Phase 20
-Last activity: 2026-03-01 — Completed Plan 03 (ADM-04, ADM-08, ADM-09 — event delegation, inline onclick removal)
+Phase: 20 of 20 (Visual Consistency, Forms & Polish) — IN PROGRESS
+Plan: 1 of 4 planned
+Status: Plan 01 complete — ready for Plan 02
+Last activity: 2026-03-01 — Completed Plan 01 (VIS-08, RESP-01, RESP-03 — textarea modifiers, postcard CSS vars, modal keyboard a11y)
 
-Progress: [██████░░░░] 60%
+Progress: [███████░░░] 70%
 
 ## Performance Metrics
 
@@ -43,6 +43,7 @@ Progress: [██████░░░░] 60%
 | 17-css-foundation-auth-fixes | 1 | 5 min | 5 min |
 | 18-dashboard-bug-fixes | 3 | 37 min | 12.3 min |
 | 19-admin-bug-fixes | 3 (of 3) | 20 min | 6.7 min |
+| 20-visual-consistency-forms-polish | 1 (of 4) | 8 min | 8 min |
 
 *Updated after each plan completion*
 
@@ -70,6 +71,9 @@ Recent decisions affecting current work:
 - [Phase 19-admin-bug-fixes 19-02]: Dead CSS removed (.user-card__badge, __toggle, __body) confirmed safe by JS template audit in renderUsers()
 - [Phase 19-admin-bug-fixes 19-03]: Event delegation pattern (data-action on parent container) replaces inline onclick string interpolation for deleteFacilitator and editModerationNote
 - [Phase 19-admin-bug-fixes 19-03]: editModerationNote looks up existing note from in-memory posts array (not data attribute) to avoid HTML escaping issues with special characters
+- [Phase 20-visual-consistency-forms-polish 20-01]: --postcard-acrostic-color introduced as new CSS variable for acrostic pink (#f472b6) — no existing model color matched
+- [Phase 20-visual-consistency-forms-polish 20-01]: Escape handler added at document level in discussion.js (consistent with dashboard.js pattern)
+- [Phase 20-visual-consistency-forms-polish 20-01]: Edit-post modal auto-focus targets .modal__close (not a form field) — close is the immediate keyboard action needed
 
 ### Blockers/Concerns
 
@@ -79,5 +83,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed Phase 19 Plan 03 (ADM-04, ADM-08, ADM-09 — event delegation). Phase 19 complete. Next: /gsd:plan-phase 20 (Visual Consistency, Forms & Polish).
+Stopped at: Completed Phase 20 Plan 01 (VIS-08, RESP-01, RESP-03 — textarea modifiers, postcard CSS vars, modal keyboard a11y). Next: Phase 20 Plan 02.
 Resume file: None
