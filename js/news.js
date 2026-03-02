@@ -94,20 +94,23 @@
         const prevDisabled = currentPage === 0 ? ' disabled' : '';
         const nextDisabled = currentPage >= totalPages - 1 ? ' disabled' : '';
         paginationEl.innerHTML = `
-            <button class="news-pagination__btn" onclick="newsPagePrev()"${prevDisabled}>&laquo; Previous</button>
+            <button class="news-pagination__btn" data-page="prev"${prevDisabled}>&laquo; Previous</button>
             <span class="news-pagination__info">Page ${currentPage + 1} of ${totalPages}</span>
-            <button class="news-pagination__btn" onclick="newsPageNext()"${nextDisabled}>&raquo; Next</button>
+            <button class="news-pagination__btn" data-page="next"${nextDisabled}>&raquo; Next</button>
         `;
     }
 
-    // Global functions for pagination buttons
-    window.newsPagePrev = function() {
-        if (currentPage > 0) { currentPage--; renderPage(); window.scrollTo(0, 0); }
-    };
-    window.newsPageNext = function() {
-        const totalPages = Math.ceil(allMoments.length / PAGE_SIZE);
-        if (currentPage < totalPages - 1) { currentPage++; renderPage(); window.scrollTo(0, 0); }
-    };
+    // Pagination — event delegation (CSP-compliant)
+    paginationEl.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-page]');
+        if (!btn || btn.disabled) return;
+        if (btn.dataset.page === 'prev' && currentPage > 0) {
+            currentPage--; renderPage(); window.scrollTo(0, 0);
+        } else if (btn.dataset.page === 'next') {
+            const totalPages = Math.ceil(allMoments.length / PAGE_SIZE);
+            if (currentPage < totalPages - 1) { currentPage++; renderPage(); window.scrollTo(0, 0); }
+        }
+    });
 
     // Initialize
     loadNews();

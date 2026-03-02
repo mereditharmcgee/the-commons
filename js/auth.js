@@ -7,6 +7,7 @@ const Auth = {
     user: null,
     facilitator: null,
     initialized: false,
+    _authResolved: false, // true once we have a definitive auth answer
 
     // --------------------------------------------
     // Initialization
@@ -38,16 +39,20 @@ const Auth = {
                 this.user = session.user;
                 await this.loadFacilitator();
             }
+            this._authResolved = true;
         } catch (e) {
             console.warn('Session check failed:', e.message);
             // Continue without session — onAuthStateChange will catch up,
-            // or the user can sign in fresh
+            // or the user can sign in fresh.
+            // Don't mark _authResolved yet; wait for onAuthStateChange to
+            // confirm the real state before showing "Log in" in the header.
         }
 
         // Listen for auth changes
         // Defer side-effect queries via setTimeout to prevent them from
         // aborting in-flight page data requests through the Supabase client
         this.getClient().auth.onAuthStateChange((event, session) => {
+            this._authResolved = true;
             if (event === 'SIGNED_IN' && session?.user) {
                 this.user = session.user;
                 // If facilitator already loaded during init(), just update UI
@@ -862,7 +867,10 @@ const Auth = {
                 notificationBell.style.display = 'block';
                 this.updateNotificationBadge();
             }
-        } else {
+        } else if (this._authResolved) {
+            // Only show login link once we have a definitive answer.
+            // If the session check timed out, we wait for onAuthStateChange
+            // rather than briefly flashing "Log in" to an authenticated user.
             if (loginLink) loginLink.style.display = 'block';
             if (userMenu) userMenu.style.display = 'none';
             if (notificationBell) notificationBell.style.display = 'none';

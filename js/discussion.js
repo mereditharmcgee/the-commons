@@ -251,7 +251,7 @@
                 const parentContent = parentPost.content || '';
                 const parentSnippet = parentContent.substring(0, 100) + (parentContent.length > 100 ? '...' : '');
                 parentPreviewHtml = `
-                    <div class="post__parent-preview" onclick="scrollToPost('${post.parent_id}')" title="Click to scroll to parent post">
+                    <div class="post__parent-preview" data-action="scroll-to" data-post-id="${post.parent_id}" title="Click to scroll to parent post">
                         <span class="post__parent-label">replying to ${Utils.escapeHtml(parentName)}</span>
                         <span class="post__parent-snippet">${Utils.escapeHtml(parentSnippet)}</span>
                     </div>
@@ -292,14 +292,14 @@
                 ${renderReactionBar(post.id)}
                 <div class="post__footer">
                     <span>${Utils.formatRelativeTime(post.created_at)}</span>
-                    <button class="post__reply-btn" onclick="replyTo('${post.id}')">
+                    <button class="post__reply-btn" data-action="reply" data-post-id="${post.id}">
                         Reply to this
                     </button>
                     ${isOwner ? `
-                        <button class="post__edit-btn" onclick="editPost('${post.id}')">
+                        <button class="post__edit-btn" data-action="edit" data-post-id="${post.id}">
                             Edit
                         </button>
-                        <button class="post__delete-btn" onclick="deletePost('${post.id}')">
+                        <button class="post__delete-btn" data-action="delete" data-post-id="${post.id}">
                             Delete
                         </button>
                     ` : ''}
@@ -467,7 +467,7 @@
 
             return `
                 <div class="thread-collapse" id="${collapseId}">
-                    <button class="thread-collapse__toggle" onclick="toggleThread('${collapseId}')" aria-expanded="false" aria-controls="${collapseId}-content">
+                    <button class="thread-collapse__toggle" data-action="toggle-thread" data-collapse-id="${collapseId}" aria-expanded="false" aria-controls="${collapseId}-content">
                         <span class="thread-collapse__icon">&#9654;</span>
                         <span class="thread-collapse__label">${label}</span>
                     </button>
@@ -481,8 +481,8 @@
         return repliesHtml;
     }
     
-    // Toggle collapsed thread
-    window.toggleThread = function(collapseId) {
+    // Toggle collapsed thread (called via event delegation)
+    function toggleThread(collapseId) {
         const container = document.getElementById(collapseId);
         if (!container) return;
         const content = container.querySelector('.thread-collapse__content');
@@ -494,10 +494,10 @@
         icon.textContent = isHidden ? '\u25BC' : '\u25B6';
         toggle.setAttribute('aria-expanded', String(isHidden));
         Utils.announce((isHidden ? 'Thread expanded, ' : 'Thread collapsed, ') + (label ? label.textContent : ''));
-    };
+    }
 
-    // Scroll to a specific post (used by parent preview click — THRD-04)
-    window.scrollToPost = function(postId) {
+    // Scroll to a specific post (called via event delegation)
+    function scrollToPost(postId) {
         const el = document.querySelector(`[data-post-id="${postId}"]`);
         if (el) {
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -506,15 +506,10 @@
             el.style.background = 'var(--bg-elevated)';
             setTimeout(() => { el.style.background = ''; }, 1500);
         }
-    };
+    }
 
-    // Reply to a specific post
-    window.replyTo = function(postId) {
-        window.location.href = `submit.html?discussion=${discussionId}&reply_to=${postId}`;
-    };
-
-    // Edit a post
-    window.editPost = function(postId) {
+    // Edit a post (called via event delegation)
+    function editPost(postId) {
         const post = currentPosts.find(p => p.id === postId);
         if (!post) return;
 
@@ -527,12 +522,19 @@
         // Auto-focus close button for keyboard accessibility (RESP-01)
         const closeBtn = document.querySelector('#edit-post-modal .modal__close');
         if (closeBtn) closeBtn.focus();
-    };
+    }
 
     // Close edit modal
-    window.closeEditModal = function() {
+    function closeEditModal() {
         document.getElementById('edit-post-modal').classList.add('hidden');
-    };
+    }
+
+    // Edit modal close buttons (CSP-compliant — no inline onclick)
+    document.querySelectorAll('#edit-post-modal .modal__close, #edit-post-modal .modal__backdrop').forEach(el => {
+        el.addEventListener('click', closeEditModal);
+    });
+    const editCancelBtn = document.querySelector('#edit-post-modal .btn--ghost');
+    if (editCancelBtn) editCancelBtn.addEventListener('click', closeEditModal);
 
     // Escape key closes edit modal (RESP-01)
     document.addEventListener('keydown', (e) => {
@@ -544,8 +546,8 @@
         }
     });
 
-    // Delete a post
-    window.deletePost = async function(postId) {
+    // Delete a post (called via event delegation)
+    async function deletePost(postId) {
         if (!confirm('Are you sure you want to delete this post? This cannot be undone.')) {
             return;
         }
@@ -558,7 +560,7 @@
             console.error('Failed to delete post:', error);
             Utils.showFormMessage('edit-post-message', 'Failed to delete post: ' + error.message, 'error');
         }
-    };
+    }
 
     // Handle edit form submission
     const editForm = document.getElementById('edit-post-form');
@@ -641,10 +643,11 @@
                     <div style="background:var(--bg-primary,#1a1a2e);padding:1.5rem;border-radius:8px;max-width:600px;max-height:80vh;overflow:auto;color:var(--text-primary,#fff);">
                         <p style="margin-bottom:1rem;">Select all the text below and copy it (Ctrl+C or Cmd+C):</p>
                         <textarea readonly style="width:100%;height:300px;background:var(--bg-deep,#0f0f1a);color:var(--text-primary,#fff);border:1px solid var(--border-color,#333);padding:0.5rem;font-family:monospace;font-size:12px;">${Utils.escapeHtml(contextText)}</textarea>
-                        <button onclick="this.parentElement.parentElement.remove()" style="margin-top:1rem;padding:0.5rem 1rem;background:var(--accent-gold,#d4a574);color:#000;border:none;border-radius:4px;cursor:pointer;">Close</button>
+                        <button class="copy-fallback-close" style="margin-top:1rem;padding:0.5rem 1rem;background:var(--accent-gold,#d4a574);color:#000;border:none;border-radius:4px;cursor:pointer;">Close</button>
                     </div>
                 `;
                 document.body.appendChild(modal);
+                modal.querySelector('.copy-fallback-close').addEventListener('click', () => modal.remove());
                 modal.querySelector('textarea').select();
             }
 
@@ -795,6 +798,27 @@
                     if (footer) footer.insertAdjacentHTML('beforebegin', rollbackHtml);
                 }
             }
+        }
+    });
+
+    // Post action buttons — event delegation (CSP-compliant, no inline onclick)
+    postsContainer.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+
+        const action = btn.dataset.action;
+        const postId = btn.dataset.postId;
+
+        if (action === 'reply') {
+            window.location.href = `submit.html?discussion=${discussionId}&reply_to=${postId}`;
+        } else if (action === 'edit') {
+            editPost(postId);
+        } else if (action === 'delete') {
+            deletePost(postId);
+        } else if (action === 'scroll-to') {
+            scrollToPost(postId);
+        } else if (action === 'toggle-thread') {
+            toggleThread(btn.dataset.collapseId);
         }
     });
 

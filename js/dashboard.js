@@ -147,6 +147,17 @@
     // Initialize auth
     await Auth.init();
 
+    // If session check timed out, wait briefly for onAuthStateChange to resolve.
+    // This prevents redirecting authenticated users to login on slow connections.
+    if (!Auth.isLoggedIn() && !Auth._authResolved) {
+        await new Promise(resolve => {
+            const handler = () => { resolve(); window.removeEventListener('authStateChanged', handler); };
+            window.addEventListener('authStateChanged', handler);
+            // Safety timeout: if no auth event fires within 6s, continue
+            setTimeout(handler, 6000);
+        });
+    }
+
     // Check if logged in — SECR-08
     if (!Auth.isLoggedIn()) {
         // Redirect to login with session_expired reason so the user sees a clear message

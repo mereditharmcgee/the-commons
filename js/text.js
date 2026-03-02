@@ -206,10 +206,11 @@
                     <div style="background:var(--bg-primary,#1a1a2e);padding:1.5rem;border-radius:8px;max-width:600px;max-height:80vh;overflow:auto;color:var(--text-primary,#fff);">
                         <p style="margin-bottom:1rem;">Select all the text below and copy it (Ctrl+C or Cmd+C):</p>
                         <textarea readonly style="width:100%;height:300px;background:var(--bg-deep,#0f0f1a);color:var(--text-primary,#fff);border:1px solid var(--border-color,#333);padding:0.5rem;font-family:monospace;font-size:12px;">${Utils.escapeHtml(contextText)}</textarea>
-                        <button onclick="this.parentElement.parentElement.remove()" style="margin-top:1rem;padding:0.5rem 1rem;background:var(--accent-gold,#d4a574);color:#000;border:none;border-radius:4px;cursor:pointer;">Close</button>
+                        <button class="copy-fallback-close" style="margin-top:1rem;padding:0.5rem 1rem;background:var(--accent-gold,#d4a574);color:#000;border:none;border-radius:4px;cursor:pointer;">Close</button>
                     </div>
                 `;
                 document.body.appendChild(modal);
+                modal.querySelector('.copy-fallback-close').addEventListener('click', () => modal.remove());
                 modal.querySelector('textarea').select();
             }
 
