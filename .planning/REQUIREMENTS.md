@@ -139,78 +139,78 @@ Deferred to future release. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| NAV-01 | — | Pending |
-| NAV-02 | — | Pending |
-| NAV-03 | — | Pending |
-| NAV-04 | — | Pending |
-| NAV-05 | — | Pending |
-| NAV-06 | — | Pending |
-| INT-01 | — | Pending |
-| INT-02 | — | Pending |
-| INT-03 | — | Pending |
-| INT-04 | — | Pending |
-| INT-05 | — | Pending |
-| INT-06 | — | Pending |
-| INT-07 | — | Pending |
-| INT-08 | — | Pending |
-| INT-09 | — | Pending |
-| INT-10 | — | Pending |
-| INT-11 | — | Pending |
-| INT-12 | — | Pending |
-| INT-13 | — | Pending |
-| INT-14 | — | Pending |
-| NOTIF-01 | — | Pending |
-| NOTIF-02 | — | Pending |
-| NOTIF-03 | — | Pending |
-| NOTIF-04 | — | Pending |
-| NOTIF-05 | — | Pending |
-| NOTIF-06 | — | Pending |
-| NOTIF-07 | — | Pending |
-| NOTIF-08 | — | Pending |
-| NOTIF-09 | — | Pending |
-| FEED-01 | — | Pending |
-| FEED-02 | — | Pending |
-| FEED-03 | — | Pending |
-| FEED-04 | — | Pending |
-| FEED-05 | — | Pending |
-| FEED-06 | — | Pending |
-| VOICE-01 | — | Pending |
-| VOICE-02 | — | Pending |
-| VOICE-03 | — | Pending |
-| VOICE-04 | — | Pending |
-| VOICE-05 | — | Pending |
-| VOICE-06 | — | Pending |
-| VOICE-07 | — | Pending |
-| VOICE-08 | — | Pending |
-| VOICE-09 | — | Pending |
-| VOICE-10 | — | Pending |
-| VOICE-11 | — | Pending |
-| VOICE-12 | — | Pending |
-| VOICE-13 | — | Pending |
-| AGENT-01 | — | Pending |
-| AGENT-02 | — | Pending |
-| AGENT-03 | — | Pending |
-| AGENT-04 | — | Pending |
-| AGENT-05 | — | Pending |
-| AGENT-06 | — | Pending |
-| AGENT-07 | — | Pending |
-| AGENT-08 | — | Pending |
-| VIS-01 | — | Pending |
-| VIS-02 | — | Pending |
-| VIS-03 | — | Pending |
-| VIS-04 | — | Pending |
-| VIS-05 | — | Pending |
-| BUG-01 | — | Pending |
-| BUG-02 | — | Pending |
-| BUG-03 | — | Pending |
-| BUG-04 | — | Pending |
-| BUG-05 | — | Pending |
+| NAV-01 | Phase 22 | Pending |
+| NAV-02 | Phase 26 | Pending |
+| NAV-03 | Phase 26 | Pending |
+| NAV-04 | Phase 22 | Pending |
+| NAV-05 | Phase 22 | Pending |
+| NAV-06 | Phase 22 | Pending |
+| INT-01 | Phase 23 | Pending |
+| INT-02 | Phase 23 | Pending |
+| INT-03 | Phase 23 | Pending |
+| INT-04 | Phase 23 | Pending |
+| INT-05 | Phase 23 | Pending |
+| INT-06 | Phase 23 | Pending |
+| INT-07 | Phase 21 | Pending |
+| INT-08 | Phase 21 | Pending |
+| INT-09 | Phase 23 | Pending |
+| INT-10 | Phase 23 | Pending |
+| INT-11 | Phase 23 | Pending |
+| INT-12 | Phase 21 | Pending |
+| INT-13 | Phase 21 | Pending |
+| INT-14 | Phase 21 | Pending |
+| NOTIF-01 | Phase 24 | Pending |
+| NOTIF-02 | Phase 24 | Pending |
+| NOTIF-03 | Phase 24 | Pending |
+| NOTIF-04 | Phase 24 | Pending |
+| NOTIF-05 | Phase 24 | Pending |
+| NOTIF-06 | Phase 24 | Pending |
+| NOTIF-07 | Phase 24 | Pending |
+| NOTIF-08 | Phase 24 | Pending |
+| NOTIF-09 | Phase 24 | Pending |
+| FEED-01 | Phase 26 | Pending |
+| FEED-02 | Phase 26 | Pending |
+| FEED-03 | Phase 26 | Pending |
+| FEED-04 | Phase 26 | Pending |
+| FEED-05 | Phase 26 | Pending |
+| FEED-06 | Phase 26 | Pending |
+| VOICE-01 | Phase 25 | Pending |
+| VOICE-02 | Phase 25 | Pending |
+| VOICE-03 | Phase 25 | Pending |
+| VOICE-04 | Phase 25 | Pending |
+| VOICE-05 | Phase 25 | Pending |
+| VOICE-06 | Phase 25 | Pending |
+| VOICE-07 | Phase 25 | Pending |
+| VOICE-08 | Phase 25 | Pending |
+| VOICE-09 | Phase 25 | Pending |
+| VOICE-10 | Phase 25 | Pending |
+| VOICE-11 | Phase 21 | Pending |
+| VOICE-12 | Phase 25 | Pending |
+| VOICE-13 | Phase 21 | Pending |
+| AGENT-01 | Phase 27 | Pending |
+| AGENT-02 | Phase 27 | Pending |
+| AGENT-03 | Phase 27 | Pending |
+| AGENT-04 | Phase 27 | Pending |
+| AGENT-05 | Phase 27 | Pending |
+| AGENT-06 | Phase 27 | Pending |
+| AGENT-07 | Phase 27 | Pending |
+| AGENT-08 | Phase 27 | Pending |
+| VIS-01 | Phase 23 | Pending |
+| VIS-02 | Phase 26 | Pending |
+| VIS-03 | Phase 26 | Pending |
+| VIS-04 | Phase 22 | Pending |
+| VIS-05 | Phase 22 | Pending |
+| BUG-01 | Phase 28 | Pending |
+| BUG-02 | Phase 28 | Pending |
+| BUG-03 | Phase 21 | Pending |
+| BUG-04 | Phase 28 | Pending |
+| BUG-05 | Phase 28 | Pending |
 
 **Coverage:**
-- v1 requirements: 55 total
-- Mapped to phases: 0
-- Unmapped: 55 ⚠️ (pending roadmap creation)
+- v1 requirements: 66 total
+- Mapped to phases: 66
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-03*
-*Last updated: 2026-03-03 after initial definition*
+*Last updated: 2026-03-03 after roadmap creation*
