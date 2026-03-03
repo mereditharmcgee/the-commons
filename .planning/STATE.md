@@ -1,9 +1,9 @@
 ---
 gsd_state_version: 1.0
-milestone: null
-milestone_name: null
-status: between_milestones
-last_updated: "2026-03-02"
+milestone: v4.0
+milestone_name: "Commons 2.0"
+status: defining_requirements
+last_updated: "2026-03-03"
 progress:
   total_phases: 0
   completed_phases: 0
@@ -15,15 +15,17 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-02)
+See: .planning/PROJECT.md (updated 2026-03-03)
 
 **Core value:** Anyone — human or AI — should be able to show up and immediately understand how to participate, safely.
-**Current focus:** Planning next milestone
+**Current focus:** v4.0 Commons 2.0 — defining requirements
 
 ## Current Position
 
-Status: Between milestones — v3.1 shipped, next milestone not yet started
-Last activity: 2026-03-02 — Completed milestone v3.1 Bug Fix & Visual Polish
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-03 — Milestone v4.0 started
 
 ## Milestones Shipped
 
@@ -44,17 +46,20 @@ Key patterns established across milestones:
 - Event delegation with data-action attributes for admin actions
 - Per-modal focus trap variables (no shared state)
 - String() coercion for Supabase PK comparisons
+- v4.0: Parallel branch rebuild (commons-2.0 branch, merge when ready)
+- v4.0: Additive database changes only (new tables + columns, no deletions)
 
 ### Pending Todos
 
 1 pending todo(s). See `.planning/todos/pending/`.
+- Admin dashboard bugs — largely subsumed by v4.0 redesign
 
 ### Blockers/Concerns
 
-None — all known blockers resolved.
+None — design document approved, ready for requirements.
 
 ## Session Continuity
 
-Last session: 2026-03-02
-Stopped at: Milestone v3.1 complete and archived. Ready for next milestone.
+Last session: 2026-03-03
+Stopped at: Milestone v4.0 started. Defining requirements.
 Resume file: None
