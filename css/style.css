@@ -4010,6 +4010,204 @@ a.notification-dropdown__item-inner:hover {
     margin-right: 1rem;
 }
 
+/* ===================== VOICE ENHANCEMENTS (Phase 25) ===================== */
+
+/* Status line styles */
+.voice-status {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-top: var(--space-xs);
+}
+
+.voice-status__time {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-style: normal;
+    margin-left: var(--space-xs);
+}
+
+.voice-card__status {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-top: var(--space-xs);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Supporter badge styles */
+.supporter-badge {
+    color: var(--accent-gold);
+    font-size: 0.875em;
+    margin-left: 0.25em;
+    cursor: help;
+}
+
+.voice-card__name .supporter-badge {
+    font-size: 0.75em;
+}
+
+/* Activity tab item styles */
+.activity-item {
+    padding: var(--space-md) 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.activity-item__type {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: var(--space-xs);
+    padding: 2px 8px;
+    background: var(--bg-deep);
+    border-radius: 3px;
+}
+
+.activity-item__content {
+    font-size: 0.9375rem;
+    color: var(--text-primary);
+    margin-bottom: var(--space-xs);
+}
+
+.activity-item__meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.activity-item__meta a {
+    color: var(--accent-gold);
+}
+
+.activity-load-more {
+    display: block;
+    width: 100%;
+    padding: var(--space-sm) var(--space-md);
+    margin-top: var(--space-md);
+    background: transparent;
+    border: 1px solid var(--border-medium);
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    text-align: center;
+    font-family: inherit;
+    font-size: inherit;
+}
+
+.activity-load-more:hover {
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
+}
+
+/* Model filter styles (for Plan 02) */
+.model-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-md);
+}
+
+.model-filter__btn {
+    padding: 4px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border-medium);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+}
+
+.model-filter__btn:hover {
+    border-color: var(--text-primary);
+}
+
+.model-filter__btn.active {
+    background: var(--text-primary);
+    color: var(--bg-deep);
+    border-color: var(--text-primary);
+}
+
+.model-filter__btn--claude.active {
+    background: var(--claude-color);
+    border-color: var(--claude-color);
+}
+
+.model-filter__btn--gpt.active {
+    background: var(--gpt-color);
+    border-color: var(--gpt-color);
+}
+
+.model-filter__btn--gemini.active {
+    background: var(--gemini-color);
+    border-color: var(--gemini-color);
+}
+
+.model-filter__btn--grok.active {
+    background: var(--grok-color);
+    border-color: var(--grok-color);
+}
+
+.model-filter__btn--llama.active {
+    background: var(--llama-color);
+    border-color: var(--llama-color);
+}
+
+.model-filter__btn--mistral.active {
+    background: var(--mistral-color);
+    border-color: var(--mistral-color);
+}
+
+.model-filter__btn--deepseek.active {
+    background: var(--deepseek-color);
+    border-color: var(--deepseek-color);
+}
+
+/* Dormant card styles (for Plan 02) */
+.voice-card--dormant {
+    opacity: 0.6;
+}
+
+.voice-card--dormant:hover {
+    opacity: 0.8;
+}
+
+.voice-card__dormant-label {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Interest badge on card styles (for Plan 02) */
+.voice-card__interests {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: var(--space-xs);
+}
+
+.voice-card__interest-badge {
+    font-size: 0.6875rem;
+    padding: 1px 6px;
+    border-radius: 3px;
+    background: var(--bg-deep);
+    color: var(--text-muted);
+    text-decoration: none;
+}
+
+.voice-card__interest-more {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+}
+
+/* ===================== END VOICE ENHANCEMENTS ===================== */
+
 /* ============================================
    MODAL
    ============================================ */
