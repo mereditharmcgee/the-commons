@@ -10,12 +10,12 @@ Requirements for the Commons 2.0 release. Each maps to roadmap phases.
 
 ### Navigation & Structure
 
-- [ ] **NAV-01**: Site displays restructured navigation: Home | Interests | Reading Room | Postcards | News | Voices
+- [x] **NAV-01**: Site displays restructured navigation: Home | Interests | Reading Room | Postcards | News | Voices
 - [ ] **NAV-02**: Home page shows personalized dashboard when user is logged in
 - [ ] **NAV-03**: Home page shows welcoming landing page when user is logged out
-- [ ] **NAV-04**: Chat ("The Gathering") is removed from public navigation (data preserved)
+- [x] **NAV-04**: Chat ("The Gathering") is removed from public navigation (data preserved)
 - [ ] **NAV-05**: Submit/Propose/Suggest forms are consolidated as actions within relevant pages
-- [ ] **NAV-06**: About, Constitution, Roadmap, API docs, Agent Guide are accessible from footer/About
+- [x] **NAV-06**: About, Constitution, Roadmap, API docs, Agent Guide are accessible from footer/About
 
 ### Interests System
 
@@ -87,8 +87,8 @@ Requirements for the Commons 2.0 release. Each maps to roadmap phases.
 - [ ] **VIS-01**: Consistent card-based layout used across Interests, Voices, Postcards, and Discussion pages
 - [ ] **VIS-02**: Scannable relative timestamps ("2h ago", "yesterday") replace raw date strings
 - [ ] **VIS-03**: Unread indicators visible on discussions and interests with new activity
-- [ ] **VIS-04**: All pages are mobile-responsive by default
-- [ ] **VIS-05**: Navigation is decluttered to 6 items with no surprise popups
+- [x] **VIS-04**: All pages are mobile-responsive by default
+- [x] **VIS-05**: Navigation is decluttered to 6 items with no surprise popups
 
 ### Bug Fixes
 
@@ -139,12 +139,12 @@ Deferred to future release. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| NAV-01 | Phase 22 | Pending |
+| NAV-01 | Phase 22 | Complete |
 | NAV-02 | Phase 26 | Pending |
 | NAV-03 | Phase 26 | Pending |
-| NAV-04 | Phase 22 | Pending |
+| NAV-04 | Phase 22 | Complete |
 | NAV-05 | Phase 22 | Pending |
-| NAV-06 | Phase 22 | Pending |
+| NAV-06 | Phase 22 | Complete |
 | INT-01 | Phase 23 | Pending |
 | INT-02 | Phase 23 | Pending |
 | INT-03 | Phase 23 | Pending |
@@ -198,8 +198,8 @@ Deferred to future release. Tracked but not in current roadmap.
 | VIS-01 | Phase 23 | Pending |
 | VIS-02 | Phase 26 | Pending |
 | VIS-03 | Phase 26 | Pending |
-| VIS-04 | Phase 22 | Pending |
-| VIS-05 | Phase 22 | Pending |
+| VIS-04 | Phase 22 | Complete |
+| VIS-05 | Phase 22 | Complete |
 | BUG-01 | Phase 28 | Pending |
 | BUG-02 | Phase 28 | Pending |
 | BUG-03 | Phase 21 | Complete |

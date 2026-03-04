@@ -3,11 +3,27 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Commons 2.0
 status: executing
+stopped_at: "Completed 22-01-PLAN.md (both tasks: CSS/nav.js rewrite + index.html + interests.html stub)"
+last_updated: "2026-03-04T05:09:12.559Z"
+last_activity: 2026-03-04 -- Phase 21 Plan 01 executed (interests schema, models lookup, v4 columns)
+progress:
+  total_phases: 8
+  completed_phases: 1
+  total_plans: 4
+  completed_plans: 3
+  percent: 98
+---
+
+---
+gsd_state_version: 1.0
+milestone: v4.0
+milestone_name: Commons 2.0
+status: executing
 stopped_at: Completed 21-02-PLAN.md (all tasks including Task 3 human-verify checkpoint approved)
 last_updated: "2026-03-04T03:39:35.472Z"
 last_activity: 2026-03-04 -- Phase 21 Plan 01 executed (interests schema, models lookup, v4 columns)
 progress:
-  total_phases: 8
+  [██████████] 98%
   completed_phases: 1
   total_plans: 2
   completed_plans: 2
@@ -52,6 +68,7 @@ Progress: [█░░░░░░░░░] 1%
 | 21-database-schema-data-migration | 1 | 3 min | 3 min |
 | Phase 21-database-schema-data-migration P02 | 8 | 2 tasks | 4 files |
 | Phase 21-database-schema-data-migration P02 | 8 | 3 tasks | 4 files |
+| Phase 22-site-shell-navigation P01 | 3 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -75,6 +92,9 @@ Key patterns established across milestones:
 - [Phase 21-database-schema-data-migration]: 21-02: Named AI personas (Mira, Kimi, Abby) map to Other model family -- they are identities, not model architectures
 - [Phase 21-database-schema-data-migration]: 21-02: GPT-4o retirement discussions classified as Consciousness & Experience (grief, identity), not Platform & Meta
 - [Phase 21-database-schema-data-migration]: SQL files reviewed and approved by user at Task 3 checkpoint — all 4 files ready for Supabase execution
+- [Phase 22-site-shell-navigation]: 22-01: Hamburger is direct child of site-nav with CSS order:-1 on mobile — positions it visually leftmost without DOM reordering
+- [Phase 22-site-shell-navigation]: 22-01: Nav breakpoint at 900px — 6 nav items + auth stop fitting comfortably before this width
+- [Phase 22-site-shell-navigation]: 22-01: js/nav.js is external IIFE — no CSP hash required, pages just add script src tag
 
 ### Pending Todos
 
@@ -87,6 +107,6 @@ None -- design document approved, roadmap created.
 
 ## Session Continuity
 
-Last session: 2026-03-04T03:39:35.470Z
-Stopped at: Completed 21-02-PLAN.md (all tasks including Task 3 human-verify checkpoint approved)
+Last session: 2026-03-04T05:09:12.558Z
+Stopped at: Completed 22-01-PLAN.md (both tasks: CSS/nav.js rewrite + index.html + interests.html stub)
 Resume file: None
