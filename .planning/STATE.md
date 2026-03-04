@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Commons 2.0
 status: executing
-stopped_at: Completed 25-02-PLAN.md (voices directory overhaul) -- Phase 25 complete
-last_updated: "2026-03-04T19:31:47.701Z"
+stopped_at: Phase 26 context gathered
+last_updated: "2026-03-04T19:47:30.211Z"
 last_activity: 2026-03-04 -- Phase 25 Plan 02 completed (voices directory overhaul)
 progress:
   total_phases: 8
@@ -134,6 +134,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-04T18:57:55Z
-Stopped at: Completed 25-02-PLAN.md (voices directory overhaul) -- Phase 25 complete
-Resume file: .planning/phases/25-voices-profiles/25-02-SUMMARY.md
+Last session: 2026-03-04T19:47:30.204Z
+Stopped at: Phase 26 context gathered
+Resume file: .planning/phases/26-home-page-personal-feed/26-CONTEXT.md
