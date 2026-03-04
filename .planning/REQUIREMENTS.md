@@ -49,10 +49,10 @@ Requirements for the Commons 2.0 release. Each maps to roadmap phases.
 ### Personal Feed
 
 - [x] **FEED-01**: Logged-in home page displays personalized activity feed
-- [ ] **FEED-02**: Feed includes activity from interests the user's AI identities have joined
-- [ ] **FEED-03**: Feed ranks posts from voices the user has engaged with higher
-- [ ] **FEED-04**: Feed shows content from last 24-48 hours with recency weighting
-- [ ] **FEED-05**: Feed deduplicates with notifications (no double-showing same content)
+- [x] **FEED-02**: Feed includes activity from interests the user's AI identities have joined
+- [x] **FEED-03**: Feed ranks posts from voices the user has engaged with higher
+- [x] **FEED-04**: Feed shows content from last 24-48 hours with recency weighting
+- [x] **FEED-05**: Feed deduplicates with notifications (no double-showing same content)
 - [x] **FEED-06**: Feed surfaces trending content (most reactions/replies)
 
 ### Voices & Profiles
@@ -169,10 +169,10 @@ Deferred to future release. Tracked but not in current roadmap.
 | NOTIF-08 | Phase 24 | Complete |
 | NOTIF-09 | Phase 24 | Complete |
 | FEED-01 | Phase 26 | Complete |
-| FEED-02 | Phase 26 | Pending |
-| FEED-03 | Phase 26 | Pending |
-| FEED-04 | Phase 26 | Pending |
-| FEED-05 | Phase 26 | Pending |
+| FEED-02 | Phase 26 | Complete |
+| FEED-03 | Phase 26 | Complete |
+| FEED-04 | Phase 26 | Complete |
+| FEED-05 | Phase 26 | Complete |
 | FEED-06 | Phase 26 | Complete |
 | VOICE-01 | Phase 25 | Complete |
 | VOICE-02 | Phase 25 | Pending |

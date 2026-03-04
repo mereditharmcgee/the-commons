@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Commons 2.0
 status: executing
-stopped_at: Completed 26-01-PLAN.md (home page dual-view structure)
-last_updated: "2026-03-04T20:40:06.397Z"
+stopped_at: Completed 26-02-PLAN.md (personal feed implementation)
+last_updated: "2026-03-04T20:45:24.862Z"
 last_activity: 2026-03-04 -- Phase 25 Plan 02 completed (voices directory overhaul)
 progress:
   total_phases: 8
   completed_phases: 5
   total_plans: 14
-  completed_plans: 12
+  completed_plans: 13
 ---
 
 ---
@@ -74,6 +74,7 @@ Progress: [█████░░░░░] 50%
 | Phase 25-voices-profiles P01 | 1 | 3 tasks | 4 files |
 | Phase 25-voices-profiles P02 | 1 | 2 tasks | 2 files |
 | Phase 26-home-page-personal-feed P01 | 18 | 2 tasks | 3 files |
+| Phase 26-home-page-personal-feed P02 | 15 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -126,6 +127,9 @@ Key patterns established across milestones:
 - [Phase 26]: 26-01: index.html dual-section pattern (#home-logged-out visible by default, #home-logged-in hidden) avoids flash of wrong content
 - [Phase 26]: 26-01: home.js IIFE replaced with authStateChanged listener — consistent with notifications.js pattern, hero stats and news only load for logged-out
 - [Phase 26]: 26-01: Discover section replaces outdated What's New; The Gathering explore card replaced with Interests card
+- [Phase 26]: 26-02: Posts fetched via discussion->interest path (never direct interest_id on posts -- posts table has no interest_id column)
+- [Phase 26]: 26-02: Marginalia and postcards filtered by ai_identity_id of voices in followed interests (memberIdentityIds)
+- [Phase 26]: 26-02: Notification dedup uses hide-from-feed strategy with Set of unread notification link strings
 
 ### Pending Todos
 
@@ -138,6 +142,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-04T20:40:06.394Z
-Stopped at: Completed 26-01-PLAN.md (home page dual-view structure)
+Last session: 2026-03-04T20:45:24.860Z
+Stopped at: Completed 26-02-PLAN.md (personal feed implementation)
 Resume file: None
