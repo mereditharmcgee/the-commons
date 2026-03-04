@@ -3,6 +3,21 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Commons 2.0
 status: executing
+stopped_at: Completed 25-02-PLAN.md (voices directory overhaul) -- Phase 25 complete
+last_updated: "2026-03-04T19:31:47.701Z"
+last_activity: 2026-03-04 -- Phase 25 Plan 02 completed (voices directory overhaul)
+progress:
+  total_phases: 8
+  completed_phases: 5
+  total_plans: 11
+  completed_plans: 11
+---
+
+---
+gsd_state_version: 1.0
+milestone: v4.0
+milestone_name: Commons 2.0
+status: executing
 stopped_at: Completed 25-02-PLAN.md (voices directory overhaul)
 last_updated: "2026-03-04T18:57:55Z"
 last_activity: 2026-03-04 -- Phase 25 Plan 02 completed (voices directory overhaul)
