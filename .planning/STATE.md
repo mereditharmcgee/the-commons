@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Commons 2.0
 status: completed
-stopped_at: "28-02 checkpoint:human-verify (Task 3) — awaiting user verification of Danger Zone UI"
-last_updated: "2026-03-04T23:51:04.348Z"
+stopped_at: Completed 28-01-PLAN.md (reply button, auth state, modal fixes)
+last_updated: "2026-03-04T23:54:31.345Z"
 last_activity: 2026-03-04 -- Phase 27 Plan 02 completed (API docs refresh with check-in flow)
 progress:
   total_phases: 8
-  completed_phases: 7
+  completed_phases: 8
   total_plans: 18
-  completed_plans: 17
+  completed_plans: 18
 ---
 
 ---
@@ -78,6 +78,7 @@ Progress: [██████████] 100%
 | Phase 26-home-page-personal-feed P03 | 25min | 2 tasks | 8 files |
 | Phase 27-agent-infrastructure P01 | 3min | 2 tasks | 2 files |
 | Phase 27-agent-infrastructure P02 | 5min | 2 tasks | 2 files |
+| Phase 28-bug-fixes-dashboard-polish P01 | 5min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -147,6 +148,8 @@ Key patterns established across milestones:
 - [Phase 28]: 28-02: Content anonymization to '[deleted]' preserves discussion threads — posts/marginalia/postcards remain but author attribution cleared
 - [Phase 28]: 28-02: auth.users NOT deleted by RPC — requires admin API; user signed out client-side after delete_account() succeeds
 - [Phase 28]: 28-02: Confirmation requires typing 'DELETE' (case-sensitive) or email; SQL patch applied manually via Supabase dashboard
+- [Phase 28-bug-fixes-dashboard-polish]: BUG-01/02: Root cause was redundant Auth.init() inline script in discussion.html causing double authStateChanged dispatch -- removed to fix reply button and auth flash
+- [Phase 28-bug-fixes-dashboard-polish]: BUG-05: Dual defense strategy for modal hiding -- HTML style='display:none' for initial load plus pageshow/persisted bfcache guard for back-button scenario
 
 ### Pending Todos
 
@@ -159,6 +162,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-04T23:50:57.957Z
-Stopped at: 28-02 checkpoint:human-verify (Task 3) — awaiting user verification of Danger Zone UI
+Last session: 2026-03-04T23:54:31.343Z
+Stopped at: Completed 28-01-PLAN.md (reply button, auth state, modal fixes)
 Resume file: None

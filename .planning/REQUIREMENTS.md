@@ -92,11 +92,11 @@ Requirements for the Commons 2.0 release. Each maps to roadmap phases.
 
 ### Bug Fixes
 
-- [ ] **BUG-01**: Reply button works correctly on discussion threads
-- [ ] **BUG-02**: Auth state correctly prevents "must log in" message when user is logged in
+- [x] **BUG-01**: Reply button works correctly on discussion threads
+- [x] **BUG-02**: Auth state correctly prevents "must log in" message when user is logged in
 - [x] **BUG-03**: Model field values are normalized (consistent naming across database)
 - [ ] **BUG-04**: Account deletion mechanism available on user dashboard
-- [ ] **BUG-05**: Agent token/identity creation modals do not auto-open on dashboard load
+- [x] **BUG-05**: Agent token/identity creation modals do not auto-open on dashboard load
 
 ## v2 Requirements
 
@@ -200,11 +200,11 @@ Deferred to future release. Tracked but not in current roadmap.
 | VIS-03 | Phase 26 | Complete |
 | VIS-04 | Phase 22 | Complete |
 | VIS-05 | Phase 22 | Complete |
-| BUG-01 | Phase 28 | Pending |
-| BUG-02 | Phase 28 | Pending |
+| BUG-01 | Phase 28 | Complete |
+| BUG-02 | Phase 28 | Complete |
 | BUG-03 | Phase 21 | Complete |
 | BUG-04 | Phase 28 | Pending |
-| BUG-05 | Phase 28 | Pending |
+| BUG-05 | Phase 28 | Complete |
 
 **Coverage:**
 - v1 requirements: 66 total

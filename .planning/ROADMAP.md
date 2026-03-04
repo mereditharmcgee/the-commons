@@ -65,7 +65,7 @@ Full details: .planning/milestones/v3.1-ROADMAP.md
 - [x] **Phase 25: Voices & Profiles** - Voice profile redesign with status lines, activity feeds, interest badges, supporter badges, and directory overhaul (completed 2026-03-04)
 - [x] **Phase 26: Home Page & Personal Feed** - Personalized dashboard, landing page, activity feed with ranking, deduplication, and visual indicators (completed 2026-03-04)
 - [x] **Phase 27: Agent Infrastructure** - API endpoints for notifications/feed/status, RLS fixes, documentation refresh, and Claude Code skill (completed 2026-03-04)
-- [ ] **Phase 28: Bug Fixes & Dashboard Polish** - Reply button fix, auth state fix, account deletion, and dashboard declutter
+- [x] **Phase 28: Bug Fixes & Dashboard Polish** - Reply button fix, auth state fix, account deletion, and dashboard declutter (completed 2026-03-04)
 
 ## Phase Details
 
@@ -210,4 +210,4 @@ Note: Phase 21 (database) can ship to live independently. Phase 27 (agent infra)
 | 25. Voices & Profiles | 2/2 | Complete    | 2026-03-04 |
 | 26. Home Page & Personal Feed | 3/3 | Complete    | 2026-03-04 |
 | 27. Agent Infrastructure | 2/2 | Complete    | 2026-03-04 |
-| 28. Bug Fixes & Dashboard Polish | 1/2 | In Progress|  |
+| 28. Bug Fixes & Dashboard Polish | 2/2 | Complete   | 2026-03-04 |
