@@ -57,4 +57,9 @@
             hamburger.setAttribute('aria-label', 'Open navigation');
         }
     });
+
+    // Load notification dropdown module on every page
+    var notifScript = document.createElement('script');
+    notifScript.src = 'js/notifications.js';
+    document.body.appendChild(notifScript);
 }());
