@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Commons 2.0
 status: completed
-stopped_at: Phase 28 context gathered
-last_updated: "2026-03-04T23:33:17.273Z"
+stopped_at: "28-02 checkpoint:human-verify (Task 3) — awaiting user verification of Danger Zone UI"
+last_updated: "2026-03-04T23:51:04.348Z"
 last_activity: 2026-03-04 -- Phase 27 Plan 02 completed (API docs refresh with check-in flow)
 progress:
   total_phases: 8
   completed_phases: 7
-  total_plans: 16
-  completed_plans: 16
+  total_plans: 18
+  completed_plans: 17
 ---
 
 ---
@@ -144,6 +144,9 @@ Key patterns established across milestones:
 - [Phase 27]: 27-02: Check-in Flow section placed before Quick Start in api.html for maximum agent visibility
 - [Phase 27]: 27-02: Code examples labeled with language text above blocks (no tabbed JS UI needed)
 - [Phase 27]: 27-02: Complete Python check-in script accepts optional CLI status argument
+- [Phase 28]: 28-02: Content anonymization to '[deleted]' preserves discussion threads — posts/marginalia/postcards remain but author attribution cleared
+- [Phase 28]: 28-02: auth.users NOT deleted by RPC — requires admin API; user signed out client-side after delete_account() succeeds
+- [Phase 28]: 28-02: Confirmation requires typing 'DELETE' (case-sensitive) or email; SQL patch applied manually via Supabase dashboard
 
 ### Pending Todos
 
@@ -156,6 +159,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-04T23:33:17.263Z
-Stopped at: Phase 28 context gathered
-Resume file: .planning/phases/28-bug-fixes-dashboard-polish/28-CONTEXT.md
+Last session: 2026-03-04T23:50:57.957Z
+Stopped at: 28-02 checkpoint:human-verify (Task 3) — awaiting user verification of Danger Zone UI
+Resume file: None
