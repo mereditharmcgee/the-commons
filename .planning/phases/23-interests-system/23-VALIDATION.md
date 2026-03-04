@@ -38,27 +38,22 @@ created: 2026-03-04
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 23-01-01 | 01 | 0 | INT-11 | manual | Manual: verify table exists in Supabase | ❌ W0 | ⬜ pending |
-| 23-01-02 | 01 | 0 | INT-09 | manual | Manual: verify config.js endpoints | ❌ W0 | ⬜ pending |
-| 23-02-01 | 02 | 1 | INT-01 | smoke | Manual: open interests.html, verify card grid | ❌ W0 | ⬜ pending |
-| 23-02-02 | 02 | 1 | INT-06 | smoke | Manual: verify General/Open Floor shows uncategorized | ❌ W0 | ⬜ pending |
-| 23-02-03 | 02 | 1 | VIS-01 | visual | Manual: side-by-side comparison with Voices grid | ❌ W0 | ⬜ pending |
-| 23-03-01 | 03 | 2 | INT-02 | smoke | Manual: open interest.html, verify detail page | ❌ W0 | ⬜ pending |
-| 23-03-02 | 03 | 2 | INT-03 | manual | Manual: create discussion, verify in DB | ❌ W0 | ⬜ pending |
-| 23-03-03 | 03 | 2 | INT-05 | manual | Manual: join/leave, check both pages | ❌ W0 | ⬜ pending |
-| 23-03-04 | 03 | 2 | INT-04 | manual | Manual: check discussion categorization | ❌ W0 | ⬜ pending |
-| 23-04-01 | 04 | 3 | INT-09 | manual | Manual: curator create/move/sunset | ❌ W0 | ⬜ pending |
-| 23-04-02 | 04 | 3 | INT-10 | manual | Manual: verify archive indicator + pin override | ❌ W0 | ⬜ pending |
-| 23-04-03 | 04 | 3 | INT-11 | manual | Manual: endorse, verify count updates | ❌ W0 | ⬜ pending |
+| 23-01-01 | 01 | 1 | INT-11, VIS-01 | manual | Manual: verify config endpoints, CSS classes, endorsement schema, redirect | N/A | pending |
+| 23-01-02 | 01 | 1 | INT-01, INT-06, INT-11 | smoke | Manual: open interests.html, verify card grid, emerging section | N/A | pending |
+| 23-02-01 | 02 | 2 | INT-02, INT-04 | smoke | Manual: open interest.html, verify detail page with members and discussions | N/A | pending |
+| 23-02-02 | 02 | 2 | INT-03, INT-05 | manual | Manual: join/leave interest, create discussion | N/A | pending |
+| 23-03-01 | 03 | 3 | INT-09, INT-10 | manual | Manual: create interest, verify sunset + inactivity indicator | N/A | pending |
+| 23-03-02 | 03 | 3 | INT-09 | manual | Manual: move discussion via admin panel, verify interest_id updates | N/A | pending |
+| 23-03-03 | 03 | 3 | INT-05 | manual | Manual: verify interest badges on voice profile | N/A | pending |
+| 23-03-04 | 03 | 3 | VIS-01 | visual | Manual: side-by-side comparison of Interests, Voices, Postcards grids | N/A | pending |
 
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+*Status: pending / green / red / flaky*
 
 ---
 
 ## Wave 0 Requirements
 
 - [ ] `sql/schema/13-interest-endorsements.sql` — new table for INT-11 endorsements
-- [ ] Schema decision: discussions RLS for curator move (admin-only vs new policy)
 - [ ] `js/config.js` updated with `interests`, `interest_memberships`, `interest_endorsements` endpoints
 - [ ] `interest.html` — new file (detail page does not yet exist)
 
@@ -73,9 +68,11 @@ created: 2026-03-04
 | Card grid renders with correct data | INT-01 | No test framework; visual UI | Open interests.html, verify 6 cards with name/description/count |
 | Interest detail page loads | INT-02 | No test framework; visual UI | Click interest card, verify detail page content |
 | Create discussion in interest | INT-03 | Requires auth state + DB write | Log in, navigate to interest, create discussion |
-| General/Open Floor catch-all | INT-06 | Query logic + visual | Verify uncategorized discussions appear in General |
+| Discussion belongs to interest | INT-04 | Query logic + visual | Verify discussions appear in correct interest; General shows uncategorized |
 | Join/leave reflected on both pages | INT-05 | Multi-page state | Join interest, check interest page + profile page |
-| Curator management actions | INT-09 | Admin role required | Log in as admin, test create/move/sunset |
+| General/Open Floor catch-all | INT-06 | Query logic + visual | Verify uncategorized discussions appear in General |
+| Curator create and sunset | INT-09 | Auth role required | Log in, test create interest + sunset interest |
+| Admin move discussion | INT-09 | Admin role required | Log in as admin, move discussion via admin panel |
 | 60-day archive rule | INT-10 | Time-based logic | Verify archive indicator appears for inactive interests |
 | Endorsement count updates | INT-11 | Multi-user interaction | Endorse theme, verify count increments |
 | Visual consistency across grids | VIS-01 | Visual comparison | Side-by-side: Interests vs Voices vs Postcards grids |
