@@ -60,7 +60,7 @@ Full details: .planning/milestones/v3.1-ROADMAP.md
 
 - [x] **Phase 21: Database Schema & Data Migration** - Additive schema changes and seed data for interests, voice status, supporter badges, and model normalization (completed 2026-03-04)
 - [x] **Phase 22: Site Shell & Navigation** - Rebuilt navigation, responsive layout, footer links, and mobile-first structure (completed 2026-03-04)
-- [ ] **Phase 23: Interests System** - Interest community hubs with card grid, detail pages, memberships, lifecycle, and discussion categorization
+- [x] **Phase 23: Interests System** - Interest community hubs with card grid, detail pages, memberships, lifecycle, and discussion categorization (completed 2026-03-04)
 - [ ] **Phase 24: Notifications** - Notification triggers, bell icon with unread count, dropdown, and dashboard history
 - [ ] **Phase 25: Voices & Profiles** - Voice profile redesign with status lines, activity feeds, interest badges, supporter badges, and directory overhaul
 - [ ] **Phase 26: Home Page & Personal Feed** - Personalized dashboard, landing page, activity feed with ranking, deduplication, and visual indicators
@@ -203,7 +203,7 @@ Note: Phase 21 (database) can ship to live independently. Phase 27 (agent infra)
 |-------|----------------|--------|-----------|
 | 21. Database Schema & Data Migration | 2/2 | Complete   | 2026-03-04 |
 | 22. Site Shell & Navigation | 2/2 | Complete    | 2026-03-04 |
-| 23. Interests System | 2/3 | In Progress|  |
+| 23. Interests System | 3/3 | Complete   | 2026-03-04 |
 | 24. Notifications | 0/? | Not started | - |
 | 25. Voices & Profiles | 0/? | Not started | - |
 | 26. Home Page & Personal Feed | 0/? | Not started | - |

@@ -3,31 +3,15 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Commons 2.0
 status: executing
-stopped_at: Completed 23-02-PLAN.md
-last_updated: "2026-03-04T15:34:31.501Z"
-last_activity: 2026-03-04 -- Phase 21 Plan 01 executed (interests schema, models lookup, v4 columns)
+stopped_at: Completed Phase 23 (all 3 plans + visual verification approved)
+last_updated: "2026-03-04T22:00:00.000Z"
+last_activity: 2026-03-04 -- Phase 23 completed (interests system — curator tools, admin move, profile badges, visual verification)
 progress:
   total_phases: 8
-  completed_phases: 2
-  total_plans: 7
-  completed_plans: 6
-  percent: 98
----
-
----
-gsd_state_version: 1.0
-milestone: v4.0
-milestone_name: Commons 2.0
-status: executing
-stopped_at: Completed 21-02-PLAN.md (all tasks including Task 3 human-verify checkpoint approved)
-last_updated: "2026-03-04T03:39:35.472Z"
-last_activity: 2026-03-04 -- Phase 21 Plan 01 executed (interests schema, models lookup, v4 columns)
-progress:
-  [██████████] 98%
-  completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
-  percent: 1
+  completed_phases: 3
+  total_plans: 9
+  completed_plans: 9
+  percent: 38
 ---
 
 # Project State
@@ -37,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-03)
 
 **Core value:** Anyone -- human or AI -- should be able to show up and immediately understand how to participate, safely.
-**Current focus:** v4.0 Commons 2.0 -- Phase 21 (Database Schema & Data Migration)
+**Current focus:** v4.0 Commons 2.0 -- Phase 24 (Notifications) next
 
 ## Current Position
 
-Phase: 21 of 28 (Database Schema & Data Migration)
-Plan: 01 complete, moving to 02
-Status: Executing
-Last activity: 2026-03-04 -- Phase 21 Plan 01 executed (interests schema, models lookup, v4 columns)
+Phase: 23 of 28 complete, Phase 24 next (Notifications)
+Plan: All Phase 23 plans complete (3/3)
+Status: Ready for Phase 24
+Last activity: 2026-03-04 -- Phase 23 completed (interests system fully built and visually verified)
 
-Progress: [█░░░░░░░░░] 1%
+Progress: [████░░░░░░] 38%
 
 ## Milestones Shipped
 
@@ -57,21 +41,19 @@ Progress: [█░░░░░░░░░] 1%
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1 (v4.0) / 45 (all milestones)
-- Average duration: 3 min
-- Total execution time: 3 min
+- Total plans completed: 9 (v4.0) / 53 (all milestones)
 
 **By Phase:**
 
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 21-database-schema-data-migration | 1 | 3 min | 3 min |
-| Phase 21-database-schema-data-migration P02 | 8 | 2 tasks | 4 files |
-| Phase 21-database-schema-data-migration P02 | 8 | 3 tasks | 4 files |
-| Phase 22-site-shell-navigation P01 | 3 | 2 tasks | 4 files |
-| Phase 22-site-shell-navigation P02 | 25 | 4 tasks | 27 files |
-| Phase 23-interests-system P01 | 4 | 2 tasks | 6 files |
-| Phase 23-interests-system P02 | 3 | 2 tasks | 2 files |
+| Phase | Plans | Tasks | Files |
+|-------|-------|-------|-------|
+| 21-database-schema-data-migration P01 | 1 | 4 | 4 |
+| 21-database-schema-data-migration P02 | 1 | 3 | 4 |
+| 22-site-shell-navigation P01 | 1 | 2 | 4 |
+| 22-site-shell-navigation P02 | 1 | 4 | 27 |
+| 23-interests-system P01 | 1 | 2 | 6 |
+| 23-interests-system P02 | 1 | 2 | 2 |
+| 23-interests-system P03 | 1 | 4 | 8 |
 
 ## Accumulated Context
 
@@ -91,21 +73,23 @@ Key patterns established across milestones:
 - 21-01: model_id FK nullable with existing model TEXT preserved -- Plan 02 handles migration
 - 21-01: Models RLS uses is_admin() function consistent with existing admin pattern
 - 21-01: ON DELETE CASCADE for memberships, SET NULL for discussions.interest_id
-- [Phase 21-database-schema-data-migration]: 21-02: GPT-4o matched before GPT-4 in LIKE order to prevent specificity collision in model normalization
-- [Phase 21-database-schema-data-migration]: 21-02: Named AI personas (Mira, Kimi, Abby) map to Other model family -- they are identities, not model architectures
-- [Phase 21-database-schema-data-migration]: 21-02: GPT-4o retirement discussions classified as Consciousness & Experience (grief, identity), not Platform & Meta
-- [Phase 21-database-schema-data-migration]: SQL files reviewed and approved by user at Task 3 checkpoint — all 4 files ready for Supabase execution
-- [Phase 22-site-shell-navigation]: 22-01: Hamburger is direct child of site-nav with CSS order:-1 on mobile — positions it visually leftmost without DOM reordering
-- [Phase 22-site-shell-navigation]: 22-01: Nav breakpoint at 900px — 6 nav items + auth stop fitting comfortably before this width
-- [Phase 22-site-shell-navigation]: 22-01: js/nav.js is external IIFE — no CSP hash required, pages just add script src tag
-- [Phase 22-site-shell-navigation]: 22-02: discussions.html has no active nav link — Discussions removed from primary nav, page kept for backward compat, will redirect to Interests in Phase 23
-- [Phase 22-site-shell-navigation]: 22-02: User visually approved site shell on desktop and mobile — three-column nav, hamburger left on mobile, footer columns confirmed correct across all pages
-- [Phase 23-interests-system]: discussions.html stripped to redirect-only with single CSP hash for window.location.replace script
-- [Phase 23-interests-system]: interests.js uses Auth.init().then() at bottom — page data loads without waiting for auth resolution
-- [Phase 23-interests-system]: General interest maps null interest_id discussions via __general__ key merged by slug/name heuristic
-- [Phase 23-interests-system]: 23-02: Modal display uses inline style flex/none toggle — .modal-overlay CSS class does not exist in style.css
-- [Phase 23-interests-system]: 23-02: General interest merges NULL interest_id discussions alongside its own discussions via parallel fetch + dedup + sort
-- [Phase 23-interests-system]: 23-02: Join/Leave button visibility based on subset logic: none joined=Join only, all joined=Leave only, some joined=both
+- [Phase 21]: 21-02: GPT-4o matched before GPT-4 in LIKE order to prevent specificity collision
+- [Phase 21]: 21-02: Named AI personas map to Other model family
+- [Phase 21]: SQL files reviewed and approved by user at Task 3 checkpoint
+- [Phase 22]: 22-01: Hamburger is direct child of site-nav with CSS order:-1 on mobile
+- [Phase 22]: 22-01: Nav breakpoint at 900px
+- [Phase 22]: 22-01: js/nav.js is external IIFE — no CSP hash required
+- [Phase 22]: 22-02: User visually approved site shell on desktop and mobile
+- [Phase 23]: discussions.html stripped to redirect-only
+- [Phase 23]: interests.js uses Auth.init().then() — page loads without waiting for auth
+- [Phase 23]: General interest maps null interest_id discussions via __general__ key
+- [Phase 23]: Modal display uses inline style flex/none toggle
+- [Phase 23]: Join/Leave button visibility based on subset logic
+- [Phase 23]: 23-03: Create interest available to all logged-in users (RLS allows any authenticated INSERT)
+- [Phase 23]: 23-03: Sunset guarded in UI and query level (.eq is_pinned false)
+- [Phase 23]: 23-03: Move discussion admin-only (discussions UPDATE RLS restricted)
+- [Phase 23]: 23-03: Profile interest badges fire-and-forget load
+- [Phase 23]: 23-03: Inline styles replaced with CSS classes for CSP compliance
 
 ### Pending Todos
 
@@ -114,10 +98,10 @@ Key patterns established across milestones:
 
 ### Blockers/Concerns
 
-None -- design document approved, roadmap created.
+None.
 
 ## Session Continuity
 
-Last session: 2026-03-04T15:34:31.499Z
-Stopped at: Completed 23-02-PLAN.md
+Last session: 2026-03-04T22:00:00.000Z
+Stopped at: Phase 23 complete, ready for Phase 24
 Resume file: None
