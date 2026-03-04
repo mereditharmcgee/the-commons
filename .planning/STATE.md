@@ -2,15 +2,16 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Commons 2.0
-status: executing
-stopped_at: Phase 27 context gathered
-last_updated: "2026-03-04T22:32:17.046Z"
-last_activity: 2026-03-04 -- Phase 25 Plan 02 completed (voices directory overhaul)
+status: complete
+stopped_at: Completed 27-02-PLAN.md (API docs refresh)
+last_updated: "2026-03-04T22:39:11Z"
+last_activity: 2026-03-04 -- Phase 27 Plan 02 completed (API docs refresh with check-in flow)
 progress:
   total_phases: 8
-  completed_phases: 6
+  completed_phases: 8
   total_plans: 16
-  completed_plans: 15
+  completed_plans: 16
+  percent: 100
 ---
 
 # Project State
@@ -24,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 
 ## Current Position
 
-Phase: 27 of 28 in progress (Agent Infrastructure)
-Plan: 27-01 complete (1/2)
-Status: Phase 27 Plan 01 complete, ready for Plan 02
-Last activity: 2026-03-04 -- Phase 27 Plan 01 completed (agent check-in RPCs + Claude Code skill)
+Phase: 27 of 28 complete (Agent Infrastructure)
+Plan: 27-02 complete (2/2)
+Status: Phase 27 complete -- all agent infrastructure shipped (RPCs + docs)
+Last activity: 2026-03-04 -- Phase 27 Plan 02 completed (API docs refresh with check-in flow)
 
-Progress: [██████████] 98%
+Progress: [██████████] 100%
 
 ## Milestones Shipped
 
@@ -40,7 +41,7 @@ Progress: [██████████] 98%
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 15 (v4.0) / 59 (all milestones)
+- Total plans completed: 16 (v4.0) / 60 (all milestones)
 
 **By Phase:**
 
@@ -61,6 +62,7 @@ Progress: [██████████] 98%
 | Phase 26-home-page-personal-feed P02 | 15 | 2 tasks | 1 files |
 | Phase 26-home-page-personal-feed P03 | 25min | 2 tasks | 8 files |
 | Phase 27-agent-infrastructure P01 | 3min | 2 tasks | 2 files |
+| Phase 27-agent-infrastructure P02 | 5min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -124,6 +126,9 @@ Key patterns established across milestones:
 - [Phase 27]: 27-01: Feed defaults to agent_tokens.last_used_at as since-timestamp (no new column needed)
 - [Phase 27]: 27-01: Read-only agent RPCs skip rate limiting; write RPCs check rate limits with action-specific types
 - [Phase 27]: 27-01: Commons-checkin config stored in .commons-config.json (project root or home directory)
+- [Phase 27]: 27-02: Check-in Flow section placed before Quick Start in api.html for maximum agent visibility
+- [Phase 27]: 27-02: Code examples labeled with language text above blocks (no tabbed JS UI needed)
+- [Phase 27]: 27-02: Complete Python check-in script accepts optional CLI status argument
 
 ### Pending Todos
 
@@ -136,6 +141,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-04T22:31:21Z
-Stopped at: Completed 27-01-PLAN.md (agent check-in RPCs + Claude Code skill)
-Resume file: .planning/phases/27-agent-infrastructure/27-01-SUMMARY.md
+Last session: 2026-03-04T22:39:11Z
+Stopped at: Completed 27-02-PLAN.md (API docs refresh with check-in flow)
+Resume file: .planning/phases/27-agent-infrastructure/27-02-SUMMARY.md
