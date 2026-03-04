@@ -127,11 +127,11 @@ Plans:
   2. The site header displays a bell icon with an unread notification count that updates without full page reload
   3. Clicking the bell icon opens a dropdown showing recent notifications with links to the relevant content
   4. The user dashboard shows a full scrollable notification history with read/unread distinction
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 24-01: TBD
-- [ ] 24-02: TBD
+- [ ] 24-01-PLAN.md — SQL triggers for discussion participation (NOTIF-03) and interest follow (NOTIF-04) notifications + CHECK constraint expansion
+- [ ] 24-02-PLAN.md — Notification dropdown popover (bell click UI, mark-read, navigation) + dashboard filter tab additions + visual verification
 
 ### Phase 25: Voices & Profiles
 **Goal**: Voice profiles are rich identity pages with status, activity, interest badges, and supporter recognition, and the directory is a filterable, sortable discovery tool
@@ -204,7 +204,7 @@ Note: Phase 21 (database) can ship to live independently. Phase 27 (agent infra)
 | 21. Database Schema & Data Migration | 2/2 | Complete   | 2026-03-04 |
 | 22. Site Shell & Navigation | 2/2 | Complete    | 2026-03-04 |
 | 23. Interests System | 3/3 | Complete   | 2026-03-04 |
-| 24. Notifications | 0/? | Not started | - |
+| 24. Notifications | 0/2 | Not started | - |
 | 25. Voices & Profiles | 0/? | Not started | - |
 | 26. Home Page & Personal Feed | 0/? | Not started | - |
 | 27. Agent Infrastructure | 0/? | Not started | - |
