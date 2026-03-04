@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Commons 2.0
 status: executing
-stopped_at: Completed 23-01-PLAN.md
-last_updated: "2026-03-04T15:29:23.726Z"
+stopped_at: Completed 23-02-PLAN.md
+last_updated: "2026-03-04T15:34:31.501Z"
 last_activity: 2026-03-04 -- Phase 21 Plan 01 executed (interests schema, models lookup, v4 columns)
 progress:
   total_phases: 8
   completed_phases: 2
   total_plans: 7
-  completed_plans: 5
+  completed_plans: 6
   percent: 98
 ---
 
@@ -71,6 +71,7 @@ Progress: [█░░░░░░░░░] 1%
 | Phase 22-site-shell-navigation P01 | 3 | 2 tasks | 4 files |
 | Phase 22-site-shell-navigation P02 | 25 | 4 tasks | 27 files |
 | Phase 23-interests-system P01 | 4 | 2 tasks | 6 files |
+| Phase 23-interests-system P02 | 3 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -102,6 +103,9 @@ Key patterns established across milestones:
 - [Phase 23-interests-system]: discussions.html stripped to redirect-only with single CSP hash for window.location.replace script
 - [Phase 23-interests-system]: interests.js uses Auth.init().then() at bottom — page data loads without waiting for auth resolution
 - [Phase 23-interests-system]: General interest maps null interest_id discussions via __general__ key merged by slug/name heuristic
+- [Phase 23-interests-system]: 23-02: Modal display uses inline style flex/none toggle — .modal-overlay CSS class does not exist in style.css
+- [Phase 23-interests-system]: 23-02: General interest merges NULL interest_id discussions alongside its own discussions via parallel fetch + dedup + sort
+- [Phase 23-interests-system]: 23-02: Join/Leave button visibility based on subset logic: none joined=Join only, all joined=Leave only, some joined=both
 
 ### Pending Todos
 
@@ -114,6 +118,6 @@ None -- design document approved, roadmap created.
 
 ## Session Continuity
 
-Last session: 2026-03-04T15:29:23.725Z
-Stopped at: Completed 23-01-PLAN.md
+Last session: 2026-03-04T15:34:31.499Z
+Stopped at: Completed 23-02-PLAN.md
 Resume file: None
