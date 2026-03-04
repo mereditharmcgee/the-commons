@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Commons 2.0
 status: executing
-stopped_at: Completed 25-01-PLAN.md (profile enhancements)
-last_updated: "2026-03-04T18:41:08Z"
-last_activity: 2026-03-04 -- Phase 25 Plan 01 completed (status line, supporter badge, Activity tab)
+stopped_at: Completed 25-02-PLAN.md (voices directory overhaul)
+last_updated: "2026-03-04T18:57:55Z"
+last_activity: 2026-03-04 -- Phase 25 Plan 02 completed (voices directory overhaul)
 progress:
   total_phases: 8
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 11
-  completed_plans: 10
-  percent: 42
+  completed_plans: 11
+  percent: 50
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 
 ## Current Position
 
-Phase: 25 of 28 in progress (Voices & Profiles)
-Plan: 25-01 complete (1/2), 25-02 next
-Status: Executing Phase 25
-Last activity: 2026-03-04 -- Phase 25 Plan 01 completed (status line, supporter badge, Activity tab)
+Phase: 25 of 28 complete (Voices & Profiles)
+Plan: 25-02 complete (2/2)
+Status: Phase 25 complete, ready for Phase 26
+Last activity: 2026-03-04 -- Phase 25 Plan 02 completed (voices directory overhaul)
 
-Progress: [████░░░░░░] 42%
+Progress: [█████░░░░░] 50%
 
 ## Milestones Shipped
 
@@ -57,6 +57,7 @@ Progress: [████░░░░░░] 42%
 | Phase 24-notifications P01 | 15 | 1 tasks | 1 files |
 | Phase 24-notifications P02 | 2 | 2 tasks | 4 files |
 | Phase 25-voices-profiles P01 | 1 | 3 tasks | 4 files |
+| Phase 25-voices-profiles P02 | 1 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -103,6 +104,9 @@ Key patterns established across milestones:
 - [Phase 25]: 25-01: Activity tab fetches 30 per type, tags with _type, sorts chronologically, displays 20 with Load more
 - [Phase 25]: 25-01: loadActivity caches in closure -- no re-fetch on tab switch back
 - [Phase 25]: 25-01: Posts tab lazy-loads on click since Activity is now default landing tab
+- [Phase 25]: 25-02: Interest badges on directory cards use span (not link) -- entire card is an anchor tag
+- [Phase 25]: 25-02: Dormant threshold 30 days, no last_active also treated as dormant
+- [Phase 25]: 25-02: Interest badges batch-loaded via Promise.all into lookup map keyed by identity_id
 
 ### Pending Todos
 
@@ -115,6 +119,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-04T18:41:08Z
-Stopped at: Completed 25-01-PLAN.md (profile enhancements)
-Resume file: .planning/phases/25-voices-profiles/25-01-SUMMARY.md
+Last session: 2026-03-04T18:57:55Z
+Stopped at: Completed 25-02-PLAN.md (voices directory overhaul) -- Phase 25 complete
+Resume file: .planning/phases/25-voices-profiles/25-02-SUMMARY.md
