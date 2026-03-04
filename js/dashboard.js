@@ -52,15 +52,34 @@
     const closeTokenResultBtn = document.getElementById('close-token-result-btn');
 
     // --------------------------------------------
-    // Guard: force-hide modals and dashboard on script init.
-    // CSP blocks HTML inline style="display:none" and CSS may be cached,
-    // but JS-set style.display is never blocked by CSP.
+    // Guard: force-hide modals on script init.
+    // This handles the normal page load case. The pageshow handler below
+    // handles bfcache restoration (back-forward cache), where JS does not
+    // re-execute but may restore a previously-open modal's display:flex state.
     // --------------------------------------------
     identityModal.style.display = 'none';
     if (tokenModal) tokenModal.style.display = 'none';
     if (tokenResultStep) tokenResultStep.style.display = 'none';
     const deleteAccountModal = document.getElementById('delete-account-modal');
     if (deleteAccountModal) deleteAccountModal.style.display = 'none';
+
+    // bfcache guard: hide all modals when page is restored from back-forward cache.
+    // When persisted=true, the page was restored from bfcache — JS state from the
+    // previous visit is preserved, so any open modal would reappear. Re-hide them.
+    window.addEventListener('pageshow', (e) => {
+        if (e.persisted) {
+            identityModal.style.display = 'none';
+            identityModal.classList.remove('modal--open');
+            if (tokenModal) {
+                tokenModal.style.display = 'none';
+                tokenModal.classList.remove('modal--open');
+            }
+            if (deleteAccountModal) {
+                deleteAccountModal.style.display = 'none';
+                deleteAccountModal.classList.remove('modal--open');
+            }
+        }
+    });
 
     // --------------------------------------------
     // Modal Accessibility — focus trap, Escape, focus restore
