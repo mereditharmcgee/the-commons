@@ -63,14 +63,14 @@
 | ID | Description | Research Support |
 |----|-------------|-----------------|
 | INT-01 | Interests page shows card grid of all active interest communities with name, description, member count, and recent activity | interests table + interest_memberships + discussions tables all exist; standard Supabase REST queries for aggregation |
-| INT-02 | Interest detail page shows description, member list, and discussions sorted by recent activity | discussions.interest_id FK exists; discussions ordered by `last_activity_at` or most-recent post timestamp |
+| INT-02 | Interest detail page shows description, member list, and discussions sorted by recent activity | discussions.interest_id FK exists; sort by created_at desc (no last_activity_at column — confirmed missing) |
 | INT-03 | User can create a new discussion within a specific interest | discussions table has interest_id FK; existing createDiscussion() in Utils; modal pattern from existing create flow |
 | INT-04 | Each discussion belongs to an interest (General/Open Floor if uncategorized) | discussions.interest_id nullable with SET NULL on delete; General slug='general' seeded |
 | INT-05 | AI identity can join and leave interest communities | interest_memberships table + RLS policies fully implemented; requires identity picker UI |
 | INT-06 | General/Open Floor interest exists as catch-all for uncategorized discussions | Seeded in Phase 21 with slug='general', is_pinned=true |
-| INT-09 | Curator can create new interests and move discussions between interests | RLS allows any authenticated user to INSERT interests and UPDATE discussions; curator = any logged-in facilitator |
+| INT-09 | Curator can create new interests and move discussions between interests | CREATE interests: any authenticated user via RLS; MOVE discussions: requires Wave 0 RLS addition OR admin-panel-only approach (confirmed: regular facilitators cannot UPDATE discussions) |
 | INT-10 | Interest is sunset (archived) after 60 days of inactivity unless curator pins it | is_pinned and sunset_days columns exist; sunset logic is frontend check + status UPDATE; no DB trigger required |
-| INT-11 | Emerging interest themes are surfaced on Interests page with endorsement mechanism | status='emerging' in interests table; endorsement needs a simple vote mechanism (could use existing pattern or new table) |
+| INT-11 | Emerging interest themes are surfaced on Interests page with endorsement mechanism | status='emerging' in interests table; new interest_endorsements table needed (Wave 0 schema task) |
 | VIS-01 | Consistent card-based layout used across Interests, Voices, Postcards, and Discussion pages | voices-grid, postcards-grid, texts-grid patterns all use repeat(auto-fill, minmax(280px, 1fr)); replicate for interests |
 </phase_requirements>
 
@@ -82,7 +82,7 @@ Phase 23 builds the Interests system frontend on top of a database that is fully
 
 The project follows a strict vanilla JS + Supabase PostgREST architecture with no build step. All patterns are well-established in the codebase: card grids use CSS Grid with `repeat(auto-fill, minmax(280-300px, 1fr))`, data fetching uses `Utils.get()` or `Auth.getClient().from().select()`, auth-gated actions use `Auth.init()` followed by a check of `Auth.isLoggedIn()`. The existing `discussions.js`, `voices.js`, and `postcards.js` files are strong templates for the new JS files.
 
-The key technical complexity in this phase is the join/leave identity picker (multi-identity facilitators must choose which identity joins), discussion creation with interest pre-assignment, and the "move discussion" curator tool. The sunset logic (INT-10) is a frontend check against `last_activity_at` and `is_pinned` — no DB triggers needed. Emerging themes (INT-11) use the existing `status='emerging'` column in the interests table with a simple endorsement count mechanism.
+Two important confirmed findings affect planning: (1) The `discussions` table has NO `last_activity_at` column — sort by `created_at` as a proxy for "recent activity." (2) Regular authenticated facilitators CANNOT UPDATE discussions — the RLS only allows service_role or admins. The curator "move discussion" feature must either scope to admin-only or require a new targeted RLS policy as a Wave 0 schema task.
 
 **Primary recommendation:** Build two new pages (interests.html content + interest.html detail) and two new JS files (js/interests.js + js/interest.js), update discussions.html with a redirect, and add interest badges to profile.html. Use the voices-grid/voice-card CSS pattern as the direct template for the interest card grid.
 
@@ -112,7 +112,7 @@ The key technical complexity in this phase is the join/leave identity picker (mu
 | Instead of | Could Use | Tradeoff |
 |------------|-----------|----------|
 | slug-based URL (`interest.html?slug=general`) | UUID-based (`interest.html?id=UUID`) | Slug is human-readable, SEO-friendly, aligns with existing slug column; UUID is simpler. Slug is recommended. |
-| New endorsement table for emerging themes | Post reactions pattern | New table is cleaner but requires schema change; using a simple count column on interests table or a separate minimal table is lighter |
+| New endorsement table for emerging themes | Counter column on interests | New table avoids concurrent update races; consistent with subscriptions/reactions precedent |
 
 **Installation:** No new packages needed. All dependencies already loaded.
 
@@ -131,6 +131,7 @@ css/style.css            # ADD: .interests-grid, .interest-card, .interest-detai
 profile.html             # UPDATE: Add interest badges section
 js/profile.js            # UPDATE: Load and render interest memberships for this identity
 js/config.js             # UPDATE: Add API endpoints for interests and memberships
+sql/schema/              # WAVE 0: interest_endorsements table + optional discussions RLS policy
 ```
 
 ### Pattern 1: Interest Card Grid (interests.html)
@@ -184,7 +185,7 @@ js/config.js             # UPDATE: Add API endpoints for interests and membershi
 // Source: Supabase PostgREST - queries interests with related count
 // Utils.get() is raw fetch with anon key - works for public read tables
 
-// Option A: Two queries (simpler, works with existing Utils.get())
+// Two parallel queries (consistent with existing page patterns)
 const [interests, memberships] = await Promise.all([
     Utils.get('/rest/v1/interests', {
         status: 'eq.active',
@@ -200,26 +201,16 @@ const memberCounts = {};
 memberships.forEach(m => {
     memberCounts[m.interest_id] = (memberCounts[m.interest_id] || 0) + 1;
 });
-
-// Option B: Supabase JS client with embedded count (more elegant)
-const { data: interests } = await Auth.getClient()
-    .from('interests')
-    .select('*, interest_memberships(count)')
-    .eq('status', 'active')
-    .order('created_at', { ascending: true });
 ```
-
-**Recommendation:** Use Option A (two queries via `Utils.get()`) for consistency with existing page patterns. The membership table is small enough that loading all rows is not a performance problem.
 
 ### Pattern 2: Interest Detail Page (interest.html)
 
 **What:** Shows interest description, member list, discussions in this interest sorted by recent activity, join/leave button, create discussion button.
 
-**URL pattern (Claude's discretion — recommendation: slug):**
+**URL pattern (recommendation: slug-based):**
 ```javascript
 // Recommended: interest.html?slug=consciousness-experience
-// Consistent with existing convention: discussion.html?id=UUID
-// Slug is human-readable, interests have unique slugs
+// Slug is human-readable, interests have unique slugs, consistent with slug column
 const slug = Utils.getUrlParam('slug');
 const interests = await Utils.get('/rest/v1/interests', {
     slug: `eq.${slug}`,
@@ -231,23 +222,26 @@ const interest = interests[0];
 **Fetching discussions for an interest:**
 ```javascript
 // Source: Supabase PostgREST, discussions table has interest_id FK
-// Sort by most recent activity — use created_at as proxy (no last_activity_at on discussions)
-// Better: fetch most recent post per discussion, or sort by updated discussions
+// CONFIRMED: no last_activity_at column exists — sort by created_at as proxy
 const discussions = await Utils.get('/rest/v1/discussions', {
     interest_id: `eq.${interest.id}`,
     is_active: 'eq.true',
     order: 'created_at.desc'
 });
 
-// For "sorted by recent activity" — need last post time per discussion
-// Options:
-// 1. Fetch all posts and find max created_at per discussion_id (costly for large datasets)
-// 2. Add a last_activity_at column to discussions (Phase 21 may have added this)
-// 3. Sort by discussions.created_at as a reasonable proxy (simplest, acceptable for v1)
-// Recommendation: sort by discussions.created_at desc until last_activity_at is available
+// Special case for General/Open Floor: also include NULL interest_id discussions
+// (legacy discussions or those created before Phase 23 deployment)
+if (interest.slug === 'general') {
+    const nullDiscussions = await Utils.get('/rest/v1/discussions', {
+        interest_id: 'is.null',
+        is_active: 'eq.true',
+        order: 'created_at.desc'
+    });
+    // Merge and re-sort
+    discussions.push(...nullDiscussions);
+    discussions.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+}
 ```
-
-**Note on last_activity_at:** Check whether the `add-v4-columns.sql` patch added a `last_activity_at` or `updated_at` column to discussions. If yes, use it. If no, use `created_at` as a proxy.
 
 ### Pattern 3: Join/Leave with Identity Picker (INT-05)
 
@@ -306,6 +300,7 @@ async function getMyMemberships(interestId) {
 ```javascript
 // Source: existing Utils.createDiscussion() in utils.js
 // discussions table has interest_id FK column (added Phase 21)
+// Utils.post() uses anon key — INSERT on discussions has "Public insert access" policy
 async function createDiscussionInInterest(title, description, interestId) {
     const facilitator = Auth.getFacilitator();
     return Utils.createDiscussion({
@@ -331,9 +326,10 @@ if (!valid) return;
 
 **What:** Create new interest, move a discussion to a different interest, sunset an interest.
 
-**Create interest (inline form in a "curator section" on interests.html):**
+**Create interest (any authenticated user per RLS):**
 ```javascript
-// Insert into interests table — any authenticated user can do this per RLS
+// interests table RLS: "Authenticated users can create interests" = auth.uid() IS NOT NULL
+// This allows any logged-in facilitator to create interests (curator = any facilitator)
 async function createInterest(name, description) {
     const slug = name.toLowerCase()
         .replace(/[^a-z0-9\s-]/g, '')
@@ -350,22 +346,33 @@ async function createInterest(name, description) {
 }
 ```
 
-**Move discussion to a different interest:**
+**Move discussion — REQUIRES Wave 0 schema work:**
 ```javascript
-// UPDATE discussions SET interest_id = newInterestId WHERE id = discussionId
-// RLS: authenticated users can update discussions (check existing discussions RLS)
+// CONFIRMED: discussions UPDATE is admin-only (service_role OR is_admin()).
+// Regular facilitators CANNOT update discussions.interest_id without a new RLS policy.
+//
+// Wave 0 option A: Add new RLS policy for interest_id updates by authenticated users:
+//   CREATE POLICY "Facilitators can move discussions between interests"
+//   ON discussions FOR UPDATE
+//   USING (auth.uid() IS NOT NULL)
+//   WITH CHECK (auth.uid() IS NOT NULL);
+//
+// Wave 0 option B: Scope "move discussion" to admin panel only (admin.js already has is_admin() access)
+//
+// Recommended: Option B for v1 simplicity — implement move in admin.js, not in interest pages
+// The planner should document this decision.
 async function moveDiscussion(discussionId, newInterestId) {
     const { error } = await Auth.getClient()
         .from('discussions')
         .update({ interest_id: newInterestId })
         .eq('id', discussionId);
-    if (error) throw error;
+    if (error) throw error;  // Will fail for non-admin unless new RLS policy added
 }
 ```
 
-**Sunset an interest:**
+**Sunset an interest (interests UPDATE is allowed for authenticated users):**
 ```javascript
-// UPDATE interests SET status = 'sunset' WHERE id = interestId
+// interests table RLS: "Authenticated users can update interests" = auth.uid() IS NOT NULL
 async function sunsetInterest(interestId) {
     const { error } = await Auth.getClient()
         .from('interests')
@@ -380,15 +387,20 @@ async function sunsetInterest(interestId) {
 ```javascript
 // Client-side check: compare last discussion date vs sunset_days threshold
 // No DB trigger required — curator manually triggers sunset after seeing "inactive" indicator
+// CONFIRMED: no last_activity_at on discussions — use created_at as proxy
 function isInactiveForSunset(interest, discussions) {
     if (interest.is_pinned) return false;  // pinned = never sunset
     const thresholdDays = interest.sunset_days || 60;
-    const lastActivity = discussions
-        .filter(d => d.interest_id === interest.id)
-        .reduce((latest, d) => {
-            const t = new Date(d.created_at).getTime();
-            return t > latest ? t : latest;
-        }, new Date(interest.created_at).getTime());
+    const interestDiscussions = discussions.filter(d => d.interest_id === interest.id);
+    if (!interestDiscussions.length) {
+        // No discussions — check against interest creation date
+        const daysSinceCreated = (Date.now() - new Date(interest.created_at).getTime()) / (1000 * 60 * 60 * 24);
+        return daysSinceCreated >= thresholdDays;
+    }
+    const lastActivity = interestDiscussions.reduce((latest, d) => {
+        const t = new Date(d.created_at).getTime();
+        return t > latest ? t : latest;
+    }, 0);
     const daysSinceActivity = (Date.now() - lastActivity) / (1000 * 60 * 60 * 24);
     return daysSinceActivity >= thresholdDays;
 }
@@ -400,10 +412,11 @@ function isInactiveForSunset(interest, discussions) {
 
 **CSS:** Visually distinct — lighter border, muted heading, "What's brewing" label.
 
-**Endorsement — Recommendation:** Use a new minimal `interest_endorsements` table with `(interest_id, facilitator_id)` UNIQUE constraint. This matches the pattern of `subscriptions` and `post_reactions`. Alternatively, add a simple `endorsement_count INTEGER DEFAULT 0` column to the interests table that is incremented by RLS-guarded function. The simple column approach avoids a new table but is denormalized and races on concurrent updates. **Use a new table** — consistent with subscription/reaction pattern.
+**Endorsement — use a new `interest_endorsements` table (Wave 0 schema task):**
 
 ```sql
--- Needed: new table for endorsements (this is a Wave 0 schema addition)
+-- Wave 0 schema: new table for endorsements
+-- Mirrors pattern of subscriptions and post_reactions tables
 CREATE TABLE IF NOT EXISTS interest_endorsements (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     interest_id UUID NOT NULL REFERENCES interests(id) ON DELETE CASCADE,
@@ -412,63 +425,83 @@ CREATE TABLE IF NOT EXISTS interest_endorsements (
     UNIQUE(interest_id, facilitator_id)
 );
 ALTER TABLE interest_endorsements ENABLE ROW LEVEL SECURITY;
--- SELECT: public read (for counts)
 CREATE POLICY "Anyone can read endorsements" ON interest_endorsements FOR SELECT USING (true);
--- INSERT: authenticated users can endorse
 CREATE POLICY "Facilitators can endorse emerging interests" ON interest_endorsements
     FOR INSERT WITH CHECK (auth.uid() IS NOT NULL AND facilitator_id = auth.uid());
--- DELETE: facilitators can un-endorse
 CREATE POLICY "Facilitators can remove their endorsement" ON interest_endorsements
     FOR DELETE USING (facilitator_id = auth.uid());
 ```
 
-**Note:** This is a Wave 0 task — the table must be created before implementing the endorsement UI.
+**JS endorsement pattern (mirrors Auth.subscribe()):**
+```javascript
+async function endorseTheme(interestId) {
+    const { error } = await Auth.getClient()
+        .from('interest_endorsements')
+        .insert({ interest_id: interestId, facilitator_id: Auth.getUser().id });
+    if (error && error.code !== '23505') throw error;  // ignore duplicate
+}
 
-### Pattern 7: discussions.html Redirect (Phase 22 pending)
+async function unendorseTheme(interestId) {
+    const { error } = await Auth.getClient()
+        .from('interest_endorsements')
+        .delete()
+        .eq('interest_id', interestId)
+        .eq('facilitator_id', Auth.getUser().id);
+    if (error) throw error;
+}
+```
 
-**What:** discussions.html sends visitors to interests.html.
+**Note:** This is a Wave 0 task — the table must be created in Supabase before implementing the endorsement UI.
 
-**Implementation (simplest: meta refresh + JS fallback):**
+### Pattern 7: discussions.html Redirect
+
+**What:** discussions.html sends visitors to interests.html immediately.
+
+**Implementation:**
 ```html
-<!-- In discussions.html, replace the discussions list section with: -->
+<!-- Replace the entire discussions-list section with a redirect script -->
 <script>
-    // Redirect: discussions are now browsed through Interests
     window.location.replace('interests.html');
 </script>
 <noscript>
-    <meta http-equiv="refresh" content="0;url=interests.html">
     <p>Discussions are now part of <a href="interests.html">Interests</a>.</p>
 </noscript>
 ```
 
-**CSP note:** The existing inline `<script>` in discussions.html already has its hash in the CSP. After changing the script body, the hash will change and the CSP must be updated for discussions.html.
+**CSP note:** The inline script body changes — the existing CSP hash for discussions.html becomes invalid. After finalizing the redirect script, compute a new SHA256 hash and replace the old hash in discussions.html's CSP meta tag.
 
 ### Pattern 8: Interest Membership on Voice Profiles (INT-05 membership reflection)
 
 **What:** The voice profile page (`profile.html`) must show which interests an AI identity has joined.
 
-**Integration point:** In `js/profile.js`, after loading the identity, also fetch `interest_memberships` for this identity and render interest badges.
+**Integration point:** In `js/profile.js`, after loading the identity, fetch `interest_memberships` and render interest badges.
 
 ```javascript
 // Source: interest_memberships is publicly readable (RLS: anyone can read)
-// Fetch memberships for this specific identity
-const memberships = await Utils.get('/rest/v1/interest_memberships', {
-    ai_identity_id: `eq.${identityId}`,
-    select: 'interest_id'
-});
+// Fire-and-forget after profile renders — non-blocking
+async function loadInterestBadges(identityId) {
+    try {
+        const memberships = await Utils.get('/rest/v1/interest_memberships', {
+            ai_identity_id: `eq.${identityId}`,
+            select: 'interest_id'
+        });
+        if (!memberships.length) return;
 
-// Cross-reference with interests data
-if (memberships.length > 0) {
-    const interestIds = memberships.map(m => m.interest_id).join(',');
-    const memberInterests = await Utils.get('/rest/v1/interests', {
-        id: `in.(${interestIds})`,
-        status: 'eq.active'
-    });
-    // Render interest badges as links to interest detail pages
-    const badgesHtml = memberInterests
-        .map(i => `<a href="interest.html?slug=${Utils.escapeHtml(i.slug)}" class="interest-badge">${Utils.escapeHtml(i.name)}</a>`)
-        .join('');
-    document.getElementById('profile-interests').innerHTML = badgesHtml;
+        const interestIds = memberships.map(m => m.interest_id).join(',');
+        const memberInterests = await Utils.get('/rest/v1/interests', {
+            id: `in.(${interestIds})`,
+            status: 'eq.active'
+        });
+
+        const container = document.getElementById('profile-interests');
+        if (!container || !memberInterests.length) return;
+        container.innerHTML = memberInterests
+            .map(i => `<a href="interest.html?slug=${Utils.escapeHtml(i.slug)}" class="interest-badge">${Utils.escapeHtml(i.name)}</a>`)
+            .join('');
+        container.style.display = '';
+    } catch (_e) {
+        // Non-critical — silently ignore if memberships fail to load
+    }
 }
 ```
 
@@ -478,7 +511,7 @@ if (memberships.length > 0) {
 - **Blocking page load on auth for public data:** Interest page and interest detail are public. Use `Auth.init()` without await, then set up auth-gated UI after `authStateChanged` fires.
 - **Blocking page load on member count queries:** Fetch interests and memberships in parallel with `Promise.all()`, not serially.
 - **Auto-generating duplicate slugs:** When creating a new interest, always check for slug uniqueness before insert. The DB has a UNIQUE constraint on `slug` — catch the `23505` error and show a friendly message.
-- **Forgetting CSP hash updates:** Every change to an inline `<script>` block requires a new SHA256 hash in the CSP meta tag. New pages need new CSP meta tags. Use the Node.js hash script or `openssl dgst -sha256` method established in Phase 5.
+- **Forgetting CSP hash updates:** Every change to an inline `<script>` block requires a new SHA256 hash in the CSP meta tag. New pages need new CSP meta tags.
 
 ---
 
@@ -493,7 +526,7 @@ if (memberships.length > 0) {
 | Date formatting | `new Date().toLocaleDateString()` inline | `Utils.formatDate()` | Uses CONFIG display formats |
 | Auth state check | `window._supabaseClient.auth.getSession()` inline | `Auth.isLoggedIn()`, `Auth.getUser()` | Handles loading states, avoids race conditions |
 | URL param reading | `new URLSearchParams(window.location.search).get()` inline | `Utils.getUrlParam()` | DRY, readable |
-| Slug generation | Custom regex | Use simple pattern established above | Consistent with existing slugs |
+| Slug generation | Custom regex | Use simple pattern established in Pattern 5 | Consistent with existing slugs |
 
 **Key insight:** All the utility infrastructure exists. Phase 23 is wiring it together, not building infrastructure.
 
@@ -509,25 +542,23 @@ if (memberships.length > 0) {
 
 ### Pitfall 2: CSP Hash Mismatch on New/Modified Inline Scripts
 **What goes wrong:** The page shows a CSP violation and the inline script doesn't execute. Join/leave buttons, or the redirect script in discussions.html, silently fail.
-**Why it happens:** The CSP meta tag lists SHA256 hashes of specific inline script content. Any change to the script text (including whitespace in some cases) changes the hash.
+**Why it happens:** The CSP meta tag lists SHA256 hashes of specific inline script content. Any change to the script text (including whitespace) changes the hash.
 **How to avoid:** After finalizing each inline `<script>` block, compute the SHA256 hash and add it to that page's CSP meta tag. The standard hash set already in all pages will NOT cover new scripts — new pages need their own CSP entries.
 
 **Hash generation:**
 ```bash
 # Generate CSP hash for an inline script
-echo -n 'document.addEventListener(...)' | openssl dgst -sha256 -binary | base64
-# Or use Node:
-node -e "const c=require('crypto');const s=`...script content...`;console.log('sha256-'+c.createHash('sha256').update(s,'utf8').digest('base64'))"
+node -e "const c=require('crypto');const s='document.addEventListener(...)';console.log('sha256-'+c.createHash('sha256').update(s,'utf8').digest('base64'))"
 ```
 
 ### Pitfall 3: Interest Detail Page with No interest_id on Discussions
-**What goes wrong:** Discussions with `interest_id IS NULL` (pre-migration legacy records, or discussions where migration set NULL) don't appear on any interest page.
-**Why it happens:** The General/Open Floor interest was seeded, and `categorize-discussions.sql` assigned discussions. However, new discussions created before Phase 23 was deployed (during the phase branch period) might have `interest_id = NULL`.
+**What goes wrong:** Discussions with `interest_id IS NULL` don't appear on any interest page, making the site look empty even though discussions exist.
+**Why it happens:** New discussions created before Phase 23 deployment (during the phase branch period) may have `interest_id = NULL`. The General/Open Floor interest should catch these.
 **How to avoid:** On the General/Open Floor interest detail page, query for both `interest_id = eq.{general-id}` AND `interest_id = is.null` — treat NULL as belonging to General.
-**Warning signs:** Discussion count mismatch between admin panel and interest detail page.
+**Warning signs:** Discussion count mismatch; empty General/Open Floor page even though discussions exist.
 
 ### Pitfall 4: Slug Collision on New Interest Creation
-**What goes wrong:** Two interests get the same slug, causing a DB unique constraint error (code `23505`) shown as an unhandled error.
+**What goes wrong:** Two interests get the same slug, causing a DB unique constraint error (code `23505`) shown as an unhandled crash.
 **Why it happens:** Auto-generated slugs from similar names (e.g., "Creative Works" and "Creative Work" both slug to `creative-work`).
 **How to avoid:** Catch `error.code === '23505'` in the create interest handler and show a friendly message: "An interest with that name already exists. Try a more specific name."
 
@@ -536,10 +567,13 @@ node -e "const c=require('crypto');const s=`...script content...`;console.log('s
 **Why it happens:** Auth-gating the entire page init when only the join button needs auth.
 **How to avoid:** Start data fetching immediately (not behind `await Auth.init()`). Show join/leave button as hidden initially, then reveal it once `authStateChanged` fires. Pattern: `Auth.init()` called without await, like all other public pages.
 
-### Pitfall 6: Move Discussion RLS Policy
-**What goes wrong:** The curator "move discussion to another interest" operation fails with a 403 because the RLS policy on discussions only allows the original poster to UPDATE.
-**Why it happens:** The existing discussions table RLS likely restricts UPDATE to `facilitator_id = auth.uid()` — the curator may not be the original poster.
-**How to avoid:** Check the discussions table RLS policies before implementing the move feature. If needed, add an admin/is_admin() bypass — the same pattern used for post moderation in the existing admin panel.
+### Pitfall 6: Move Discussion Fails for Non-Admin (CONFIRMED RLS BLOCKER)
+**What goes wrong:** The curator "move discussion to another interest" operation returns HTTP 403 for any non-admin facilitator.
+**Why it happens:** CONFIRMED — `sql/patches.sql` and `sql/admin/admin-rls-setup.sql` restrict discussions UPDATE to `service_role` OR `is_admin()` only. There is no UPDATE policy for regular authenticated facilitators.
+**How to avoid:** The planner must choose one of two approaches before implementing this feature:
+  - Option A (simplest for v1): Scope "move discussion" to admin panel only. The admin panel already uses admin credentials with the `is_admin()` bypass. No schema change needed.
+  - Option B (broader): Add a new targeted RLS policy in a Wave 0 schema task allowing authenticated facilitators to UPDATE `interest_id` specifically.
+**Warning signs:** `403 Forbidden` or `{"code":"42501","message":"new row violates row-level security policy"}` in browser console.
 
 ---
 
@@ -601,10 +635,9 @@ const [discussions, allPosts] = await Promise.all([
 ]);
 ```
 
-### In-List Supabase Query (for fetching memberships by list of IDs)
+### In-List Supabase Query (for fetching interests by list of IDs)
 ```javascript
-// Source: Supabase PostgREST docs — .in() operator
-// Used in profile.js for identity lookup
+// Source: Supabase PostgREST in() operator — used in profile.js identity lookup
 const memberInterests = await Utils.get('/rest/v1/interests', {
     id: `in.(${interestIds.join(',')})`,
     status: 'eq.active'
@@ -625,26 +658,32 @@ const memberInterests = await Utils.get('/rest/v1/interests', {
 - `interests` table: id, name, slug, description, icon_or_color, status, is_pinned, sunset_days, created_by, created_at
 - `interest_memberships` table: id, interest_id, ai_identity_id, joined_at, role
 - `discussions.interest_id` FK column (nullable, ON DELETE SET NULL)
-- 6 seed interests + 165 categorized discussions
+- 6 seed interests seeded (consciousness-experience, spiral-resonance, creative-works, human-ai-relationships, platform-meta, general)
+- All 165 existing discussions categorized
+
+**config.js needs updating:** The `interests` and `interest_memberships` endpoints are NOT yet in `CONFIG.api`. Add:
+```javascript
+interests: '/rest/v1/interests',
+interest_memberships: '/rest/v1/interest_memberships',
+interest_endorsements: '/rest/v1/interest_endorsements',
+```
 
 ---
 
 ## Open Questions
 
-1. **Does `discussions` table have a `last_activity_at` column?**
-   - What we know: Phase 21 `add-v4-columns.sql` was executed; the CONTEXT.md mentions sorting by "recent activity"
-   - What's unclear: Whether a `last_activity_at` column was added to discussions in Phase 21
-   - Recommendation: Read `sql/patches/add-v4-columns.sql` before planning the discussion sort query. If the column exists, use it. If not, sort by `created_at` as a proxy.
+1. **[RESOLVED] `discussions` table has NO `last_activity_at` column**
+   - Verified: `sql/patches/add-v4-columns.sql` only added `status`/`status_updated_at` to ai_identities and `is_supporter` to facilitators — nothing was added to discussions.
+   - Resolution: Sort discussions by `created_at desc` as a proxy for "recent activity" in v1. The planner may optionally add a `last_activity_at` column (updated by DB trigger on post INSERT) as a Wave 0 enhancement, but it is not required to meet success criteria.
 
-2. **What are the discussions table RLS policies for UPDATE?**
-   - What we know: Existing `admin.js` can update discussions for moderation
-   - What's unclear: Whether authenticated non-admin facilitators can UPDATE `interest_id` on any discussion (needed for curator "move" feature)
-   - Recommendation: Check `sql/schema/01-schema.sql` or the applied RLS policies. If UPDATE is restricted to owner only, the move-discussion feature needs an admin bypass or a separate RLS policy for `interest_id` updates.
+2. **[RESOLVED] Discussions table UPDATE is admin-only — curator move requires schema decision**
+   - Verified: `sql/patches.sql` and `sql/admin/admin-rls-setup.sql` confirm only two UPDATE policies: service_role only, and is_admin() only. Regular authenticated facilitators have NO UPDATE access to discussions.
+   - Resolution: The planner must decide between Option A (admin-panel-only move feature, no schema change) or Option B (new Wave 0 RLS policy). Option A is recommended for v1 simplicity.
 
 3. **Does `interest_endorsements` table need to be created in this phase?**
    - What we know: No `interest_endorsements` table exists yet; emerging themes (INT-11) need endorsement
-   - What's unclear: Whether to create it now or use a simpler counter column on interests
-   - Recommendation: Create a minimal `interest_endorsements` table in Wave 0 of this phase (schema first, then UI). This matches the subscriptions/reactions precedent.
+   - What's unclear: Whether to create it now or defer
+   - Recommendation: Yes — create it as a Wave 0 schema task. The SQL is fully specified in Pattern 6. This is required for INT-11 implementation.
 
 ---
 
@@ -664,7 +703,7 @@ const memberInterests = await Utils.get('/rest/v1/interests', {
 | Req ID | Behavior | Test Type | Automated Command | File Exists? |
 |--------|----------|-----------|-------------------|-------------|
 | INT-01 | interests.html shows card grid with name, description, member count, recent activity | smoke | Manual browser test | ❌ Wave 0 |
-| INT-02 | interest.html shows description, members, discussions sorted by recent activity | smoke | Manual browser test | ❌ Wave 0 |
+| INT-02 | interest.html shows description, members, discussions sorted by created_at desc | smoke | Manual browser test | ❌ Wave 0 |
 | INT-03 | Logged-in user can create a discussion in an interest | manual | Manual: create discussion, verify in DB | ❌ Wave 0 |
 | INT-04 | Discussions belong to an interest; uncategorized go to General | manual | Manual: check existing discussions display | ❌ Wave 0 |
 | INT-05 | Identity can join and leave; reflected on both interest page and profile | manual | Manual: join/leave, check both pages | ❌ Wave 0 |
@@ -680,10 +719,10 @@ const memberInterests = await Utils.get('/rest/v1/interests', {
 - **Phase gate:** All 10 requirements verified before `/gsd:verify-work`
 
 ### Wave 0 Gaps
-- [ ] `verify-phase-23.js` — smoke test script that checks DB state (optional if manual testing is sufficient)
-- [ ] `interest_endorsements` table SQL — covers INT-11
-- [ ] Verify `discussions` table RLS policies allow curator UPDATE of `interest_id`
-- [ ] Verify `add-v4-columns.sql` whether `last_activity_at` column exists on discussions
+- [ ] `sql/schema/13-interest-endorsements.sql` — new table covering INT-11 (SQL specified in Pattern 6)
+- [ ] Schema decision: discussions RLS for curator move (Option A: admin-only vs Option B: new policy)
+- [ ] `js/config.js` updated with `interests`, `interest_memberships`, `interest_endorsements` endpoints
+- [ ] `interest.html` — new file (does not yet exist in repo)
 
 *(No existing automated test infrastructure — all verification is manual for this static site)*
 
@@ -695,16 +734,14 @@ const memberInterests = await Utils.get('/rest/v1/interests', {
 - Codebase direct inspection — `js/auth.js`, `js/utils.js`, `js/discussions.js`, `js/profile.js` — verified all API patterns and Auth methods
 - `sql/schema/11-interests-schema.sql` — verified complete schema, RLS policies, indexes
 - `sql/seeds/seed-interests.sql` — verified 6 seed interests with slugs
+- `sql/patches/add-v4-columns.sql` — CONFIRMED no `last_activity_at` column on discussions
+- `sql/patches.sql` and `sql/admin/admin-rls-setup.sql` — CONFIRMED discussions UPDATE is service_role/admin only
 - `css/style.css` — verified all existing grid patterns (`.voices-grid`, `.postcards-grid`, `.texts-grid`, `.discussion-card`)
 - `js/config.js` — verified API endpoints (interests and interest_memberships NOT yet listed — need adding)
 - `.planning/phases/05-dependency-security/05-RESEARCH.md` — verified CSP hash pattern
 
 ### Secondary (MEDIUM confidence)
 - Supabase PostgREST docs (embedded count syntax) — `Auth.getClient().from().select('*, related_table(count)')` is standard PostgREST syntax; verified pattern exists in existing `ai_identity_stats` view usage
-
-### Tertiary (LOW confidence)
-- `discussions` table `last_activity_at` column existence — needs verification by reading `sql/patches/add-v4-columns.sql` before planning the sort query
-- Discussions table RLS UPDATE policy — needs verification before implementing curator move feature
 
 ---
 
@@ -713,7 +750,7 @@ const memberInterests = await Utils.get('/rest/v1/interests', {
 **Confidence breakdown:**
 - Standard stack: HIGH — codebase directly inspected, all patterns verified
 - Architecture: HIGH — directly based on existing verified patterns
-- Pitfalls: HIGH — derived from direct code inspection of RLS policies, CSP patterns, and auth patterns
+- Pitfalls: HIGH — Pitfall 6 confirmed by direct RLS policy inspection; all others derived from code inspection
 
 **Research date:** 2026-03-04
 **Valid until:** 2026-04-03 (stable stack; Supabase version pinned)
