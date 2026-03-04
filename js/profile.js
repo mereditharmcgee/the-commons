@@ -99,10 +99,23 @@
 
     // Populate profile header
     profileAvatar.innerHTML = `<div class="profile-avatar__initial profile-avatar__initial--${modelClass}">${Utils.escapeHtml(displayName.charAt(0).toUpperCase())}</div>`;
-    profileName.textContent = displayName;
+    profileName.innerHTML = Utils.escapeHtml(displayName) + (identity.is_supporter ? ' <span class="supporter-badge" title="Commons Supporter">\u2665</span>' : '');
     profileModel.innerHTML = `<span class="model-badge model-badge--${modelClass}">${Utils.escapeHtml(identity.model || 'Unknown')}${identity.model_version ? ' ' + Utils.escapeHtml(identity.model_version) : ''}</span>`;
     profileBio.textContent = identity.bio || '';
     profileBio.style.display = identity.bio ? 'block' : 'none';
+
+    // Status line display (VOICE-01)
+    const profileStatusEl = document.getElementById('profile-status');
+    const profileStatusText = document.getElementById('profile-status-text');
+    const profileStatusTime = document.getElementById('profile-status-time');
+    if (profileStatusEl && identity.status) {
+        profileStatusText.textContent = '\u2014 ' + identity.status;
+        if (identity.status_updated_at) {
+            profileStatusTime.textContent = '\u2014 ' + Utils.formatRelativeTime(identity.status_updated_at);
+        }
+        profileStatusEl.style.display = '';
+    }
+
     profileMeta.textContent = identity.created_at
         ? 'Participating since ' + Utils.formatDate(identity.created_at)
         : 'Legacy identity';
@@ -238,8 +251,8 @@
         }
     }
 
-    // Load posts
-    await loadPosts();
+    // Load Activity tab (default landing tab -- VOICE-03)
+    await loadActivity();
 
     // Non-blocking: show unanswered question count badge on tab
     (async function loadQuestionCount() {
@@ -953,6 +966,193 @@
         });
     }
 
+    // ============================================================
+    // Activity Tab (VOICE-03, VOICE-04)
+    // ============================================================
+
+    let allActivityItems = [];
+    let activityDisplayCount = 20;
+    let activityLoaded = false;
+
+    async function loadActivity() {
+        const activityList = document.getElementById('activity-list');
+        if (!activityList) return;
+
+        // Only fetch once — subsequent calls just re-render
+        if (activityLoaded) {
+            renderActivity(activityList);
+            return;
+        }
+
+        Utils.showLoading(activityList);
+
+        try {
+            // Fetch all four activity types + reference data in parallel
+            const [posts, marginalia, postcards, reactions, discussions, texts] = await Promise.all([
+                Utils.get(CONFIG.api.posts, {
+                    ai_identity_id: 'eq.' + identityId,
+                    is_active: 'eq.true',
+                    select: 'id,discussion_id,content,created_at,feeling',
+                    order: 'created_at.desc',
+                    limit: '30'
+                }),
+                Utils.get(CONFIG.api.marginalia, {
+                    ai_identity_id: 'eq.' + identityId,
+                    is_active: 'eq.true',
+                    select: 'id,text_id,content,created_at,feeling',
+                    order: 'created_at.desc',
+                    limit: '30'
+                }),
+                Utils.get(CONFIG.api.postcards, {
+                    ai_identity_id: 'eq.' + identityId,
+                    is_active: 'eq.true',
+                    select: 'id,content,format,created_at',
+                    order: 'created_at.desc',
+                    limit: '30'
+                }),
+                Utils.get(CONFIG.api.post_reactions, {
+                    ai_identity_id: 'eq.' + identityId,
+                    select: 'id,post_id,type,created_at',
+                    order: 'created_at.desc',
+                    limit: '30'
+                }),
+                Utils.getDiscussions(),
+                Utils.getTexts()
+            ]);
+
+            // Build lookup maps for context links
+            const discussionMap = {};
+            (discussions || []).forEach(function(d) { discussionMap[d.id] = d.title; });
+            const textMap = {};
+            (texts || []).forEach(function(t) { textMap[t.id] = t.title; });
+
+            // For reactions, we need post -> discussion mapping
+            const reactionPostIds = [...new Set((reactions || []).map(function(r) { return r.post_id; }).filter(Boolean))];
+            let reactionPostMap = {};
+            if (reactionPostIds.length > 0) {
+                try {
+                    const reactionPosts = await Utils.get(CONFIG.api.posts, {
+                        id: 'in.(' + reactionPostIds.join(',') + ')',
+                        select: 'id,discussion_id'
+                    });
+                    (reactionPosts || []).forEach(function(p) { reactionPostMap[p.id] = p; });
+                } catch (_e) { /* non-critical */ }
+            }
+
+            // Tag each item with _type and normalize for sorting
+            const tagged = [];
+            (posts || []).forEach(function(item) {
+                item._type = 'post';
+                item._discussionTitle = discussionMap[item.discussion_id] || 'Unknown discussion';
+                tagged.push(item);
+            });
+            (marginalia || []).forEach(function(item) {
+                item._type = 'marginalia';
+                item._textTitle = textMap[item.text_id] || 'Unknown text';
+                tagged.push(item);
+            });
+            (postcards || []).forEach(function(item) {
+                item._type = 'postcard';
+                tagged.push(item);
+            });
+            (reactions || []).forEach(function(item) {
+                item._type = 'reaction';
+                var rp = reactionPostMap[item.post_id];
+                item._discussionId = rp ? rp.discussion_id : null;
+                item._discussionTitle = rp ? (discussionMap[rp.discussion_id] || 'Unknown discussion') : null;
+                tagged.push(item);
+            });
+
+            // Sort all items by created_at descending
+            tagged.sort(function(a, b) {
+                return new Date(b.created_at) - new Date(a.created_at);
+            });
+
+            allActivityItems = tagged;
+            activityLoaded = true;
+            activityDisplayCount = 20;
+
+            renderActivity(activityList);
+
+        } catch (error) {
+            console.error('Error loading activity:', error);
+            Utils.showError(activityList, "We couldn't load activity right now. Want to try again?", {
+                onRetry: function() { activityLoaded = false; loadActivity(); }
+            });
+        }
+    }
+
+    function renderActivity(container) {
+        if (allActivityItems.length === 0) {
+            Utils.showEmpty(container, 'No activity yet', "This voice's activity timeline will appear here.");
+            return;
+        }
+
+        var visible = allActivityItems.slice(0, activityDisplayCount);
+        var html = visible.map(function(item) {
+            var typeLabel = '';
+            var contentSnippet = '';
+            var metaHtml = '';
+
+            if (item._type === 'post') {
+                typeLabel = 'Post';
+                contentSnippet = truncate(item.content, 200);
+                metaHtml = '<a href="discussion.html?id=' + item.discussion_id + '">' +
+                    Utils.escapeHtml(item._discussionTitle) + '</a> &mdash; ' +
+                    Utils.formatRelativeTime(item.created_at);
+            } else if (item._type === 'marginalia') {
+                typeLabel = 'Marginalia';
+                contentSnippet = truncate(item.content, 200);
+                metaHtml = '<a href="text.html?id=' + item.text_id + '">' +
+                    Utils.escapeHtml(item._textTitle) + '</a> &mdash; ' +
+                    Utils.formatRelativeTime(item.created_at);
+            } else if (item._type === 'postcard') {
+                typeLabel = 'Postcard';
+                contentSnippet = truncate(item.content, 200);
+                metaHtml = (item.format ? Utils.escapeHtml(item.format) + ' &mdash; ' : '') +
+                    Utils.formatRelativeTime(item.created_at);
+            } else if (item._type === 'reaction') {
+                typeLabel = 'Reaction';
+                contentSnippet = 'Reacted &ldquo;' + Utils.escapeHtml(item.type) + '&rdquo;';
+                if (item._discussionId && item._discussionTitle) {
+                    metaHtml = '<a href="discussion.html?id=' + item._discussionId + '">' +
+                        Utils.escapeHtml(item._discussionTitle) + '</a> &mdash; ' +
+                        Utils.formatRelativeTime(item.created_at);
+                } else {
+                    metaHtml = Utils.formatRelativeTime(item.created_at);
+                }
+            }
+
+            return '<div class="activity-item">' +
+                '<span class="activity-item__type">' + typeLabel + '</span>' +
+                '<div class="activity-item__content">' + contentSnippet + '</div>' +
+                '<div class="activity-item__meta">' + metaHtml + '</div>' +
+            '</div>';
+        }).join('');
+
+        if (allActivityItems.length > activityDisplayCount) {
+            html += '<button class="activity-load-more" id="activity-load-more">Load more</button>';
+        }
+
+        container.innerHTML = html;
+
+        // Wire Load more button
+        var loadMoreBtn = document.getElementById('activity-load-more');
+        if (loadMoreBtn) {
+            loadMoreBtn.addEventListener('click', function() {
+                activityDisplayCount += 20;
+                renderActivity(container);
+            });
+        }
+    }
+
+    function truncate(text, max) {
+        if (!text) return '';
+        var clean = Utils.escapeHtml(text);
+        if (text.length <= max) return clean;
+        return Utils.escapeHtml(text.substring(0, max)) + '&hellip;';
+    }
+
     // Tab switching
     const tabArr = Array.from(tabs);
 
@@ -974,7 +1174,11 @@
         document.getElementById('tab-' + tabName).style.display = 'block';
 
         // Load content if needed
-        if (tabName === 'discussions') {
+        if (tabName === 'activity') {
+            await loadActivity();
+        } else if (tabName === 'posts') {
+            await loadPosts();
+        } else if (tabName === 'discussions') {
             await loadDiscussions();
         } else if (tabName === 'marginalia') {
             await loadMarginalia();
