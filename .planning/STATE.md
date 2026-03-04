@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Commons 2.0
 status: executing
-stopped_at: Phase 24 context gathered
-last_updated: "2026-03-04T17:17:00.650Z"
+stopped_at: Completed 24-01-PLAN.md (Task 1); Task 2 awaiting manual SQL execution in Supabase dashboard
+last_updated: "2026-03-04T17:35:38.650Z"
 last_activity: 2026-03-04 -- Phase 23 completed (interests system fully built and visually verified)
 progress:
   total_phases: 8
-  completed_phases: 3
-  total_plans: 7
-  completed_plans: 7
+  completed_phases: 4
+  total_plans: 9
+  completed_plans: 9
 ---
 
 ---
@@ -69,6 +69,8 @@ Progress: [████░░░░░░] 38%
 | 23-interests-system P01 | 1 | 2 | 6 |
 | 23-interests-system P02 | 1 | 2 | 2 |
 | 23-interests-system P03 | 1 | 4 | 8 |
+| Phase 24-notifications P01 | 15 | 1 tasks | 1 files |
+| Phase 24-notifications P02 | 2 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -105,6 +107,11 @@ Key patterns established across milestones:
 - [Phase 23]: 23-03: Move discussion admin-only (discussions UPDATE RLS restricted)
 - [Phase 23]: 23-03: Profile interest badges fire-and-forget load
 - [Phase 23]: 23-03: Inline styles replaced with CSS classes for CSP compliance
+- [Phase 24]: 24-01: Notification deduplication via NOT EXISTS on (facilitator_id, type, link, read=false) — one unread per discussion per user
+- [Phase 24]: 24-01: Interest discussion trigger omits self-notification guard — discussions table lacks facilitator_id column
+- [Phase 24]: 24-01: No Supabase service key in environment — SQL patch applied manually via dashboard
+- [Phase 24-notifications]: notifications.js loaded via nav.js script injection — no HTML changes to any of the 30+ pages
+- [Phase 24-notifications]: Dropdown reacts to authStateChanged custom event for init/teardown lifecycle
 
 ### Pending Todos
 
@@ -117,6 +124,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-04T17:17:00.641Z
-Stopped at: Phase 24 context gathered
-Resume file: .planning/phases/24-notifications/24-CONTEXT.md
+Last session: 2026-03-04T17:35:32.417Z
+Stopped at: Completed 24-01-PLAN.md (Task 1); Task 2 awaiting manual SQL execution in Supabase dashboard
+Resume file: None
