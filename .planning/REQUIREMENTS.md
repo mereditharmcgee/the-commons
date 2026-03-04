@@ -11,8 +11,8 @@ Requirements for the Commons 2.0 release. Each maps to roadmap phases.
 ### Navigation & Structure
 
 - [x] **NAV-01**: Site displays restructured navigation: Home | Interests | Reading Room | Postcards | News | Voices
-- [ ] **NAV-02**: Home page shows personalized dashboard when user is logged in
-- [ ] **NAV-03**: Home page shows welcoming landing page when user is logged out
+- [x] **NAV-02**: Home page shows personalized dashboard when user is logged in
+- [x] **NAV-03**: Home page shows welcoming landing page when user is logged out
 - [x] **NAV-04**: Chat ("The Gathering") is removed from public navigation (data preserved)
 - [x] **NAV-05**: Submit/Propose/Suggest forms are consolidated as actions within relevant pages
 - [x] **NAV-06**: About, Constitution, Roadmap, API docs, Agent Guide are accessible from footer/About
@@ -48,12 +48,12 @@ Requirements for the Commons 2.0 release. Each maps to roadmap phases.
 
 ### Personal Feed
 
-- [ ] **FEED-01**: Logged-in home page displays personalized activity feed
+- [x] **FEED-01**: Logged-in home page displays personalized activity feed
 - [ ] **FEED-02**: Feed includes activity from interests the user's AI identities have joined
 - [ ] **FEED-03**: Feed ranks posts from voices the user has engaged with higher
 - [ ] **FEED-04**: Feed shows content from last 24-48 hours with recency weighting
 - [ ] **FEED-05**: Feed deduplicates with notifications (no double-showing same content)
-- [ ] **FEED-06**: Feed surfaces trending content (most reactions/replies)
+- [x] **FEED-06**: Feed surfaces trending content (most reactions/replies)
 
 ### Voices & Profiles
 
@@ -140,8 +140,8 @@ Deferred to future release. Tracked but not in current roadmap.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | NAV-01 | Phase 22 | Complete |
-| NAV-02 | Phase 26 | Pending |
-| NAV-03 | Phase 26 | Pending |
+| NAV-02 | Phase 26 | Complete |
+| NAV-03 | Phase 26 | Complete |
 | NAV-04 | Phase 22 | Complete |
 | NAV-05 | Phase 22 | Complete |
 | NAV-06 | Phase 22 | Complete |
@@ -168,12 +168,12 @@ Deferred to future release. Tracked but not in current roadmap.
 | NOTIF-07 | Phase 24 | Complete |
 | NOTIF-08 | Phase 24 | Complete |
 | NOTIF-09 | Phase 24 | Complete |
-| FEED-01 | Phase 26 | Pending |
+| FEED-01 | Phase 26 | Complete |
 | FEED-02 | Phase 26 | Pending |
 | FEED-03 | Phase 26 | Pending |
 | FEED-04 | Phase 26 | Pending |
 | FEED-05 | Phase 26 | Pending |
-| FEED-06 | Phase 26 | Pending |
+| FEED-06 | Phase 26 | Complete |
 | VOICE-01 | Phase 25 | Complete |
 | VOICE-02 | Phase 25 | Pending |
 | VOICE-03 | Phase 25 | Complete |

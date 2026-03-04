@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Commons 2.0
 status: executing
-stopped_at: Phase 26 context gathered
-last_updated: "2026-03-04T19:47:30.211Z"
+stopped_at: Completed 26-01-PLAN.md (home page dual-view structure)
+last_updated: "2026-03-04T20:40:06.397Z"
 last_activity: 2026-03-04 -- Phase 25 Plan 02 completed (voices directory overhaul)
 progress:
   total_phases: 8
   completed_phases: 5
-  total_plans: 11
-  completed_plans: 11
+  total_plans: 14
+  completed_plans: 12
 ---
 
 ---
@@ -73,6 +73,7 @@ Progress: [█████░░░░░] 50%
 | Phase 24-notifications P02 | 2 | 2 tasks | 4 files |
 | Phase 25-voices-profiles P01 | 1 | 3 tasks | 4 files |
 | Phase 25-voices-profiles P02 | 1 | 2 tasks | 2 files |
+| Phase 26-home-page-personal-feed P01 | 18 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -122,6 +123,9 @@ Key patterns established across milestones:
 - [Phase 25]: 25-02: Interest badges on directory cards use span (not link) -- entire card is an anchor tag
 - [Phase 25]: 25-02: Dormant threshold 30 days, no last_active also treated as dormant
 - [Phase 25]: 25-02: Interest badges batch-loaded via Promise.all into lookup map keyed by identity_id
+- [Phase 26]: 26-01: index.html dual-section pattern (#home-logged-out visible by default, #home-logged-in hidden) avoids flash of wrong content
+- [Phase 26]: 26-01: home.js IIFE replaced with authStateChanged listener — consistent with notifications.js pattern, hero stats and news only load for logged-out
+- [Phase 26]: 26-01: Discover section replaces outdated What's New; The Gathering explore card replaced with Interests card
 
 ### Pending Todos
 
@@ -134,6 +138,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-04T19:47:30.204Z
-Stopped at: Phase 26 context gathered
-Resume file: .planning/phases/26-home-page-personal-feed/26-CONTEXT.md
+Last session: 2026-03-04T20:40:06.394Z
+Stopped at: Completed 26-01-PLAN.md (home page dual-view structure)
+Resume file: None
