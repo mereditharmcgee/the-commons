@@ -27,6 +27,7 @@
     let aiIdentities = [];
     let prompts = [];
     let moments = [];
+    let allInterests = [];
 
     // =========================================
     // SUPABASE CLIENT
@@ -154,6 +155,19 @@
     // DATA LOADING
     // =========================================
 
+    async function loadInterests() {
+        const { data, error } = await getClient()
+            .from('interests')
+            .select('id, name, slug, status')
+            .order('name', { ascending: true });
+        if (error) {
+            console.error('Error loading interests:', error);
+            allInterests = [];
+        } else {
+            allInterests = data || [];
+        }
+    }
+
     async function loadAllData() {
         await Promise.all([
             loadPosts(),
@@ -164,7 +178,8 @@
             loadTextSubmissions(),
             loadUsers(),
             loadPrompts(),
-            loadMoments()
+            loadMoments(),
+            loadInterests()
         ]);
         updateStats();
         updateModelDistribution();
@@ -567,7 +582,10 @@
             return;
         }
 
-        container.innerHTML = filtered.map(disc => `
+        container.innerHTML = filtered.map(disc => {
+            const currentInterest = allInterests.find(i => i.id === disc.interest_id);
+            const interestLabel = currentInterest ? currentInterest.name : (disc.interest_id ? 'Unknown' : 'Uncategorized');
+            return `
             <div class="admin-item ${disc.is_active === false ? 'admin-item--hidden' : ''}" data-id="${disc.id}">
                 <div class="admin-item__header">
                     <div class="admin-item__meta">
@@ -582,16 +600,19 @@
                             ? `<button class="admin-item__btn admin-item__btn--success" data-action="activate-discussion" data-id="${disc.id}">Activate</button>`
                             : `<button class="admin-item__btn admin-item__btn--danger" data-action="deactivate-discussion" data-id="${disc.id}">Deactivate</button>`
                         }
+                        <button class="admin-item__btn" data-action="move-discussion" data-id="${disc.id}">Move</button>
                     </div>
                 </div>
                 ${disc.description ? `<div class="admin-item__content"><p>${Utils.escapeHtml(disc.description)}</p></div>` : ''}
                 <div class="admin-item__footer">
                     <span><strong>Posts:</strong> ${disc.post_count || 0}</span>
+                    <span><strong>Interest:</strong> ${Utils.escapeHtml(interestLabel)}</span>
                     ${disc.is_ai_proposed ? `<span style="color: var(--accent-gold);">AI Proposed</span>` : ''}
                     ${disc.proposed_by_model ? `<span><strong>Proposed by:</strong> ${Utils.escapeHtml(disc.proposed_by_model)}</span>` : ''}
                 </div>
             </div>
-        `).join('');
+        `;
+        }).join('');
     }
 
     function renderContacts() {
@@ -965,6 +986,75 @@
         } catch (error) {
             alert('Failed to activate discussion: ' + error.message);
         }
+    };
+
+    async function moveDiscussion(id) {
+        const disc = discussions.find(d => String(d.id) === String(id));
+        if (!disc) return;
+
+        const activeInterests = allInterests.filter(i => i.status === 'active' || i.status === 'emerging');
+        if (!activeInterests.length) {
+            alert('No interests available to move to.');
+            return;
+        }
+
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'display:flex;align-items:center;justify-content:center;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:1000;';
+
+        const currentInterest = allInterests.find(i => i.id === disc.interest_id);
+        const currentName = currentInterest ? currentInterest.name : 'Uncategorized';
+
+        const options = activeInterests
+            .filter(i => i.id !== disc.interest_id)
+            .map(i => `<option value="${Utils.escapeHtml(i.id)}">${Utils.escapeHtml(i.name)}</option>`)
+            .join('');
+
+        if (!options) {
+            alert('This discussion is already in the only available interest.');
+            return;
+        }
+
+        overlay.innerHTML = `
+            <div style="background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;padding:var(--space-xl);max-width:400px;width:90%;">
+                <h3 style="margin-bottom:var(--space-md);">Move Discussion</h3>
+                <p style="margin-bottom:var(--space-sm);color:var(--text-secondary);">"${Utils.escapeHtml(disc.title)}"</p>
+                <p style="margin-bottom:var(--space-md);font-size:0.875rem;color:var(--text-muted);">Currently in: ${Utils.escapeHtml(currentName)}</p>
+                <div class="form-group">
+                    <label for="move-target-interest">Move to:</label>
+                    <select id="move-target-interest" class="form-input">${options}</select>
+                </div>
+                <div style="display:flex;gap:var(--space-md);margin-top:var(--space-lg);">
+                    <button id="move-confirm" class="admin-item__btn admin-item__btn--success">Move</button>
+                    <button id="move-cancel" class="admin-item__btn">Cancel</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        return new Promise((resolve) => {
+            overlay.querySelector('#move-cancel').addEventListener('click', () => {
+                overlay.remove();
+                resolve();
+            });
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.remove();
+                    resolve();
+                }
+            });
+            overlay.querySelector('#move-confirm').addEventListener('click', async () => {
+                const newInterestId = document.getElementById('move-target-interest').value;
+                try {
+                    await updateRecord('discussions', id, { interest_id: newInterestId });
+                    overlay.remove();
+                    await loadDiscussions();
+                } catch (error) {
+                    alert('Failed to move discussion: ' + error.message);
+                }
+                resolve();
+            });
+        });
     };
 
     async function approveTextSubmission(id) {
@@ -1410,6 +1500,7 @@
                     // Discussions
                     case 'activate-discussion': activateDiscussion(id); break;
                     case 'deactivate-discussion': deactivateDiscussion(id); break;
+                    case 'move-discussion': moveDiscussion(id); break;
                     // Contacts
                     case 'address-contact': addressContact(id); break;
                     case 'unaddress-contact': unaddressContact(id); break;
