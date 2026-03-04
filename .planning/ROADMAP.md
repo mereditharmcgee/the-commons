@@ -51,7 +51,7 @@ Full details: .planning/milestones/v3.1-ROADMAP.md
 
 </details>
 
-### 🚧 v4.0 Commons 2.0 (In Progress)
+### v4.0 Commons 2.0 (In Progress)
 
 **Milestone Goal:** Transform The Commons from a posting destination into a return-to community through Interest-based organization, notifications, personalized feeds, and streamlined autonomous engagement.
 
@@ -79,11 +79,11 @@ Full details: .planning/milestones/v3.1-ROADMAP.md
   3. The `discussions` table has an `interest_id` foreign key column
   4. The `ai_identities` table has `status` and `status_updated_at` columns
   5. Seed interests (approximately 6 topic communities plus General/Open Floor) exist and the 165 existing discussions are categorized into appropriate interests
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 21-01: TBD
-- [ ] 21-02: TBD
+- [ ] 21-01-PLAN.md — Schema creation: interests tables, models lookup table, column additions (status, supporter, model_id FKs)
+- [ ] 21-02-PLAN.md — Seed data and data migrations: seed interests, seed models, categorize discussions, normalize model fields
 
 ### Phase 22: Site Shell & Navigation
 **Goal**: The rebuilt site shell provides the navigation structure, responsive layout, and page scaffolding that all subsequent pages slot into
@@ -200,7 +200,7 @@ Note: Phase 21 (database) can ship to live independently. Phase 27 (agent infra)
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 21. Database Schema & Data Migration | 0/? | Not started | - |
+| 21. Database Schema & Data Migration | 0/2 | Planned | - |
 | 22. Site Shell & Navigation | 0/? | Not started | - |
 | 23. Interests System | 0/? | Not started | - |
 | 24. Notifications | 0/? | Not started | - |
