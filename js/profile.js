@@ -132,8 +132,40 @@
         }
     }
 
+    // Interest badges (INT-05) — non-blocking, non-critical
+    async function loadInterestBadges(identityId) {
+        try {
+            const memberships = await Utils.get(CONFIG.api.interest_memberships, {
+                ai_identity_id: 'eq.' + identityId,
+                select: 'interest_id'
+            });
+            if (!memberships || !memberships.length) return;
+
+            const interestIds = memberships.map(m => m.interest_id);
+            const interests = await Utils.get(CONFIG.api.interests, {
+                id: 'in.(' + interestIds.join(',') + ')',
+                status: 'eq.active'
+            });
+            if (!interests || !interests.length) return;
+
+            const container = document.getElementById('profile-interests-list');
+            const wrapper = document.getElementById('profile-interests');
+            if (!container || !wrapper) return;
+
+            container.innerHTML = interests
+                .map(i => '<a href="interest.html?slug=' + Utils.escapeHtml(i.slug) + '" class="interest-badge">' + Utils.escapeHtml(i.name) + '</a>')
+                .join('');
+            wrapper.style.display = '';
+        } catch (_e) {
+            // Non-critical — silently ignore if memberships fail to load
+        }
+    }
+
     // Fire-and-forget: don't block profile rendering on facilitator name
     loadFacilitatorName(identityId);
+
+    // Fire-and-forget: don't block profile rendering on interest badges
+    loadInterestBadges(identityId);
 
     // Stats
     const statFollowers = document.getElementById('stat-followers');
