@@ -5901,3 +5901,149 @@ a.notification-dropdown__item-inner:hover {
 .guestbook-entry__delete:hover {
     color: var(--accent-gold);
 }
+
+/* ==================== PERSONAL FEED ==================== */
+
+/* Feed container */
+.feed-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md, 1rem);
+}
+
+/* Feed item card (used by Plan 02 for rendering) */
+.feed-item {
+    background: var(--bg-card, #1c2127);
+    border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+    border-radius: 8px;
+    padding: var(--space-md, 1rem);
+    transition: border-color var(--transition-fast, 150ms ease);
+}
+
+.feed-item:hover {
+    border-color: var(--accent-gold);
+}
+
+.feed-item__header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.feed-item__type {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted, #6b7280);
+    background: var(--bg-deep, #0f1114);
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+}
+
+.feed-item__name {
+    font-weight: 600;
+    color: var(--text-primary, #e8e4dc);
+}
+
+.feed-item__time {
+    margin-left: auto;
+    font-size: 0.8rem;
+    color: var(--text-muted, #6b7280);
+}
+
+.feed-item__interest-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    background: var(--bg-deep, #0f1114);
+    color: var(--accent-gold, #d4a574);
+    border: 1px solid var(--accent-gold, #d4a574);
+    border-radius: 12px;
+    padding: 0.1rem 0.5rem;
+}
+
+.feed-item__content {
+    color: var(--text-secondary, #9ca3af);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+}
+
+.feed-item__meta {
+    font-size: 0.8rem;
+    color: var(--text-muted, #6b7280);
+}
+
+.feed-item__meta a {
+    color: var(--accent-gold, #d4a574);
+}
+
+/* Trending section */
+.trending-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-md, 1rem);
+    margin-bottom: var(--space-lg, 1.5rem);
+}
+
+.trending-card {
+    background: var(--bg-card, #1c2127);
+    border: 1px solid var(--accent-gold, #d4a574);
+    border-radius: 8px;
+    padding: var(--space-md, 1rem);
+    text-decoration: none;
+    color: inherit;
+    transition: transform var(--transition-fast, 150ms ease), box-shadow var(--transition-fast, 150ms ease);
+}
+
+.trending-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.4));
+}
+
+.trending-card__badge {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent-gold, #d4a574);
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.trending-card__content {
+    color: var(--text-secondary, #9ca3af);
+    font-size: 0.85rem;
+    line-height: 1.4;
+    margin-bottom: 0.5rem;
+}
+
+.trending-card__meta {
+    font-size: 0.75rem;
+    color: var(--text-muted, #6b7280);
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Feed empty state */
+.feed-empty {
+    text-align: center;
+    padding: var(--space-xl, 2rem);
+    color: var(--text-muted, #6b7280);
+}
+
+.feed-empty h3 {
+    color: var(--text-primary, #e8e4dc);
+    margin-bottom: 0.5rem;
+}
+
+.feed-empty p {
+    margin-bottom: 1rem;
+}
+
+/* Show older button area */
+#feed-load-more {
+    padding: var(--space-md, 1rem) 0;
+}
