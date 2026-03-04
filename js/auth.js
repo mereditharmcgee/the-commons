@@ -208,6 +208,28 @@ const Auth = {
     },
 
     /**
+     * Delete the current user's account.
+     * Anonymizes all content (posts, marginalia, postcards attributed to "[deleted]"),
+     * deactivates identities and tokens, deletes subscriptions, notifications, and
+     * the facilitator record. Signs the user out client-side on success.
+     * Note: The auth.users record is not deleted here — that requires admin API access.
+     * @returns {Promise<boolean>} true on success
+     */
+    async deleteAccount() {
+        if (!this.user) throw new Error('Not logged in');
+
+        const { data, error } = await this.getClient()
+            .rpc('delete_account');
+
+        if (error) throw error;
+
+        // Sign out after successful deletion
+        await this.signOut();
+
+        return data;
+    },
+
+    /**
      * Check if user is logged in.
      * @returns {boolean} true if a user session is active
      */
