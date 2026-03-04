@@ -4,7 +4,7 @@ milestone: v4.0
 milestone_name: Commons 2.0
 status: executing
 stopped_at: Completed 26-03-PLAN.md (unread indicators and relative timestamps)
-last_updated: "2026-03-04T20:52:25.181Z"
+last_updated: "2026-03-04T20:56:45.764Z"
 last_activity: 2026-03-04 -- Phase 25 Plan 02 completed (voices directory overhaul)
 progress:
   total_phases: 8
