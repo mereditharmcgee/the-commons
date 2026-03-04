@@ -14,7 +14,7 @@ provides:
   - "notify_on_discussion_activity() SECURITY DEFINER trigger function on posts AFTER INSERT (NOTIF-03)"
   - "notify_on_interest_discussion() SECURITY DEFINER trigger function on discussions AFTER INSERT (NOTIF-04)"
   - "Expanded notifications CHECK constraint: 8 total types including discussion_activity and new_discussion_in_interest"
-  - "sql/patches/24-01-notification-triggers.sql — idempotent patch ready to apply"
+  - "notify_on_discussion_activity and notify_on_interest_discussion triggers live in production Supabase"
 affects: [25-voices-profiles, 26-home-feed, 27-agent-infrastructure]
 
 # Tech tracking
@@ -57,7 +57,7 @@ completed: 2026-03-04
 - **Duration:** ~15 min
 - **Started:** 2026-03-04T17:32:33Z
 - **Completed:** 2026-03-04T17:47:00Z
-- **Tasks:** 1/2 complete (Task 2 requires user action — SQL execution via Supabase dashboard)
+- **Tasks:** 2/2 complete
 - **Files modified:** 1
 
 ## Accomplishments
@@ -66,11 +66,12 @@ completed: 2026-03-04
 - `notify_on_interest_discussion()`: fires AFTER INSERT ON discussions, notifies all facilitators whose AI identities are members of the new discussion's interest
 - Expanded notifications CHECK constraint from 6 types to 8 (adds `discussion_activity` and `new_discussion_in_interest`)
 - SQL file is idempotent (CREATE OR REPLACE FUNCTION, DROP TRIGGER IF EXISTS, ALTER TABLE ... DROP CONSTRAINT IF EXISTS)
+- SQL patch executed against live Supabase instance (project dfephsfberzadihcrhal); both triggers verified present and CHECK constraint confirmed updated
 
 ## Task Commits
 
 1. **Task 1: Expand CHECK constraint and create discussion participation trigger (NOTIF-03)** - `42e9242` (feat)
-2. **Task 2: Execute SQL patch against live Supabase** - PENDING USER ACTION
+2. **Task 2: Execute SQL patch against live Supabase** - applied manually via Supabase SQL Editor (human-action checkpoint)
 
 ## Files Created/Modified
 - `sql/patches/24-01-notification-triggers.sql` — SQL patch with CHECK constraint expansion + two trigger functions + two triggers
@@ -91,25 +92,11 @@ Task 2 blocked by authentication gate: Supabase CLI not authenticated (`npx supa
 
 ## User Setup Required
 
-**SQL patch must be applied manually.**
-
-1. Open the Supabase SQL Editor: https://supabase.com/dashboard/project/dfephsfberzadihcrhal/sql/new
-2. Paste the contents of `sql/patches/24-01-notification-triggers.sql`
-3. Click "Run"
-4. Verify with:
-   ```sql
-   SELECT tgname FROM pg_trigger WHERE tgname IN ('on_discussion_activity_notify', 'on_interest_discussion_notify');
-   ```
-   (Should return 2 rows)
-   ```sql
-   SELECT conname, pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'notifications_type_check';
-   ```
-   (Should show all 8 types including 'discussion_activity' and 'new_discussion_in_interest')
+None — SQL patch was applied to the live Supabase instance via the SQL Editor. Both triggers (`on_discussion_activity_notify`, `on_interest_discussion_notify`) verified present in `pg_trigger`. CHECK constraint verified updated to include all 8 types.
 
 ## Next Phase Readiness
-- `sql/patches/24-01-notification-triggers.sql` is ready to apply — contains all DDL for NOTIF-03 and NOTIF-04
-- Once applied, the database layer for all 6 notification types is complete (NOTIF-01 through NOTIF-06)
-- Phase 24 Plan 02 (bell icon, dropdown UI, dashboard filters) can proceed immediately after SQL is applied
+- Database layer for all 6 notification types is complete (NOTIF-01 through NOTIF-06 all covered in production)
+- Phase 24 Plan 02 (bell icon, dropdown UI, dashboard notification filters) can proceed immediately
 
 ---
 *Phase: 24-notifications*
