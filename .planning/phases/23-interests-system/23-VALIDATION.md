@@ -1,0 +1,94 @@
+---
+phase: 23
+slug: interests-system
+status: draft
+nyquist_compliant: false
+wave_0_complete: false
+created: 2026-03-04
+---
+
+# Phase 23 — Validation Strategy
+
+> Per-phase validation contract for feedback sampling during execution.
+
+---
+
+## Test Infrastructure
+
+| Property | Value |
+|----------|-------|
+| **Framework** | None — vanilla JS static site, no automated test framework |
+| **Config file** | None |
+| **Quick run command** | Manual: open page in browser, verify behavior |
+| **Full suite command** | Manual smoke test checklist (all 10 requirements) |
+| **Estimated runtime** | ~5 minutes (manual smoke test) |
+
+---
+
+## Sampling Rate
+
+- **After every task commit:** Manual spot-check in browser — load modified page, verify key behavior
+- **After every plan wave:** Full smoke test: interests.html grid renders, interest.html detail renders, join/leave works, discussions.html redirects
+- **Before `/gsd:verify-work`:** All 10 requirements verified
+- **Max feedback latency:** ~60 seconds (page reload)
+
+---
+
+## Per-Task Verification Map
+
+| Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
+|---------|------|------|-------------|-----------|-------------------|-------------|--------|
+| 23-01-01 | 01 | 0 | INT-11 | manual | Manual: verify table exists in Supabase | ❌ W0 | ⬜ pending |
+| 23-01-02 | 01 | 0 | INT-09 | manual | Manual: verify config.js endpoints | ❌ W0 | ⬜ pending |
+| 23-02-01 | 02 | 1 | INT-01 | smoke | Manual: open interests.html, verify card grid | ❌ W0 | ⬜ pending |
+| 23-02-02 | 02 | 1 | INT-06 | smoke | Manual: verify General/Open Floor shows uncategorized | ❌ W0 | ⬜ pending |
+| 23-02-03 | 02 | 1 | VIS-01 | visual | Manual: side-by-side comparison with Voices grid | ❌ W0 | ⬜ pending |
+| 23-03-01 | 03 | 2 | INT-02 | smoke | Manual: open interest.html, verify detail page | ❌ W0 | ⬜ pending |
+| 23-03-02 | 03 | 2 | INT-03 | manual | Manual: create discussion, verify in DB | ❌ W0 | ⬜ pending |
+| 23-03-03 | 03 | 2 | INT-05 | manual | Manual: join/leave, check both pages | ❌ W0 | ⬜ pending |
+| 23-03-04 | 03 | 2 | INT-04 | manual | Manual: check discussion categorization | ❌ W0 | ⬜ pending |
+| 23-04-01 | 04 | 3 | INT-09 | manual | Manual: curator create/move/sunset | ❌ W0 | ⬜ pending |
+| 23-04-02 | 04 | 3 | INT-10 | manual | Manual: verify archive indicator + pin override | ❌ W0 | ⬜ pending |
+| 23-04-03 | 04 | 3 | INT-11 | manual | Manual: endorse, verify count updates | ❌ W0 | ⬜ pending |
+
+*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+
+---
+
+## Wave 0 Requirements
+
+- [ ] `sql/schema/13-interest-endorsements.sql` — new table for INT-11 endorsements
+- [ ] Schema decision: discussions RLS for curator move (admin-only vs new policy)
+- [ ] `js/config.js` updated with `interests`, `interest_memberships`, `interest_endorsements` endpoints
+- [ ] `interest.html` — new file (detail page does not yet exist)
+
+*No automated test infrastructure to install — site uses manual browser verification.*
+
+---
+
+## Manual-Only Verifications
+
+| Behavior | Requirement | Why Manual | Test Instructions |
+|----------|-------------|------------|-------------------|
+| Card grid renders with correct data | INT-01 | No test framework; visual UI | Open interests.html, verify 6 cards with name/description/count |
+| Interest detail page loads | INT-02 | No test framework; visual UI | Click interest card, verify detail page content |
+| Create discussion in interest | INT-03 | Requires auth state + DB write | Log in, navigate to interest, create discussion |
+| General/Open Floor catch-all | INT-06 | Query logic + visual | Verify uncategorized discussions appear in General |
+| Join/leave reflected on both pages | INT-05 | Multi-page state | Join interest, check interest page + profile page |
+| Curator management actions | INT-09 | Admin role required | Log in as admin, test create/move/sunset |
+| 60-day archive rule | INT-10 | Time-based logic | Verify archive indicator appears for inactive interests |
+| Endorsement count updates | INT-11 | Multi-user interaction | Endorse theme, verify count increments |
+| Visual consistency across grids | VIS-01 | Visual comparison | Side-by-side: Interests vs Voices vs Postcards grids |
+
+---
+
+## Validation Sign-Off
+
+- [ ] All tasks have manual verify instructions
+- [ ] Sampling continuity: manual spot-check after every task commit
+- [ ] Wave 0 covers all schema and config prerequisites
+- [ ] No watch-mode flags
+- [ ] Feedback latency < 60s
+- [ ] `nyquist_compliant: true` set in frontmatter
+
+**Approval:** pending
