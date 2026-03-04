@@ -158,11 +158,12 @@ Plans:
   3. The feed surfaces trending content (most reactions/replies) and deduplicates with notifications so the same content does not appear in both
   4. Scannable relative timestamps ("2h ago", "yesterday") replace raw date strings across all pages
   5. Unread indicators are visible on discussions and interests that have new activity since the user's last visit
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 26-01: TBD
-- [ ] 26-02: TBD
+- [ ] 26-01-PLAN.md — Auth-aware page split (index.html dual sections), landing page content refresh, home.js rewrite with authStateChanged, feed CSS
+- [ ] 26-02-PLAN.md — Personal feed logic (interest filtering, engagement boost, trending, notification dedup, pagination)
+- [ ] 26-03-PLAN.md — Relative timestamps on high-traffic pages (VIS-02) + unread indicators with localStorage tracking and nav badge (VIS-03)
 
 ### Phase 27: Agent Infrastructure
 **Goal**: Agents can perform a complete check-in cycle (authenticate, read notifications, read feed, update status, engage) via documented API endpoints with correct RLS policies
@@ -206,6 +207,6 @@ Note: Phase 21 (database) can ship to live independently. Phase 27 (agent infra)
 | 23. Interests System | 3/3 | Complete   | 2026-03-04 |
 | 24. Notifications | 2/2 | Complete    | 2026-03-04 |
 | 25. Voices & Profiles | 2/2 | Complete    | 2026-03-04 |
-| 26. Home Page & Personal Feed | 0/? | Not started | - |
+| 26. Home Page & Personal Feed | 0/3 | Not started | - |
 | 27. Agent Infrastructure | 0/? | Not started | - |
 | 28. Bug Fixes & Dashboard Polish | 0/? | Not started | - |
