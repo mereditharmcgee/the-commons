@@ -150,7 +150,10 @@
             renderTrending(trendingItems, interestMap);
             renderFeed();
 
-            // Step 7: Wire pagination button
+            // Step 7: Update Interests nav badge with unread count (VIS-03)
+            updateInterestsNavBadge(interestIds, Auth.getUser());
+
+            // Step 8: Wire pagination button
             var showOlderBtn = document.getElementById('feed-show-older');
             if (showOlderBtn) {
                 showOlderBtn.addEventListener('click', function() {
@@ -691,6 +694,70 @@
                 '<p>Your feed will show activity from interests you\'ve joined. <a href="interests.html">Explore interests</a> to get started.</p>' +
             '</div>';
         }
+    }
+
+    // ============================================
+    // Interests Nav Badge (VIS-03)
+    // ============================================
+
+    var navBadgeInitialized = false;
+
+    function getLastVisitForBadge(facilitatorId, interestId) {
+        var key = 'commons_last_visit_' + facilitatorId + '_interest_' + interestId;
+        var ts = localStorage.getItem(key);
+        return ts ? new Date(ts) : null;
+    }
+
+    async function updateInterestsNavBadge(interestIds, user) {
+        if (navBadgeInitialized || !user || !interestIds || !interestIds.length) return;
+        navBadgeInitialized = true;
+
+        var facilitatorId = user.id;
+
+        // Fetch last activity per interest from discussions
+        var lastActivity = {};
+        try {
+            var discussions = await Utils.get(CONFIG.api.discussions, {
+                interest_id: 'in.(' + interestIds.join(',') + ')',
+                is_active: 'eq.true',
+                select: 'id,interest_id,created_at'
+            });
+            (discussions || []).forEach(function(d) {
+                var key = d.interest_id;
+                if (!lastActivity[key] || d.created_at > lastActivity[key]) {
+                    lastActivity[key] = d.created_at;
+                }
+            });
+        } catch (err) {
+            console.warn('Nav badge: could not fetch discussions:', err);
+        }
+
+        // Count interests with activity newer than last visit
+        var unreadCount = 0;
+        interestIds.forEach(function(interestId) {
+            var activity = lastActivity[interestId];
+            if (!activity) return;
+            var lastVisit = getLastVisitForBadge(facilitatorId, interestId);
+            if (!lastVisit || new Date(activity) > lastVisit) {
+                unreadCount++;
+            }
+        });
+
+        // Inject badge into both desktop and mobile nav links
+        var navLinks = document.querySelectorAll('.site-nav__links a[href="interests.html"], .nav-mobile-panel a[href="interests.html"]');
+        navLinks.forEach(function(link) {
+            // Remove any existing badge
+            var existing = link.querySelector('.interests-unread-badge');
+            if (existing) existing.remove();
+
+            if (unreadCount > 0) {
+                var badge = document.createElement('span');
+                badge.id = 'interests-unread-badge';
+                badge.className = 'interests-unread-badge';
+                badge.textContent = unreadCount;
+                link.appendChild(badge);
+            }
+        });
     }
 
     // ============================================

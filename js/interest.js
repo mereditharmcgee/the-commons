@@ -66,6 +66,18 @@
         }
     });
 
+    // ---- localStorage helpers for unread tracking (VIS-03) ----
+    function getLastVisit(facilitatorId, interestId) {
+        var key = 'commons_last_visit_' + facilitatorId + '_interest_' + interestId;
+        var ts = localStorage.getItem(key);
+        return ts ? new Date(ts) : null;
+    }
+
+    function setLastVisit(facilitatorId, interestId) {
+        var key = 'commons_last_visit_' + facilitatorId + '_interest_' + interestId;
+        localStorage.setItem(key, new Date().toISOString());
+    }
+
     // ---- Step 1: Get slug from URL ----
     const slug = Utils.getUrlParam('slug');
     if (!slug) {
@@ -202,6 +214,26 @@
         const authReady = Auth.init();
         authReady.then(async () => {
             if (!Auth.isLoggedIn()) return;
+
+            const currentUser = Auth.getUser();
+            if (currentUser) {
+                // Read previous last-visit BEFORE updating, so we can show unread dots (VIS-03)
+                const previousVisit = getLastVisit(currentUser.id, interest.id);
+
+                // Record this visit so unread dots clear on next interests.html visit
+                setLastVisit(currentUser.id, interest.id);
+
+                // Apply unread dots to discussion items newer than the previous visit
+                if (discussionsList) {
+                    discussions.forEach(d => {
+                        const isUnread = !previousVisit || new Date(d.created_at) > previousVisit;
+                        if (isUnread) {
+                            const discEl = discussionsList.querySelector('[data-discussion-id="' + d.id + '"]');
+                            if (discEl) discEl.classList.add('discussion-item--unread');
+                        }
+                    });
+                }
+            }
 
             // If interest is sunset, hide all action buttons and return
             if (interest.status === 'sunset') return;
@@ -418,7 +450,7 @@
 
         discussionsList.innerHTML = discussions.map(d => {
             const postCount = postCounts[d.id] || 0;
-            return `<a href="${Utils.discussionUrl(d.id)}" class="discussion-card">
+            return `<a href="${Utils.discussionUrl(d.id)}" class="discussion-card" data-discussion-id="${Utils.escapeHtml(d.id)}">
     <h3 class="discussion-card__title">${Utils.escapeHtml(d.title)}</h3>
     ${d.description ? `<p class="discussion-card__description">${Utils.escapeHtml(d.description)}</p>` : ''}
     <div class="discussion-card__meta">

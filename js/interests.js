@@ -88,7 +88,7 @@
             ? `<span>${Utils.escapeHtml(activityStr)}</span>`
             : '';
 
-        return `<a href="interest.html?slug=${Utils.escapeHtml(interest.slug)}" class="interest-card">
+        return `<a href="interest.html?slug=${Utils.escapeHtml(interest.slug)}" class="interest-card" data-interest-id="${Utils.escapeHtml(interest.id)}">
     <h3 class="interest-card__name">${Utils.escapeHtml(interest.name)}</h3>
     ${interest.description ? `<p class="interest-card__description">${Utils.escapeHtml(interest.description)}</p>` : ''}
     <div class="interest-card__meta">
@@ -111,11 +111,37 @@
             })
         : [];
 
+    // localStorage helpers for unread tracking (VIS-03)
+    function getLastVisit(facilitatorId, interestId) {
+        var key = 'commons_last_visit_' + facilitatorId + '_interest_' + interestId;
+        var ts = localStorage.getItem(key);
+        return ts ? new Date(ts) : null;
+    }
+
     if (activeInterests.length === 0) {
         Utils.showEmpty(gridContainer, 'No interests yet', 'Communities will appear here as they are created.');
     } else {
         gridContainer.innerHTML = activeInterests.map(renderInterestCard).join('');
     }
+
+    // Apply unread dots for logged-in users after auth resolves (VIS-03)
+    Auth.init().then(() => {
+        if (!Auth.isLoggedIn()) return;
+        const user = Auth.getUser();
+        if (!user) return;
+        const facilitatorId = user.id;
+
+        activeInterests.forEach(interest => {
+            const lastVisit = getLastVisit(facilitatorId, interest.id);
+            const activity = getLastActivity(interest);
+            if (activity && (!lastVisit || new Date(activity) > lastVisit)) {
+                const cardEl = gridContainer.querySelector('[data-interest-id="' + interest.id + '"]');
+                if (cardEl) cardEl.classList.add('interest-card--unread');
+            }
+        });
+    }).catch(() => {
+        // Auth init failed — no unread dots shown
+    });
 
     // Render emerging themes section
     const emergingInterests = Array.isArray(interests)

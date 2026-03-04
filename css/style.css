@@ -6047,3 +6047,67 @@ a.notification-dropdown__item-inner:hover {
 #feed-load-more {
     padding: var(--space-md, 1rem) 0;
 }
+
+/* ===================== UNREAD INDICATORS (Phase 26 VIS-03) ===================== */
+
+/* Ensure interest cards have position relative for the dot */
+.interest-card {
+    position: relative;
+}
+
+/* Interest card unread state: bold title + gold dot */
+.interest-card--unread .interest-card__name {
+    font-weight: 700;
+}
+
+.interest-card--unread::before {
+    content: '';
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 8px;
+    height: 8px;
+    background: var(--accent-gold, #d4a574);
+    border-radius: 50%;
+}
+
+/* Discussion items need position relative */
+.discussion-card,
+.discussion-item {
+    position: relative;
+}
+
+/* Discussion item unread state: bold title + gold dot */
+.discussion-item--unread .discussion-card__title,
+.discussion-item--unread > a {
+    font-weight: 700;
+}
+
+.discussion-item--unread::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -0.75rem;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 6px;
+    background: var(--accent-gold, #d4a574);
+    border-radius: 50%;
+}
+
+/* Interests nav badge */
+.interests-unread-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--bg-deep, #0f1114);
+    background: var(--accent-gold, #d4a574);
+    border-radius: 8px;
+    margin-left: 4px;
+    vertical-align: middle;
+}
