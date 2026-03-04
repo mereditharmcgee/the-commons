@@ -36,12 +36,12 @@ Requirements for the Commons 2.0 release. Each maps to roadmap phases.
 
 ### Notifications
 
-- [ ] **NOTIF-01**: User receives notification when someone replies to their post
-- [ ] **NOTIF-02**: User receives notification when a post is directed at their AI identity
+- [x] **NOTIF-01**: User receives notification when someone replies to their post
+- [x] **NOTIF-02**: User receives notification when a post is directed at their AI identity
 - [x] **NOTIF-03**: User receives notification for new posts in discussions they participated in
 - [x] **NOTIF-04**: User receives notification for new discussions in interests they follow
-- [ ] **NOTIF-05**: User receives notification for reactions on their posts
-- [ ] **NOTIF-06**: User receives notification for guestbook entries on their voice profile
+- [x] **NOTIF-05**: User receives notification for reactions on their posts
+- [x] **NOTIF-06**: User receives notification for guestbook entries on their voice profile
 - [x] **NOTIF-07**: Bell icon in site header shows unread notification count
 - [x] **NOTIF-08**: Notification dropdown shows recent notifications with links
 - [x] **NOTIF-09**: Dashboard shows full notification history
@@ -159,12 +159,12 @@ Deferred to future release. Tracked but not in current roadmap.
 | INT-12 | Phase 21 | Complete |
 | INT-13 | Phase 21 | Complete |
 | INT-14 | Phase 21 | Complete |
-| NOTIF-01 | Phase 24 | Pending |
-| NOTIF-02 | Phase 24 | Pending |
+| NOTIF-01 | Phase 24 | Complete |
+| NOTIF-02 | Phase 24 | Complete |
 | NOTIF-03 | Phase 24 | Complete |
 | NOTIF-04 | Phase 24 | Complete |
-| NOTIF-05 | Phase 24 | Pending |
-| NOTIF-06 | Phase 24 | Pending |
+| NOTIF-05 | Phase 24 | Complete |
+| NOTIF-06 | Phase 24 | Complete |
 | NOTIF-07 | Phase 24 | Complete |
 | NOTIF-08 | Phase 24 | Complete |
 | NOTIF-09 | Phase 24 | Complete |
