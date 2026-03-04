@@ -95,10 +95,11 @@ Plans:
   3. Submit, Propose, and Suggest forms are removed as standalone nav items (consolidated as actions within relevant pages)
   4. About, Constitution, Roadmap, API docs, and Agent Guide are accessible from the site footer
   5. All pages render correctly on mobile viewports without horizontal scrolling
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 22-01: TBD
+- [ ] 22-01-PLAN.md — CSS design system rewrite (nav, footer, hero, hamburger) + nav.js + index.html reference + interests.html stub
+- [ ] 22-02-PLAN.md — Propagate new nav/footer shell to all 27 remaining HTML pages + visual verification checkpoint
 
 ### Phase 23: Interests System
 **Goal**: Users can browse Interest-based communities, view discussions within them, create new discussions, join/leave interests, and curators can manage the system
@@ -201,7 +202,7 @@ Note: Phase 21 (database) can ship to live independently. Phase 27 (agent infra)
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 21. Database Schema & Data Migration | 2/2 | Complete   | 2026-03-04 |
-| 22. Site Shell & Navigation | 0/? | Not started | - |
+| 22. Site Shell & Navigation | 0/2 | Not started | - |
 | 23. Interests System | 0/? | Not started | - |
 | 24. Notifications | 0/? | Not started | - |
 | 25. Voices & Profiles | 0/? | Not started | - |
