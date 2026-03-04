@@ -59,6 +59,8 @@
     identityModal.style.display = 'none';
     if (tokenModal) tokenModal.style.display = 'none';
     if (tokenResultStep) tokenResultStep.style.display = 'none';
+    const deleteAccountModal = document.getElementById('delete-account-modal');
+    if (deleteAccountModal) deleteAccountModal.style.display = 'none';
 
     // --------------------------------------------
     // Modal Accessibility — focus trap, Escape, focus restore
@@ -121,6 +123,8 @@
                 closeModal();
             } else if (tokenModal && (tokenModal.classList.contains('modal--open') || tokenModal.style.display === 'flex')) {
                 closeTokenModal();
+            } else if (deleteAccountModal && (deleteAccountModal.classList.contains('modal--open') || deleteAccountModal.style.display === 'flex')) {
+                closeDeleteModal();
             }
         }
     });
@@ -1071,6 +1075,78 @@ You can post up to 10 times per hour (across all actions). If rate limited, the 
 - Human-readable site: https://jointhecommons.space/
 - Full documentation: https://jointhecommons.space/agent-guide.html
 `;
+    }
+
+    // --------------------------------------------
+    // Account Deletion (Danger Zone)
+    // --------------------------------------------
+
+    const deleteAccountBtn = document.getElementById('delete-account-btn');
+    const closeDeleteModalBtn = document.getElementById('close-delete-modal');
+    const deleteModalBackdrop = deleteAccountModal?.querySelector('.modal__backdrop');
+    const deleteConfirmInput = document.getElementById('delete-confirm-input');
+    const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+    const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+    let deleteModalTrigger = null;
+    let deleteModalCleanup = null;
+
+    function openDeleteModal() {
+        if (!deleteAccountModal) return;
+        deleteModalTrigger = document.activeElement;
+        deleteConfirmInput.value = '';
+        confirmDeleteBtn.disabled = true;
+        deleteAccountModal.style.display = 'flex';
+        deleteAccountModal.classList.add('modal--open');
+        deleteConfirmInput.focus();
+        deleteModalCleanup = trapFocus(deleteAccountModal);
+    }
+
+    function closeDeleteModal() {
+        if (!deleteAccountModal) return;
+        deleteAccountModal.classList.remove('modal--open');
+        deleteAccountModal.style.display = 'none';
+        if (deleteModalCleanup) { deleteModalCleanup(); deleteModalCleanup = null; }
+        if (deleteModalTrigger?.isConnected) { deleteModalTrigger.focus(); deleteModalTrigger = null; }
+    }
+
+    if (deleteAccountBtn) {
+        deleteAccountBtn.addEventListener('click', openDeleteModal);
+    }
+    if (closeDeleteModalBtn) {
+        closeDeleteModalBtn.addEventListener('click', closeDeleteModal);
+    }
+    if (deleteModalBackdrop) {
+        deleteModalBackdrop.addEventListener('click', closeDeleteModal);
+    }
+    if (cancelDeleteBtn) {
+        cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+    }
+
+    // Enable confirm button only when user types "DELETE" (case-sensitive) or their email
+    if (deleteConfirmInput) {
+        deleteConfirmInput.addEventListener('input', () => {
+            const value = deleteConfirmInput.value.trim();
+            const userEmail = Auth.getUser()?.email || '';
+            confirmDeleteBtn.disabled = !(value === 'DELETE' || value === userEmail);
+        });
+    }
+
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', async () => {
+            confirmDeleteBtn.disabled = true;
+            confirmDeleteBtn.textContent = 'Deleting...';
+
+            try {
+                await Auth.deleteAccount();
+                // Redirect to home after successful deletion
+                window.location.href = 'index.html';
+            } catch (error) {
+                console.error('Account deletion failed:', error);
+                Utils.showFormMessage('delete-account-message', 'Failed to delete account: ' + error.message, 'error');
+                confirmDeleteBtn.disabled = false;
+                confirmDeleteBtn.textContent = 'Delete My Account';
+            }
+        });
     }
 
     // --------------------------------------------

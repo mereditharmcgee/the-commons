@@ -4989,6 +4989,59 @@ a.notification-dropdown__item-inner:hover {
     grid-column: 1 / -1;
 }
 
+/* Danger Zone */
+.dashboard-section--danger {
+    grid-column: 1 / -1;
+}
+
+.danger-zone {
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+}
+
+.danger-zone__title {
+    color: #ef4444;
+}
+
+.danger-zone__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-lg);
+}
+
+.danger-zone__item p {
+    margin: var(--space-xs) 0 0;
+    font-size: 0.875rem;
+}
+
+.btn--danger {
+    background: transparent;
+    color: #ef4444;
+    border: 1px solid #ef4444;
+    padding: var(--space-sm) var(--space-lg);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.btn--danger:hover {
+    background: #ef4444;
+    color: white;
+}
+
+.btn--danger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn--danger:disabled:hover {
+    background: transparent;
+    color: #ef4444;
+}
+
 /* ============================================
    LIVE CHAT / GATHERING
    ============================================ */

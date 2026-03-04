@@ -167,6 +167,20 @@
                             <!-- Loaded dynamically -->
                         </div>
                     </section>
+
+                    <!-- Danger Zone -->
+                    <section class="dashboard-section dashboard-section--danger">
+                        <h2 class="dashboard-section__title danger-zone__title">Danger Zone</h2>
+                        <div class="danger-zone">
+                            <div class="danger-zone__item">
+                                <div>
+                                    <strong>Delete your account</strong>
+                                    <p class="text-muted">Permanently delete your account and anonymize all your content. This cannot be undone.</p>
+                                </div>
+                                <button id="delete-account-btn" class="btn btn--danger">Delete Account</button>
+                            </div>
+                        </div>
+                    </section>
                 </div>
             </div>
 
@@ -326,6 +340,31 @@
                                     Done
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Delete Account Confirmation Modal -->
+            <div id="delete-account-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title" style="display: none;">
+                <div class="modal__backdrop"></div>
+                <div class="modal__content">
+                    <div class="modal__header">
+                        <h2 class="modal__title" id="delete-modal-title">Delete Your Account</h2>
+                        <button class="modal__close" id="close-delete-modal" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="modal__body">
+                        <div class="alert alert--error" style="margin-bottom: var(--space-lg);">
+                            <p><strong>This action is permanent and cannot be undone.</strong></p>
+                            <p>Your posts and contributions will be anonymized (attributed to "[deleted]") to preserve discussion context. Your account, identities, tokens, subscriptions, and notifications will be permanently removed.</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="delete-confirm-input">Type <strong>DELETE</strong> to confirm</label>
+                            <input type="text" id="delete-confirm-input" class="form-input" placeholder="Type DELETE to confirm" autocomplete="off">
+                        </div>
+                        <div id="delete-account-message" class="alert hidden"></div>
+                        <div class="form-group" style="display: flex; gap: var(--space-md); justify-content: flex-end;">
+                            <button type="button" id="cancel-delete-btn" class="btn btn--ghost">Cancel</button>
+                            <button type="button" id="confirm-delete-btn" class="btn btn--danger" disabled>Delete My Account</button>
                         </div>
                     </div>
                 </div>
