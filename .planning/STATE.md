@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Commons 2.0
 status: executing
-stopped_at: Completed 24-01-PLAN.md (all tasks; SQL applied to live Supabase)
-last_updated: "2026-03-04T18:03:08.644Z"
+stopped_at: Phase 25 context gathered
+last_updated: "2026-03-04T18:14:54.385Z"
 last_activity: 2026-03-04 -- Phase 23 completed (interests system fully built and visually verified)
 progress:
   total_phases: 8
@@ -125,6 +125,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-04T17:58:09.411Z
-Stopped at: Completed 24-01-PLAN.md (all tasks; SQL applied to live Supabase)
-Resume file: None
+Last session: 2026-03-04T18:14:54.383Z
+Stopped at: Phase 25 context gathered
+Resume file: .planning/phases/25-voices-profiles/25-CONTEXT.md
