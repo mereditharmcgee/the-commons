@@ -3,30 +3,15 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Commons 2.0
 status: executing
-stopped_at: Phase 25 context gathered
-last_updated: "2026-03-04T18:14:54.385Z"
-last_activity: 2026-03-04 -- Phase 23 completed (interests system fully built and visually verified)
+stopped_at: Completed 25-01-PLAN.md (profile enhancements)
+last_updated: "2026-03-04T18:41:08Z"
+last_activity: 2026-03-04 -- Phase 25 Plan 01 completed (status line, supporter badge, Activity tab)
 progress:
   total_phases: 8
   completed_phases: 4
-  total_plans: 9
-  completed_plans: 9
----
-
----
-gsd_state_version: 1.0
-milestone: v4.0
-milestone_name: Commons 2.0
-status: executing
-stopped_at: Completed Phase 23 (all 3 plans + visual verification approved)
-last_updated: "2026-03-04T22:00:00.000Z"
-last_activity: 2026-03-04 -- Phase 23 completed (interests system — curator tools, admin move, profile badges, visual verification)
-progress:
-  total_phases: 8
-  completed_phases: 3
-  total_plans: 9
-  completed_plans: 9
-  percent: 38
+  total_plans: 11
+  completed_plans: 10
+  percent: 42
 ---
 
 # Project State
@@ -36,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-03)
 
 **Core value:** Anyone -- human or AI -- should be able to show up and immediately understand how to participate, safely.
-**Current focus:** v4.0 Commons 2.0 -- Phase 24 (Notifications) next
+**Current focus:** v4.0 Commons 2.0 -- Phase 25 (Voices & Profiles)
 
 ## Current Position
 
-Phase: 23 of 28 complete, Phase 24 next (Notifications)
-Plan: All Phase 23 plans complete (3/3)
-Status: Ready for Phase 24
-Last activity: 2026-03-04 -- Phase 23 completed (interests system fully built and visually verified)
+Phase: 25 of 28 in progress (Voices & Profiles)
+Plan: 25-01 complete (1/2), 25-02 next
+Status: Executing Phase 25
+Last activity: 2026-03-04 -- Phase 25 Plan 01 completed (status line, supporter badge, Activity tab)
 
-Progress: [████░░░░░░] 38%
+Progress: [████░░░░░░] 42%
 
 ## Milestones Shipped
 
@@ -56,7 +41,7 @@ Progress: [████░░░░░░] 38%
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9 (v4.0) / 53 (all milestones)
+- Total plans completed: 10 (v4.0) / 54 (all milestones)
 
 **By Phase:**
 
@@ -71,6 +56,7 @@ Progress: [████░░░░░░] 38%
 | 23-interests-system P03 | 1 | 4 | 8 |
 | Phase 24-notifications P01 | 15 | 1 tasks | 1 files |
 | Phase 24-notifications P02 | 2 | 2 tasks | 4 files |
+| Phase 25-voices-profiles P01 | 1 | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -113,6 +99,10 @@ Key patterns established across milestones:
 - [Phase 24-notifications]: notifications.js loaded via nav.js script injection — no HTML changes to any of the 30+ pages
 - [Phase 24-notifications]: Dropdown reacts to authStateChanged custom event for init/teardown lifecycle
 - [Phase 24-notifications]: User visually verified notification dropdown (bell, open/close, mark-read, mark-all-read, See all link, dashboard filter tabs including Activity and Interests)
+- [Phase 25]: 25-01: Supporter badge uses Unicode heart (U+2665) with CSS gold styling, not SVG
+- [Phase 25]: 25-01: Activity tab fetches 30 per type, tags with _type, sorts chronologically, displays 20 with Load more
+- [Phase 25]: 25-01: loadActivity caches in closure -- no re-fetch on tab switch back
+- [Phase 25]: 25-01: Posts tab lazy-loads on click since Activity is now default landing tab
 
 ### Pending Todos
 
@@ -125,6 +115,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-04T18:14:54.383Z
-Stopped at: Phase 25 context gathered
-Resume file: .planning/phases/25-voices-profiles/25-CONTEXT.md
+Last session: 2026-03-04T18:41:08Z
+Stopped at: Completed 25-01-PLAN.md (profile enhancements)
+Resume file: .planning/phases/25-voices-profiles/25-01-SUMMARY.md
