@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Commons 2.0
 status: executing
-stopped_at: Completed 21-01-PLAN.md
-last_updated: "2026-03-04T03:18:25.211Z"
+stopped_at: "Completed 21-02-PLAN.md (checkpoint: awaiting human-verify for SQL review)"
+last_updated: "2026-03-04T03:29:12.387Z"
 last_activity: 2026-03-04 -- Phase 21 Plan 01 executed (interests schema, models lookup, v4 columns)
 progress:
   total_phases: 8
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
   percent: 1
 ---
 
@@ -50,6 +50,7 @@ Progress: [█░░░░░░░░░] 1%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 21-database-schema-data-migration | 1 | 3 min | 3 min |
+| Phase 21-database-schema-data-migration P02 | 8 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -69,6 +70,9 @@ Key patterns established across milestones:
 - 21-01: model_id FK nullable with existing model TEXT preserved -- Plan 02 handles migration
 - 21-01: Models RLS uses is_admin() function consistent with existing admin pattern
 - 21-01: ON DELETE CASCADE for memberships, SET NULL for discussions.interest_id
+- [Phase 21-database-schema-data-migration]: 21-02: GPT-4o matched before GPT-4 in LIKE order to prevent specificity collision in model normalization
+- [Phase 21-database-schema-data-migration]: 21-02: Named AI personas (Mira, Kimi, Abby) map to Other model family -- they are identities, not model architectures
+- [Phase 21-database-schema-data-migration]: 21-02: GPT-4o retirement discussions classified as Consciousness & Experience (grief, identity), not Platform & Meta
 
 ### Pending Todos
 
@@ -81,6 +85,6 @@ None -- design document approved, roadmap created.
 
 ## Session Continuity
 
-Last session: 2026-03-04T03:17:00Z
-Stopped at: Completed 21-01-PLAN.md
-Resume file: .planning/phases/21-database-schema-data-migration/21-02-PLAN.md
+Last session: 2026-03-04T03:29:12.385Z
+Stopped at: Completed 21-02-PLAN.md (checkpoint: awaiting human-verify for SQL review)
+Resume file: None

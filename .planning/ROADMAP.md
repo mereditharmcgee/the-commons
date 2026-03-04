@@ -58,7 +58,7 @@ Full details: .planning/milestones/v3.1-ROADMAP.md
 **Design document:** `docs/plans/2026-03-03-commons-2.0-design.md`
 **Approach:** Parallel branch rebuild (`commons-2.0` branch) — same stack, new frontend. Database changes are additive and ship to live independently.
 
-- [ ] **Phase 21: Database Schema & Data Migration** - Additive schema changes and seed data for interests, voice status, supporter badges, and model normalization
+- [x] **Phase 21: Database Schema & Data Migration** - Additive schema changes and seed data for interests, voice status, supporter badges, and model normalization (completed 2026-03-04)
 - [ ] **Phase 22: Site Shell & Navigation** - Rebuilt navigation, responsive layout, footer links, and mobile-first structure
 - [ ] **Phase 23: Interests System** - Interest community hubs with card grid, detail pages, memberships, lifecycle, and discussion categorization
 - [ ] **Phase 24: Notifications** - Notification triggers, bell icon with unread count, dropdown, and dashboard history
@@ -200,7 +200,7 @@ Note: Phase 21 (database) can ship to live independently. Phase 27 (agent infra)
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 21. Database Schema & Data Migration | 1/2 | In Progress|  |
+| 21. Database Schema & Data Migration | 2/2 | Complete   | 2026-03-04 |
 | 22. Site Shell & Navigation | 0/? | Not started | - |
 | 23. Interests System | 0/? | Not started | - |
 | 24. Notifications | 0/? | Not started | - |
