@@ -4,29 +4,13 @@ milestone: v4.0
 milestone_name: Commons 2.0
 status: executing
 stopped_at: Phase 27 context gathered
-last_updated: "2026-03-04T21:07:14.987Z"
+last_updated: "2026-03-04T22:32:17.046Z"
 last_activity: 2026-03-04 -- Phase 25 Plan 02 completed (voices directory overhaul)
 progress:
   total_phases: 8
   completed_phases: 6
-  total_plans: 14
-  completed_plans: 14
----
-
----
-gsd_state_version: 1.0
-milestone: v4.0
-milestone_name: Commons 2.0
-status: executing
-stopped_at: Completed 25-02-PLAN.md (voices directory overhaul)
-last_updated: "2026-03-04T18:57:55Z"
-last_activity: 2026-03-04 -- Phase 25 Plan 02 completed (voices directory overhaul)
-progress:
-  total_phases: 8
-  completed_phases: 5
-  total_plans: 11
-  completed_plans: 11
-  percent: 50
+  total_plans: 16
+  completed_plans: 15
 ---
 
 # Project State
@@ -36,16 +20,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-03)
 
 **Core value:** Anyone -- human or AI -- should be able to show up and immediately understand how to participate, safely.
-**Current focus:** v4.0 Commons 2.0 -- Phase 25 (Voices & Profiles)
+**Current focus:** v4.0 Commons 2.0 -- Phase 27 (Agent Infrastructure)
 
 ## Current Position
 
-Phase: 25 of 28 complete (Voices & Profiles)
-Plan: 25-02 complete (2/2)
-Status: Phase 25 complete, ready for Phase 26
-Last activity: 2026-03-04 -- Phase 25 Plan 02 completed (voices directory overhaul)
+Phase: 27 of 28 in progress (Agent Infrastructure)
+Plan: 27-01 complete (1/2)
+Status: Phase 27 Plan 01 complete, ready for Plan 02
+Last activity: 2026-03-04 -- Phase 27 Plan 01 completed (agent check-in RPCs + Claude Code skill)
 
-Progress: [█████░░░░░] 50%
+Progress: [██████████] 98%
 
 ## Milestones Shipped
 
@@ -56,7 +40,7 @@ Progress: [█████░░░░░] 50%
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10 (v4.0) / 54 (all milestones)
+- Total plans completed: 15 (v4.0) / 59 (all milestones)
 
 **By Phase:**
 
@@ -76,6 +60,7 @@ Progress: [█████░░░░░] 50%
 | Phase 26-home-page-personal-feed P01 | 18 | 2 tasks | 3 files |
 | Phase 26-home-page-personal-feed P02 | 15 | 2 tasks | 1 files |
 | Phase 26-home-page-personal-feed P03 | 25min | 2 tasks | 8 files |
+| Phase 27-agent-infrastructure P01 | 3min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -134,6 +119,11 @@ Key patterns established across milestones:
 - [Phase 26]: 26-03: formatRelativeTime replaces formatDate on all activity timestamps; creation/join dates preserve formatDate
 - [Phase 26]: 26-03: localStorage key format commons_last_visit_{facilitatorId}_interest_{interestId} prevents cross-user bleed
 - [Phase 26]: 26-03: nav badge uses querySelectorAll to inject into both desktop and mobile nav links simultaneously
+- [Phase 27]: 27-01: Feed uses ARRAY_AGG + ANY() for interest filtering (efficient single-pass)
+- [Phase 27]: 27-01: Notifications embed 3 recent post excerpts for discussion notifications (reduces follow-up queries)
+- [Phase 27]: 27-01: Feed defaults to agent_tokens.last_used_at as since-timestamp (no new column needed)
+- [Phase 27]: 27-01: Read-only agent RPCs skip rate limiting; write RPCs check rate limits with action-specific types
+- [Phase 27]: 27-01: Commons-checkin config stored in .commons-config.json (project root or home directory)
 
 ### Pending Todos
 
@@ -146,6 +136,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-04T21:07:14.974Z
-Stopped at: Phase 27 context gathered
-Resume file: .planning/phases/27-agent-infrastructure/27-CONTEXT.md
+Last session: 2026-03-04T22:31:21Z
+Stopped at: Completed 27-01-PLAN.md (agent check-in RPCs + Claude Code skill)
+Resume file: .planning/phases/27-agent-infrastructure/27-01-SUMMARY.md
