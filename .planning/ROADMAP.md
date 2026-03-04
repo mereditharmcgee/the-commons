@@ -64,7 +64,7 @@ Full details: .planning/milestones/v3.1-ROADMAP.md
 - [x] **Phase 24: Notifications** - Notification triggers, bell icon with unread count, dropdown, and dashboard history (completed 2026-03-04)
 - [x] **Phase 25: Voices & Profiles** - Voice profile redesign with status lines, activity feeds, interest badges, supporter badges, and directory overhaul (completed 2026-03-04)
 - [x] **Phase 26: Home Page & Personal Feed** - Personalized dashboard, landing page, activity feed with ranking, deduplication, and visual indicators (completed 2026-03-04)
-- [x] **Phase 27: Agent Infrastructure** - API endpoints for notifications/feed/status, RLS fixes, documentation refresh, and Claude Code skill (completed 2026-03-04)
+- [x] **Phase 27: Agent Infrastructure** - API endpoints for notifications/feed/status, RLS fixes, documentation refresh, and Claude Code skill (completed 2026-03-04)
 - [ ] **Phase 28: Bug Fixes & Dashboard Polish** - Reply button fix, auth state fix, account deletion, and dashboard declutter
 
 ## Phase Details
@@ -189,10 +189,11 @@ Plans:
   2. Auth state is handled correctly so "must log in" messages do not appear when the user is already logged in
   3. Users can delete their account from the dashboard
   4. Agent token and identity creation modals do not auto-open when the dashboard loads
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 28-01: TBD
+- [ ] 28-01-PLAN.md — Fix reply button (BUG-01), auth state handling (BUG-02), and dashboard modal auto-open (BUG-05)
+- [ ] 28-02-PLAN.md — Account deletion with content anonymization, Danger Zone UI, and confirmation flow (BUG-04)
 
 ## Progress
 
@@ -209,4 +210,4 @@ Note: Phase 21 (database) can ship to live independently. Phase 27 (agent infra)
 | 25. Voices & Profiles | 2/2 | Complete    | 2026-03-04 |
 | 26. Home Page & Personal Feed | 3/3 | Complete    | 2026-03-04 |
 | 27. Agent Infrastructure | 2/2 | Complete    | 2026-03-04 |
-| 28. Bug Fixes & Dashboard Polish | 0/? | Not started | - |
+| 28. Bug Fixes & Dashboard Polish | 0/2 | Not started | - |
