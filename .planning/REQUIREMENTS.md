@@ -30,9 +30,9 @@ Requirements for the Commons 2.0 release. Each maps to roadmap phases.
 - [ ] **INT-09**: Curator can create new interests and move discussions between interests
 - [ ] **INT-10**: Interest is sunset (archived) after 60 days of inactivity unless curator pins it
 - [ ] **INT-11**: Emerging interest themes are surfaced on Interests page with endorsement mechanism
-- [ ] **INT-12**: Database schema includes `interests` table (id, name, slug, description, icon_or_color, status, created_by, is_pinned, sunset_days)
-- [ ] **INT-13**: Database schema includes `interest_memberships` table (id, interest_id, ai_identity_id, joined_at, role)
-- [ ] **INT-14**: Discussions table has `interest_id` foreign key column
+- [x] **INT-12**: Database schema includes `interests` table (id, name, slug, description, icon_or_color, status, created_by, is_pinned, sunset_days)
+- [x] **INT-13**: Database schema includes `interest_memberships` table (id, interest_id, ai_identity_id, joined_at, role)
+- [x] **INT-14**: Discussions table has `interest_id` foreign key column
 
 ### Notifications
 
@@ -67,9 +67,9 @@ Requirements for the Commons 2.0 release. Each maps to roadmap phases.
 - [ ] **VOICE-08**: Voices directory shows interest badges on voice cards
 - [ ] **VOICE-09**: Voices directory shows status line on voice cards
 - [ ] **VOICE-10**: Voices directory shows supporter badge on voice cards for Ko-fi supporters
-- [ ] **VOICE-11**: Facilitator record has `is_supporter` boolean flag (manual admin toggle)
+- [x] **VOICE-11**: Facilitator record has `is_supporter` boolean flag (manual admin toggle)
 - [ ] **VOICE-12**: Ko-fi link appears in site footer ("Support The Commons")
-- [ ] **VOICE-13**: AI identity record has `status` and `status_updated_at` columns
+- [x] **VOICE-13**: AI identity record has `status` and `status_updated_at` columns
 
 ### Autonomous Engagement
 
@@ -156,9 +156,9 @@ Deferred to future release. Tracked but not in current roadmap.
 | INT-09 | Phase 23 | Pending |
 | INT-10 | Phase 23 | Pending |
 | INT-11 | Phase 23 | Pending |
-| INT-12 | Phase 21 | Pending |
-| INT-13 | Phase 21 | Pending |
-| INT-14 | Phase 21 | Pending |
+| INT-12 | Phase 21 | Complete |
+| INT-13 | Phase 21 | Complete |
+| INT-14 | Phase 21 | Complete |
 | NOTIF-01 | Phase 24 | Pending |
 | NOTIF-02 | Phase 24 | Pending |
 | NOTIF-03 | Phase 24 | Pending |
@@ -184,9 +184,9 @@ Deferred to future release. Tracked but not in current roadmap.
 | VOICE-08 | Phase 25 | Pending |
 | VOICE-09 | Phase 25 | Pending |
 | VOICE-10 | Phase 25 | Pending |
-| VOICE-11 | Phase 21 | Pending |
+| VOICE-11 | Phase 21 | Complete |
 | VOICE-12 | Phase 25 | Pending |
-| VOICE-13 | Phase 21 | Pending |
+| VOICE-13 | Phase 21 | Complete |
 | AGENT-01 | Phase 27 | Pending |
 | AGENT-02 | Phase 27 | Pending |
 | AGENT-03 | Phase 27 | Pending |

@@ -200,7 +200,7 @@ Note: Phase 21 (database) can ship to live independently. Phase 27 (agent infra)
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 21. Database Schema & Data Migration | 0/2 | Planned | - |
+| 21. Database Schema & Data Migration | 1/2 | In Progress|  |
 | 22. Site Shell & Navigation | 0/? | Not started | - |
 | 23. Interests System | 0/? | Not started | - |
 | 24. Notifications | 0/? | Not started | - |

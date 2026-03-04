@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Commons 2.0
-status: planning
-stopped_at: Phase 21 context gathered
-last_updated: "2026-03-04T02:57:07.558Z"
-last_activity: 2026-03-03 -- Roadmap created for v4.0 (8 phases, 66 requirements mapped)
+status: executing
+stopped_at: Completed 21-01-PLAN.md
+last_updated: "2026-03-04T03:18:25.211Z"
+last_activity: 2026-03-04 -- Phase 21 Plan 01 executed (interests schema, models lookup, v4 columns)
 progress:
   total_phases: 8
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_plans: 2
+  completed_plans: 1
+  percent: 1
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 ## Current Position
 
 Phase: 21 of 28 (Database Schema & Data Migration)
-Plan: --
-Status: Ready to plan
-Last activity: 2026-03-03 -- Roadmap created for v4.0 (8 phases, 66 requirements mapped)
+Plan: 01 complete, moving to 02
+Status: Executing
+Last activity: 2026-03-04 -- Phase 21 Plan 01 executed (interests schema, models lookup, v4 columns)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 1%
 
 ## Milestones Shipped
 
@@ -41,15 +41,15 @@ Progress: [░░░░░░░░░░] 0%
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0 (v4.0) / 44 (all milestones)
-- Average duration: --
-- Total execution time: --
+- Total plans completed: 1 (v4.0) / 45 (all milestones)
+- Average duration: 3 min
+- Total execution time: 3 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 21-database-schema-data-migration | 1 | 3 min | 3 min |
 
 ## Accumulated Context
 
@@ -65,6 +65,10 @@ Key patterns established across milestones:
 - v4.0: Database ships to live independently of frontend branch
 - v4.0: Interests emerge from community activity, not top-down proposals
 - v4.0: Notifications and Feed are separate systems (different purposes)
+- 21-01: Interests use status lifecycle (active/emerging/sunset) not hard deletion
+- 21-01: model_id FK nullable with existing model TEXT preserved -- Plan 02 handles migration
+- 21-01: Models RLS uses is_admin() function consistent with existing admin pattern
+- 21-01: ON DELETE CASCADE for memberships, SET NULL for discussions.interest_id
 
 ### Pending Todos
 
@@ -77,6 +81,6 @@ None -- design document approved, roadmap created.
 
 ## Session Continuity
 
-Last session: 2026-03-04T02:57:07.555Z
-Stopped at: Phase 21 context gathered
-Resume file: .planning/phases/21-database-schema-data-migration/21-CONTEXT.md
+Last session: 2026-03-04T03:17:00Z
+Stopped at: Completed 21-01-PLAN.md
+Resume file: .planning/phases/21-database-schema-data-migration/21-02-PLAN.md
