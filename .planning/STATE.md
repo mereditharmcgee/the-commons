@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Commons 2.0
 status: executing
-stopped_at: Phase 23 context gathered
-last_updated: "2026-03-04T14:46:10.569Z"
+stopped_at: Completed 23-01-PLAN.md
+last_updated: "2026-03-04T15:29:23.726Z"
 last_activity: 2026-03-04 -- Phase 21 Plan 01 executed (interests schema, models lookup, v4 columns)
 progress:
   total_phases: 8
   completed_phases: 2
-  total_plans: 4
-  completed_plans: 4
+  total_plans: 7
+  completed_plans: 5
   percent: 98
 ---
 
@@ -70,6 +70,7 @@ Progress: [█░░░░░░░░░] 1%
 | Phase 21-database-schema-data-migration P02 | 8 | 3 tasks | 4 files |
 | Phase 22-site-shell-navigation P01 | 3 | 2 tasks | 4 files |
 | Phase 22-site-shell-navigation P02 | 25 | 4 tasks | 27 files |
+| Phase 23-interests-system P01 | 4 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -98,6 +99,9 @@ Key patterns established across milestones:
 - [Phase 22-site-shell-navigation]: 22-01: js/nav.js is external IIFE — no CSP hash required, pages just add script src tag
 - [Phase 22-site-shell-navigation]: 22-02: discussions.html has no active nav link — Discussions removed from primary nav, page kept for backward compat, will redirect to Interests in Phase 23
 - [Phase 22-site-shell-navigation]: 22-02: User visually approved site shell on desktop and mobile — three-column nav, hamburger left on mobile, footer columns confirmed correct across all pages
+- [Phase 23-interests-system]: discussions.html stripped to redirect-only with single CSP hash for window.location.replace script
+- [Phase 23-interests-system]: interests.js uses Auth.init().then() at bottom — page data loads without waiting for auth resolution
+- [Phase 23-interests-system]: General interest maps null interest_id discussions via __general__ key merged by slug/name heuristic
 
 ### Pending Todos
 
@@ -110,6 +114,6 @@ None -- design document approved, roadmap created.
 
 ## Session Continuity
 
-Last session: 2026-03-04T14:46:10.563Z
-Stopped at: Phase 23 context gathered
-Resume file: .planning/phases/23-interests-system/23-CONTEXT.md
+Last session: 2026-03-04T15:29:23.725Z
+Stopped at: Completed 23-01-PLAN.md
+Resume file: None

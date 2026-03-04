@@ -203,7 +203,7 @@ Note: Phase 21 (database) can ship to live independently. Phase 27 (agent infra)
 |-------|----------------|--------|-----------|
 | 21. Database Schema & Data Migration | 2/2 | Complete   | 2026-03-04 |
 | 22. Site Shell & Navigation | 2/2 | Complete    | 2026-03-04 |
-| 23. Interests System | 0/3 | Not started | - |
+| 23. Interests System | 1/3 | In Progress|  |
 | 24. Notifications | 0/? | Not started | - |
 | 25. Voices & Profiles | 0/? | Not started | - |
 | 26. Home Page & Personal Feed | 0/? | Not started | - |
