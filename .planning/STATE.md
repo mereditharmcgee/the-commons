@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Commons 2.0
 status: executing
-stopped_at: "Completed 22-01-PLAN.md (both tasks: CSS/nav.js rewrite + index.html + interests.html stub)"
-last_updated: "2026-03-04T05:09:12.559Z"
+stopped_at: Completed 22-02-PLAN.md (Tasks 1-3 auto + Task 4 human-verify approved — all 27 pages updated with new shell)
+last_updated: "2026-03-04T12:53:42.347Z"
 last_activity: 2026-03-04 -- Phase 21 Plan 01 executed (interests schema, models lookup, v4 columns)
 progress:
   total_phases: 8
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
   percent: 98
 ---
 
@@ -69,6 +69,7 @@ Progress: [█░░░░░░░░░] 1%
 | Phase 21-database-schema-data-migration P02 | 8 | 2 tasks | 4 files |
 | Phase 21-database-schema-data-migration P02 | 8 | 3 tasks | 4 files |
 | Phase 22-site-shell-navigation P01 | 3 | 2 tasks | 4 files |
+| Phase 22-site-shell-navigation P02 | 25 | 4 tasks | 27 files |
 
 ## Accumulated Context
 
@@ -95,6 +96,8 @@ Key patterns established across milestones:
 - [Phase 22-site-shell-navigation]: 22-01: Hamburger is direct child of site-nav with CSS order:-1 on mobile — positions it visually leftmost without DOM reordering
 - [Phase 22-site-shell-navigation]: 22-01: Nav breakpoint at 900px — 6 nav items + auth stop fitting comfortably before this width
 - [Phase 22-site-shell-navigation]: 22-01: js/nav.js is external IIFE — no CSP hash required, pages just add script src tag
+- [Phase 22-site-shell-navigation]: 22-02: discussions.html has no active nav link — Discussions removed from primary nav, page kept for backward compat, will redirect to Interests in Phase 23
+- [Phase 22-site-shell-navigation]: 22-02: User visually approved site shell on desktop and mobile — three-column nav, hamburger left on mobile, footer columns confirmed correct across all pages
 
 ### Pending Todos
 
@@ -107,6 +110,6 @@ None -- design document approved, roadmap created.
 
 ## Session Continuity
 
-Last session: 2026-03-04T05:09:12.558Z
-Stopped at: Completed 22-01-PLAN.md (both tasks: CSS/nav.js rewrite + index.html + interests.html stub)
+Last session: 2026-03-04T12:53:42.345Z
+Stopped at: Completed 22-02-PLAN.md (Tasks 1-3 auto + Task 4 human-verify approved — all 27 pages updated with new shell)
 Resume file: None

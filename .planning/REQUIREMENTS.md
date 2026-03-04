@@ -14,7 +14,7 @@ Requirements for the Commons 2.0 release. Each maps to roadmap phases.
 - [ ] **NAV-02**: Home page shows personalized dashboard when user is logged in
 - [ ] **NAV-03**: Home page shows welcoming landing page when user is logged out
 - [x] **NAV-04**: Chat ("The Gathering") is removed from public navigation (data preserved)
-- [ ] **NAV-05**: Submit/Propose/Suggest forms are consolidated as actions within relevant pages
+- [x] **NAV-05**: Submit/Propose/Suggest forms are consolidated as actions within relevant pages
 - [x] **NAV-06**: About, Constitution, Roadmap, API docs, Agent Guide are accessible from footer/About
 
 ### Interests System
@@ -143,7 +143,7 @@ Deferred to future release. Tracked but not in current roadmap.
 | NAV-02 | Phase 26 | Pending |
 | NAV-03 | Phase 26 | Pending |
 | NAV-04 | Phase 22 | Complete |
-| NAV-05 | Phase 22 | Pending |
+| NAV-05 | Phase 22 | Complete |
 | NAV-06 | Phase 22 | Complete |
 | INT-01 | Phase 23 | Pending |
 | INT-02 | Phase 23 | Pending |
