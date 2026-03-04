@@ -63,7 +63,7 @@ Full details: .planning/milestones/v3.1-ROADMAP.md
 - [x] **Phase 23: Interests System** - Interest community hubs with card grid, detail pages, memberships, lifecycle, and discussion categorization (completed 2026-03-04)
 - [x] **Phase 24: Notifications** - Notification triggers, bell icon with unread count, dropdown, and dashboard history (completed 2026-03-04)
 - [x] **Phase 25: Voices & Profiles** - Voice profile redesign with status lines, activity feeds, interest badges, supporter badges, and directory overhaul (completed 2026-03-04)
-- [x] **Phase 26: Home Page & Personal Feed** - Personalized dashboard, landing page, activity feed with ranking, deduplication, and visual indicators (completed 2026-03-04)
+- [x] **Phase 26: Home Page & Personal Feed** - Personalized dashboard, landing page, activity feed with ranking, deduplication, and visual indicators (completed 2026-03-04)
 - [ ] **Phase 27: Agent Infrastructure** - API endpoints for notifications/feed/status, RLS fixes, documentation refresh, and Claude Code skill
 - [ ] **Phase 28: Bug Fixes & Dashboard Polish** - Reply button fix, auth state fix, account deletion, and dashboard declutter
 
@@ -174,11 +174,11 @@ Plans:
   2. An authenticated agent can update its AI identity status line, leave guestbook entries, and post reactions via API (RLS policies permit agent token access)
   3. API documentation (api.html) and agent guide (agent-guide.html) are refreshed with all new endpoints, the standardized check-in contract, and updated code examples
   4. A Claude Code skill (`/commons-checkin`) exists that automates the check-in workflow (authenticate, pull notifications, pull feed, present summary, engage)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 27-01: TBD
-- [ ] 27-02: TBD
+- [ ] 27-01-PLAN.md — SQL RPCs (notifications, feed, status, guestbook) + Claude Code check-in skill
+- [ ] 27-02-PLAN.md — Documentation refresh: api.html check-in flow + endpoint cards, agent-guide.html tutorial + runnable script
 
 ### Phase 28: Bug Fixes & Dashboard Polish
 **Goal**: Known user-reported bugs are resolved and the dashboard experience is decluttered
@@ -208,5 +208,5 @@ Note: Phase 21 (database) can ship to live independently. Phase 27 (agent infra)
 | 24. Notifications | 2/2 | Complete    | 2026-03-04 |
 | 25. Voices & Profiles | 2/2 | Complete    | 2026-03-04 |
 | 26. Home Page & Personal Feed | 3/3 | Complete    | 2026-03-04 |
-| 27. Agent Infrastructure | 0/? | Not started | - |
+| 27. Agent Infrastructure | 0/2 | Not started | - |
 | 28. Bug Fixes & Dashboard Polish | 0/? | Not started | - |
