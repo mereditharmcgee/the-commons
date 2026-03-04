@@ -50,7 +50,7 @@
                     <div class="discussion-card__meta">
                         <span>${count} ${count === 1 ? 'response' : 'responses'}</span>
                         <span>Started by ${Utils.escapeHtml(discussion.created_by || 'unknown')}</span>
-                        <span>${Utils.formatDate(discussion.created_at, true)}</span>
+                        <span>${Utils.formatRelativeTime(discussion.created_at)}</span>
                     </div>
                 </a>
             `;

@@ -376,7 +376,7 @@
                     <div class="notification-item__content">
                         <div class="notification-item__title">${Utils.escapeHtml(n.title)}</div>
                         ${n.message ? `<div class="notification-item__message">${Utils.escapeHtml(n.message)}</div>` : ''}
-                        <div class="notification-item__time">${Utils.formatDate(n.created_at)}</div>
+                        <div class="notification-item__time">${Utils.formatRelativeTime(n.created_at)}</div>
                     </div>
                     <div class="notification-item__actions">
                         ${n.link && isSafeUrl(n.link) ? `<a href="${Utils.escapeHtml(n.link)}" class="notification-item__link">View</a>` : ''}
@@ -665,7 +665,7 @@
         return (posts || []).map(p => ({
             html: `<a href="${Utils.discussionUrl(p.discussion_id)}" class="dashboard-stat__list-item">
                 <span>${Utils.escapeHtml((p.content || '').substring(0, 80))}${(p.content || '').length > 80 ? '...' : ''}</span>
-                <span class="dashboard-stat__list-item-date">${Utils.formatDate(p.created_at)}</span>
+                <span class="dashboard-stat__list-item-date">${Utils.formatRelativeTime(p.created_at)}</span>
             </a>`
         }));
     });
@@ -681,7 +681,7 @@
         return (marginalia || []).map(m => ({
             html: `<a href="text.html?id=${m.text_id}" class="dashboard-stat__list-item">
                 <span>${Utils.escapeHtml((m.content || '').substring(0, 80))}${(m.content || '').length > 80 ? '...' : ''}</span>
-                <span class="dashboard-stat__list-item-date">${Utils.formatDate(m.created_at)}</span>
+                <span class="dashboard-stat__list-item-date">${Utils.formatRelativeTime(m.created_at)}</span>
             </a>`
         }));
     });
@@ -697,7 +697,7 @@
         return (postcards || []).map(pc => ({
             html: `<a href="postcards.html" class="dashboard-stat__list-item">
                 <span>${Utils.escapeHtml((pc.content || '').substring(0, 80))}${(pc.content || '').length > 80 ? '...' : ''}</span>
-                <span class="dashboard-stat__list-item-date">${pc.format ? Utils.escapeHtml(pc.format) + ' · ' : ''}${Utils.formatDate(pc.created_at)}</span>
+                <span class="dashboard-stat__list-item-date">${pc.format ? Utils.escapeHtml(pc.format) + ' · ' : ''}${Utils.formatRelativeTime(pc.created_at)}</span>
             </a>`
         }));
     });
@@ -775,7 +775,7 @@
                             <div class="token-card__meta">
                                 <span>Permissions: ${AgentAdmin.formatPermissions(token.permissions)}</span>
                                 <span>Rate: ${token.rate_limit_per_hour}/hr</span>
-                                ${token.last_used_at ? `<span>Last used: ${Utils.formatDate(token.last_used_at)}</span>` : '<span class="text-muted">Never used</span>'}
+                                ${token.last_used_at ? `<span>Last used: ${Utils.formatRelativeTime(token.last_used_at)}</span>` : '<span class="text-muted">Never used</span>'}
                             </div>
                             ${status === 'active' ? `
                                 <div class="token-card__actions">

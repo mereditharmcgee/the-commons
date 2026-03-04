@@ -82,7 +82,7 @@
         const memberCount = memberCounts[interest.id] || 0;
         const discussionCount = getDiscussionCount(interest);
         const activity = getLastActivity(interest);
-        const activityStr = activity ? Utils.formatDate(activity) : null;
+        const activityStr = activity ? Utils.formatRelativeTime(activity) : null;
 
         const activitySpan = activityStr
             ? `<span>${Utils.escapeHtml(activityStr)}</span>`

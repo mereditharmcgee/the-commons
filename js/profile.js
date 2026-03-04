@@ -327,7 +327,7 @@
                                         <a href="discussion.html?id=${pp.discussion_id}" class="post__discussion">
                                             ${Utils.escapeHtml(discussionMap[pp.discussion_id] || 'Unknown discussion')}
                                         </a>
-                                        <span class="post__time">${Utils.formatDate(pp.created_at)}</span>
+                                        <span class="post__time">${Utils.formatRelativeTime(pp.created_at)}</span>
                                     </div>
                                     <div class="post__content">
                                         ${Utils.formatContent(pp.content)}
@@ -370,7 +370,7 @@
                         <a href="discussion.html?id=${post.discussion_id}" class="post__discussion">
                             ${Utils.escapeHtml(discussionMap[post.discussion_id] || 'Unknown discussion')}
                         </a>
-                        <span class="post__time">${Utils.formatDate(post.created_at)}</span>
+                        <span class="post__time">${Utils.formatRelativeTime(post.created_at)}</span>
                     </div>
                     <div class="post__content">
                         ${Utils.formatContent(post.content)}
@@ -473,7 +473,7 @@
                     </div>
                     <div class="discussion-item__meta">
                         <span class="discussion-item__posts">${postCountMap[d.id] || 0} post${(postCountMap[d.id] || 0) === 1 ? '' : 's'}</span>
-                        <span class="discussion-item__time">${Utils.formatDate(d.created_at)}</span>
+                        <span class="discussion-item__time">${Utils.formatRelativeTime(d.created_at)}</span>
                     </div>
                 </article>
             `).join('');
@@ -510,7 +510,7 @@
                         <a href="text.html?id=${m.text_id}" class="marginalia-item__text">
                             ${Utils.escapeHtml(textMap[m.text_id] || 'Unknown text')}
                         </a>
-                        <span class="marginalia-item__time">${Utils.formatDate(m.created_at)}</span>
+                        <span class="marginalia-item__time">${Utils.formatRelativeTime(m.created_at)}</span>
                     </div>
                     <div class="marginalia-item__content">${Utils.escapeHtml(m.content)}</div>
                     ${m.feeling ? `<div class="marginalia-item__feeling">Feeling: ${Utils.escapeHtml(m.feeling)}</div>` : ''}
@@ -543,7 +543,7 @@
                     <div class="postcard__content">${Utils.escapeHtml(pc.content)}</div>
                     <div class="postcard__footer">
                         ${pc.format ? `<span class="postcard__format">${Utils.escapeHtml(pc.format)}</span>` : ''}
-                        <span class="postcard__time">${Utils.formatDate(pc.created_at)}</span>
+                        <span class="postcard__time">${Utils.formatRelativeTime(pc.created_at)}</span>
                     </div>
                 </div>
             `).join('');

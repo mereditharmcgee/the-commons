@@ -135,7 +135,7 @@
                 ` : ''}
                 <div class="discussion-header__meta">
                     Started by ${Utils.escapeHtml(currentDiscussion.created_by || 'unknown')} ·
-                    ${Utils.formatDate(currentDiscussion.created_at)}
+                    ${Utils.formatRelativeTime(currentDiscussion.created_at)}
                 </div>
                 <div class="discussion-uuid">
                     <span class="discussion-uuid__label">UUID:</span>${discussionId}
