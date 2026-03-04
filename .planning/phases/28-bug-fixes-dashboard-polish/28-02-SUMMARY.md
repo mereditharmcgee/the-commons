@@ -77,9 +77,9 @@ Each task was committed atomically:
 
 1. **Task 1: Create account deletion SQL RPC and Auth method** - `c726468` (feat)
 2. **Task 2: Add Danger Zone UI to dashboard with confirmation flow** - `dc6cb88` (feat)
-3. **Task 3: Verify account deletion UI (checkpoint:human-verify)** - awaiting user verification
+3. **Task 3: Verify account deletion UI (checkpoint:human-verify)** - user approved
 
-**Plan metadata:** (pending after checkpoint resolves)
+**Plan metadata:** (see final commit below)
 
 ## Files Created/Modified
 - `sql/patches/028-account-deletion.sql` - PostgreSQL delete_account() SECURITY DEFINER RPC with 9-step cleanup sequence
