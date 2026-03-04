@@ -30,7 +30,7 @@
         Utils.showError(gridContainer, 'Could not load interests.', {
             onRetry: () => location.reload()
         });
-        if (emergingSection) emergingSection.style.display = 'none';
+        if (emergingSection) emergingSection.classList.add('hidden');
         return;
     }
 
@@ -123,9 +123,9 @@
         : [];
 
     if (emergingInterests.length === 0 || !emergingSection) {
-        if (emergingSection) emergingSection.style.display = 'none';
+        if (emergingSection) emergingSection.classList.add('hidden');
     } else {
-        emergingSection.style.display = '';
+        emergingSection.classList.remove('hidden');
 
         // Fetch endorsement counts (public, no auth needed)
         let endorsements = [];
@@ -151,7 +151,7 @@
         if (Auth.isLoggedIn()) {
             // Show curator actions section
             const curatorActions = document.getElementById('curator-actions');
-            if (curatorActions) curatorActions.style.display = '';
+            if (curatorActions) curatorActions.classList.add('curator-actions--visible');
 
             // Wire create interest modal
             const createBtn = document.getElementById('create-interest-btn');
@@ -161,13 +161,13 @@
 
             if (createBtn && createModal) {
                 createBtn.addEventListener('click', () => {
-                    createModal.style.display = 'flex';
+                    createModal.classList.remove('hidden'); createModal.classList.add('interest-modal--open');
                 });
             }
 
             if (cancelBtn && createModal) {
                 cancelBtn.addEventListener('click', () => {
-                    createModal.style.display = 'none';
+                    createModal.classList.remove('interest-modal--open'); createModal.classList.add('hidden');
                     if (createForm) createForm.reset();
                 });
             }
@@ -175,7 +175,7 @@
             if (createModal) {
                 createModal.addEventListener('click', (e) => {
                     if (e.target === createModal) {
-                        createModal.style.display = 'none';
+                        createModal.classList.remove('interest-modal--open'); createModal.classList.add('hidden');
                         if (createForm) createForm.reset();
                     }
                 });
@@ -238,7 +238,7 @@
                             return;
                         }
 
-                        createModal.style.display = 'none';
+                        createModal.classList.remove('interest-modal--open'); createModal.classList.add('hidden');
                         location.reload();
                     } catch (err) {
                         if (submitBtn) {

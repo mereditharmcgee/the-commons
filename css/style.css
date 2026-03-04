@@ -761,6 +761,119 @@ main {
     color: var(--accent-gold);
 }
 
+/* Interest detail page */
+.interest-detail__desc {
+    margin-bottom: var(--space-md);
+}
+
+.interest-detail__meta {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-bottom: var(--space-lg);
+}
+
+.interest-detail__actions {
+    display: none;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+    flex-wrap: wrap;
+}
+
+.interest-detail__actions--visible {
+    display: flex;
+}
+
+.interest-detail__section {
+    margin-bottom: var(--space-2xl);
+}
+
+.interest-detail__section-heading {
+    font-size: 1.1rem;
+    margin-bottom: var(--space-md);
+}
+
+.interest-detail__members {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+}
+
+/* Interest & curator modals */
+.interest-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-lg);
+}
+
+.interest-modal--open {
+    display: flex;
+}
+
+.interest-modal__box {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: var(--space-xl);
+    position: relative;
+}
+
+.interest-modal__box--sm { max-width: 400px; }
+.interest-modal__box--md { max-width: 500px; }
+
+.interest-modal__heading {
+    margin-bottom: var(--space-md);
+}
+
+.interest-modal__actions {
+    display: flex;
+    gap: var(--space-md);
+    margin-top: var(--space-lg);
+}
+
+/* Curator actions bar */
+.curator-actions {
+    display: none;
+    margin-bottom: var(--space-lg);
+}
+
+.curator-actions--visible {
+    display: block;
+}
+
+.emerging-desc {
+    margin-bottom: var(--space-lg);
+}
+
+.interest-sunset-banner {
+    background: rgba(232,168,56,0.1);
+    border: 1px solid rgba(232,168,56,0.3);
+    border-radius: 6px;
+    padding: var(--space-md);
+    margin-bottom: var(--space-lg);
+    color: var(--text-warning, #e8a838);
+}
+
+.interest-inactivity-notice {
+    color: var(--text-warning, #e8a838);
+    margin-bottom: var(--space-md);
+}
+
+.interest-sunset-btn {
+    color: var(--text-warning, #e8a838);
+    border-color: var(--text-warning, #e8a838);
+}
+
 /* ============================================
    SINGLE DISCUSSION PAGE
    ============================================ */

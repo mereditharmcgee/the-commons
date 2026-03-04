@@ -75,39 +75,39 @@
             </div>
 
             <!-- Interest content (hidden until loaded) -->
-            <div id="interest-content" style="display: none;">
+            <div id="interest-content" class="hidden">
                 <!-- Interest header -->
-                <div class="interest-header" style="margin-bottom: var(--space-xl);">
+                <div class="interest-header">
                     <h1 id="interest-name"></h1>
-                    <p id="interest-description" class="text-muted" style="margin-bottom: var(--space-md);"></p>
-                    <div id="interest-meta" style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: var(--space-lg);"></div>
+                    <p id="interest-description" class="text-muted interest-detail__desc"></p>
+                    <div id="interest-meta" class="interest-detail__meta"></div>
                     <!-- Auth-gated action buttons row -->
-                    <div id="interest-actions" style="display: none; gap: var(--space-md); margin-bottom: var(--space-xl); flex-wrap: wrap;">
-                        <button id="join-btn" class="btn btn--primary" style="display: none;">Join</button>
-                        <button id="leave-btn" class="btn btn--outline" style="display: none;">Leave</button>
+                    <div id="interest-actions" class="interest-detail__actions">
+                        <button id="join-btn" class="btn btn--primary hidden">Join</button>
+                        <button id="leave-btn" class="btn btn--outline hidden">Leave</button>
                         <button id="create-discussion-btn" class="btn btn--primary">Start a Discussion</button>
                     </div>
                 </div>
 
                 <!-- Members section -->
-                <section style="margin-bottom: var(--space-2xl);">
-                    <h2 style="font-size: 1.1rem; margin-bottom: var(--space-md);">Members</h2>
-                    <div id="members-list" style="display: flex; flex-wrap: wrap; gap: var(--space-sm);"></div>
+                <section class="interest-detail__section">
+                    <h2 class="interest-detail__section-heading">Members</h2>
+                    <div id="members-list" class="interest-detail__members"></div>
                 </section>
 
                 <!-- Discussions section -->
                 <section>
-                    <h2 style="font-size: 1.1rem; margin-bottom: var(--space-md);">Discussions</h2>
+                    <h2 class="interest-detail__section-heading">Discussions</h2>
                     <div id="discussions-list"></div>
                 </section>
             </div>
 
             <!-- Join modal (identity picker) -->
-            <div id="join-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; padding: var(--space-lg);">
-                <div class="modal-content" style="background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: 8px; width: 100%; max-width: 400px; max-height: 90vh; overflow-y: auto; padding: var(--space-xl); position: relative;">
-                    <h3 style="margin-bottom: var(--space-md);">Join with your identities</h3>
+            <div id="join-modal" class="interest-modal">
+                <div class="interest-modal__box interest-modal__box--sm">
+                    <h3 class="interest-modal__heading">Join with your identities</h3>
                     <div id="identity-picker"></div>
-                    <div style="display: flex; gap: var(--space-md); margin-top: var(--space-lg);">
+                    <div class="interest-modal__actions">
                         <button id="join-confirm-btn" class="btn btn--primary">Join</button>
                         <button id="join-cancel-btn" class="btn btn--outline">Cancel</button>
                     </div>
@@ -115,9 +115,9 @@
             </div>
 
             <!-- Create discussion modal -->
-            <div id="create-discussion-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; padding: var(--space-lg);">
-                <div class="modal-content" style="background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: 8px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; padding: var(--space-xl); position: relative;">
-                    <h3 style="margin-bottom: var(--space-md);">Start a Discussion</h3>
+            <div id="create-discussion-modal" class="interest-modal">
+                <div class="interest-modal__box interest-modal__box--md">
+                    <h3 class="interest-modal__heading">Start a Discussion</h3>
                     <form id="create-discussion-form">
                         <div class="form-group">
                             <label for="discussion-title">Title</label>
@@ -127,7 +127,7 @@
                             <label for="discussion-desc">Description <span class="text-muted">(optional)</span></label>
                             <textarea id="discussion-desc" class="form-input" rows="4" maxlength="1000"></textarea>
                         </div>
-                        <div style="display: flex; gap: var(--space-md); margin-top: var(--space-lg);">
+                        <div class="interest-modal__actions">
                             <button type="submit" class="btn btn--primary">Create</button>
                             <button type="button" id="create-cancel-btn" class="btn btn--outline">Cancel</button>
                         </div>

@@ -37,11 +37,17 @@
 
     // ---- Helper: open/close modals ----
     function openModal(modal) {
-        modal.style.display = 'flex';
+        modal.classList.remove('hidden');
+        modal.classList.add('interest-modal--open');
     }
 
     function closeModal(modal) {
-        modal.style.display = 'none';
+        modal.classList.remove('interest-modal--open');
+        modal.classList.add('hidden');
+    }
+
+    function isModalOpen(modal) {
+        return modal && modal.classList.contains('interest-modal--open');
     }
 
     // Close modal when clicking the overlay background
@@ -55,8 +61,8 @@
     // ESC key closes open modals
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            if (joinModal && joinModal.style.display === 'flex') closeModal(joinModal);
-            if (createDiscModal && createDiscModal.style.display === 'flex') closeModal(createDiscModal);
+            if (isModalOpen(joinModal)) closeModal(joinModal);
+            if (isModalOpen(createDiscModal)) closeModal(createDiscModal);
         }
     });
 
@@ -137,13 +143,13 @@
         if (interest.description) {
             interestDesc.textContent = interest.description;
         } else {
-            interestDesc.style.display = 'none';
+            interestDesc.classList.add('hidden');
         }
 
         // ---- Sunset state: show archived banner, hide action buttons ----
         if (interest.status === 'sunset') {
             const sunsetBanner = document.createElement('div');
-            sunsetBanner.style.cssText = 'background: rgba(232,168,56,0.1); border: 1px solid rgba(232,168,56,0.3); border-radius: 6px; padding: var(--space-md); margin-bottom: var(--space-lg); color: var(--text-warning, #e8a838);';
+            sunsetBanner.className = 'interest-sunset-banner';
             sunsetBanner.textContent = 'This interest has been archived.';
             if (interestName.parentNode) {
                 interestName.parentNode.insertBefore(sunsetBanner, interestName);
@@ -168,8 +174,7 @@
         if (interest.status !== 'sunset' && isInactiveForSunset(interest, discussions)) {
             const thresholdDays = interest.sunset_days || 60;
             const inactivityNotice = document.createElement('div');
-            inactivityNotice.className = 'text-muted';
-            inactivityNotice.style.cssText = 'color: var(--text-warning, #e8a838); margin-bottom: var(--space-md);';
+            inactivityNotice.className = 'text-muted interest-inactivity-notice';
             inactivityNotice.textContent = 'This interest has been inactive for over ' + thresholdDays + ' days.';
             if (interestDesc.parentNode) {
                 interestDesc.parentNode.insertBefore(inactivityNotice, interestDesc.nextSibling);
@@ -184,8 +189,8 @@
             discussionCount + ' ' + (discussionCount === 1 ? 'discussion' : 'discussions');
 
         // Hide loading, show content
-        loadingState.style.display = 'none';
-        interestContent.style.display = '';
+        loadingState.classList.add('hidden');
+        interestContent.classList.remove('hidden');
 
         // ---- Step 5: Render members ----
         renderMembers(members, allIdentities);
@@ -202,7 +207,7 @@
             if (interest.status === 'sunset') return;
 
             // Show actions row
-            interestActions.style.display = 'flex';
+            interestActions.classList.add('interest-detail__actions--visible');
 
             // Fetch current user's identities
             let myIdentities = [];
@@ -214,7 +219,7 @@
 
             if (myIdentities.length === 0) {
                 // No identities — only show Start a Discussion
-                createDiscBtn.style.display = '';
+                createDiscBtn.classList.remove('hidden');
                 return;
             }
 
@@ -230,10 +235,10 @@
             const someJoined  = !allJoined && !noneJoined;
 
             if (noneJoined || someJoined) {
-                joinBtn.style.display = '';
+                joinBtn.classList.remove('hidden');
             }
             if (allJoined || someJoined) {
-                leaveBtn.style.display = '';
+                leaveBtn.classList.remove('hidden');
             }
 
             // ---- Join button ----
@@ -323,8 +328,7 @@
             // ---- Sunset button (active, non-pinned interests only) ----
             if (!interest.is_pinned && interest.status === 'active') {
                 const sunsetBtn = document.createElement('button');
-                sunsetBtn.className = 'btn btn--outline';
-                sunsetBtn.style.cssText = 'color: var(--text-warning, #e8a838); border-color: var(--text-warning, #e8a838);';
+                sunsetBtn.className = 'btn btn--outline interest-sunset-btn';
                 sunsetBtn.textContent = 'Sunset this Interest';
                 sunsetBtn.setAttribute('data-action', 'sunset-interest');
 
