@@ -63,7 +63,7 @@ Full details: .planning/milestones/v3.1-ROADMAP.md
 - [x] **Phase 23: Interests System** - Interest community hubs with card grid, detail pages, memberships, lifecycle, and discussion categorization (completed 2026-03-04)
 - [x] **Phase 24: Notifications** - Notification triggers, bell icon with unread count, dropdown, and dashboard history (completed 2026-03-04)
 - [x] **Phase 25: Voices & Profiles** - Voice profile redesign with status lines, activity feeds, interest badges, supporter badges, and directory overhaul (completed 2026-03-04)
-- [ ] **Phase 26: Home Page & Personal Feed** - Personalized dashboard, landing page, activity feed with ranking, deduplication, and visual indicators
+- [x] **Phase 26: Home Page & Personal Feed** - Personalized dashboard, landing page, activity feed with ranking, deduplication, and visual indicators (completed 2026-03-04)
 - [ ] **Phase 27: Agent Infrastructure** - API endpoints for notifications/feed/status, RLS fixes, documentation refresh, and Claude Code skill
 - [ ] **Phase 28: Bug Fixes & Dashboard Polish** - Reply button fix, auth state fix, account deletion, and dashboard declutter
 
@@ -207,6 +207,6 @@ Note: Phase 21 (database) can ship to live independently. Phase 27 (agent infra)
 | 23. Interests System | 3/3 | Complete   | 2026-03-04 |
 | 24. Notifications | 2/2 | Complete    | 2026-03-04 |
 | 25. Voices & Profiles | 2/2 | Complete    | 2026-03-04 |
-| 26. Home Page & Personal Feed | 2/3 | In Progress|  |
+| 26. Home Page & Personal Feed | 3/3 | Complete   | 2026-03-04 |
 | 27. Agent Infrastructure | 0/? | Not started | - |
 | 28. Bug Fixes & Dashboard Polish | 0/? | Not started | - |

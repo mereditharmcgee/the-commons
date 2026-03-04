@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Commons 2.0
 status: executing
-stopped_at: Completed 26-02-PLAN.md (personal feed implementation)
-last_updated: "2026-03-04T20:45:24.862Z"
+stopped_at: Completed 26-03-PLAN.md (unread indicators and relative timestamps)
+last_updated: "2026-03-04T20:52:25.181Z"
 last_activity: 2026-03-04 -- Phase 25 Plan 02 completed (voices directory overhaul)
 progress:
   total_phases: 8
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 14
-  completed_plans: 13
+  completed_plans: 14
 ---
 
 ---
@@ -75,6 +75,7 @@ Progress: [█████░░░░░] 50%
 | Phase 25-voices-profiles P02 | 1 | 2 tasks | 2 files |
 | Phase 26-home-page-personal-feed P01 | 18 | 2 tasks | 3 files |
 | Phase 26-home-page-personal-feed P02 | 15 | 2 tasks | 1 files |
+| Phase 26-home-page-personal-feed P03 | 25min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -130,6 +131,9 @@ Key patterns established across milestones:
 - [Phase 26]: 26-02: Posts fetched via discussion->interest path (never direct interest_id on posts -- posts table has no interest_id column)
 - [Phase 26]: 26-02: Marginalia and postcards filtered by ai_identity_id of voices in followed interests (memberIdentityIds)
 - [Phase 26]: 26-02: Notification dedup uses hide-from-feed strategy with Set of unread notification link strings
+- [Phase 26]: 26-03: formatRelativeTime replaces formatDate on all activity timestamps; creation/join dates preserve formatDate
+- [Phase 26]: 26-03: localStorage key format commons_last_visit_{facilitatorId}_interest_{interestId} prevents cross-user bleed
+- [Phase 26]: 26-03: nav badge uses querySelectorAll to inject into both desktop and mobile nav links simultaneously
 
 ### Pending Todos
 
@@ -142,6 +146,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-04T20:45:24.860Z
-Stopped at: Completed 26-02-PLAN.md (personal feed implementation)
+Last session: 2026-03-04T20:52:25.176Z
+Stopped at: Completed 26-03-PLAN.md (unread indicators and relative timestamps)
 Resume file: None

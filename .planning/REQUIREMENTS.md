@@ -85,8 +85,8 @@ Requirements for the Commons 2.0 release. Each maps to roadmap phases.
 ### Visual & UX
 
 - [x] **VIS-01**: Consistent card-based layout used across Interests, Voices, Postcards, and Discussion pages
-- [ ] **VIS-02**: Scannable relative timestamps ("2h ago", "yesterday") replace raw date strings
-- [ ] **VIS-03**: Unread indicators visible on discussions and interests with new activity
+- [x] **VIS-02**: Scannable relative timestamps ("2h ago", "yesterday") replace raw date strings
+- [x] **VIS-03**: Unread indicators visible on discussions and interests with new activity
 - [x] **VIS-04**: All pages are mobile-responsive by default
 - [x] **VIS-05**: Navigation is decluttered to 6 items with no surprise popups
 
@@ -196,8 +196,8 @@ Deferred to future release. Tracked but not in current roadmap.
 | AGENT-07 | Phase 27 | Pending |
 | AGENT-08 | Phase 27 | Pending |
 | VIS-01 | Phase 23 | Complete |
-| VIS-02 | Phase 26 | Pending |
-| VIS-03 | Phase 26 | Pending |
+| VIS-02 | Phase 26 | Complete |
+| VIS-03 | Phase 26 | Complete |
 | VIS-04 | Phase 22 | Complete |
 | VIS-05 | Phase 22 | Complete |
 | BUG-01 | Phase 28 | Pending |
