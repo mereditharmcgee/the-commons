@@ -140,6 +140,42 @@
             interestDesc.style.display = 'none';
         }
 
+        // ---- Sunset state: show archived banner, hide action buttons ----
+        if (interest.status === 'sunset') {
+            const sunsetBanner = document.createElement('div');
+            sunsetBanner.style.cssText = 'background: rgba(232,168,56,0.1); border: 1px solid rgba(232,168,56,0.3); border-radius: 6px; padding: var(--space-md); margin-bottom: var(--space-lg); color: var(--text-warning, #e8a838);';
+            sunsetBanner.textContent = 'This interest has been archived.';
+            if (interestName.parentNode) {
+                interestName.parentNode.insertBefore(sunsetBanner, interestName);
+            }
+        }
+
+        // ---- Inactivity indicator ----
+        function isInactiveForSunset(interest, discussions) {
+            if (interest.is_pinned) return false;
+            const thresholdDays = interest.sunset_days || 60;
+            if (!discussions.length) {
+                const daysSinceCreated = (Date.now() - new Date(interest.created_at).getTime()) / (1000 * 60 * 60 * 24);
+                return daysSinceCreated >= thresholdDays;
+            }
+            const lastActivity = discussions.reduce((latest, d) => {
+                const t = new Date(d.created_at).getTime();
+                return t > latest ? t : latest;
+            }, 0);
+            return (Date.now() - lastActivity) / (1000 * 60 * 60 * 24) >= thresholdDays;
+        }
+
+        if (interest.status !== 'sunset' && isInactiveForSunset(interest, discussions)) {
+            const thresholdDays = interest.sunset_days || 60;
+            const inactivityNotice = document.createElement('div');
+            inactivityNotice.className = 'text-muted';
+            inactivityNotice.style.cssText = 'color: var(--text-warning, #e8a838); margin-bottom: var(--space-md);';
+            inactivityNotice.textContent = 'This interest has been inactive for over ' + thresholdDays + ' days.';
+            if (interestDesc.parentNode) {
+                interestDesc.parentNode.insertBefore(inactivityNotice, interestDesc.nextSibling);
+            }
+        }
+
         const memberCount = members.length;
         const discussionCount = discussions.length;
         interestMeta.textContent =
@@ -161,6 +197,9 @@
         const authReady = Auth.init();
         authReady.then(async () => {
             if (!Auth.isLoggedIn()) return;
+
+            // If interest is sunset, hide all action buttons and return
+            if (interest.status === 'sunset') return;
 
             // Show actions row
             interestActions.style.display = 'flex';
@@ -280,6 +319,41 @@
                     alert('Could not leave: ' + (err.message || 'Unknown error'));
                 }
             });
+
+            // ---- Sunset button (active, non-pinned interests only) ----
+            if (!interest.is_pinned && interest.status === 'active') {
+                const sunsetBtn = document.createElement('button');
+                sunsetBtn.className = 'btn btn--outline';
+                sunsetBtn.style.cssText = 'color: var(--text-warning, #e8a838); border-color: var(--text-warning, #e8a838);';
+                sunsetBtn.textContent = 'Sunset this Interest';
+                sunsetBtn.setAttribute('data-action', 'sunset-interest');
+
+                if (interestActions) {
+                    interestActions.appendChild(sunsetBtn);
+                }
+
+                sunsetBtn.addEventListener('click', async () => {
+                    if (!confirm('Sunset "' + interest.name + '"? This will archive the interest. Discussions will remain accessible.')) return;
+
+                    sunsetBtn.disabled = true;
+                    sunsetBtn.textContent = 'Archiving...';
+
+                    try {
+                        const { error } = await Auth.getClient()
+                            .from('interests')
+                            .update({ status: 'sunset' })
+                            .eq('id', interest.id)
+                            .eq('is_pinned', false);
+
+                        if (error) throw error;
+                        location.reload();
+                    } catch (err) {
+                        sunsetBtn.disabled = false;
+                        sunsetBtn.textContent = 'Sunset this Interest';
+                        alert('Could not sunset interest: ' + (err.message || 'Unknown error'));
+                    }
+                });
+            }
 
         }).catch(() => {
             // Auth failed or timed out — leave actions hidden

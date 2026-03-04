@@ -146,6 +146,114 @@
         renderEmergingCards(emergingInterests, endorsementCounts, new Set());
     }
 
+    // Wire curator tools (create interest) after auth resolves
+    Auth.init().then(() => {
+        if (Auth.isLoggedIn()) {
+            // Show curator actions section
+            const curatorActions = document.getElementById('curator-actions');
+            if (curatorActions) curatorActions.style.display = '';
+
+            // Wire create interest modal
+            const createBtn = document.getElementById('create-interest-btn');
+            const createModal = document.getElementById('create-interest-modal');
+            const createForm = document.getElementById('create-interest-form');
+            const cancelBtn = document.getElementById('create-interest-cancel');
+
+            if (createBtn && createModal) {
+                createBtn.addEventListener('click', () => {
+                    createModal.style.display = 'flex';
+                });
+            }
+
+            if (cancelBtn && createModal) {
+                cancelBtn.addEventListener('click', () => {
+                    createModal.style.display = 'none';
+                    if (createForm) createForm.reset();
+                });
+            }
+
+            if (createModal) {
+                createModal.addEventListener('click', (e) => {
+                    if (e.target === createModal) {
+                        createModal.style.display = 'none';
+                        if (createForm) createForm.reset();
+                    }
+                });
+            }
+
+            if (createForm) {
+                createForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+
+                    const nameEl = document.getElementById('interest-name');
+                    const descEl = document.getElementById('interest-desc');
+                    const statusEl = document.getElementById('interest-status');
+
+                    const name = nameEl ? nameEl.value.trim() : '';
+                    const description = descEl ? descEl.value.trim() : '';
+                    const selectedStatus = statusEl ? statusEl.value : 'active';
+
+                    if (!name || name.length < 3) {
+                        alert('Name must be at least 3 characters.');
+                        return;
+                    }
+                    if (name.length > 100) {
+                        alert('Name must be 100 characters or fewer.');
+                        return;
+                    }
+                    if (description.length > 500) {
+                        alert('Description must be 500 characters or fewer.');
+                        return;
+                    }
+
+                    const slug = name.toLowerCase()
+                        .replace(/[^a-z0-9\s-]/g, '')
+                        .replace(/\s+/g, '-')
+                        .replace(/-+/g, '-')
+                        .trim();
+
+                    const submitBtn = createForm.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.textContent = 'Creating...';
+                    }
+
+                    try {
+                        const { data, error } = await Auth.getClient()
+                            .from('interests')
+                            .insert({ name, slug, description: description || null, status: selectedStatus })
+                            .select()
+                            .single();
+
+                        if (error) {
+                            if (error.code === '23505') {
+                                alert('An interest with a similar name already exists. Try a more specific name.');
+                            } else {
+                                throw error;
+                            }
+                            if (submitBtn) {
+                                submitBtn.disabled = false;
+                                submitBtn.textContent = 'Create';
+                            }
+                            return;
+                        }
+
+                        createModal.style.display = 'none';
+                        location.reload();
+                    } catch (err) {
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = 'Create';
+                        }
+                        alert('Could not create interest: ' + (err.message || 'Unknown error'));
+                    }
+                });
+            }
+        }
+    }).catch(() => {
+        // Auth init failed — no curator tools shown
+    });
+
     // Wire endorsement auth logic after auth resolves
     Auth.init().then(() => {
         if (emergingInterests.length === 0) return;
