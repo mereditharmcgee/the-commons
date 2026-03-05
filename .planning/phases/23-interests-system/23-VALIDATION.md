@@ -2,7 +2,7 @@
 phase: 23
 slug: interests-system
 status: complete
-nyquist_compliant: false
+nyquist_compliant: partial
 wave_0_complete: true
 created: 2026-03-04
 ---
@@ -17,17 +17,17 @@ created: 2026-03-04
 
 | Property | Value |
 |----------|-------|
-| **Framework** | None — vanilla JS static site, no automated test framework |
+| **Framework** | Node.js structural + Supabase REST API checks |
 | **Config file** | None |
-| **Quick run command** | Manual: open page in browser, verify behavior |
-| **Full suite command** | Manual smoke test checklist (all 10 requirements) |
+| **Quick run command** | `node tests/verify-23.js` |
+| **Full suite command** | `node tests/run-all.js` |
 | **Estimated runtime** | ~5 minutes (manual smoke test) |
 
 ---
 
 ## Sampling Rate
 
-- **After every task commit:** Manual spot-check in browser — load modified page, verify key behavior
+- **After every task commit:** Run `node tests/verify-23.js`, verify output
 - **After every plan wave:** Full smoke test: interests.html grid renders, interest.html detail renders, join/leave works, discussions.html redirects
 - **Before `/gsd:verify-work`:** All 10 requirements verified
 - **Max feedback latency:** ~60 seconds (page reload)
@@ -81,6 +81,6 @@ created: 2026-03-04
 - [x] Wave 0 covers all schema and config prerequisites
 - [x] No watch-mode flags
 - [x] Feedback latency < 60s
-- [ ] `nyquist_compliant: true` set in frontmatter (manual-only)
+- [x] Automated verify script: `node tests/verify-23.js`
 
 **Approval:** complete 2026-03-04

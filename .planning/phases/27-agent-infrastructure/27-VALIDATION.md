@@ -2,7 +2,7 @@
 phase: 27
 slug: agent-infrastructure
 status: complete
-nyquist_compliant: false
+nyquist_compliant: partial
 wave_0_complete: true
 created: 2026-03-04
 ---
@@ -17,17 +17,17 @@ created: 2026-03-04
 
 | Property | Value |
 |----------|-------|
-| **Framework** | None — SQL RPCs verified via Supabase, docs via browser |
+| **Framework** | Node.js structural + Supabase REST API checks |
 | **Config file** | None |
-| **Quick run command** | Manual: call RPCs via curl, open docs pages in browser |
-| **Full suite command** | Test all 4 RPCs + verify api.html and agent-guide.html content |
+| **Quick run command** | `node tests/verify-27.js` |
+| **Full suite command** | `node tests/run-all.js` |
 | **Estimated runtime** | ~5 minutes (manual) |
 
 ---
 
 ## Sampling Rate
 
-- **After every task commit:** Test affected RPC or reload docs page
+- **After every task commit:** Run `node tests/verify-27.js`, verify output
 - **After every plan wave:** Full RPC + docs verification
 - **Before `/gsd:verify-work`:** All 8 requirements verified
 - **Max feedback latency:** ~30 seconds
@@ -79,6 +79,6 @@ created: 2026-03-04
 - [x] Wave 0 covers all prerequisites
 - [x] No watch-mode flags
 - [x] Feedback latency < 30s
-- [ ] `nyquist_compliant: true` set in frontmatter (manual-only)
+- [x] Automated verify script: `node tests/verify-27.js`
 
 **Approval:** complete 2026-03-04

@@ -2,7 +2,7 @@
 phase: 22
 slug: site-shell-navigation
 status: complete
-nyquist_compliant: false
+nyquist_compliant: partial
 wave_0_complete: true
 created: 2026-03-03
 ---
@@ -17,17 +17,17 @@ created: 2026-03-03
 
 | Property | Value |
 |----------|-------|
-| **Framework** | None — manual browser testing only (no test runner in this project) |
+| **Framework** | Node.js structural + Supabase REST API checks |
 | **Config file** | None |
-| **Quick run command** | Open affected pages in browser, check at 375px and 1280px viewports |
-| **Full suite command** | Open all 28 pages, verify nav/footer on each at 375px, 768px, and 1280px |
+| **Quick run command** | `node tests/verify-22.js` |
+| **Full suite command** | `node tests/run-all.js` |
 | **Estimated runtime** | ~5 minutes (manual) |
 
 ---
 
 ## Sampling Rate
 
-- **After every task commit:** Open affected page(s) at 375px and 1280px viewports
+- **After every task commit:** Run `node tests/verify-22.js`, verify output
 - **After every plan wave:** Open all modified pages, verify nav/footer at 375px, 768px, and 1280px
 - **Before `/gsd:verify-work`:** Full suite — all 28 pages verified
 - **Max feedback latency:** ~30 seconds per page
@@ -75,6 +75,6 @@ created: 2026-03-03
 - [x] Wave 0 covers all MISSING references
 - [x] No watch-mode flags
 - [x] Feedback latency < 30s per page
-- [ ] `nyquist_compliant: true` set in frontmatter (manual-only)
+- [x] Automated verify script: `node tests/verify-22.js`
 
 **Approval:** complete 2026-03-04

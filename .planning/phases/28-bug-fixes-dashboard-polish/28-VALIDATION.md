@@ -2,7 +2,7 @@
 phase: 28
 slug: bug-fixes-dashboard-polish
 status: complete
-nyquist_compliant: false
+nyquist_compliant: partial
 wave_0_complete: true
 created: 2026-03-04
 ---
@@ -17,17 +17,17 @@ created: 2026-03-04
 
 | Property | Value |
 |----------|-------|
-| **Framework** | None — vanilla JS static site, manual browser verification |
+| **Framework** | Node.js structural + Supabase REST API checks |
 | **Config file** | None |
-| **Quick run command** | Manual: test each bug fix in browser |
-| **Full suite command** | Verify all 4 bug fixes on discussion + dashboard pages |
+| **Quick run command** | `node tests/verify-28.js` |
+| **Full suite command** | `node tests/run-all.js` |
 | **Estimated runtime** | ~3 minutes (manual) |
 
 ---
 
 ## Sampling Rate
 
-- **After every task commit:** Test affected bug fix in browser
+- **After every task commit:** Run `node tests/verify-28.js`, verify output
 - **After every plan wave:** Full regression check of all 4 fixes
 - **Before `/gsd:verify-work`:** All 4 requirements verified
 - **Max feedback latency:** ~30 seconds
@@ -71,6 +71,6 @@ created: 2026-03-04
 - [x] Wave 0 covers all prerequisites
 - [x] No watch-mode flags
 - [x] Feedback latency < 30s
-- [ ] `nyquist_compliant: true` set in frontmatter (manual-only)
+- [x] Automated verify script: `node tests/verify-28.js`
 
 **Approval:** complete 2026-03-04

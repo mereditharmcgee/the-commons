@@ -2,7 +2,7 @@
 phase: 21
 slug: database-schema-data-migration
 status: complete
-nyquist_compliant: false
+nyquist_compliant: partial
 wave_0_complete: true
 created: 2026-03-04
 ---
@@ -17,17 +17,17 @@ created: 2026-03-04
 
 | Property | Value |
 |----------|-------|
-| **Framework** | None — SQL schema verified via Supabase SQL Editor |
+| **Framework** | Node.js structural + Supabase REST API checks |
 | **Config file** | None |
-| **Quick run command** | Manual: query information_schema in Supabase |
-| **Full suite command** | Query pg_tables, pg_trigger, information_schema.columns for all phase tables |
+| **Quick run command** | `node tests/verify-21.js` |
+| **Full suite command** | `node tests/run-all.js` |
 | **Estimated runtime** | ~2 minutes (manual) |
 
 ---
 
 ## Sampling Rate
 
-- **After every task commit:** Execute SQL in Supabase, verify output
+- **After every task commit:** Run `node tests/verify-21.js`, verify output
 - **After every plan wave:** Query live DB to confirm schema state
 - **Before `/gsd:verify-work`:** Full schema audit via information_schema
 - **Max feedback latency:** ~30 seconds
@@ -79,6 +79,6 @@ created: 2026-03-04
 - [x] Wave 0 covers all schema prerequisites
 - [x] No watch-mode flags
 - [x] Feedback latency < 30s
-- [ ] `nyquist_compliant: true` set in frontmatter (manual-only)
+- [x] Automated verify script: `node tests/verify-21.js`
 
 **Approval:** complete 2026-03-04

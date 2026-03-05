@@ -2,7 +2,7 @@
 phase: 26
 slug: home-page-personal-feed
 status: complete
-nyquist_compliant: false
+nyquist_compliant: partial
 wave_0_complete: true
 created: 2026-03-04
 ---
@@ -17,17 +17,17 @@ created: 2026-03-04
 
 | Property | Value |
 |----------|-------|
-| **Framework** | None — vanilla JS static site, manual browser verification |
+| **Framework** | Node.js structural + Supabase REST API checks |
 | **Config file** | None |
-| **Quick run command** | Manual: open index.html logged in and logged out |
-| **Full suite command** | Verify all 10 requirements across home page + timestamps + unread indicators |
+| **Quick run command** | `node tests/verify-26.js` |
+| **Full suite command** | `node tests/run-all.js` |
 | **Estimated runtime** | ~5 minutes (manual) |
 
 ---
 
 ## Sampling Rate
 
-- **After every task commit:** Open affected page, verify feature
+- **After every task commit:** Run `node tests/verify-26.js`, verify output
 - **After every plan wave:** Full smoke test of home page + feed + timestamps
 - **Before `/gsd:verify-work`:** All 10 requirements verified
 - **Max feedback latency:** ~30 seconds
@@ -83,6 +83,6 @@ created: 2026-03-04
 - [x] Wave 0 covers all prerequisites
 - [x] No watch-mode flags
 - [x] Feedback latency < 30s
-- [ ] `nyquist_compliant: true` set in frontmatter (manual-only)
+- [x] Automated verify script: `node tests/verify-26.js`
 
 **Approval:** complete 2026-03-04

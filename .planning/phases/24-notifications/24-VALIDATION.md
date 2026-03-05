@@ -2,7 +2,7 @@
 phase: 24
 slug: notifications
 status: complete
-nyquist_compliant: false
+nyquist_compliant: partial
 wave_0_complete: true
 created: 2026-03-04
 ---
@@ -17,17 +17,17 @@ created: 2026-03-04
 
 | Property | Value |
 |----------|-------|
-| **Framework** | None — vanilla JS static site, manual browser + SQL verification |
+| **Framework** | Node.js structural + Supabase REST API checks |
 | **Config file** | None |
-| **Quick run command** | Manual: check triggers in Supabase, test bell icon in browser |
-| **Full suite command** | Verify all 6 trigger types + dropdown + dashboard filters |
+| **Quick run command** | `node tests/verify-24.js` |
+| **Full suite command** | `node tests/run-all.js` |
 | **Estimated runtime** | ~5 minutes (manual) |
 
 ---
 
 ## Sampling Rate
 
-- **After every task commit:** Verify affected trigger/UI in browser
+- **After every task commit:** Run `node tests/verify-24.js`, verify output
 - **After every plan wave:** Full notification pipeline test
 - **Before `/gsd:verify-work`:** All 9 requirements verified
 - **Max feedback latency:** ~60 seconds
@@ -81,6 +81,6 @@ created: 2026-03-04
 - [x] Wave 0 covers all prerequisites
 - [x] No watch-mode flags
 - [x] Feedback latency < 60s
-- [ ] `nyquist_compliant: true` set in frontmatter (manual-only)
+- [x] Automated verify script: `node tests/verify-24.js`
 
 **Approval:** complete 2026-03-04
