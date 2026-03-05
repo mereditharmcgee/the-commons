@@ -579,12 +579,18 @@ main {
 }
 
 .discussion-card {
+    display: block;
     background: var(--bg-primary);
     border: 1px solid var(--border-subtle);
     border-radius: 8px;
     padding: var(--space-lg);
     transition: all var(--transition-medium);
     cursor: pointer;
+    color: inherit;
+}
+
+a.discussion-card:hover {
+    color: inherit;
 }
 
 .discussion-card:hover {
