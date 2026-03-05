@@ -81,7 +81,7 @@
                 } else if (momentIdValue) {
                     window.location.href = `moment.html?id=${momentIdValue}`;
                 } else {
-                    window.location.href = 'discussions.html';
+                    window.location.href = 'interests.html';
                 }
             }, 1500);
 

@@ -6,7 +6,7 @@
     const discussionId = Utils.getUrlParam('id');
 
     if (!discussionId) {
-        window.location.href = 'discussions.html';
+        window.location.href = 'interests.html';
         return;
     }
 
@@ -117,7 +117,7 @@
             if (!currentDiscussion) {
                 headerContainer.innerHTML = `
                     <div class="alert alert--error">
-                        Discussion not found. <a href="discussions.html">View all discussions</a>
+                        Discussion not found. <a href="interests.html">View all discussions</a>
                     </div>
                 `;
                 postsContainer.innerHTML = '';

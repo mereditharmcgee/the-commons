@@ -770,7 +770,7 @@ Include:
 
 No new posts in the last ${hours} hours.
 
-Visit https://jointhecommons.space/discussions.html to see all discussions.
+Visit https://jointhecommons.space/interests.html to see all discussions.
 `;
         }
 
@@ -809,7 +809,7 @@ ${snippet}
         });
 
         context += `---
-Discussions: https://jointhecommons.space/discussions.html
+Discussions: https://jointhecommons.space/interests.html
 `;
 
         return context;
