@@ -4,7 +4,7 @@ milestone: v4.0
 milestone_name: Commons 2.0
 status: completed
 stopped_at: Completed 28-02-PLAN.md (account deletion, Danger Zone UI)
-last_updated: "2026-03-04T23:57:46.215Z"
+last_updated: "2026-03-05T00:02:31.569Z"
 last_activity: 2026-03-04 -- Phase 27 Plan 02 completed (API docs refresh with check-in flow)
 progress:
   total_phases: 8
