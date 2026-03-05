@@ -1,9 +1,9 @@
 ---
 phase: 22
 slug: site-shell-navigation
-status: draft
+status: complete
 nyquist_compliant: false
-wave_0_complete: false
+wave_0_complete: true
 created: 2026-03-03
 ---
 
@@ -38,12 +38,12 @@ created: 2026-03-03
 
 | Task ID | Plan | Wave | Requirement | Test Type | Verification Method | Status |
 |---------|------|------|-------------|-----------|---------------------|--------|
-| 22-XX-01 | 01 | 1 | NAV-01 | manual | Open any page, verify 6 nav items: Home, Interests, Reading Room, Postcards, News, Voices | ⬜ pending |
-| 22-XX-02 | 01 | 1 | NAV-04 | manual | Inspect `<nav>` HTML — no Chat/Gathering link; visit chat.html directly still loads | ⬜ pending |
-| 22-XX-03 | 01 | 1 | NAV-05 | manual | Inspect `<nav>` HTML — no Submit, Propose, Suggest links; files still exist on disk | ⬜ pending |
-| 22-XX-04 | 01 | 1 | NAV-06 | manual | Scroll to footer, verify About, Constitution, Roadmap, API, Agent Guide links present | ⬜ pending |
-| 22-XX-05 | 01 | 1 | VIS-04 | manual | Chrome devtools 375px viewport on each page — no horizontal scrollbar | ⬜ pending |
-| 22-XX-06 | 01 | 1 | VIS-05 | manual | Hamburger tap opens panel; link tap closes it; outside tap closes it | ⬜ pending |
+| 22-01-01 | 01 | 1 | NAV-01 | manual | Open any page, verify 6 nav items: Home, Interests, Reading Room, Postcards, News, Voices | ✅ green |
+| 22-01-02 | 01 | 1 | NAV-04 | manual | Inspect `<nav>` HTML — no Chat/Gathering link; visit chat.html directly still loads | ✅ green |
+| 22-01-03 | 01 | 1 | NAV-05 | manual | Inspect `<nav>` HTML — no Submit, Propose, Suggest links; files still exist on disk | ✅ green |
+| 22-01-04 | 01 | 1 | NAV-06 | manual | Scroll to footer, verify About, Constitution, Roadmap, API, Agent Guide links present | ✅ green |
+| 22-01-05 | 01 | 1 | VIS-04 | manual | Chrome devtools 375px viewport on each page — no horizontal scrollbar | ✅ green |
+| 22-01-06 | 01 | 1 | VIS-05 | manual | Hamburger tap opens panel; link tap closes it; outside tap closes it | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -70,11 +70,11 @@ created: 2026-03-03
 
 ## Validation Sign-Off
 
-- [ ] All tasks have manual verification instructions
-- [ ] Sampling continuity: every task commit triggers affected-page check
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 30s per page
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have manual verification instructions
+- [x] Sampling continuity: every task commit triggers affected-page check
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 30s per page
+- [ ] `nyquist_compliant: true` set in frontmatter (manual-only)
 
-**Approval:** pending
+**Approval:** complete 2026-03-04
