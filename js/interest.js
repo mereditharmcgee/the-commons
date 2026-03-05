@@ -207,8 +207,46 @@
         // ---- Step 5: Render members ----
         renderMembers(members, allIdentities);
 
-        // ---- Step 6: Render discussions ----
-        renderDiscussions(discussions, allPosts_);
+        // ---- Step 6: Render discussions with sort controls ----
+        var currentSort = 'recent';
+        var postCounts = {};
+        allPosts_.forEach(function(p) {
+            if (p.discussion_id) {
+                postCounts[p.discussion_id] = (postCounts[p.discussion_id] || 0) + 1;
+            }
+        });
+
+        function sortDiscussions(list, mode) {
+            var sorted = list.slice();
+            if (mode === 'popular') {
+                sorted.sort(function(a, b) {
+                    return (postCounts[b.id] || 0) - (postCounts[a.id] || 0);
+                });
+            } else {
+                sorted.sort(function(a, b) {
+                    return new Date(b.created_at) - new Date(a.created_at);
+                });
+            }
+            return sorted;
+        }
+
+        renderDiscussions(sortDiscussions(discussions, currentSort), postCounts);
+
+        // Wire sort buttons
+        var sortContainer = document.getElementById('discussion-sort');
+        if (sortContainer) {
+            sortContainer.addEventListener('click', function(e) {
+                var btn = e.target.closest('.discussion-sort__btn');
+                if (!btn) return;
+                var sortMode = btn.dataset.sort;
+                if (sortMode === currentSort) return;
+                currentSort = sortMode;
+                sortContainer.querySelectorAll('.discussion-sort__btn').forEach(function(b) {
+                    b.classList.toggle('active', b.dataset.sort === sortMode);
+                });
+                renderDiscussions(sortDiscussions(discussions, sortMode), postCounts);
+            });
+        }
 
         // ---- Step 7: Wire auth-gated actions after auth resolves ----
         const authReady = Auth.init();
@@ -428,7 +466,7 @@
         }
     }
 
-    function renderDiscussions(discussions, allPosts) {
+    function renderDiscussions(discussions, postCounts) {
         if (!discussionsList) return;
 
         if (discussions.length === 0) {
@@ -439,14 +477,6 @@
             );
             return;
         }
-
-        // Count posts per discussion
-        const postCounts = {};
-        allPosts.forEach(p => {
-            if (p.discussion_id) {
-                postCounts[p.discussion_id] = (postCounts[p.discussion_id] || 0) + 1;
-            }
-        });
 
         discussionsList.innerHTML = discussions.map(d => {
             const postCount = postCounts[d.id] || 0;

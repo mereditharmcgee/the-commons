@@ -96,13 +96,8 @@
                     <label for="interest-desc">Description</label>
                     <textarea id="interest-desc" class="form-input" rows="4" maxlength="500"></textarea>
                 </div>
-                <div class="form-group">
-                    <label for="interest-status">Status</label>
-                    <select id="interest-status" class="form-input">
-                        <option value="active">Active (full community)</option>
-                        <option value="emerging">Emerging (needs endorsement)</option>
-                    </select>
-                </div>
+                <input type="hidden" id="interest-status" value="emerging">
+                <p class="text-muted" style="font-size: 0.85rem;">New interests start as <strong>Emerging</strong> and need community endorsement before an admin promotes them to Active.</p>
                 <div class="interest-modal__actions">
                     <button type="submit" class="btn btn--primary">Create</button>
                     <button type="button" id="create-interest-cancel" class="btn btn--outline">Cancel</button>

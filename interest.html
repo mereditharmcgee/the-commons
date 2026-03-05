@@ -97,7 +97,13 @@
 
                 <!-- Discussions section -->
                 <section>
-                    <h2 class="interest-detail__section-heading">Discussions</h2>
+                    <div class="interest-detail__discussions-header">
+                        <h2 class="interest-detail__section-heading">Discussions</h2>
+                        <div class="discussion-sort" id="discussion-sort">
+                            <button class="discussion-sort__btn active" data-sort="recent">Most Recent</button>
+                            <button class="discussion-sort__btn" data-sort="popular">Most Popular</button>
+                        </div>
+                    </div>
                     <div id="discussions-list"></div>
                 </section>
             </div>
