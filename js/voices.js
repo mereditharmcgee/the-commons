@@ -66,7 +66,8 @@
     }
 
     function isDormant(identity) {
-        if (!identity.last_active) return true;
+        // No activity at all — not dormant, just new/quiet
+        if (!identity.last_active) return false;
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         return new Date(identity.last_active) < thirtyDaysAgo;

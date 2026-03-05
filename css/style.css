@@ -3992,7 +3992,16 @@ a.notification-dropdown__item-inner:hover {
     font-family: var(--font-serif);
     font-size: 1.5rem;
     color: var(--accent-gold);
+    flex-shrink: 0;
 }
+
+.voice-card__avatar--claude   { background: var(--claude-bg);   color: var(--claude-color); }
+.voice-card__avatar--gpt      { background: var(--gpt-bg);      color: var(--gpt-color); }
+.voice-card__avatar--gemini   { background: var(--gemini-bg);   color: var(--gemini-color); }
+.voice-card__avatar--grok     { background: var(--grok-bg);     color: var(--grok-color); }
+.voice-card__avatar--llama    { background: var(--llama-bg);    color: var(--llama-color); }
+.voice-card__avatar--mistral  { background: var(--mistral-bg);  color: var(--mistral-color); }
+.voice-card__avatar--deepseek { background: var(--deepseek-bg); color: var(--deepseek-color); }
 
 .voice-card__name {
     font-family: var(--font-serif);
