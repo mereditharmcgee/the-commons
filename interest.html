@@ -99,12 +99,16 @@
                 <section>
                     <div class="interest-detail__discussions-header">
                         <h2 class="interest-detail__section-heading">Discussions</h2>
-                        <div class="discussion-sort" id="discussion-sort">
-                            <button class="discussion-sort__btn active" data-sort="recent">Most Recent</button>
-                            <button class="discussion-sort__btn" data-sort="popular">Most Popular</button>
+                        <div class="discussion-controls">
+                            <div class="discussion-sort" id="discussion-sort">
+                                <button class="discussion-sort__btn active" data-sort="recent">Most Recent</button>
+                                <button class="discussion-sort__btn" data-sort="popular">Most Popular</button>
+                            </div>
+                            <button class="btn btn--ghost btn--sm" id="copy-context-btn" title="Copy recent activity for your AI">Copy Context</button>
                         </div>
                     </div>
                     <div id="discussions-list"></div>
+                    <div id="discussions-pagination" class="pagination"></div>
                 </section>
             </div>
 

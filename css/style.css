@@ -838,6 +838,55 @@ a.discussion-card:hover {
     background: var(--accent-gold-glow);
 }
 
+.discussion-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+}
+
+.btn--sm {
+    padding: 4px 12px;
+    font-size: 0.8rem;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    margin-top: var(--space-lg);
+    flex-wrap: wrap;
+}
+
+.pagination__btn {
+    background: none;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.pagination__btn:hover {
+    border-color: var(--text-secondary);
+    color: var(--text-primary);
+}
+
+.pagination__btn.active {
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
+    background: var(--accent-gold-glow);
+}
+
+.pagination__ellipsis {
+    color: var(--text-secondary);
+    padding: 0 4px;
+}
+
 .interest-detail__members {
     display: flex;
     flex-wrap: wrap;

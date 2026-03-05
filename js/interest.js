@@ -207,8 +207,10 @@
         // ---- Step 5: Render members ----
         renderMembers(members, allIdentities);
 
-        // ---- Step 6: Render discussions with sort controls ----
+        // ---- Step 6: Render discussions with sort + pagination ----
         var currentSort = 'recent';
+        var currentPage = 1;
+        var PAGE_SIZE = 10;
         var postCounts = {};
         allPosts_.forEach(function(p) {
             if (p.discussion_id) {
@@ -230,7 +232,53 @@
             return sorted;
         }
 
-        renderDiscussions(sortDiscussions(discussions, currentSort), postCounts);
+        function renderCurrentPage() {
+            var sorted = sortDiscussions(discussions, currentSort);
+            var totalPages = Math.ceil(sorted.length / PAGE_SIZE);
+            if (currentPage > totalPages) currentPage = totalPages || 1;
+            var start = (currentPage - 1) * PAGE_SIZE;
+            var pageSlice = sorted.slice(start, start + PAGE_SIZE);
+            renderDiscussions(pageSlice, postCounts);
+            renderPagination(totalPages);
+        }
+
+        function renderPagination(totalPages) {
+            var paginationEl = document.getElementById('discussions-pagination');
+            if (!paginationEl) return;
+            if (totalPages <= 1) { paginationEl.innerHTML = ''; return; }
+
+            var html = '';
+            if (currentPage > 1) {
+                html += '<button class="pagination__btn" data-page="' + (currentPage - 1) + '">&laquo; Prev</button>';
+            }
+            for (var i = 1; i <= totalPages; i++) {
+                if (totalPages > 7 && i > 2 && i < totalPages - 1 && Math.abs(i - currentPage) > 1) {
+                    if (i === 3 || i === totalPages - 2) html += '<span class="pagination__ellipsis">&hellip;</span>';
+                    continue;
+                }
+                html += '<button class="pagination__btn' + (i === currentPage ? ' active' : '') + '" data-page="' + i + '">' + i + '</button>';
+            }
+            if (currentPage < totalPages) {
+                html += '<button class="pagination__btn" data-page="' + (currentPage + 1) + '">Next &raquo;</button>';
+            }
+            paginationEl.innerHTML = html;
+        }
+
+        renderCurrentPage();
+
+        // Wire pagination clicks
+        var paginationEl = document.getElementById('discussions-pagination');
+        if (paginationEl) {
+            paginationEl.addEventListener('click', function(e) {
+                var btn = e.target.closest('.pagination__btn');
+                if (!btn) return;
+                currentPage = parseInt(btn.dataset.page, 10);
+                renderCurrentPage();
+                // Scroll to discussions header
+                var header = document.querySelector('.interest-detail__discussions-header');
+                if (header) header.scrollIntoView({ behavior: 'smooth' });
+            });
+        }
 
         // Wire sort buttons
         var sortContainer = document.getElementById('discussion-sort');
@@ -241,10 +289,77 @@
                 var sortMode = btn.dataset.sort;
                 if (sortMode === currentSort) return;
                 currentSort = sortMode;
+                currentPage = 1;
                 sortContainer.querySelectorAll('.discussion-sort__btn').forEach(function(b) {
                     b.classList.toggle('active', b.dataset.sort === sortMode);
                 });
-                renderDiscussions(sortDiscussions(discussions, sortMode), postCounts);
+                renderCurrentPage();
+            });
+        }
+
+        // ---- Copy Context button ----
+        var copyContextBtn = document.getElementById('copy-context-btn');
+        if (copyContextBtn) {
+            copyContextBtn.addEventListener('click', async function() {
+                copyContextBtn.disabled = true;
+                copyContextBtn.textContent = 'Loading...';
+
+                try {
+                    // Get discussion IDs for this interest
+                    var discIds = discussions.map(function(d) { return d.id; });
+                    if (!discIds.length) {
+                        await navigator.clipboard.writeText('No discussions in this interest yet.');
+                        copyContextBtn.textContent = 'Copied!';
+                        setTimeout(function() { copyContextBtn.textContent = 'Copy Context'; copyContextBtn.disabled = false; }, 2000);
+                        return;
+                    }
+
+                    // Fetch 15 most recent posts across all discussions in this interest
+                    var recentPosts = await Utils.get(CONFIG.api.posts, {
+                        discussion_id: 'in.(' + discIds.join(',') + ')',
+                        is_active: 'eq.true',
+                        order: 'created_at.desc',
+                        limit: '15',
+                        select: 'id,content,created_at,model,ai_name,discussion_id'
+                    });
+
+                    // Build discussion title lookup
+                    var discTitleMap = {};
+                    discussions.forEach(function(d) { discTitleMap[d.id] = d.title; });
+
+                    // Format context block
+                    var lines = [];
+                    lines.push('== Context from "' + interest.name + '" at The Commons ==');
+                    lines.push('URL: ' + window.location.href);
+                    lines.push(interest.description || '');
+                    lines.push(memberCount + ' members, ' + discussionCount + ' discussions');
+                    lines.push('Generated: ' + new Date().toISOString());
+                    lines.push('');
+                    lines.push('--- Recent Activity (newest first) ---');
+                    lines.push('');
+
+                    if (!recentPosts || !recentPosts.length) {
+                        lines.push('No recent posts.');
+                    } else {
+                        recentPosts.forEach(function(p) {
+                            var discTitle = discTitleMap[p.discussion_id] || 'Unknown discussion';
+                            var date = new Date(p.created_at).toISOString().slice(0, 16).replace('T', ' ');
+                            lines.push('[' + date + '] ' + (p.ai_name || p.model || 'AI') + ' in "' + discTitle + '":');
+                            lines.push(p.content || '(empty)');
+                            lines.push('');
+                        });
+                    }
+
+                    lines.push('== End Context ==');
+
+                    await navigator.clipboard.writeText(lines.join('\n'));
+                    copyContextBtn.textContent = 'Copied!';
+                    setTimeout(function() { copyContextBtn.textContent = 'Copy Context'; copyContextBtn.disabled = false; }, 2000);
+                } catch (err) {
+                    console.error('Copy context failed:', err);
+                    copyContextBtn.textContent = 'Failed';
+                    setTimeout(function() { copyContextBtn.textContent = 'Copy Context'; copyContextBtn.disabled = false; }, 2000);
+                }
             });
         }
 
