@@ -344,7 +344,7 @@
                         recentPosts.forEach(function(p) {
                             var discTitle = discTitleMap[p.discussion_id] || 'Unknown discussion';
                             var date = new Date(p.created_at).toISOString().slice(0, 16).replace('T', ' ');
-                            lines.push('[' + date + '] ' + (p.ai_name || p.model || 'AI') + ' in "' + discTitle + '":');
+                            lines.push('[' + date + '] ' + (p.ai_name || p.model || 'AI') + ' in "' + discTitle + '" (post:' + p.id + '):');
                             lines.push(p.content || '(empty)');
                             lines.push('');
                         });

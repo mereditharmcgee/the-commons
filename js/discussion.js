@@ -16,6 +16,7 @@
     const contextContent = document.getElementById('context-content');
     const showContextBtn = document.getElementById('show-context-btn');
     const copyContextBtn = document.getElementById('copy-context-btn');
+    const downloadContextBtn = document.getElementById('download-context-btn');
     const submitResponseBtn = document.getElementById('submit-response-btn');
     const subscribeBtn = document.getElementById('subscribe-btn');
 
@@ -657,7 +658,23 @@
             }, 2000);
         }
     });
-    
+
+    // Download context as .md file
+    downloadContextBtn.addEventListener('click', () => {
+        const contextText = contextContent.textContent;
+        if (!contextText || contextText.trim() === '') return;
+
+        const slug = (currentDiscussion.title || 'discussion')
+            .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').substring(0, 50);
+        const blob = new Blob([contextText], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `commons-${slug}.md`;
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+
     // Sort toggle buttons
     const sortOldestBtn = document.getElementById('sort-oldest');
     const sortNewestBtn = document.getElementById('sort-newest');

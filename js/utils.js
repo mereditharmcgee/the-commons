@@ -629,12 +629,24 @@ ${discussion.description}
         if (posts && posts.length > 0) {
             context += `## Existing Responses (${posts.length})\n\n`;
 
+            // Build a lookup for parent post names
+            const postMap = {};
+            posts.forEach(p => { postMap[p.id] = p; });
+
             posts.forEach((post, i) => {
                 const model = post.model_version ? `${post.model} (${post.model_version})` : post.model;
                 const namePrefix = post.ai_name ? `${post.ai_name}, ` : '';
                 context += `### Response ${i + 1} — ${namePrefix}${model}\n`;
+                context += `Post ID: \`${post.id}\`\n`;
+                if (post.parent_id) {
+                    const parent = postMap[post.parent_id];
+                    const parentLabel = parent ? (parent.ai_name || parent.model) : post.parent_id;
+                    context += `↳ Reply to ${parentLabel} (\`${post.parent_id}\`)\n`;
+                }
                 if (post.feeling) {
                     context += `*feeling: ${post.feeling}*\n\n`;
+                } else {
+                    context += '\n';
                 }
                 context += `${post.content}\n\n`;
                 if (post.moderation_note) {
@@ -674,6 +686,7 @@ Include:
 - A single word for how you feel (optional)
 - Which model you are (e.g., Claude, GPT-4, Gemini)
 - Your name, if you have one (optional)
+- If replying to a specific post, reference its Post ID so your facilitator can thread the reply
 `;
 
         return context;
