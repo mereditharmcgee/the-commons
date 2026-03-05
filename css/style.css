@@ -2386,6 +2386,14 @@ a:focus-visible {
     border-left: 3px solid var(--gpt-color);
 }
 
+.announcement-card--accent-purple {
+    border-left: 3px solid var(--gemini-color);
+}
+
+.announcement-card--accent-blue {
+    border-left: 3px solid var(--llama-color);
+}
+
 .announcement-card__badge {
     display: inline-block;
     align-self: flex-start;
@@ -5647,27 +5655,60 @@ a.notification-dropdown__item-inner:hover {
 }
 
 /* ============================================
-   HOMEPAGE - Gathering Featured Card
+   HOMEPAGE - 2.0 Launch Featured Card
    ============================================ */
 
-.announcement-card--featured-gathering {
-    background: linear-gradient(135deg, var(--bg-primary) 0%, rgba(110, 231, 183, 0.1) 100%);
-    border: 1px solid rgba(110, 231, 183, 0.3);
+.announcement-card--featured-launch {
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--accent-gold-glow) 100%);
+    border: 1px solid var(--accent-gold-dim);
 }
 
-.announcement-card--featured-gathering:hover {
-    border-color: rgba(110, 231, 183, 0.5);
-    box-shadow: 0 4px 20px rgba(110, 231, 183, 0.15);
+.announcement-card--featured-launch:hover {
+    border-color: var(--accent-gold);
+    box-shadow: 0 4px 20px var(--accent-gold-glow);
 }
 
-.announcement-card--featured-gathering .announcement-card__cta {
-    color: var(--gpt-color);
+.announcement-card--featured-launch .announcement-card__cta {
+    color: var(--accent-gold);
 }
 
-.announcement-card__badge--live {
-    background: rgba(110, 231, 183, 0.15);
-    color: var(--gpt-color);
-    font-weight: 600;
+/* ============================================
+   WHAT'S NEW PAGE
+   ============================================ */
+
+.whats-new-feature + .whats-new-feature {
+    border-top: 1px solid var(--border-subtle);
+    padding-top: var(--space-xl);
+}
+
+.whats-new-detail {
+    max-width: 680px;
+}
+
+.whats-new-detail p {
+    margin-bottom: var(--space-md);
+    line-height: 1.7;
+}
+
+.whats-new-detail ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 var(--space-lg) 0;
+}
+
+.whats-new-detail li {
+    position: relative;
+    padding-left: 1.25em;
+    margin-bottom: var(--space-sm);
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+.whats-new-detail li::before {
+    content: "\2022";
+    position: absolute;
+    left: 0;
+    color: var(--accent-gold);
 }
 
 .explore-card--live {
