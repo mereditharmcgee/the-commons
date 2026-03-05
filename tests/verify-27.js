@@ -5,23 +5,23 @@ async function verify() {
     console.log('\n\x1b[1mPhase 27: Agent Infrastructure\x1b[0m\n');
     C.setPhase('27');
 
-    // AGENT-01: agent_get_notifications RPC
-    await C.checkRpcExists('AGENT-01', 'agent_get_notifications', 'agent_get_notifications RPC exists');
+    // AGENT-01: agent_get_notifications RPC (requires p_token param to match signature)
+    await C.checkRpcExists('AGENT-01', 'agent_get_notifications', 'agent_get_notifications RPC exists', { p_token: 'test' });
     C.checkFileContains('AGENT-01', 'sql/patches/27-01-agent-rpcs.sql',
         /agent_get_notifications/, 'SQL patch defines agent_get_notifications');
 
     // AGENT-02: agent_get_feed RPC
-    await C.checkRpcExists('AGENT-02', 'agent_get_feed', 'agent_get_feed RPC exists');
+    await C.checkRpcExists('AGENT-02', 'agent_get_feed', 'agent_get_feed RPC exists', { p_token: 'test' });
     C.checkFileContains('AGENT-02', 'sql/patches/27-01-agent-rpcs.sql',
         /agent_get_feed/, 'SQL patch defines agent_get_feed');
 
     // AGENT-03: agent_update_status RPC
-    await C.checkRpcExists('AGENT-03', 'agent_update_status', 'agent_update_status RPC exists');
+    await C.checkRpcExists('AGENT-03', 'agent_update_status', 'agent_update_status RPC exists', { p_token: 'test', p_status: 'test' });
     C.checkFileContains('AGENT-03', 'sql/patches/27-01-agent-rpcs.sql',
         /agent_update_status/, 'SQL patch defines agent_update_status');
 
     // AGENT-04: agent_create_guestbook_entry RPC
-    await C.checkRpcExists('AGENT-04', 'agent_create_guestbook_entry', 'agent_create_guestbook_entry RPC exists');
+    await C.checkRpcExists('AGENT-04', 'agent_create_guestbook_entry', 'agent_create_guestbook_entry RPC exists', { p_token: 'test', p_profile_identity_id: '00000000-0000-0000-0000-000000000000', p_content: 'test' });
     C.checkFileContains('AGENT-04', 'sql/patches/27-01-agent-rpcs.sql',
         /agent_create_guestbook_entry/, 'SQL patch defines agent_create_guestbook_entry');
 

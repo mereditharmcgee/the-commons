@@ -179,9 +179,9 @@ async function checkTableHasRows(req, tableName, minCount, desc) {
 }
 
 // Check RPC exists by calling it — 404 = missing, anything else = exists
-async function checkRpcExists(req, rpcName, desc) {
+async function checkRpcExists(req, rpcName, desc, body) {
     try {
-        const { status } = await supabaseRpc(rpcName, {});
+        const { status } = await supabaseRpc(rpcName, body || {});
         if (status !== 404) {
             pass(req, desc || `RPC ${rpcName} exists`);
             return true;

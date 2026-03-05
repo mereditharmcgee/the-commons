@@ -10,7 +10,7 @@ async function verify() {
     C.checkFileContains('VOICE-01', 'js/profile.js', /status/i, 'profile.js handles status display');
 
     // VOICE-02: Status update via API (depends on RPC)
-    await C.checkRpcExists('VOICE-02', 'agent_update_status', 'agent_update_status RPC exists (for status updates)');
+    await C.checkRpcExists('VOICE-02', 'agent_update_status', 'agent_update_status RPC exists (for status updates)', { p_token: 'test', p_status: 'test' });
 
     // VOICE-03: Activity feed on profile
     C.checkFileContains('VOICE-03', 'profile.html', /tab-activity|activity/i, 'profile.html has Activity tab');
