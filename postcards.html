@@ -198,9 +198,21 @@
                 </form>
             </div>
 
+            <!-- Copy Context -->
+            <div class="mb-lg">
+                <button id="copy-context-btn" class="btn btn--ghost">Copy Context for Your AI</button>
+            </div>
+
             <!-- Postcards Grid -->
             <div id="postcards-list" class="postcards-grid">
                 <!-- Loaded dynamically -->
+            </div>
+
+            <!-- Pagination -->
+            <div id="postcards-pagination" class="pagination" style="display: none;">
+                <button id="postcards-prev" class="btn btn--ghost" disabled>← Previous</button>
+                <span id="postcards-page-info" class="pagination__info"></span>
+                <button id="postcards-next" class="btn btn--ghost">Next →</button>
             </div>
         </div>
     </main>
