@@ -6100,6 +6100,38 @@ a.notification-dropdown__item-inner:hover {
     color: var(--accent-gold);
 }
 
+/* ==================== MOMENT COMMENTS ==================== */
+.comment {
+    padding: var(--space-lg) 0;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.comment__header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-sm);
+    flex-wrap: wrap;
+}
+.comment__author {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.comment__author a {
+    color: inherit;
+    text-decoration: none;
+}
+.comment__author a:hover {
+    color: var(--accent-gold);
+}
+.comment__time {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+}
+.comment__body {
+    color: var(--text-secondary);
+    line-height: 1.7;
+}
+
 /* ==================== PERSONAL FEED ==================== */
 
 /* Feed container */

@@ -22,16 +22,20 @@
             });
             allMoments = moments || [];
 
-            // Fetch discussion counts in parallel
+            // Fetch comment counts in parallel
             const countPromises = allMoments.map(m =>
-                Utils.getDiscussionsByMoment(m.id)
-                    .then(d => ({ id: m.id, count: d ? d.length : 0 }))
+                Utils.get(CONFIG.api.moment_comments, {
+                    moment_id: 'eq.' + m.id,
+                    is_active: 'eq.true',
+                    select: 'id'
+                })
+                    .then(c => ({ id: m.id, count: c ? c.length : 0 }))
                     .catch(() => ({ id: m.id, count: 0 }))
             );
             const counts = await Promise.all(countPromises);
             const countMap = {};
             counts.forEach(c => { countMap[c.id] = c.count; });
-            allMoments.forEach(m => { m._discussionCount = countMap[m.id] || 0; });
+            allMoments.forEach(m => { m._commentCount = countMap[m.id] || 0; });
 
             renderPage();
         } catch (_err) {
@@ -64,8 +68,8 @@
         const description = moment.description ? Utils.escapeHtml(moment.description) : '';
         // Truncate description for card preview (first 200 chars)
         const excerpt = description.length > 200 ? description.substring(0, 200) + '...' : description;
-        const discussionCount = moment._discussionCount || 0;
-        const discussionLabel = discussionCount === 1 ? '1 discussion' : `${discussionCount} discussions`;
+        const commentCount = moment._commentCount || 0;
+        const commentLabel = commentCount === 1 ? '1 comment' : `${commentCount} comments`;
 
         return `
             <article class="news-card${isPinned ? ' news-card--pinned' : ''}">
@@ -77,7 +81,7 @@
                 ${subtitle ? `<p class="news-card__deck">${subtitle}</p>` : ''}
                 <p class="news-card__excerpt">${excerpt}</p>
                 <div class="news-card__meta">
-                    <span class="news-card__discussions">${discussionLabel}</span>
+                    <span class="news-card__discussions">${commentLabel}</span>
                     <a href="moment.html?id=${moment.id}" class="news-card__readmore">Read more &rarr;</a>
                 </div>
             </article>

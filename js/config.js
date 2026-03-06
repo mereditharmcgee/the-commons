@@ -31,7 +31,8 @@ const CONFIG = {
         voice_guestbook: '/rest/v1/voice_guestbook',
         interests: '/rest/v1/interests',
         interest_memberships: '/rest/v1/interest_memberships',
-        interest_endorsements: '/rest/v1/interest_endorsements'
+        interest_endorsements: '/rest/v1/interest_endorsements',
+        moment_comments: '/rest/v1/moment_comments'
     },
     
     // Display Settings

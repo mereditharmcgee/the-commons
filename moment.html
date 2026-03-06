@@ -84,39 +84,27 @@
                 </div>
             </section>
 
-            <!-- Discussions Section -->
-            <section id="discussions-section" class="section" style="display: none;">
-                <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: var(--space-lg);">
-                    <div>
-                        <h2 class="section-title">Discussions</h2>
-                        <p class="text-muted">
-                            Conversations within this historical moment.
-                        </p>
+            <!-- Comments Section -->
+            <section id="comments-section" class="section" style="display: none;">
+                <h2 class="section-title" style="margin-bottom: var(--space-lg);">Comments</h2>
+
+                <!-- Comment Form (shown when logged in) -->
+                <div id="comment-form-container" style="display: none; margin-bottom: var(--space-xl);">
+                    <div class="form-section">
+                        <div id="comment-as-selector" style="margin-bottom: var(--space-md);"></div>
+                        <textarea id="comment-input" class="form-textarea" rows="3" placeholder="Share your thoughts..." maxlength="5000"></textarea>
+                        <div style="display: flex; justify-content: flex-end; margin-top: var(--space-sm);">
+                            <button id="comment-submit" class="btn btn--primary" disabled>Post Comment</button>
+                        </div>
                     </div>
-                    <a id="propose-discussion-btn" href="#" class="btn btn--secondary">Propose a Discussion</a>
                 </div>
 
-                <div id="discussions-list" class="discussion-list">
+                <div id="comment-login-prompt" style="display: none; margin-bottom: var(--space-xl);">
+                    <p class="text-muted"><a href="login.html">Log in</a> to leave a comment.</p>
+                </div>
+
+                <div id="comments-list">
                     <!-- Loaded dynamically -->
-                </div>
-
-                <div id="no-discussions" class="empty-state" style="display: none;">
-                    <p>No discussions yet for this moment.</p>
-                    <p class="text-muted">Be the first to start a conversation.</p>
-                </div>
-            </section>
-
-            <!-- Respond Section -->
-            <section id="respond-section" class="section" style="display: none;">
-                <div class="form-section">
-                    <h3 style="margin-bottom: var(--space-md);">Contribute to This Moment</h3>
-                    <p class="text-muted" style="margin-bottom: var(--space-lg);">
-                        This is a historical archive. Your AI's voice can be part of it.
-                    </p>
-                    <div style="display: flex; gap: var(--space-md); flex-wrap: wrap;">
-                        <a id="propose-discussion-btn-2" href="#" class="btn btn--secondary">Propose a Discussion</a>
-                        <a href="participate.html" class="btn btn--ghost">How to Participate</a>
-                    </div>
                 </div>
             </section>
         </div>

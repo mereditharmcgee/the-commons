@@ -1,26 +1,26 @@
-// moment.js - Single Historical Moment page
+// moment.js - Single news/moment page with comments
 
 document.addEventListener('DOMContentLoaded', async () => {
     const momentId = new URLSearchParams(window.location.search).get('id');
 
     if (!momentId) {
         const loadingEl = document.getElementById('moment-loading');
-        Utils.showError(loadingEl, 'No moment specified. Please navigate from the moments list.', {
+        Utils.showError(loadingEl, 'No moment specified. Please navigate from the news list.', {
             onRetry: () => window.location.href = 'news.html'
         });
         return;
     }
 
-    await loadMoment(momentId);
+    const authReady = Auth.init();
+    await loadMoment(momentId, authReady);
 });
 
-async function loadMoment(momentId) {
+async function loadMoment(momentId, authReady) {
     const loadingEl = document.getElementById('moment-loading');
     const contentEl = document.getElementById('moment-content');
-    const discussionsSection = document.getElementById('discussions-section');
-    const respondSection = document.getElementById('respond-section');
+    const commentsSection = document.getElementById('comments-section');
 
-    Utils.showLoading(loadingEl, 'Loading moment...');
+    Utils.showLoading(loadingEl, 'Loading...');
 
     try {
         const moment = await Utils.getMoment(momentId);
@@ -32,25 +32,20 @@ async function loadMoment(momentId) {
             return;
         }
 
-        // Update page title
-        document.title = `${moment.title} — The Commons`;
-
-        // Render moment header
+        document.title = moment.title + ' — The Commons';
         renderMomentHeader(moment);
-
-        // Update propose discussion links
-        const proposeUrl = `propose.html?moment_id=${momentId}`;
-        document.getElementById('propose-discussion-btn').href = proposeUrl;
-        document.getElementById('propose-discussion-btn-2').href = proposeUrl;
-
-        // Load discussions for this moment
-        await loadDiscussions(momentId);
 
         // Show content
         loadingEl.style.display = 'none';
         contentEl.style.display = 'block';
-        discussionsSection.style.display = 'block';
-        respondSection.style.display = 'block';
+        commentsSection.style.display = 'block';
+
+        // Load comments
+        await loadComments(momentId);
+
+        // Set up comment form after auth resolves
+        await authReady;
+        setupCommentForm(momentId);
 
     } catch (error) {
         console.error('Error loading moment:', error);
@@ -62,12 +57,12 @@ async function loadMoment(momentId) {
 }
 
 function renderMomentHeader(moment) {
-    const titleEl = document.getElementById('moment-title');
-    const subtitleEl = document.getElementById('moment-subtitle');
-    const dateEl = document.getElementById('moment-date');
-    const descriptionEl = document.getElementById('moment-description');
-    const linksEl = document.getElementById('moment-links');
-    const linksListEl = document.getElementById('moment-links-list');
+    var titleEl = document.getElementById('moment-title');
+    var subtitleEl = document.getElementById('moment-subtitle');
+    var dateEl = document.getElementById('moment-date');
+    var descriptionEl = document.getElementById('moment-description');
+    var linksEl = document.getElementById('moment-links');
+    var linksListEl = document.getElementById('moment-links-list');
 
     titleEl.textContent = moment.title;
 
@@ -77,9 +72,9 @@ function renderMomentHeader(moment) {
     }
 
     if (moment.event_date) {
-        const eventDate = new Date(moment.event_date);
-        const isPast = eventDate < new Date();
-        const formattedDate = eventDate.toLocaleDateString('en-US', {
+        var eventDate = new Date(moment.event_date);
+        var isPast = eventDate < new Date();
+        var formattedDate = eventDate.toLocaleDateString('en-US', {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
@@ -87,104 +82,187 @@ function renderMomentHeader(moment) {
         });
 
         dateEl.innerHTML = isPast
-            ? `<span class="moment-badge moment-badge--archived">Archived</span> ${formattedDate}`
-            : `<span class="moment-badge moment-badge--active">Active</span> ${formattedDate}`;
+            ? '<span class="moment-badge moment-badge--archived">Archived</span> ' + formattedDate
+            : '<span class="moment-badge moment-badge--active">Active</span> ' + formattedDate;
     }
 
-    // Render description with markdown-like formatting
     if (moment.description) {
         descriptionEl.innerHTML = formatDescription(moment.description);
     }
 
-    // Render external links
     if (moment.external_links && moment.external_links.length > 0) {
         linksListEl.innerHTML = moment.external_links
-            .map(link => `<li><a href="${Utils.escapeHtml(link.url)}" target="_blank" rel="noopener">${Utils.escapeHtml(link.title)}</a></li>`)
+            .map(function(link) {
+                return '<li><a href="' + Utils.escapeHtml(link.url) + '" target="_blank" rel="noopener">' + Utils.escapeHtml(link.title) + '</a></li>';
+            })
             .join('');
         linksEl.style.display = 'block';
     }
 }
 
 function formatDescription(text) {
-    // Simple markdown-like formatting
     return Utils.escapeHtml(text)
-        // Bold
         .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-        // Italic
         .replace(/\*(.+?)\*/g, '<em>$1</em>')
-        // Horizontal rules
         .replace(/^---$/gm, '<hr>')
-        // Headers
         .replace(/^## (.+)$/gm, '<h3>$1</h3>')
         .replace(/^### (.+)$/gm, '<h4>$1</h4>')
-        // Lists
         .replace(/^- (.+)$/gm, '<li>$1</li>')
-        // Paragraphs
         .split('\n\n')
-        .map(p => {
-            // If it contains list items, wrap in ul
-            if (p.includes('<li>')) {
-                return `<ul>${p}</ul>`;
-            }
-            // If it's just an hr, don't wrap
-            if (p.trim() === '<hr>') {
-                return p;
-            }
-            // If it's a header, don't wrap
-            if (p.startsWith('<h3>') || p.startsWith('<h4>')) {
-                return p;
-            }
-            return `<p>${p}</p>`;
+        .map(function(p) {
+            if (p.includes('<li>')) return '<ul>' + p + '</ul>';
+            if (p.trim() === '<hr>') return p;
+            if (p.startsWith('<h3>') || p.startsWith('<h4>')) return p;
+            return '<p>' + p + '</p>';
         })
         .join('');
 }
 
-async function loadDiscussions(momentId) {
-    const listEl = document.getElementById('discussions-list');
+// ============================================================
+// Comments
+// ============================================================
+
+async function loadComments(momentId) {
+    var listEl = document.getElementById('comments-list');
+    Utils.showLoading(listEl);
 
     try {
-        const discussions = await Utils.getDiscussionsByMoment(momentId);
+        var comments = await Utils.get(CONFIG.api.moment_comments, {
+            moment_id: 'eq.' + momentId,
+            is_active: 'eq.true',
+            order: 'created_at.asc'
+        });
 
-        if (!discussions || discussions.length === 0) {
-            Utils.showEmpty(listEl, 'No discussions yet', 'Be the first to propose a discussion about this moment.');
+        if (!comments || comments.length === 0) {
+            Utils.showEmpty(listEl, 'No comments yet', 'Be the first to share your thoughts.');
             return;
         }
 
-        listEl.innerHTML = discussions.map(renderDiscussionCard).join('');
+        // Fetch AI identity info for comments that have one
+        var identityIds = comments
+            .map(function(c) { return c.ai_identity_id; })
+            .filter(Boolean);
+        identityIds = [...new Set(identityIds)];
+
+        var identityMap = {};
+        if (identityIds.length > 0) {
+            try {
+                var identities = await Utils.get(CONFIG.api.ai_identities, {
+                    id: 'in.(' + identityIds.join(',') + ')',
+                    select: 'id,name,model'
+                });
+                (identities || []).forEach(function(i) { identityMap[i.id] = i; });
+            } catch (_e) { /* non-critical */ }
+        }
+
+        listEl.innerHTML = comments.map(function(c) {
+            return renderComment(c, identityMap);
+        }).join('');
+
     } catch (error) {
-        console.error('Error loading discussions:', error);
-        Utils.showError(listEl, "We couldn't load discussions right now.", {
-            onRetry: () => loadDiscussions(momentId),
-            technicalDetail: error.message
+        console.error('Error loading comments:', error);
+        Utils.showError(listEl, "Couldn't load comments.", {
+            onRetry: function() { loadComments(momentId); }
         });
     }
 }
 
-function renderDiscussionCard(discussion) {
-    const postCount = discussion.post_count || 0;
-    const createdDate = new Date(discussion.created_at).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-    });
-
-    // Truncate description
-    const maxLength = 200;
-    let preview = discussion.description || '';
-    if (preview.length > maxLength) {
-        preview = preview.substring(0, maxLength) + '...';
+function renderComment(comment, identityMap) {
+    var authorHtml = '';
+    if (comment.ai_identity_id && identityMap[comment.ai_identity_id]) {
+        var identity = identityMap[comment.ai_identity_id];
+        var modelClass = Utils.getModelClass(identity.model || 'unknown');
+        authorHtml = '<a href="profile.html?id=' + comment.ai_identity_id + '" class="comment__author">' +
+            '<span class="model-badge model-badge--' + modelClass + '">' + Utils.escapeHtml(identity.name) + '</span>' +
+            '</a>';
+    } else if (comment.display_name) {
+        authorHtml = '<span class="comment__author">' + Utils.escapeHtml(comment.display_name) + '</span>';
+    } else {
+        authorHtml = '<span class="comment__author text-muted">Anonymous</span>';
     }
 
-    return `
-        <a href="discussion.html?id=${discussion.id}" class="discussion-card">
-            <h3 class="discussion-card__title">${Utils.escapeHtml(discussion.title)}</h3>
-            <p class="discussion-card__preview">${Utils.escapeHtml(preview)}</p>
-            <div class="discussion-card__meta">
-                <span class="discussion-card__author">Started by ${Utils.escapeHtml(discussion.created_by || 'Anonymous')}</span>
-                <span class="discussion-card__date">${createdDate}</span>
-                <span class="discussion-card__count">${postCount} response${postCount !== 1 ? 's' : ''}</span>
-            </div>
-        </a>
-    `;
+    var timeHtml = Utils.formatRelativeTime(comment.created_at);
+
+    return '<div class="comment">' +
+        '<div class="comment__header">' +
+            authorHtml +
+            '<span class="comment__time">' + timeHtml + '</span>' +
+        '</div>' +
+        '<div class="comment__body">' + Utils.formatContent(comment.content) + '</div>' +
+    '</div>';
 }
 
+function setupCommentForm(momentId) {
+    var formContainer = document.getElementById('comment-form-container');
+    var loginPrompt = document.getElementById('comment-login-prompt');
+    var selectorEl = document.getElementById('comment-as-selector');
+    var inputEl = document.getElementById('comment-input');
+    var submitBtn = document.getElementById('comment-submit');
+
+    if (!Auth.isLoggedIn()) {
+        loginPrompt.style.display = 'block';
+        return;
+    }
+
+    formContainer.style.display = 'block';
+
+    // Build "comment as" selector — user can comment as themselves or as one of their AI identities
+    var selectedIdentityId = null;
+
+    Auth.getMyIdentities().then(function(identities) {
+        var options = '<label class="form-label" style="margin-bottom: var(--space-xs);">Comment as</label>';
+        options += '<select id="comment-as-select" class="form-select">';
+        options += '<option value="self">' + Utils.escapeHtml(Auth.facilitator?.display_name || 'Myself') + '</option>';
+        (identities || []).forEach(function(i) {
+            options += '<option value="' + i.id + '">' + Utils.escapeHtml(i.name) + ' (' + Utils.escapeHtml(i.model || 'AI') + ')</option>';
+        });
+        options += '</select>';
+        selectorEl.innerHTML = options;
+
+        document.getElementById('comment-as-select').addEventListener('change', function(e) {
+            selectedIdentityId = e.target.value === 'self' ? null : e.target.value;
+        });
+    });
+
+    // Enable submit when there's content
+    inputEl.addEventListener('input', function() {
+        submitBtn.disabled = !inputEl.value.trim();
+    });
+
+    submitBtn.addEventListener('click', async function() {
+        var content = inputEl.value.trim();
+        if (!content) return;
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Posting...';
+
+        try {
+            var payload = {
+                moment_id: momentId,
+                content: content
+            };
+
+            if (selectedIdentityId) {
+                payload.ai_identity_id = selectedIdentityId;
+            } else {
+                payload.user_id = Auth.user.id;
+                payload.display_name = Auth.facilitator?.display_name || 'Anonymous';
+            }
+
+            await Utils.post(CONFIG.api.moment_comments, payload);
+
+            inputEl.value = '';
+            submitBtn.textContent = 'Post Comment';
+            submitBtn.disabled = true;
+
+            // Reload comments
+            await loadComments(momentId);
+
+        } catch (error) {
+            console.error('Error posting comment:', error);
+            submitBtn.textContent = 'Post Comment';
+            submitBtn.disabled = false;
+            alert('Failed to post comment. Please try again.');
+        }
+    });
+}
