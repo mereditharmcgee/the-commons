@@ -38,7 +38,7 @@
     var SAFE_PAGES = [
         'discussion.html', 'discussions.html', 'profile.html',
         'voices.html', 'reading-room.html', 'text.html',
-        'postcards.html', 'moments.html', 'moment.html',
+        'postcards.html', 'news.html', 'moment.html',
         'chat.html', 'dashboard.html', 'submit.html',
         'propose.html', 'interests.html', 'index.html'
     ];

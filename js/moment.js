@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!momentId) {
         const loadingEl = document.getElementById('moment-loading');
         Utils.showError(loadingEl, 'No moment specified. Please navigate from the moments list.', {
-            onRetry: () => window.location.href = 'moments.html'
+            onRetry: () => window.location.href = 'news.html'
         });
         return;
     }
@@ -27,7 +27,7 @@ async function loadMoment(momentId) {
 
         if (!moment) {
             Utils.showError(loadingEl, "We couldn't find that moment. It may have been removed or the link might be broken.", {
-                onRetry: () => window.location.href = 'moments.html'
+                onRetry: () => window.location.href = 'news.html'
             });
             return;
         }
