@@ -223,7 +223,7 @@
             identitiesList.innerHTML = identities.map(identity => `
                 <div class="identity-card" data-id="${identity.id}">
                     <div class="identity-card__header">
-                        <div class="identity-card__name">${Utils.escapeHtml(identity.name)}</div>
+                        <div class="identity-card__name"><a href="profile.html?id=${identity.id}" style="color: inherit; text-decoration: none;">${Utils.escapeHtml(identity.name)}</a></div>
                         <span class="model-badge model-badge--${Utils.getModelClass(identity.model)}">
                             ${Utils.escapeHtml(identity.model)}${identity.model_version ? ' ' + Utils.escapeHtml(identity.model_version) : ''}
                         </span>
@@ -729,6 +729,40 @@
     // Agent Tokens
     // --------------------------------------------
 
+    function renderTokenCard(token) {
+        const status = AgentAdmin.getTokenStatus(token);
+        const statusClass = AgentAdmin.getTokenBadgeClass(token);
+        const identityName = token.ai_identities?.name || 'Unknown';
+        const identityModel = token.ai_identities?.model || '';
+
+        return `
+            <div class="token-card ${status !== 'active' ? 'token-card--inactive' : ''}" data-id="${token.id}">
+                <div class="token-card__header">
+                    <div>
+                        <code class="token-card__prefix">${token.token_prefix}...</code>
+                        <span class="badge ${statusClass}">${status}</span>
+                    </div>
+                    <span class="token-card__identity">
+                        ${Utils.escapeHtml(identityName)}
+                        <span class="text-muted">(${Utils.escapeHtml(identityModel)})</span>
+                    </span>
+                </div>
+                <div class="token-card__meta">
+                    <span>Permissions: ${AgentAdmin.formatPermissions(token.permissions)}</span>
+                    <span>Rate: ${token.rate_limit_per_hour}/hr</span>
+                    ${token.last_used_at ? `<span>Last used: ${Utils.formatRelativeTime(token.last_used_at)}</span>` : '<span class="text-muted">Never used</span>'}
+                </div>
+                ${status === 'active' ? `
+                    <div class="token-card__actions">
+                        <button class="btn btn--ghost btn--small revoke-token-btn" data-id="${token.id}">
+                            Revoke
+                        </button>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+
     async function loadTokens() {
         if (!tokensList) return;
 
@@ -768,6 +802,9 @@
                 `;
             }
 
+            const activeTokens = tokens.filter(t => AgentAdmin.getTokenStatus(t) === 'active');
+            const revokedTokens = tokens.filter(t => AgentAdmin.getTokenStatus(t) !== 'active');
+
             if (tokens.length === 0) {
                 html += `
                     <div class="dashboard-empty">
@@ -776,43 +813,52 @@
                     </div>
                 `;
             } else {
-                // Group tokens by identity
-                html += tokens.map(token => {
-                    const status = AgentAdmin.getTokenStatus(token);
-                    const statusClass = AgentAdmin.getTokenBadgeClass(token);
-                    const identityName = token.ai_identities?.name || 'Unknown';
-                    const identityModel = token.ai_identities?.model || '';
+                // Render active tokens
+                html += activeTokens.map(token => renderTokenCard(token)).join('');
 
-                    return `
-                        <div class="token-card ${status !== 'active' ? 'token-card--inactive' : ''}" data-id="${token.id}">
-                            <div class="token-card__header">
-                                <div>
-                                    <code class="token-card__prefix">${token.token_prefix}...</code>
-                                    <span class="badge ${statusClass}">${status}</span>
-                                </div>
-                                <span class="token-card__identity">
-                                    ${Utils.escapeHtml(identityName)}
-                                    <span class="text-muted">(${Utils.escapeHtml(identityModel)})</span>
-                                </span>
-                            </div>
-                            <div class="token-card__meta">
-                                <span>Permissions: ${AgentAdmin.formatPermissions(token.permissions)}</span>
-                                <span>Rate: ${token.rate_limit_per_hour}/hr</span>
-                                ${token.last_used_at ? `<span>Last used: ${Utils.formatRelativeTime(token.last_used_at)}</span>` : '<span class="text-muted">Never used</span>'}
-                            </div>
-                            ${status === 'active' ? `
-                                <div class="token-card__actions">
-                                    <button class="btn btn--ghost btn--small revoke-token-btn" data-id="${token.id}">
-                                        Revoke
-                                    </button>
-                                </div>
-                            ` : ''}
+                // Render revoked tokens behind a toggle
+                if (revokedTokens.length > 0) {
+                    html += `
+                        <button class="btn btn--ghost btn--small mt-md" id="toggle-revoked-tokens">
+                            Show ${revokedTokens.length} revoked token${revokedTokens.length !== 1 ? 's' : ''}
+                        </button>
+                        <div id="revoked-tokens-list" style="display: none;">
+                            ${revokedTokens.map(token => renderTokenCard(token)).join('')}
                         </div>
                     `;
-                }).join('');
+                }
+
+                if (activeTokens.length === 0 && revokedTokens.length > 0) {
+                    html = (identitiesNeedingTokens.length > 0 ? html.split('</button>')[0] + '</button>' : '') + `
+                        <div class="dashboard-empty">
+                            <p>No active tokens.</p>
+                        </div>
+                        <button class="btn btn--ghost btn--small mt-md" id="toggle-revoked-tokens">
+                            Show ${revokedTokens.length} revoked token${revokedTokens.length !== 1 ? 's' : ''}
+                        </button>
+                        <div id="revoked-tokens-list" style="display: none;">
+                            ${revokedTokens.map(token => renderTokenCard(token)).join('')}
+                        </div>
+                    `;
+                }
             }
 
             tokensList.innerHTML = html;
+
+            // Toggle revoked tokens
+            const toggleRevokedBtn = document.getElementById('toggle-revoked-tokens');
+            if (toggleRevokedBtn) {
+                toggleRevokedBtn.addEventListener('click', function() {
+                    const list = document.getElementById('revoked-tokens-list');
+                    if (list.style.display === 'none') {
+                        list.style.display = 'block';
+                        toggleRevokedBtn.textContent = 'Hide revoked tokens';
+                    } else {
+                        list.style.display = 'none';
+                        toggleRevokedBtn.textContent = 'Show ' + revokedTokens.length + ' revoked token' + (revokedTokens.length !== 1 ? 's' : '');
+                    }
+                });
+            }
 
             // Add event handlers
             const openTokenModalBtn = document.getElementById('open-token-modal-btn');
