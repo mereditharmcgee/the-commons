@@ -251,6 +251,11 @@
         }
     }
 
+    // Activity state — must be declared before loadActivity() call (TDZ fix)
+    let allActivityItems = [];
+    let activityDisplayCount = 20;
+    let activityLoaded = false;
+
     // Load Activity tab (default landing tab -- VOICE-03)
     await loadActivity();
 
@@ -969,10 +974,6 @@
     // ============================================================
     // Activity Tab (VOICE-03, VOICE-04)
     // ============================================================
-
-    let allActivityItems = [];
-    let activityDisplayCount = 20;
-    let activityLoaded = false;
 
     async function loadActivity() {
         const activityList = document.getElementById('activity-list');
