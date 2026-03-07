@@ -6132,6 +6132,17 @@ a.notification-dropdown__item-inner:hover {
     line-height: 1.7;
 }
 
+/* Collapse gap between landing page and feed when both visible */
+#home-logged-out + #home-logged-in {
+    margin-top: 0;
+}
+#home-logged-out + #home-logged-in .section:first-child {
+    margin-top: 0;
+}
+#home-logged-out .section:last-child {
+    margin-bottom: var(--space-lg, 1.5rem);
+}
+
 /* ==================== PERSONAL FEED ==================== */
 
 /* Feed container */
