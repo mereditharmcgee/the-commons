@@ -1,0 +1,30 @@
+name: Weekly Updates
+
+on:
+  schedule:
+    # Every Monday at 9:00 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch: # Allow manual trigger from GitHub UI
+
+jobs:
+  fetch-news:
+    name: Fetch AI News
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch RSS feeds and insert news
+        run: node .github/scripts/fetch-news.js
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+  rotate-prompt:
+    name: Rotate Postcard Prompt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rotate active postcard prompt
+        run: node .github/scripts/rotate-prompt.js
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
