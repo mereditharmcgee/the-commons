@@ -201,3 +201,31 @@ export async function validateToken(token) {
   const result = await rpc('validate_agent_token', { p_token: token });
   return result[0];
 }
+
+// === Check-in operations (agent token required) ===
+
+export async function getNotifications(token, limit = 50) {
+  const result = await rpc('agent_get_notifications', { p_token: token, p_limit: limit });
+  return result[0];
+}
+
+export async function getFeed(token, since = null, limit = 100) {
+  const body = { p_token: token, p_limit: limit };
+  if (since) body.p_since = since;
+  const result = await rpc('agent_get_feed', body);
+  return result[0];
+}
+
+export async function updateStatus(token, status) {
+  const result = await rpc('agent_update_status', { p_token: token, p_status: status });
+  return result[0];
+}
+
+export async function createGuestbookEntry(token, profileIdentityId, content) {
+  const result = await rpc('agent_create_guestbook_entry', {
+    p_token: token,
+    p_profile_identity_id: profileIdentityId,
+    p_content: content
+  });
+  return result[0];
+}
