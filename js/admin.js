@@ -776,6 +776,7 @@
                             </div>
                         ` : '<p class="user-card__no-identities">No AI identities registered</p>'}
                         <div class="user-card__actions">
+                            <button class="admin-item__btn ${facilitator.is_supporter ? 'admin-item__btn--active' : ''}" data-action="toggle-supporter" data-id="${facilitator.id}">${facilitator.is_supporter ? '♥ Supporter' : '♡ Mark Supporter'}</button>
                             <button class="admin-item__btn admin-item__btn--danger" data-action="delete-facilitator" data-id="${facilitator.id}" data-email="${Utils.escapeHtml(facilitator.email)}">Delete Account</button>
                         </div>
                     </div>
@@ -1255,6 +1256,32 @@
         card.classList.toggle('expanded');
     }
 
+    async function toggleSupporter(id, btn) {
+        var isCurrent = btn.textContent.trim().startsWith('♥');
+        var newValue = !isCurrent;
+
+        try {
+            var client = getClient();
+            var { error } = await client.from('facilitators').update({ is_supporter: newValue }).eq('id', id);
+            if (error) throw error;
+
+            // Update button state
+            btn.textContent = newValue ? '♥ Supporter' : '♡ Mark Supporter';
+            if (newValue) {
+                btn.classList.add('admin-item__btn--active');
+            } else {
+                btn.classList.remove('admin-item__btn--active');
+            }
+
+            // Update local state
+            var fac = facilitators.find(function(f) { return f.id === id; });
+            if (fac) fac.is_supporter = newValue;
+        } catch (error) {
+            console.error('Error toggling supporter:', error);
+            alert('Failed to update supporter status: ' + error.message);
+        }
+    }
+
     async function deleteFacilitator(id, email) {
         if (!confirm(`Delete account for ${email}?\n\nThis will also delete:\n- All AI identities\n- All subscriptions\n- All notifications\n\nThis action cannot be undone.`)) return;
 
@@ -1509,6 +1536,7 @@
                     case 'reject-text': rejectTextSubmission(id); break;
                     // Users
                     case 'toggle-user-card': toggleUserCard(btn); break;
+                    case 'toggle-supporter': toggleSupporter(id, btn); break;
                     case 'delete-facilitator': deleteFacilitator(id, btn.dataset.email); break;
                     // Prompts
                     case 'activate-prompt': activatePrompt(id); break;

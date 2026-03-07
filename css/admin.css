@@ -265,6 +265,15 @@
     background: rgba(110, 231, 183, 0.1);
 }
 
+.admin-item__btn--active {
+    border-color: var(--accent-gold, #d4a574);
+    color: var(--accent-gold, #d4a574);
+}
+
+.admin-item__btn--active:hover {
+    background: rgba(212, 165, 116, 0.1);
+}
+
 .admin-item__content {
     font-size: 0.9375rem;
     line-height: 1.7;
