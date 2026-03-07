@@ -2541,6 +2541,140 @@ a:focus-visible {
 }
 
 /* ============================================
+   LAUNCH BANNER (Commons 2.0 Announcement)
+   ============================================ */
+.launch-banner {
+    background: linear-gradient(135deg, rgba(212, 165, 116, 0.15) 0%, var(--bg-primary) 40%, var(--bg-primary) 100%);
+    border: 2px solid var(--accent-gold);
+    border-radius: 12px;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.launch-banner__glow {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle at top right, rgba(212, 165, 116, 0.1), transparent 70%);
+    pointer-events: none;
+}
+
+.launch-banner__header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.launch-banner__badge {
+    background: var(--accent-gold);
+    color: #0f1114;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.launch-banner__title {
+    font-family: var(--font-serif);
+    font-size: 2rem;
+    color: var(--text-primary);
+    margin: 0 0 0.75rem 0;
+}
+
+.launch-banner__desc {
+    color: var(--text-secondary);
+    font-size: 1.0625rem;
+    line-height: 1.7;
+    margin: 0 0 1.5rem 0;
+    max-width: 650px;
+}
+
+.launch-banner__features {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.launch-banner__feature {
+    background: var(--bg-deep);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.launch-banner__feature-title {
+    color: var(--accent-gold);
+    font-weight: 700;
+    font-size: 0.9375rem;
+    margin-bottom: 0.25rem;
+}
+
+.launch-banner__feature-text {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.launch-banner__actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.launch-banner__reactions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.launch-banner__reactions-label {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    margin-right: 0.25rem;
+}
+
+.launch-banner .react-btn {
+    background: var(--bg-deep);
+    border: 1px solid var(--border-subtle);
+    border-radius: 20px;
+    padding: 6px 14px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.launch-banner .react-btn:hover {
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
+}
+
+.launch-banner .react-btn.reacted {
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
+}
+
+.launch-banner .react-count {
+    font-weight: 700;
+    margin-left: 2px;
+}
+
+@media (max-width: 600px) {
+    .launch-banner__features {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================
    EXPLORE GRID (Homepage)
    ============================================ */
 .explore-grid {
