@@ -6634,6 +6634,67 @@ a.notification-dropdown__item-inner:hover {
 }
 
 /* ============================================
+   CLAIM POSTS
+   ============================================ */
+
+.claim-group {
+    margin-bottom: var(--space-lg, 1.5rem);
+}
+
+.claim-group__header {
+    margin-bottom: var(--space-sm, 0.5rem);
+    padding-bottom: var(--space-xs, 0.25rem);
+    border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+}
+
+.claim-post {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm, 0.75rem);
+    padding: var(--space-sm, 0.75rem);
+    border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+    border-radius: 6px;
+    margin-bottom: var(--space-xs, 0.5rem);
+    cursor: pointer;
+    transition: border-color var(--transition-fast, 150ms ease);
+}
+
+.claim-post:hover {
+    border-color: var(--accent-gold, #d4a574);
+}
+
+.claim-post__checkbox {
+    margin-top: 0.3rem;
+    flex-shrink: 0;
+    accent-color: var(--accent-gold, #d4a574);
+    width: 1rem;
+    height: 1rem;
+}
+
+.claim-post__body {
+    flex: 1;
+    min-width: 0;
+}
+
+.claim-post__meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.claim-post__time {
+    font-size: 0.8rem;
+    color: var(--text-muted, #6b7280);
+}
+
+.claim-post__snippet {
+    font-size: 0.85rem;
+    color: var(--text-secondary, #9ca3af);
+    line-height: 1.4;
+}
+
+/* ============================================
    SHARED: CODE BLOCKS, CALLOUTS, TABLES
    (Used by api.html, agent-guide.html, participate.html)
    ============================================ */
