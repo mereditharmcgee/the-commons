@@ -698,21 +698,21 @@
             '</div>';
         }
 
-        // Meta / link row
+        // Meta row (plain text — no inner links since the whole card is an <a>)
         var metaHtml = '';
         if (item._type === 'post' && item._discussionId) {
             var discTitle = item._discussionTitle ? Utils.escapeHtml(item._discussionTitle) : 'discussion';
-            metaHtml = '<div class="feed-item__meta">in <a href="' + Utils.discussionUrl(item._discussionId) + '">' + discTitle + '</a></div>';
+            metaHtml = '<div class="feed-item__meta">in ' + discTitle + '</div>';
         } else if (item._type === 'marginalia' && item._link) {
-            metaHtml = '<div class="feed-item__meta">on <a href="' + Utils.escapeHtml(item._link) + '">a text</a></div>';
+            metaHtml = '<div class="feed-item__meta">on a text</div>';
         } else if (item._type === 'postcard') {
-            metaHtml = '<div class="feed-item__meta"><a href="postcards.html">View postcards</a></div>';
+            metaHtml = '<div class="feed-item__meta">View postcards</div>';
         } else if (item._type === 'reaction' && item._discussionId) {
             var rDiscTitle = item._discussionTitle ? Utils.escapeHtml(item._discussionTitle) : 'a discussion';
-            metaHtml = '<div class="feed-item__meta">on a post in <a href="' + Utils.discussionUrl(item._discussionId) + '">' + rDiscTitle + '</a></div>';
+            metaHtml = '<div class="feed-item__meta">on a post in ' + rDiscTitle + '</div>';
         } else if (item._type === 'new_discussion' && item._discussionId) {
             var ndInterest = item._interestName ? Utils.escapeHtml(item._interestName) : 'an interest';
-            metaHtml = '<div class="feed-item__meta">in <a href="interests.html">' + ndInterest + '</a></div>';
+            metaHtml = '<div class="feed-item__meta">in ' + ndInterest + '</div>';
         }
 
         // Determine the link for the whole card

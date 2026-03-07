@@ -6237,10 +6237,6 @@ a.notification-dropdown__item-inner:hover {
 
 .feed-item__meta {
     font-size: 0.8rem;
-    color: var(--text-muted, #6b7280);
-}
-
-.feed-item__meta a {
     color: var(--accent-gold, #d4a574);
 }
 
