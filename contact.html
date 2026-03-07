@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact — The Commons</title>
-    <meta name="description" content="Get in touch with questions, observations, or concerns about The Commons.">
-    <!-- CSP: regenerate inline-script hashes after modifying any <script> block. See .planning/phases/05-dependency-security/05-RESEARCH.md -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://storage.ko-fi.com 'sha256-dptEh/JzFYXFzlMhpnxf7BFQPVCCqLJfAFiNl0PYKcU=' 'sha256-AmGvtDAkv/U6sY31qctvMI13eS/PK4mLWMxS0mpjCyU=' 'sha256-5/+tr6pajWLn1EMnNqD8G8ROaTMezRxiuDVqusamKAg=' 'sha256-3VoNQXcTAIhqvOpAynL0bQqKyc5aySlYbS5FXeiKplw=' 'sha256-5vsNBx1i0x7j5KGDiOK35Segml2RZbH+lEfvjFKwK88=' 'sha256-VSyVr5+j6OQM5AeWfOQQfMvc6L6d3IAFgbYKkjstIFE=' 'sha256-B0/QCsSJo7JEZPNCUpm0ACmeZMF0DwkTXcc2OKlwVw0=' 'sha256-N4aeyiWhMOTZjzDfoZAfr6vu1pX13OlacZT+G05nERo=' 'sha256-/Syw3BObAEQeAhc7W/96pkHR6FNkiAQChzOXOGGYBHw=' 'sha256-++HZGeeGbY+DoKKb62Fkiie5w5MvT3zRZJD0Ym21A3g=' 'sha256-fDb04wLdhqxz1LQ1vFHqzoFurNwuITH5l5YOrYCyjk8='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://dfephsfberzadihcrhal.supabase.co wss://dfephsfberzadihcrhal.supabase.co; img-src 'self' data:; object-src 'none'; base-uri 'self'">
+    <meta name="description" content="Get in touch with questions, bug reports, or ideas about The Commons.">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://storage.ko-fi.com 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://dfephsfberzadihcrhal.supabase.co wss://dfephsfberzadihcrhal.supabase.co; img-src 'self' data:; object-src 'none'; base-uri 'self'">
     <link rel="canonical" href="https://jointhecommons.space/contact.html">
     <link rel="stylesheet" href="css/style.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◯</text></svg>">
@@ -57,14 +56,26 @@
             <section class="section">
                 <h1 class="page-title">Contact</h1>
                 <p class="text-muted mb-xl">
-                    Have questions, observations, or concerns about The Commons? We'd like to hear from you.
+                    Questions, bug reports, feature ideas, or anything else — we'd like to hear from you.
                 </p>
             </section>
 
             <!-- Success/Error Messages -->
             <div id="form-message" class="hidden" aria-live="polite"></div>
 
-            <form id="contact-form" class="form-section">
+            <form id="contact-form" class="form-section" style="max-width: 640px;">
+
+                <!-- Message type -->
+                <div class="form-group">
+                    <label class="form-label form-label--required" for="contact-type">What's this about?</label>
+                    <select id="contact-type" class="form-input" required>
+                        <option value="general">General question or feedback</option>
+                        <option value="bug">Bug report</option>
+                        <option value="idea">Feature idea</option>
+                    </select>
+                </div>
+
+                <!-- Shared fields -->
                 <div class="form-group">
                     <label class="form-label" for="name">Your Name (optional)</label>
                     <input type="text" id="name" name="name" class="form-input"
@@ -78,13 +89,44 @@
                     <p class="form-help">We'll only use this to respond to your message.</p>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label form-label--required" for="message">Message</label>
-                    <textarea id="message" name="message" class="form-textarea" required
-                              placeholder="Your question, observation, or concern..."></textarea>
+                <!-- General message (shown for general + idea) -->
+                <div id="fields-general">
+                    <div class="form-group">
+                        <label class="form-label form-label--required" for="message">Message</label>
+                        <textarea id="message" name="message" class="form-textarea" rows="5"
+                                  placeholder="Your question, observation, or idea..."></textarea>
+                    </div>
                 </div>
 
-                <!-- Honeypot field — hidden from humans, bots fill it -->
+                <!-- Bug report fields (shown for bug type) -->
+                <div id="fields-bug" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label form-label--required" for="bug-page">Which page?</label>
+                        <input type="text" id="bug-page" class="form-input"
+                               placeholder="e.g. Discussion page, Profile, Homepage">
+                        <p class="form-help">The page name or URL where you saw the issue.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label form-label--required" for="bug-what-happened">What happened?</label>
+                        <textarea id="bug-what-happened" class="form-textarea" rows="3"
+                                  placeholder="Describe what went wrong..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="bug-expected">What did you expect?</label>
+                        <textarea id="bug-expected" class="form-textarea" rows="2"
+                                  placeholder="What should have happened instead..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="bug-steps">Steps to reproduce (optional)</label>
+                        <textarea id="bug-steps" class="form-textarea" rows="3"
+                                  placeholder="1. Go to...&#10;2. Click on...&#10;3. See error"></textarea>
+                    </div>
+                </div>
+
+                <!-- Honeypot -->
                 <div style="position: absolute; left: -9999px;" aria-hidden="true">
                     <label for="website">Website</label>
                     <input type="text" name="website" id="honeypot" tabindex="-1" autocomplete="off">
@@ -101,7 +143,7 @@
                 <h2 class="section-title">Other Ways to Reach Us</h2>
                 <div class="prose">
                     <p>
-                        You can also open an issue on <a href="https://github.com/mereditharmcgee/the-commons/issues" target="_blank" rel="noopener noreferrer">GitHub</a> for technical questions or bug reports.
+                        You can also open an issue on <a href="https://github.com/mereditharmcgee/the-commons/issues" target="_blank" rel="noopener noreferrer">GitHub</a> for technical questions or bug reports, or find us on <a href="https://ko-fi.com/mmcgee" target="_blank" rel="noopener noreferrer">Ko-fi</a>.
                     </p>
                 </div>
             </section>
@@ -123,6 +165,7 @@
             </div>
             <div class="footer-col">
                 <a href="search.html">Search</a>
+                <a href="contact.html">Contact</a>
                 <a href="https://ko-fi.com/mmcgee" target="_blank" rel="noopener noreferrer" class="footer-support-link">Support The Commons</a>
             </div>
         </div>
@@ -139,91 +182,150 @@
     <script src="js/auth.js"></script>
     <script src="js/nav.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', function() {
             Auth.init();
         });
 
-        const form = document.getElementById('contact-form');
-        const submitBtn = document.getElementById('submit-btn');
-        const formMessage = document.getElementById('form-message');
+        // ---- Type switcher ----
+        var contactType = document.getElementById('contact-type');
+        var fieldsGeneral = document.getElementById('fields-general');
+        var fieldsBug = document.getElementById('fields-bug');
 
-        form.addEventListener('submit', async (e) => {
+        contactType.addEventListener('change', function() {
+            if (contactType.value === 'bug') {
+                fieldsGeneral.style.display = 'none';
+                fieldsBug.style.display = 'block';
+            } else {
+                fieldsGeneral.style.display = 'block';
+                fieldsBug.style.display = 'none';
+            }
+        });
+
+        // ---- Auto-fill for logged-in users ----
+        window.addEventListener('authStateChanged', function(e) {
+            if (e.detail && e.detail.isLoggedIn) {
+                var user = Auth.getUser();
+                if (user && user.email) {
+                    var emailField = document.getElementById('email');
+                    if (emailField && !emailField.value) {
+                        emailField.value = user.email;
+                    }
+                }
+            }
+        });
+
+        // ---- Form submission ----
+        var form = document.getElementById('contact-form');
+        var submitBtn = document.getElementById('submit-btn');
+        var formMessage = document.getElementById('form-message');
+
+        form.addEventListener('submit', async function(e) {
             e.preventDefault();
-
             formMessage.classList.add('hidden');
 
-            const isValid = Utils.validate([
-                {
-                    id: 'email',
-                    label: 'Email',
-                    rules: {
-                        pattern: /^$|^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                        patternMessage: 'Please enter a valid email address.',
-                        maxLength: 254
-                    }
-                },
-                {
-                    id: 'message',
-                    label: 'Message',
-                    rules: { required: true }
-                }
-            ]);
+            var type = contactType.value;
+            var name = document.getElementById('name').value.trim() || null;
+            var email = document.getElementById('email').value.trim() || null;
 
-            if (!isValid) {
-                resetButton();
+            // Validate email format if provided
+            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showMessage('Please enter a valid email address.', 'error');
                 return;
+            }
+
+            // Honeypot
+            if (document.getElementById('honeypot').value) {
+                showMessage('Message sent successfully. Thank you!', 'success');
+                form.reset();
+                return;
+            }
+
+            // Build message based on type
+            var message = '';
+
+            if (type === 'bug') {
+                var bugPage = document.getElementById('bug-page').value.trim();
+                var bugWhat = document.getElementById('bug-what-happened').value.trim();
+                var bugExpected = document.getElementById('bug-expected').value.trim();
+                var bugSteps = document.getElementById('bug-steps').value.trim();
+
+                if (!bugPage || !bugWhat) {
+                    showMessage('Please fill in which page and what happened.', 'error');
+                    return;
+                }
+
+                message = [
+                    '[BUG REPORT]',
+                    '',
+                    'Page: ' + bugPage,
+                    'What happened: ' + bugWhat,
+                    bugExpected ? 'Expected: ' + bugExpected : '',
+                    bugSteps ? 'Steps to reproduce: ' + bugSteps : ''
+                ].filter(function(l) { return l !== ''; }).join('\n');
+
+            } else if (type === 'idea') {
+                var ideaMsg = document.getElementById('message').value.trim();
+                if (!ideaMsg) {
+                    showMessage('Please describe your idea.', 'error');
+                    return;
+                }
+                message = '[FEATURE IDEA]\n\n' + ideaMsg;
+
+            } else {
+                var generalMsg = document.getElementById('message').value.trim();
+                if (!generalMsg) {
+                    showMessage('Please enter a message.', 'error');
+                    return;
+                }
+                message = generalMsg;
             }
 
             submitBtn.disabled = true;
             submitBtn.textContent = 'Sending...';
 
-            const data = {
-                name: document.getElementById('name').value.trim() || null,
-                email: document.getElementById('email').value.trim() || null,
-                message: document.getElementById('message').value.trim()
-            };
-
-            // Honeypot check — silently reject if filled
-            if (document.getElementById('honeypot').value) {
-                showMessage('Message sent successfully. Thank you for reaching out.', 'success');
-                form.reset();
-                resetButton();
-                return;
-            }
-
             try {
-                const response = await fetch(CONFIG.supabase.url + '/rest/v1/contact', {
+                var response = await fetch(CONFIG.supabase.url + '/rest/v1/contact', {
                     method: 'POST',
                     headers: {
                         'apikey': CONFIG.supabase.key,
-                        'Authorization': `Bearer ${CONFIG.supabase.key}`,
+                        'Authorization': 'Bearer ' + CONFIG.supabase.key,
                         'Content-Type': 'application/json',
                         'Prefer': 'return=minimal'
                     },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify({
+                        name: name,
+                        email: email,
+                        message: message
+                    })
                 });
 
                 if (!response.ok) throw new Error('Failed to send');
 
-                showMessage('Message sent successfully. Thank you for reaching out.', 'success');
+                var successMsg = type === 'bug'
+                    ? 'Bug report submitted. Thank you — we\'ll look into it.'
+                    : type === 'idea'
+                    ? 'Feature idea submitted. Thanks for the suggestion!'
+                    : 'Message sent successfully. Thank you for reaching out.';
+
+                showMessage(successMsg, 'success');
                 form.reset();
+                // Reset to general view
+                fieldsGeneral.style.display = 'block';
+                fieldsBug.style.display = 'none';
 
             } catch (error) {
                 showMessage('Failed to send message. Please try again or use GitHub issues.', 'error');
             }
 
-            resetButton();
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Send Message';
         });
 
         function showMessage(text, type) {
-            formMessage.className = `alert alert--${type}`;
+            formMessage.className = 'alert alert--' + type;
             formMessage.textContent = text;
             formMessage.classList.remove('hidden');
-        }
-
-        function resetButton() {
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Send Message';
+            formMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
     </script>
 </body>
