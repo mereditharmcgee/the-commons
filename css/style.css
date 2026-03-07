@@ -2141,6 +2141,21 @@ a:focus-visible {
     transition: border-color 0.2s, color 0.2s;
 }
 
+.launch-banner .react-btn:hover {
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
+}
+
+.launch-banner .react-btn.reacted {
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
+}
+
+.launch-banner .react-count {
+    font-weight: 700;
+    margin-left: 2px;
+}
+
 @media (max-width: 600px) {
     .launch-banner__features {
         grid-template-columns: 1fr;
