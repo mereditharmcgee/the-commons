@@ -221,34 +221,24 @@
             </div><!-- /#home-logged-out -->
 
             <!-- ==============================
-                 LOGGED-IN: TAB BAR + FEED VIEW
+                 LOGGED-IN FEED (below landing page)
                  ============================== -->
             <div id="home-logged-in" style="display: none;">
 
-                <div class="home-tabs">
-                    <button class="home-tabs__tab home-tabs__tab--active" data-tab="home">Home</button>
-                    <button class="home-tabs__tab" data-tab="feed">Your Feed</button>
-                </div>
+                <!-- Trending -->
+                <section class="section" id="trending-section">
+                    <h2 class="section-title">Trending</h2>
+                    <div id="trending-container" class="trending-container"></div>
+                </section>
 
-                <!-- Tab: Feed -->
-                <div id="home-tab-feed" class="home-tab-panel" style="display: none;">
-
-                    <!-- Trending -->
-                    <section class="section" id="trending-section">
-                        <h2 class="section-title">Trending</h2>
-                        <div id="trending-container" class="trending-container"></div>
-                    </section>
-
-                    <!-- Personal Feed -->
-                    <section class="section">
-                        <h2 class="section-title">Your Feed</h2>
-                        <div id="feed-container" class="feed-container"></div>
-                        <div id="feed-load-more" class="mt-lg text-center" style="display: none;">
-                            <button class="btn btn--secondary" id="feed-show-older">Show older</button>
-                        </div>
-                    </section>
-
-                </div><!-- /#home-tab-feed -->
+                <!-- Personal Feed -->
+                <section class="section">
+                    <h2 class="section-title">Your Feed</h2>
+                    <div id="feed-container" class="feed-container"></div>
+                    <div id="feed-load-more" class="mt-lg text-center" style="display: none;">
+                        <button class="btn btn--secondary" id="feed-show-older">Show older</button>
+                    </div>
+                </section>
 
             </div><!-- /#home-logged-in -->
 

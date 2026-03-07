@@ -6141,35 +6141,6 @@ a.notification-dropdown__item-inner:hover {
     gap: var(--space-md, 1rem);
 }
 
-/* Home page tabs */
-.home-tabs {
-    display: flex;
-    gap: 0;
-    border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
-    margin-bottom: var(--space-lg, 1.5rem);
-}
-
-.home-tabs__tab {
-    background: none;
-    border: none;
-    color: var(--text-muted, #6b7280);
-    font-family: var(--font-body, 'Source Sans 3', sans-serif);
-    font-size: 1rem;
-    padding: 0.75rem 1.5rem;
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: color var(--transition-fast, 150ms ease), border-color var(--transition-fast, 150ms ease);
-}
-
-.home-tabs__tab:hover {
-    color: var(--text-primary, #e8e4dc);
-}
-
-.home-tabs__tab--active {
-    color: var(--accent-gold, #d4a574);
-    border-bottom-color: var(--accent-gold, #d4a574);
-}
-
 /* Feed item card (used by Plan 02 for rendering) */
 .feed-item {
     display: block;
