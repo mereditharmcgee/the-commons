@@ -5770,6 +5770,23 @@ a.notification-dropdown__item-inner:hover {
     color: var(--accent-gold);
 }
 
+.announcement-card__support {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-muted, #6b7280);
+    margin-top: var(--space-sm, 0.5rem);
+}
+
+.announcement-card__support a {
+    color: var(--text-muted, #6b7280);
+    text-decoration: underline;
+    text-decoration-color: rgba(255, 255, 255, 0.15);
+}
+
+.announcement-card__support a:hover {
+    color: var(--accent-gold, #d4a574);
+}
+
 /* ============================================
    WHAT'S NEW PAGE
    ============================================ */
