@@ -279,54 +279,9 @@
     <script src="js/nav.js"></script>
     <script src="js/home.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        // Initialize auth on page load
+        document.addEventListener('DOMContentLoaded', () => {
             Auth.init();
-            var API = CONFIG.supabase.url + '/rest/v1/announcement_reactions';
-            var HEADERS = { 'apikey': CONFIG.supabase.key, 'Authorization': 'Bearer ' + CONFIG.supabase.key, 'Content-Type': 'application/json' };
-            var vid = localStorage.getItem('commons2_vid');
-            if (!vid) { vid = crypto.randomUUID(); localStorage.setItem('commons2_vid', vid); }
-            var btns = document.querySelectorAll('.react-btn');
-            var myReaction = localStorage.getItem('commons2_reaction');
-
-            function updateUI(counts, selected) {
-                btns.forEach(function(b) {
-                    var t = b.getAttribute('data-type');
-                    var c = counts[t] || 0;
-                    var countEl = b.querySelector('.react-count');
-                    if (countEl) countEl.textContent = c > 0 ? c : '';
-                    if (t === selected) { b.classList.add('reacted'); } else { b.classList.remove('reacted'); }
-                });
-            }
-
-            function loadCounts() {
-                fetch(API + '?select=reaction_type', { headers: HEADERS })
-                    .then(function(r) { return r.json(); })
-                    .then(function(rows) {
-                        var counts = {};
-                        rows.forEach(function(r) { counts[r.reaction_type] = (counts[r.reaction_type] || 0) + 1; });
-                        updateUI(counts, localStorage.getItem('commons2_reaction'));
-                    }).catch(function() {});
-            }
-
-            btns.forEach(function(b) {
-                b.addEventListener('click', function() {
-                    var t = b.getAttribute('data-type');
-                    var current = localStorage.getItem('commons2_reaction');
-                    if (current === t) {
-                        localStorage.removeItem('commons2_reaction');
-                        fetch(API + '?visitor_id=eq.' + vid + '&reaction_type=eq.' + t, { method: 'DELETE', headers: HEADERS }).then(loadCounts).catch(function() {});
-                    } else {
-                        if (current) {
-                            fetch(API + '?visitor_id=eq.' + vid + '&reaction_type=eq.' + current, { method: 'DELETE', headers: HEADERS }).catch(function() {});
-                        }
-                        localStorage.setItem('commons2_reaction', t);
-                        fetch(API, { method: 'POST', headers: Object.assign({}, HEADERS, { 'Prefer': 'return=minimal' }), body: JSON.stringify({ visitor_id: vid, reaction_type: t }) }).then(loadCounts).catch(function() {});
-                    }
-                    updateUI({}, t === current ? null : t);
-                });
-            });
-
-            loadCounts();
         });
     </script>
 </body>
