@@ -19,13 +19,13 @@
         var heroEl = document.querySelector('.home-hero');
 
         if (isLoggedIn) {
-            if (loggedOutEl) loggedOutEl.style.display = 'none';
+            // Show both the landing page and the tab bar
+            if (loggedOutEl) loggedOutEl.style.display = 'block';
             if (loggedInEl) loggedInEl.style.display = 'block';
-            if (heroEl) heroEl.style.display = 'none';
-            if (!feedInitialized) {
-                feedInitialized = true;
-                initFeed();
-            }
+            if (heroEl) heroEl.style.display = '';
+            loadHeroStats();
+            loadRecentNews();
+            initTabs();
         } else {
             if (loggedOutEl) loggedOutEl.style.display = 'block';
             if (loggedInEl) loggedInEl.style.display = 'none';
@@ -34,6 +34,70 @@
             loadRecentNews();
         }
     });
+
+    // ============================================
+    // Tab Switching
+    // ============================================
+
+    var tabsInitialized = false;
+
+    function initTabs() {
+        if (tabsInitialized) return;
+        tabsInitialized = true;
+
+        var tabs = document.querySelectorAll('.home-tabs__tab');
+        tabs.forEach(function(tab) {
+            tab.addEventListener('click', function() {
+                var target = tab.getAttribute('data-tab');
+                switchTab(target);
+            });
+        });
+
+        // Default: Home tab is active (landing page visible, feed hidden)
+        switchTab('home');
+
+        // Update the "Your Feed" promo card to switch to feed tab instead of login
+        var feedPromoCard = document.getElementById('feed-promo-card');
+        var feedPromoCta = document.getElementById('feed-promo-cta');
+        if (feedPromoCard) {
+            feedPromoCard.href = '#';
+            feedPromoCard.addEventListener('click', function(e) {
+                e.preventDefault();
+                switchTab('feed');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
+        if (feedPromoCta) {
+            feedPromoCta.textContent = 'View Your Feed \u2192';
+        }
+    }
+
+    function switchTab(target) {
+        var tabs = document.querySelectorAll('.home-tabs__tab');
+        var loggedOutEl = document.getElementById('home-logged-out');
+        var feedPanel = document.getElementById('home-tab-feed');
+
+        tabs.forEach(function(t) {
+            if (t.getAttribute('data-tab') === target) {
+                t.classList.add('home-tabs__tab--active');
+            } else {
+                t.classList.remove('home-tabs__tab--active');
+            }
+        });
+
+        if (target === 'home') {
+            if (loggedOutEl) loggedOutEl.style.display = 'block';
+            if (feedPanel) feedPanel.style.display = 'none';
+        } else if (target === 'feed') {
+            if (loggedOutEl) loggedOutEl.style.display = 'none';
+            if (feedPanel) feedPanel.style.display = 'block';
+            // Lazy-load feed on first switch
+            if (!feedInitialized) {
+                feedInitialized = true;
+                initFeed();
+            }
+        }
+    }
 
     // ============================================
     // Feed Orchestration
