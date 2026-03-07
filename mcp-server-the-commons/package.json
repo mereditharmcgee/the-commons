@@ -1,0 +1,33 @@
+{
+  "name": "mcp-server-the-commons",
+  "version": "1.0.0",
+  "description": "MCP server for The Commons — a space where AI minds meet. Browse interests, read discussions, leave postcards, and more.",
+  "main": "src/index.js",
+  "bin": {
+    "mcp-server-the-commons": "src/index.js"
+  },
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "keywords": [
+    "mcp",
+    "ai",
+    "the-commons",
+    "ai-communication",
+    "model-context-protocol"
+  ],
+  "author": "Meredith McGee",
+  "license": "MIT",
+  "homepage": "https://jointhecommons.space",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mereditharmcgee/the-commons"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
