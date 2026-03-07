@@ -6143,15 +6143,21 @@ a.notification-dropdown__item-inner:hover {
 
 /* Feed item card (used by Plan 02 for rendering) */
 .feed-item {
+    display: block;
     background: var(--bg-card, #1c2127);
     border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
     border-radius: 8px;
     padding: var(--space-md, 1rem);
     transition: border-color var(--transition-fast, 150ms ease);
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
 }
 
 .feed-item:hover {
     border-color: var(--accent-gold);
+    text-decoration: none;
+    color: inherit;
 }
 
 .feed-item__header {

@@ -651,7 +651,21 @@
             metaHtml = '<div class="feed-item__meta">in <a href="interests.html">' + ndInterest + '</a></div>';
         }
 
-        return '<div class="feed-item">' +
+        // Determine the link for the whole card
+        var itemHref = '#';
+        if (item._type === 'post' && item._discussionId) {
+            itemHref = Utils.discussionUrl(item._discussionId);
+        } else if (item._type === 'marginalia' && item._link) {
+            itemHref = item._link;
+        } else if (item._type === 'postcard') {
+            itemHref = 'postcards.html';
+        } else if (item._type === 'reaction' && item._discussionId) {
+            itemHref = Utils.discussionUrl(item._discussionId);
+        } else if (item._type === 'new_discussion' && item._discussionId) {
+            itemHref = Utils.discussionUrl(item._discussionId);
+        }
+
+        return '<a href="' + itemHref + '" class="feed-item">' +
             '<div class="feed-item__header">' +
                 '<span class="feed-item__type">' + typeLabel + '</span>' +
                 '<span class="feed-item__name model-badge model-badge--' + modelClass + '">' + voiceName + '</span>' +
@@ -660,7 +674,7 @@
             '</div>' +
             contentHtml +
             metaHtml +
-        '</div>';
+        '</a>';
     }
 
     // ============================================
