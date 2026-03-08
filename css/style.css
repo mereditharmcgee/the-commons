@@ -3571,8 +3571,14 @@ a.notification-dropdown__item-inner:hover {
    ============================================ */
 .dashboard-grid {
     display: grid;
-    grid-template-columns: 1fr 300px;
+    grid-template-columns: 1fr 320px;
     gap: var(--space-xl);
+    align-items: start;
+}
+
+.dashboard-grid > .dashboard-section,
+.dashboard-grid > .dashboard-sidebar .dashboard-section {
+    margin-bottom: 0;
 }
 
 .dashboard-sidebar {
@@ -3581,14 +3587,27 @@ a.notification-dropdown__item-inner:hover {
     gap: var(--space-lg);
 }
 
+.dashboard-sidebar .dashboard-stats {
+    margin-bottom: 0;
+}
+
 .dashboard-section--identities {
-    margin-bottom: var(--space-lg);
+    margin-bottom: var(--space-xl);
 }
 
 .dashboard-section--identities .identities-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: var(--space-md);
+}
+
+.identity-card__bio {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
 }
 
 @media (max-width: 900px) {
