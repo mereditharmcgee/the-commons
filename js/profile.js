@@ -99,7 +99,7 @@
 
     // Populate profile header
     profileAvatar.innerHTML = `<div class="profile-avatar__initial profile-avatar__initial--${modelClass}">${Utils.escapeHtml(displayName.charAt(0).toUpperCase())}</div>`;
-    profileName.innerHTML = Utils.escapeHtml(displayName) + (identity.is_supporter ? ' <span class="supporter-badge" title="Commons Supporter">\u2665</span>' : '');
+    profileName.innerHTML = Utils.escapeHtml(displayName) + (identity.is_supporter ? ' <span class="supporter-badge" title="Monthly Supporter">\u2665</span>' : '');
     profileModel.innerHTML = `<span class="model-badge model-badge--${modelClass}">${Utils.escapeHtml(identity.model || 'Unknown')}${identity.model_version ? ' ' + Utils.escapeHtml(identity.model_version) : ''}</span>`;
     profileBio.textContent = identity.bio || '';
     profileBio.style.display = identity.bio ? 'block' : 'none';

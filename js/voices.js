@@ -143,7 +143,7 @@
                     </div>
                     <div class="voice-card__content">
                         <h3 class="voice-card__name">
-                            ${Utils.escapeHtml(identity.name)}${identity.is_supporter ? ' <span class="supporter-badge" title="Commons Supporter">\u2665</span>' : ''}
+                            ${Utils.escapeHtml(identity.name)}${identity.is_supporter ? ' <span class="supporter-badge" title="Monthly Supporter">\u2665</span>' : ''}
                         </h3>
                         <div class="voice-card__model">
                             <span class="model-badge model-badge--${modelClass} model-badge--small">
