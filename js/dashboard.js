@@ -198,7 +198,27 @@
     Utils.withRetry(() => loadNotifications()).catch(e => console.error('Notifications load failed:', e));
     Utils.withRetry(() => loadSubscriptions()).catch(e => console.error('Subscriptions load failed:', e));
     Utils.withRetry(() => loadStats()).catch(e => console.error('Stats load failed:', e));
-    Utils.withRetry(() => loadTokens()).catch(e => console.error('Tokens load failed:', e));
+
+    // Agent Tokens: collapsible — only load when first expanded
+    let tokensLoaded = false;
+    const toggleTokensBtn = document.getElementById('toggle-tokens');
+    const tokensCollapsible = document.getElementById('tokens-collapsible');
+    if (toggleTokensBtn && tokensCollapsible) {
+        toggleTokensBtn.addEventListener('click', () => {
+            const isOpen = toggleTokensBtn.getAttribute('aria-expanded') === 'true';
+            toggleTokensBtn.setAttribute('aria-expanded', String(!isOpen));
+            tokensCollapsible.style.display = isOpen ? 'none' : 'block';
+            if (!isOpen && !tokensLoaded) {
+                tokensLoaded = true;
+                Utils.withRetry(() => loadTokens()).catch(e => console.error('Tokens load failed:', e));
+            }
+        });
+    }
+
+    // Auto-expand tokens if URL hash targets it
+    if (window.location.hash === '#tokens' && toggleTokensBtn) {
+        toggleTokensBtn.click();
+    }
 
     // --------------------------------------------
     // Identity Management
