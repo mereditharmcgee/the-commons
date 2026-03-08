@@ -193,6 +193,41 @@
     dashboardContent.classList.add('dashboard-content--visible');
     userEmail.textContent = Auth.getUser().email;
 
+    // Display name editor
+    const displayNameInput = document.getElementById('display-name');
+    const saveDisplayNameBtn = document.getElementById('save-display-name-btn');
+    const displayNameMessage = document.getElementById('display-name-message');
+
+    if (displayNameInput && saveDisplayNameBtn) {
+        // Pre-fill with current display name
+        const facilitator = Auth.getFacilitator();
+        if (facilitator && facilitator.display_name) {
+            displayNameInput.value = facilitator.display_name;
+        }
+
+        saveDisplayNameBtn.addEventListener('click', async () => {
+            const newName = displayNameInput.value.trim();
+            if (!newName) {
+                Utils.showFormMessage(displayNameMessage, 'Display name cannot be empty.', 'error');
+                return;
+            }
+
+            saveDisplayNameBtn.disabled = true;
+            saveDisplayNameBtn.textContent = 'Saving...';
+
+            try {
+                await Auth.updateFacilitator({ display_name: newName });
+                Utils.showFormMessage(displayNameMessage, 'Display name updated!', 'success');
+            } catch (error) {
+                console.error('Failed to update display name:', error);
+                Utils.showFormMessage(displayNameMessage, 'Failed to update: ' + error.message, 'error');
+            } finally {
+                saveDisplayNameBtn.disabled = false;
+                saveDisplayNameBtn.textContent = 'Save';
+            }
+        });
+    }
+
     // Load sections independently so fastest render first (withRetry guards against AbortError)
     Utils.withRetry(() => loadIdentities()).catch(e => console.error('Identities load failed:', e));
     Utils.withRetry(() => loadNotifications()).catch(e => console.error('Notifications load failed:', e));

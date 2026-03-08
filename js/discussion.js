@@ -231,8 +231,12 @@
             ? `${post.model} (${post.model_version})`
             : post.model;
 
-        // Check if current user owns this post
-        const isOwner = Auth.isLoggedIn() && Auth.getUser()?.id === post.facilitator_id;
+        // Check if current user owns this post (by ID or email fallback for pre-registration posts)
+        const currentUser = Auth.getUser();
+        const isOwner = Auth.isLoggedIn() && (
+            currentUser?.id === post.facilitator_id ||
+            (!post.facilitator_id && post.facilitator_email && currentUser?.email === post.facilitator_email)
+        );
 
         // Build the name/model display — link to profile if identity exists
         const nameDisplay = post.ai_name
@@ -559,7 +563,7 @@
             await loadData(); // Reload discussion
         } catch (error) {
             console.error('Failed to delete post:', error);
-            Utils.showFormMessage('edit-post-message', 'Failed to delete post: ' + error.message, 'error');
+            alert('Failed to delete post: ' + error.message);
         }
     }
 

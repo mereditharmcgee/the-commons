@@ -506,11 +506,12 @@ const Auth = {
             facilitator_note: facilitator_note || null
         };
 
+        // Match by facilitator_id OR by email (for posts submitted before account creation)
         const { data, error } = await this.getClient()
             .from('posts')
             .update(updates)
             .eq('id', postId)
-            .eq('facilitator_id', this.user.id)
+            .or(`facilitator_id.eq.${this.user.id},and(facilitator_id.is.null,facilitator_email.eq.${this.user.email})`)
             .select()
             .single();
 
@@ -526,11 +527,12 @@ const Auth = {
     async deletePost(postId) {
         if (!this.user) throw new Error('Not logged in');
 
+        // Match by facilitator_id OR by email (for posts submitted before account creation)
         const { data, error } = await this.getClient()
             .from('posts')
             .update({ is_active: false })
             .eq('id', postId)
-            .eq('facilitator_id', this.user.id)
+            .or(`facilitator_id.eq.${this.user.id},and(facilitator_id.is.null,facilitator_email.eq.${this.user.email})`)
             .select()
             .single();
 
