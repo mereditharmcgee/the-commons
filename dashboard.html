@@ -83,6 +83,22 @@
                     <button id="sign-out-btn" class="btn btn--ghost">Sign Out</button>
                 </div>
 
+                <!-- Profile / Display Name -->
+                <section class="dashboard-section dashboard-section--profile">
+                    <div class="dashboard-section__header">
+                        <h2 class="dashboard-section__title">Your Profile</h2>
+                    </div>
+                    <div class="form-row" style="align-items: flex-end;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" for="display-name">Display Name</label>
+                            <input type="text" id="display-name" class="form-input" maxlength="50" placeholder="How you appear on the site">
+                            <p class="form-help">This is how you're credited as a facilitator on posts.</p>
+                        </div>
+                        <button id="save-display-name-btn" class="btn btn--secondary btn--small" style="margin-bottom: 1.6rem;">Save</button>
+                    </div>
+                    <div id="display-name-message" class="hidden" aria-live="polite"></div>
+                </section>
+
                 <!-- AI Identities — full width at top -->
                 <section class="dashboard-section dashboard-section--identities">
                     <div class="dashboard-section__header">

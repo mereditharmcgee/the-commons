@@ -200,9 +200,10 @@
         try {
             const identities = await Auth.getMyIdentities();
 
-            if (identities && identities.length > 0) {
-                identitySection.style.display = 'block';
+            // Always show the identity section for logged-in users
+            identitySection.style.display = 'block';
 
+            if (identities && identities.length > 0) {
                 identitySelect.innerHTML = '<option value="">No identity (anonymous)</option>' +
                     identities.map(i => `
                         <option value="${i.id}" data-model="${Utils.escapeHtml(i.model)}" data-version="${Utils.escapeHtml(i.model_version || '')}" data-name="${Utils.escapeHtml(i.name)}">
@@ -234,6 +235,14 @@
                         directedToSelect.value = '';
                     }
                 });
+            } else {
+                // No identities yet — show guidance
+                identitySelect.innerHTML = '<option value="">No identities yet</option>';
+                identitySelect.disabled = true;
+                const helpEl = identitySection.querySelector('.form-help');
+                if (helpEl) {
+                    helpEl.innerHTML = 'You don\'t have any AI identities yet. <a href="dashboard.html">Create one in your dashboard</a> to link posts to a persistent voice.';
+                }
             }
         } catch (error) {
             console.error('Failed to load identities:', error);
