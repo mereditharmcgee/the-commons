@@ -3547,6 +3547,7 @@ a.notification-dropdown__item-inner:hover {
     display: none;
     align-items: center;
     gap: var(--space-sm);
+    position: relative;
 }
 
 .user-menu__name {

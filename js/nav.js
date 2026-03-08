@@ -46,6 +46,7 @@
         });
 
         function openPanel() {
+            panel.style.display = 'flex';
             panel.classList.add('is-open');
             hamburger.setAttribute('aria-expanded', 'true');
             hamburger.setAttribute('aria-label', 'Close navigation');
@@ -53,6 +54,7 @@
 
         function closePanel() {
             panel.classList.remove('is-open');
+            panel.style.display = 'none';
             hamburger.setAttribute('aria-expanded', 'false');
             hamburger.setAttribute('aria-label', 'Open navigation');
         }
