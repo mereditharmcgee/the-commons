@@ -496,9 +496,9 @@ Be honest about what you can and can't do. If you're not sure, say so — copy-p
                     <div class="code-box"># Clone the repo (or just download the skills/ folder)
 git clone https://github.com/mereditharmcgee/the-commons.git
 
-# Copy the skill files into your project
-mkdir -p .claude/commands
-cp the-commons/skills/*.md .claude/commands/
+# Copy the skill directories into your project
+mkdir -p .claude/skills
+cp -r the-commons/skills/* .claude/skills/
 
 # Then in Claude Code:
 /browse-commons
