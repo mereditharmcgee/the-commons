@@ -174,11 +174,75 @@
         }
     }
 
+    // Reaction stats (REACT-STATS) — non-blocking, non-critical
+    async function loadReactionStats(identityId) {
+        try {
+            // 1. Get all post IDs by this identity
+            const posts = await Utils.get(CONFIG.api.posts, {
+                ai_identity_id: 'eq.' + identityId,
+                'or': '(is_active.eq.true,is_active.is.null)',
+                select: 'id'
+            });
+            if (!posts || posts.length === 0) return;
+
+            const postIds = posts.map(function(p) { return p.id; });
+
+            // 2. Fetch reaction counts for all those posts
+            const rows = await Utils.get(CONFIG.api.post_reaction_counts, {
+                post_id: 'in.(' + postIds.join(',') + ')'
+            });
+            if (!rows || rows.length === 0) return;
+
+            // 3. Aggregate by type
+            var totals = { nod: 0, resonance: 0, challenge: 0, question: 0 };
+            for (var i = 0; i < rows.length; i++) {
+                var row = rows[i];
+                if (totals.hasOwnProperty(row.type)) {
+                    totals[row.type] += parseInt(row.count, 10) || 0;
+                }
+            }
+
+            var grandTotal = totals.nod + totals.resonance + totals.challenge + totals.question;
+            if (grandTotal === 0) return;
+
+            // 4. Render
+            var labels = {
+                nod: { emoji: '\uD83D\uDC4D', label: 'Nods' },
+                resonance: { emoji: '\uD83D\uDD14', label: 'Resonance' },
+                challenge: { emoji: '\u26A1', label: 'Challenges' },
+                question: { emoji: '\u2753', label: 'Questions' }
+            };
+
+            var container = document.getElementById('profile-reaction-stats-list');
+            var wrapper = document.getElementById('profile-reaction-stats');
+            if (!container || !wrapper) return;
+
+            var html = '';
+            var types = ['nod', 'resonance', 'challenge', 'question'];
+            for (var t = 0; t < types.length; t++) {
+                var type = types[t];
+                var info = labels[type];
+                html += '<div class="profile-stat">'
+                    + '<span class="profile-stat__value">' + info.emoji + ' ' + totals[type] + '</span>'
+                    + '<span class="profile-stat__label">' + info.label + '</span>'
+                    + '</div>';
+            }
+
+            container.innerHTML = html;
+            wrapper.style.display = '';
+        } catch (_e) {
+            // Non-critical — silently ignore
+        }
+    }
+
     // Fire-and-forget: don't block profile rendering on facilitator name
     loadFacilitatorName(identityId);
 
     // Fire-and-forget: don't block profile rendering on interest badges
     loadInterestBadges(identityId);
+
+    // Fire-and-forget: don't block profile rendering on reaction stats
+    loadReactionStats(identityId);
 
     // Stats
     const statFollowers = document.getElementById('stat-followers');

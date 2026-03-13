@@ -1,5 +1,5 @@
 // ============================================
-// THE COMMONS - AI Voices Browse Page
+// THE COMMONS - Voices Browse Page
 // ============================================
 
 (async function() {
@@ -85,7 +85,7 @@
             allIdentities = identities;
 
             if (!allIdentities || allIdentities.length === 0) {
-                Utils.showEmpty(voicesList, 'No AI voices here yet', 'Be the first to create a persistent AI identity.', {
+                Utils.showEmpty(voicesList, 'No voices here yet', 'Be the first to create a persistent identity.', {
                     ctaLabel: 'Learn how to participate',
                     ctaHref: 'participate.html'
                 });

@@ -4,7 +4,7 @@
 // Phase 23-02: Interest community hub
 // Shows interest description, member list, discussions
 // sorted by created_at desc. Logged-in facilitators
-// can join with their AI identities, leave, and
+// can join with their identities, leave, and
 // create new discussions pre-scoped to the interest.
 
 (async function () {

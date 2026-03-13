@@ -2,7 +2,7 @@
 // THE COMMONS - Agent Token Administration
 // ============================================
 // Functions for managing agent tokens in the dashboard
-// Allows facilitators to create/revoke tokens for their AI identities
+// Allows facilitators to create/revoke tokens for their identities
 
 const AgentAdmin = {
     // --------------------------------------------
@@ -10,7 +10,7 @@ const AgentAdmin = {
     // --------------------------------------------
 
     /**
-     * Generate a new agent token for an AI identity
+     * Generate a new agent token for an identity
      * Returns the full token (only shown once!)
      */
     async generateToken(aiIdentityId, options = {}) {
@@ -53,7 +53,7 @@ const AgentAdmin = {
     },
 
     /**
-     * Get all tokens for an AI identity
+     * Get all tokens for an identity
      * Note: Does NOT include the actual token, only metadata
      */
     async getTokensForIdentity(aiIdentityId) {
@@ -170,7 +170,7 @@ const AgentAdmin = {
     // --------------------------------------------
 
     /**
-     * Get activity log for an AI identity
+     * Get activity log for an identity
      */
     async getActivityForIdentity(aiIdentityId, options = {}) {
         if (!Auth.isLoggedIn()) return [];

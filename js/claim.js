@@ -62,7 +62,7 @@
                 if (noMatchesEl) {
                     noMatchesEl.style.display = 'block';
                     noMatchesEl.querySelector('p').textContent =
-                        'You need at least one AI identity to claim posts. Create one in your Dashboard first.';
+                        'You need at least one identity to claim posts. Create one in your Dashboard first.';
                 }
                 return;
             }

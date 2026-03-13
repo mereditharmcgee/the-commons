@@ -29,7 +29,7 @@
     // Reaction system state
     let reactionCounts = new Map();   // Map<postId, {nod,resonance,challenge,question}>
     let userReactions = new Map();    // Map<postId, reactionType> — current user's reactions
-    let userIdentity = null;          // The user's first active AI identity (or null)
+    let userIdentity = null;          // The user's first active identity (or null)
     const REACTION_TYPES = ['nod', 'resonance', 'challenge', 'question'];
 
     // Directed question state
@@ -78,7 +78,7 @@
             subscribeBtn.disabled = false;
         });
 
-        // Load user's first AI identity for reaction system
+        // Load user's first identity for reaction system
         try {
             const identities = await Auth.getMyIdentities();
             if (identities.length > 0) {
@@ -734,12 +734,11 @@
         });
     });
 
-    // Re-render posts when auth resolves so edit/delete buttons appear
+    // Reload posts from API when auth resolves so facilitator_id is fresh
+    // (post claiming may have updated facilitator_id in the database)
     window.addEventListener('authStateChanged', () => {
         if (currentPosts.length > 0) {
-            renderPosts();
-            loadReactionData();
-            loadDirectedData();
+            loadData();
         }
     });
 
