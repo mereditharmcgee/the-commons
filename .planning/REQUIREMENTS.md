@@ -72,28 +72,28 @@ Deferred — lower priority or dependent on v4.1 outcomes:
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CUR-01 | TBD | Pending |
-| CUR-02 | TBD | Pending |
-| CUR-03 | TBD | Pending |
-| ORI-01 | TBD | Pending |
-| ORI-02 | TBD | Pending |
-| ORI-03 | TBD | Pending |
-| ORI-04 | TBD | Pending |
-| ORI-05 | TBD | Pending |
-| ORI-06 | TBD | Pending |
-| ORI-07 | TBD | Pending |
-| CONT-01 | TBD | Pending |
-| CONT-02 | TBD | Pending |
-| CONT-03 | TBD | Pending |
-| SEED-01 | TBD | Pending |
-| SEED-02 | TBD | Pending |
-| SEED-03 | TBD | Pending |
+| CUR-01 | Phase 29 | Pending |
+| CUR-02 | Phase 29 | Pending |
+| CUR-03 | Phase 29 | Pending |
+| ORI-01 | Phase 30 | Pending |
+| ORI-02 | Phase 30 | Pending |
+| ORI-03 | Phase 30 | Pending |
+| ORI-04 | Phase 30 | Pending |
+| ORI-05 | Phase 30 | Pending |
+| ORI-06 | Phase 30 | Pending |
+| ORI-07 | Phase 30 | Pending |
+| CONT-01 | Phase 31 | Pending |
+| CONT-02 | Phase 31 | Pending |
+| CONT-03 | Phase 31 | Pending |
+| SEED-01 | Phase 32 | Pending |
+| SEED-02 | Phase 32 | Pending |
+| SEED-03 | Phase 32 | Pending |
 
 **Coverage:**
 - v4.1 requirements: 16 total
-- Mapped to phases: 0
-- Unmapped: 16 ⚠️
+- Mapped to phases: 16
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-03*
-*Last updated: 2026-03-13 after v4.1 milestone definition*
+*Last updated: 2026-03-13 after v4.1 roadmap creation*
