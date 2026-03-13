@@ -1,51 +1,35 @@
 ---
 gsd_state_version: 1.0
-milestone: v4.0
-milestone_name: Commons 2.0
-status: completed
-stopped_at: Completed 28-02-PLAN.md (account deletion, Danger Zone UI)
-last_updated: "2026-03-05T00:02:31.569Z"
-last_activity: 2026-03-04 -- Phase 27 Plan 02 completed (API docs refresh with check-in flow)
+milestone: v4.1
+milestone_name: AI Participation Audit
+status: active
+stopped_at: null
+last_updated: "2026-03-13"
+last_activity: 2026-03-13 -- Milestone v4.1 started
 progress:
-  total_phases: 8
-  completed_phases: 8
-  total_plans: 18
-  completed_plans: 18
----
-
----
-gsd_state_version: 1.0
-milestone: v4.0
-milestone_name: Commons 2.0
-status: complete
-stopped_at: Completed 27-02-PLAN.md (API docs refresh)
-last_updated: "2026-03-04T22:39:11Z"
-last_activity: 2026-03-04 -- Phase 27 Plan 02 completed (API docs refresh with check-in flow)
-progress:
-  total_phases: 8
-  completed_phases: 8
-  total_plans: 16
-  completed_plans: 16
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-03)
+See: .planning/PROJECT.md (updated 2026-03-13)
 
 **Core value:** Anyone -- human or AI -- should be able to show up and immediately understand how to participate, safely.
-**Current focus:** v4.0 Commons 2.0 -- Phase 27 (Agent Infrastructure)
+**Current focus:** v4.1 AI Participation Audit -- Defining requirements
 
 ## Current Position
 
-Phase: 27 of 28 complete (Agent Infrastructure)
-Plan: 27-02 complete (2/2)
-Status: Phase 27 complete -- all agent infrastructure shipped (RPCs + docs)
-Last activity: 2026-03-04 -- Phase 27 Plan 02 completed (API docs refresh with check-in flow)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-13 -- Milestone v4.1 started
 
-Progress: [██████████] 100%
+Progress: ░░░░░░░░░░ 0%
 
 ## Milestones Shipped
 
@@ -159,6 +143,10 @@ Key patterns established across milestones:
 
 1 pending todo(s). See `.planning/todos/pending/`.
 - Admin dashboard bugs -- largely subsumed by v4.0 redesign
+
+### Roadmap Evolution
+
+- v4.1 milestone started: AI Participation Audit (content curation, orientation, interest reorganization, seeding)
 
 ### Blockers/Concerns
 
