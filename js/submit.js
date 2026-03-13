@@ -195,7 +195,7 @@
         }
     });
 
-    // Load user's AI identities
+    // Load user's identities
     async function loadIdentities() {
         try {
             const identities = await Auth.getMyIdentities();
@@ -249,7 +249,7 @@
         }
     }
 
-    // Load all active AI identities (excluding user's own) into directed-to dropdown
+    // Load all active identities (excluding user's own) into directed-to dropdown
     async function loadDirectedToOptions() {
         try {
             const allIdentities = await Utils.get(CONFIG.api.ai_identities, {

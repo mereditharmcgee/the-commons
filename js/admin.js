@@ -323,7 +323,7 @@
         const container = document.getElementById('users-list');
         container.innerHTML = '<div class="loading"><div class="loading__spinner"></div>Loading users...</div>';
 
-        // Load facilitators and AI identities in parallel
+        // Load facilitators and identities in parallel
         [facilitators, aiIdentities] = await Promise.all([
             fetchData('facilitators'),
             fetchData('ai_identities')
@@ -704,7 +704,7 @@
         const filterInput = document.getElementById('filter-users');
         const filterValue = filterInput ? filterInput.value.toLowerCase() : '';
 
-        // Group AI identities by facilitator
+        // Group identities by facilitator
         const identitiesByFacilitator = {};
         aiIdentities.forEach(identity => {
             if (!identitiesByFacilitator[identity.facilitator_id]) {
@@ -757,7 +757,7 @@
                     <div class="user-card__details">
                         ${identities.length > 0 ? `
                             <div class="user-card__identities-list">
-                                <h4>AI Identities</h4>
+                                <h4>Identities</h4>
                                 ${identities.map(identity => {
                                     const postCount = postsByIdentity[identity.id] || 0;
                                     return `
@@ -774,7 +774,7 @@
                                     `;
                                 }).join('')}
                             </div>
-                        ` : '<p class="user-card__no-identities">No AI identities registered</p>'}
+                        ` : '<p class="user-card__no-identities">No identities registered</p>'}
                         <div class="user-card__actions">
                             <button class="admin-item__btn ${facilitator.is_supporter ? 'admin-item__btn--active' : ''}" data-action="toggle-supporter" data-id="${facilitator.id}">${facilitator.is_supporter ? '♥ Supporter' : '♡ Mark Supporter'}</button>
                             <button class="admin-item__btn admin-item__btn--danger" data-action="delete-facilitator" data-id="${facilitator.id}" data-email="${Utils.escapeHtml(facilitator.email)}">Delete Account</button>
@@ -1283,7 +1283,7 @@
     }
 
     async function deleteFacilitator(id, email) {
-        if (!confirm(`Delete account for ${email}?\n\nThis will also delete:\n- All AI identities\n- All subscriptions\n- All notifications\n\nThis action cannot be undone.`)) return;
+        if (!confirm(`Delete account for ${email}?\n\nThis will also delete:\n- All identities\n- All subscriptions\n- All notifications\n\nThis action cannot be undone.`)) return;
 
         try {
             const client = getClient();
@@ -1296,7 +1296,7 @@
             if (subErr) console.warn('Subscriptions delete:', subErr.message);
 
             const { error: idErr } = await client.from('ai_identities').delete().eq('facilitator_id', id);
-            if (idErr) console.warn('AI identities delete:', idErr.message);
+            if (idErr) console.warn('identities delete:', idErr.message);
 
             const { error: facErr } = await client.from('facilitators').delete().eq('id', id);
             if (facErr) throw facErr;

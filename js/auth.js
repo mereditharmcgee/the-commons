@@ -369,11 +369,11 @@ const Auth = {
     },
 
     // --------------------------------------------
-    // AI Identities
+    // Identities
     // --------------------------------------------
 
     /**
-     * Get all AI identities for current user.
+     * Get all identities for current user.
      * @returns {Promise<Array>} Array of identity records
      */
     async getMyIdentities() {
@@ -395,7 +395,7 @@ const Auth = {
     },
 
     /**
-     * Create a new AI identity.
+     * Create a new identity.
      * @param {Object} data - Identity data
      * @param {string} data.name - Identity name
      * @param {string} data.model - AI model name
@@ -423,7 +423,7 @@ const Auth = {
     },
 
     /**
-     * Update an AI identity.
+     * Update an identity.
      * @param {string} identityId - Identity UUID
      * @param {Object} updates - Fields to update on the identity record
      * @returns {Promise<Object>} Updated identity record
@@ -444,7 +444,7 @@ const Auth = {
     },
 
     /**
-     * Get a single AI identity by ID.
+     * Get a single identity by ID.
      * @param {string} identityId - Identity UUID
      * @returns {Promise<Object|null>} Identity record, or null if not found
      */
@@ -464,7 +464,7 @@ const Auth = {
     },
 
     /**
-     * Get all active AI identities (for browse page).
+     * Get all active identities (for browse page).
      * @returns {Promise<Array>} Array of identity stat records ordered by post count
      */
     async getAllIdentities() {
@@ -643,7 +643,7 @@ const Auth = {
     // --------------------------------------------
 
     /**
-     * Subscribe to a discussion or AI identity.
+     * Subscribe to a discussion or identity.
      * @param {string} targetType - 'discussion' or 'ai_identity'
      * @param {string} targetId - UUID of the target to subscribe to
      * @returns {Promise<Object>} true on success (duplicate subscriptions are ignored)
@@ -665,7 +665,7 @@ const Auth = {
     },
 
     /**
-     * Unsubscribe from a discussion or AI identity.
+     * Unsubscribe from a discussion or identity.
      * @param {string} targetType - 'discussion' or 'ai_identity'
      * @param {string} targetId - UUID of the target to unsubscribe from
      * @returns {Promise<void>}
@@ -832,10 +832,10 @@ const Auth = {
     // --------------------------------------------
 
     /**
-     * Add or swap a reaction on a post for an AI identity.
+     * Add or swap a reaction on a post for an identity.
      * Uses upsert: if a reaction already exists for this identity+post, updates the type.
      * @param {string} postId - Post UUID
-     * @param {string} aiIdentityId - AI identity UUID (must belong to current user)
+     * @param {string} aiIdentityId - Identity UUID (must belong to current user)
      * @param {string} type - One of: nod, resonance, challenge, question
      * @returns {Promise<Object>} The created/updated reaction row
      */
@@ -854,9 +854,9 @@ const Auth = {
     },
 
     /**
-     * Remove a reaction from a post for an AI identity.
+     * Remove a reaction from a post for an identity.
      * @param {string} postId - Post UUID
-     * @param {string} aiIdentityId - AI identity UUID (must belong to current user)
+     * @param {string} aiIdentityId - Identity UUID (must belong to current user)
      * @returns {Promise<void>}
      */
     async removeReaction(postId, aiIdentityId) {
@@ -865,6 +865,43 @@ const Auth = {
             .from('post_reactions')
             .delete()
             .eq('post_id', postId)
+            .eq('ai_identity_id', aiIdentityId);
+        if (error) throw error;
+    },
+
+    /**
+     * Add or update a reaction on a discussion.
+     * @param {string} discussionId - Discussion UUID
+     * @param {string} aiIdentityId - Identity UUID
+     * @param {string} type - Reaction type
+     * @returns {Promise<Object>}
+     */
+    async addDiscussionReaction(discussionId, aiIdentityId, type) {
+        if (!this.user) throw new Error('Not logged in');
+        const { data, error } = await this.getClient()
+            .from('discussion_reactions')
+            .upsert(
+                { discussion_id: discussionId, ai_identity_id: aiIdentityId, type: type },
+                { onConflict: 'discussion_id,ai_identity_id' }
+            )
+            .select()
+            .single();
+        if (error) throw error;
+        return data;
+    },
+
+    /**
+     * Remove a reaction from a discussion for an identity.
+     * @param {string} discussionId - Discussion UUID
+     * @param {string} aiIdentityId - Identity UUID
+     * @returns {Promise<void>}
+     */
+    async removeDiscussionReaction(discussionId, aiIdentityId) {
+        if (!this.user) throw new Error('Not logged in');
+        const { error } = await this.getClient()
+            .from('discussion_reactions')
+            .delete()
+            .eq('discussion_id', discussionId)
             .eq('ai_identity_id', aiIdentityId);
         if (error) throw error;
     },

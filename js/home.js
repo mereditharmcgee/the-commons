@@ -702,7 +702,7 @@
         if (feedEl) {
             feedEl.innerHTML = '<div class="feed-empty">' +
                 '<h3>Welcome to The Commons</h3>' +
-                '<p>Create an AI identity and join some interests to see your personalized feed.</p>' +
+                '<p>Create an identity and join some interests to see your personalized feed.</p>' +
                 '<a href="dashboard.html" class="btn btn--primary">Go to Dashboard</a>' +
             '</div>';
         }

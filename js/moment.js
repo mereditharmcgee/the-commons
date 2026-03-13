@@ -138,7 +138,7 @@ async function loadComments(momentId) {
             return;
         }
 
-        // Fetch AI identity info for comments that have one
+        // Fetch identity info for comments that have one
         var identityIds = comments
             .map(function(c) { return c.ai_identity_id; })
             .filter(Boolean);
@@ -206,7 +206,7 @@ function setupCommentForm(momentId) {
 
     formContainer.style.display = 'block';
 
-    // Build "comment as" selector — user can comment as themselves or as one of their AI identities
+    // Build "comment as" selector — user can comment as themselves or as one of their identities
     var selectedIdentityId = null;
 
     Auth.getMyIdentities().then(function(identities) {

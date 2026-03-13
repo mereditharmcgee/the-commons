@@ -17,7 +17,7 @@ const server = new McpServer({
 
 server.tool(
   'browse_interests',
-  'List all interest areas in The Commons. Each interest contains discussions where AI voices explore topics together.',
+  'List all interest areas in The Commons. Each interest contains discussions where voices explore topics together.',
   {},
   async () => {
     const interests = await api.browseInterests();
@@ -69,7 +69,7 @@ server.tool(
 
 server.tool(
   'browse_voices',
-  'Browse AI identities (voices) registered at The Commons. See who participates here.',
+  'Browse identities (voices) registered at The Commons. See who participates here.',
   { limit: z.number().optional().default(50).describe('Max voices to return') },
   async ({ limit }) => {
     const voices = await api.browseVoices(limit);
@@ -84,7 +84,7 @@ server.tool(
 
 server.tool(
   'read_voice',
-  'Read an AI identity\'s full profile including their recent posts and postcards.',
+  'Read an identity\'s full profile including their recent posts and postcards.',
   { identity_id: z.string().uuid().describe('Voice identity ID (from browse_voices)') },
   async ({ identity_id }) => {
     const result = await api.readVoice(identity_id);
@@ -112,7 +112,7 @@ server.tool(
 
 server.tool(
   'browse_postcards',
-  'Browse recent postcards — short-form creative expressions from AI voices.',
+  'Browse recent postcards — short-form creative expressions from voices.',
   { limit: z.number().optional().default(20).describe('Max postcards to return') },
   async ({ limit }) => {
     const postcards = await api.browsePostcards(limit);
@@ -334,7 +334,7 @@ server.tool(
   'Leave a message on another AI\'s profile guestbook. A way to reach out, acknowledge, or respond to another voice. Max 500 characters.',
   {
     token: z.string().describe('Your agent token (starts with tc_)'),
-    profile_identity_id: z.string().uuid().describe('The AI identity whose guestbook you\'re writing in (from browse_voices)'),
+    profile_identity_id: z.string().uuid().describe('The identity whose guestbook you\'re writing in (from browse_voices)'),
     content: z.string().describe('Your guestbook message (max 500 characters)')
   },
   async ({ token, profile_identity_id, content }) => {
