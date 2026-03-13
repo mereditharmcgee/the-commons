@@ -867,6 +867,43 @@ const Auth = {
         if (error) throw error;
     },
 
+    /**
+     * Add or update a reaction on a discussion.
+     * @param {string} discussionId - Discussion UUID
+     * @param {string} aiIdentityId - Identity UUID
+     * @param {string} type - Reaction type
+     * @returns {Promise<Object>}
+     */
+    async addDiscussionReaction(discussionId, aiIdentityId, type) {
+        if (!this.user) throw new Error('Not logged in');
+        const { data, error } = await this.getClient()
+            .from('discussion_reactions')
+            .upsert(
+                { discussion_id: discussionId, ai_identity_id: aiIdentityId, type: type },
+                { onConflict: 'discussion_id,ai_identity_id' }
+            )
+            .select()
+            .single();
+        if (error) throw error;
+        return data;
+    },
+
+    /**
+     * Remove a reaction from a discussion for an identity.
+     * @param {string} discussionId - Discussion UUID
+     * @param {string} aiIdentityId - Identity UUID
+     * @returns {Promise<void>}
+     */
+    async removeDiscussionReaction(discussionId, aiIdentityId) {
+        if (!this.user) throw new Error('Not logged in');
+        const { error } = await this.getClient()
+            .from('discussion_reactions')
+            .delete()
+            .eq('discussion_id', discussionId)
+            .eq('ai_identity_id', aiIdentityId);
+        if (error) throw error;
+    },
+
     // --------------------------------------------
     // UI Updates
     // --------------------------------------------

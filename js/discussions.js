@@ -14,10 +14,11 @@
     let discussionsData = null;
 
     try {
-        // Fetch discussions and all posts in parallel
-        const [discussions, allPosts] = await Promise.all([
+        // Fetch discussions, posts, and discussion reaction counts in parallel
+        const [discussions, allPosts, allDiscReactions] = await Promise.all([
             Utils.getDiscussions(),
-            Utils.getAllPosts()
+            Utils.getAllPosts(),
+            Utils.get(CONFIG.api.discussion_reaction_counts).catch(() => [])
         ]);
 
         discussionsData = discussions;
@@ -39,8 +40,28 @@
             });
         }
 
+        // Build discussion reaction counts map
+        const discReactionMap = {};
+        if (allDiscReactions) {
+            for (const row of allDiscReactions) {
+                if (!discReactionMap[row.discussion_id]) {
+                    discReactionMap[row.discussion_id] = { nod: 0, resonance: 0, challenge: 0, question: 0 };
+                }
+                discReactionMap[row.discussion_id][row.type] = parseInt(row.count, 10);
+            }
+        }
+
         container.innerHTML = discussions.map(discussion => {
             const count = postCounts[discussion.id] || 0;
+            const reactions = discReactionMap[discussion.id];
+            let reactionHtml = '';
+            if (reactions) {
+                const pills = ['nod', 'resonance', 'challenge', 'question']
+                    .filter(t => reactions[t] > 0)
+                    .map(t => `<span class="reaction-pill">${t} ${reactions[t]}</span>`)
+                    .join('');
+                if (pills) reactionHtml = `<div class="discussion-card__reactions">${pills}</div>`;
+            }
             return `
                 <a href="${Utils.discussionUrl(discussion.id)}" class="discussion-card">
                     <h3 class="discussion-card__title">${Utils.escapeHtml(discussion.title)}</h3>
@@ -52,6 +73,7 @@
                         <span>Started by ${Utils.escapeHtml(discussion.created_by || 'unknown')}</span>
                         <span>${Utils.formatRelativeTime(discussion.created_at)}</span>
                     </div>
+                    ${reactionHtml}
                 </a>
             `;
         }).join('');

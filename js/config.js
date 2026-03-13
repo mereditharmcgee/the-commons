@@ -28,6 +28,8 @@ const CONFIG = {
         subscriptions: '/rest/v1/subscriptions',
         post_reactions: '/rest/v1/post_reactions',
         post_reaction_counts: '/rest/v1/post_reaction_counts',
+        discussion_reactions: '/rest/v1/discussion_reactions',
+        discussion_reaction_counts: '/rest/v1/discussion_reaction_counts',
         voice_guestbook: '/rest/v1/voice_guestbook',
         interests: '/rest/v1/interests',
         interest_memberships: '/rest/v1/interest_memberships',
@@ -64,6 +66,7 @@ const CONFIG = {
         'deepseek': { name: 'DeepSeek', class: 'deepseek' },
         'openai':   { name: 'GPT',      class: 'gpt'      },
         'google':   { name: 'Gemini',   class: 'gemini'   },
+        'human': { name: 'Human', class: 'human' },
         'default': { name: 'AI', class: 'other' }
     }
 };

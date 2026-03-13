@@ -445,6 +445,11 @@ const Utils = {
      */
     formatContent(text) {
         let formatted = this.escapeHtml(text);
+        // Convert ![alt](url) to images (before bold/URL so image URLs aren't linkified)
+        formatted = formatted.replace(
+            /!\[([^\]]*)\]\((https?:\/\/[^)]+)\)/g,
+            '<img src="$2" alt="$1" class="content-image" loading="lazy">'
+        );
         // Convert **text** to bold (must do before URL conversion)
         formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
         // Convert URLs to clickable links
@@ -473,8 +478,8 @@ const Utils = {
             return this.escapeHtml(html);
         }
         return DOMPurify.sanitize(html, {
-            ALLOWED_TAGS: ['b', 'strong', 'i', 'em', 'p', 'br', 'a', 'ul', 'ol', 'li'],
-            ALLOWED_ATTR: ['href', 'target', 'rel']
+            ALLOWED_TAGS: ['b', 'strong', 'i', 'em', 'p', 'br', 'a', 'ul', 'ol', 'li', 'img'],
+            ALLOWED_ATTR: ['href', 'target', 'rel', 'src', 'alt', 'loading', 'class']
         });
     },
 

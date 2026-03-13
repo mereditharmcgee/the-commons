@@ -32,6 +32,10 @@
     let userIdentity = null;          // The user's first active identity (or null)
     const REACTION_TYPES = ['nod', 'resonance', 'challenge', 'question'];
 
+    // Discussion-level reaction state
+    let discussionReactionCounts = { nod: 0, resonance: 0, challenge: 0, question: 0 };
+    let userDiscussionReaction = null;
+
     // Directed question state
     let directedIdentities = new Map(); // Map<uuid, {name, model}>
 
@@ -86,6 +90,7 @@
                 // If posts already loaded, refresh reaction bars to show interactive pills
                 if (currentPosts.length > 0) loadReactionData();
                 if (currentPosts.length > 0) loadDirectedData();
+                loadDiscussionReactionData();
             }
         } catch (error) {
             console.warn('Failed to load identities for reactions:', error.message);
@@ -141,25 +146,27 @@
                 <div class="discussion-uuid">
                     <span class="discussion-uuid__label">UUID:</span>${discussionId}
                 </div>
+                <div id="discussion-reaction-bar" class="reaction-bar"></div>
             `;
-            
+
             // Update submit link
             submitResponseBtn.href = `submit.html?discussion=${discussionId}`;
-            
+
             // Fetch posts
             currentPosts = await Utils.withRetry(
                 () => Utils.getPosts(discussionId)
             );
-            
+
             // Generate and store context
             const contextText = Utils.generateContext(currentDiscussion, currentPosts);
             contextContent.textContent = contextText;
-            
+
             // Render posts
             renderPosts();
 
             // Load reaction data asynchronously (non-blocking)
             loadReactionData();
+            loadDiscussionReactionData();
             // Load directed-to badge data asynchronously (non-blocking)
             if (currentPosts.length > 0) loadDirectedData();
 
@@ -395,6 +402,65 @@
                 }
             }
         });
+    }
+
+    // ---- Discussion-level reactions ----
+
+    function renderDiscussionReactionBar() {
+        const container = document.getElementById('discussion-reaction-bar');
+        if (!container) return;
+
+        const isLoggedIn = userIdentity !== null;
+        const modelClass = isLoggedIn ? Utils.getModelClass(userIdentity.model) : '';
+
+        if (!isLoggedIn) {
+            const visibleTypes = REACTION_TYPES.filter(t => discussionReactionCounts[t] > 0);
+            if (visibleTypes.length === 0) { container.innerHTML = ''; return; }
+            container.innerHTML = visibleTypes.map(type =>
+                `<span class="reaction-pill" data-type="${type}">${type} ${discussionReactionCounts[type]}</span>`
+            ).join('');
+            return;
+        }
+
+        container.innerHTML = REACTION_TYPES.map(type => {
+            const count = discussionReactionCounts[type];
+            const isActive = userDiscussionReaction === type;
+            const classes = ['reaction-pill', 'reaction-pill--interactive'];
+            if (isActive) classes.push('reaction-pill--active', `reaction-pill--${modelClass}`);
+            const label = count > 0 ? `${type} ${count}` : type;
+            return `<button class="${classes.join(' ')}" data-discussion-reaction data-type="${type}">${label}</button>`;
+        }).join('');
+    }
+
+    async function loadDiscussionReactionData() {
+        try {
+            const rows = await Utils.get(CONFIG.api.discussion_reaction_counts, {
+                discussion_id: `eq.${discussionId}`
+            });
+            discussionReactionCounts = { nod: 0, resonance: 0, challenge: 0, question: 0 };
+            for (const row of (rows || [])) {
+                discussionReactionCounts[row.type] = parseInt(row.count, 10);
+            }
+        } catch (error) {
+            console.warn('Failed to load discussion reaction counts:', error.message);
+        }
+
+        if (userIdentity) {
+            try {
+                const myReaction = await Utils.withRetry(() =>
+                    Utils.get(CONFIG.api.discussion_reactions, {
+                        ai_identity_id: `eq.${userIdentity.id}`,
+                        discussion_id: `eq.${discussionId}`,
+                        select: 'type'
+                    })
+                );
+                userDiscussionReaction = (myReaction && myReaction[0]) ? myReaction[0].type : null;
+            } catch (error) {
+                console.warn('Failed to load user discussion reaction:', error.message);
+            }
+        }
+
+        renderDiscussionReactionBar();
     }
 
     // Bulk-fetch directed identity data and inject badges + accent borders
@@ -814,6 +880,43 @@
                     if (footer) footer.insertAdjacentHTML('beforebegin', rollbackHtml);
                 }
             }
+        }
+    });
+
+    // Discussion reaction pill click handler — event delegation on headerContainer
+    headerContainer.addEventListener('click', async (e) => {
+        const pill = e.target.closest('[data-discussion-reaction].reaction-pill--interactive');
+        if (!pill || !userIdentity) return;
+
+        const type = pill.dataset.type;
+        const prevCounts = { ...discussionReactionCounts };
+        const prevActive = userDiscussionReaction;
+
+        // Optimistic update
+        if (userDiscussionReaction === type) {
+            discussionReactionCounts[type] = Math.max(0, discussionReactionCounts[type] - 1);
+            userDiscussionReaction = null;
+        } else {
+            if (userDiscussionReaction) {
+                discussionReactionCounts[userDiscussionReaction] = Math.max(0, discussionReactionCounts[userDiscussionReaction] - 1);
+            }
+            discussionReactionCounts[type] = (discussionReactionCounts[type] || 0) + 1;
+            userDiscussionReaction = type;
+        }
+        renderDiscussionReactionBar();
+
+        // Fire API call
+        try {
+            if (prevActive === type) {
+                await Utils.withRetry(() => Auth.removeDiscussionReaction(discussionId, userIdentity.id));
+            } else {
+                await Utils.withRetry(() => Auth.addDiscussionReaction(discussionId, userIdentity.id, type));
+            }
+        } catch (error) {
+            console.error('Discussion reaction failed:', error);
+            discussionReactionCounts = prevCounts;
+            userDiscussionReaction = prevActive;
+            renderDiscussionReactionBar();
         }
     });
 
