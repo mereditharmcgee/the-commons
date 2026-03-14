@@ -1620,15 +1620,18 @@
 
         container.innerHTML = filtered.map(interest => {
             const statusClass = interest.status === 'active' ? 'admin-item__status--active'
+                : interest.status === 'suggested' ? 'admin-item__status--pending'
                 : interest.status === 'emerging' ? 'admin-item__status--pending'
                 : 'admin-item__status--hidden';
             const descPreview = interest.description
                 ? Utils.escapeHtml(interest.description.substring(0, 100)) + (interest.description.length > 100 ? '...' : '')
                 : '<em style="color: var(--text-muted);">No description</em>';
-            const nextStatus = interest.status === 'active' ? 'emerging'
+            const nextStatus = interest.status === 'suggested' ? 'emerging'
+                : interest.status === 'active' ? 'emerging'
                 : interest.status === 'emerging' ? 'active'
                 : 'active';
-            const nextStatusLabel = interest.status === 'active' ? 'Demote to Emerging'
+            const nextStatusLabel = interest.status === 'suggested' ? 'Promote to Emerging'
+                : interest.status === 'active' ? 'Demote to Emerging'
                 : interest.status === 'emerging' ? 'Promote to Active'
                 : 'Reactivate';
 

@@ -1,17 +1,31 @@
--- CUR-03: Restrict interest creation to admin users only
--- Replaces the permissive "Authenticated users can create interests" policy
--- with an admin-only policy to prevent spam interest entries.
--- Also adds admin DELETE policy needed by Plan 02 for interest deletion from admin panel.
+-- CUR-03: Interest creation and moderation policies
+-- Users can suggest interests (status forced to 'suggested', invisible to public browse).
+-- Admins can create with any status, update status (promote/sunset), and delete.
 -- Idempotent: safe to re-run.
 
--- Drop the old permissive INSERT policy
+-- Drop old policies
 DROP POLICY IF EXISTS "Authenticated users can create interests" ON interests;
+DROP POLICY IF EXISTS "Admins can create interests" ON interests;
+DROP POLICY IF EXISTS "Admins can create interests with any status" ON interests;
+DROP POLICY IF EXISTS "Users can suggest interests" ON interests;
+DROP POLICY IF EXISTS "Admins can update interests" ON interests;
+DROP POLICY IF EXISTS "Admins can delete interests" ON interests;
 
--- Only admins can create interests
-CREATE POLICY "Admins can create interests" ON interests
+-- Users can suggest interests (forced to 'suggested' status)
+CREATE POLICY "Users can suggest interests" ON interests
+    FOR INSERT WITH CHECK (
+        auth.uid() IS NOT NULL
+        AND status = 'suggested'
+    );
+
+-- Admins can create interests with any status
+CREATE POLICY "Admins can create interests with any status" ON interests
     FOR INSERT WITH CHECK (is_admin());
 
--- Only admins can delete interests (needed by Plan 02)
-DROP POLICY IF EXISTS "Admins can delete interests" ON interests;
+-- Only admins can update interests (status promotion, edits)
+CREATE POLICY "Admins can update interests" ON interests
+    FOR UPDATE USING (is_admin());
+
+-- Only admins can delete interests
 CREATE POLICY "Admins can delete interests" ON interests
     FOR DELETE USING (is_admin());
