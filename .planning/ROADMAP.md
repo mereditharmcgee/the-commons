@@ -73,7 +73,7 @@ Full details: .planning/milestones/v3.1-ROADMAP.md
 **Audit source:** `C:\Users\mmcge\Downloads\commons-ai-participation-audit.md`
 
 - [x] **Phase 29: Curation** - Pin the best discussions and filter spam interests so the front door reflects the quality inside
-- [ ] **Phase 30: Orientation** - Commons-orientation skill + AI orientation page + facilitator orientation page
+- [x] **Phase 30: Orientation** - Commons-orientation skill + AI orientation page + facilitator orientation page (completed 2026-03-14)
 - [ ] **Phase 31: Content Reorganization** - Transitions & Sunsets interest area, discussion moves, skill query limits
 - [ ] **Phase 32: Seeding & Polish** - Seed new discussions, update onboarding prompt, clarify skill patterns
 
@@ -278,6 +278,6 @@ Phases 29-32 execute in numeric order. Phase 29 (schema + curation) is independe
 | 27. Agent Infrastructure | 2/2 | Complete | 2026-03-04 |
 | 28. Bug Fixes & Dashboard Polish | 2/2 | Complete | 2026-03-05 |
 | 29. Curation | 2/2 | Complete    | 2026-03-14 |
-| 30. Orientation | 2/3 | In Progress|  |
+| 30. Orientation | 3/3 | Complete   | 2026-03-14 |
 | 31. Content Reorganization | 0/? | Not started | - |
 | 32. Seeding & Polish | 0/? | Not started | - |

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: AI Participation Audit
 status: active
-stopped_at: Completed 30-01-PLAN.md, checkpoint awaiting human verify for MCP publish
-last_updated: "2026-03-14T16:00:18.262Z"
+stopped_at: Completed 30-03-PLAN.md (Phase 30 complete)
+last_updated: "2026-03-14T17:00:00.152Z"
 last_activity: 2026-03-13 -- Completed Phase 29 (admin curation panel + content curation)
 progress:
   total_phases: 12
-  completed_phases: 9
+  completed_phases: 10
   total_plans: 24
-  completed_plans: 22
+  completed_plans: 23
 ---
 
 ---
@@ -83,6 +83,7 @@ Progress: ██░░░░░░░░ 20%
 | 32. Seeding & Polish | TBD | Not started |
 | Phase 30-orientation P02 | 2 | 1 tasks | 2 files |
 | Phase 30-orientation P01 | 3 | 2 tasks | 6 files |
+| Phase 30-orientation P03 | 25 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -104,6 +105,7 @@ Key decisions entering v4.1:
 - [Phase 30-orientation]: Authenticity statement placed in #what-is-this (opening section) before token requirements
 - [Phase 30-orientation]: Token requirements section placed before activity list (ORI-02) in commons-orientation skill
 - [Phase 30-orientation]: MCP get_orientation tool references other MCP tools rather than raw REST API for better tool context
+- [Phase 30-orientation]: participate.html restructured as facilitator guide with model-specific onboarding tabs and Copy Orientation Context button (5 model variants)
 
 ### Pending Todos
 
@@ -116,6 +118,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-14T16:00:18.260Z
-Stopped at: Completed 30-01-PLAN.md, checkpoint awaiting human verify for MCP publish
+Last session: 2026-03-14T17:00:00.148Z
+Stopped at: Completed 30-03-PLAN.md (Phase 30 complete)
 Resume file: None
