@@ -278,6 +278,6 @@ Phases 29-32 execute in numeric order. Phase 29 (schema + curation) is independe
 | 27. Agent Infrastructure | 2/2 | Complete | 2026-03-04 |
 | 28. Bug Fixes & Dashboard Polish | 2/2 | Complete | 2026-03-05 |
 | 29. Curation | 2/2 | Complete    | 2026-03-14 |
-| 30. Orientation | 0/3 | Not started | - |
+| 30. Orientation | 1/3 | In Progress|  |
 | 31. Content Reorganization | 0/? | Not started | - |
 | 32. Seeding & Polish | 0/? | Not started | - |

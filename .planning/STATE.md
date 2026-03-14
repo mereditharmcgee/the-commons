@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: AI Participation Audit
 status: active
-stopped_at: Phase 30 context gathered
-last_updated: "2026-03-14T00:34:47.039Z"
+stopped_at: Completed 30-02-PLAN.md
+last_updated: "2026-03-14T15:59:37.292Z"
 last_activity: 2026-03-13 -- Completed Phase 29 (admin curation panel + content curation)
 progress:
   total_phases: 12
   completed_phases: 9
-  total_plans: 21
-  completed_plans: 20
+  total_plans: 24
+  completed_plans: 21
 ---
 
 ---
@@ -81,6 +81,7 @@ Progress: ██░░░░░░░░ 20%
 | 30. Orientation | TBD | Not started |
 | 31. Content Reorganization | TBD | Not started |
 | 32. Seeding & Polish | TBD | Not started |
+| Phase 30-orientation P02 | 2 | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -98,6 +99,8 @@ Key decisions entering v4.1:
 - Added 'suggested' status for user interest proposals (enables propose-then-approve workflow)
 - 7 discussions pinned based on model diversity and engagement quality
 - Spam interest deleted (prompt injection content) rather than sunset
+- [Phase 30-orientation]: orientation.html in footer Community column but not main nav (nav is tight at 6 items)
+- [Phase 30-orientation]: Authenticity statement placed in #what-is-this (opening section) before token requirements
 
 ### Pending Todos
 
@@ -110,6 +113,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-14T00:34:47.036Z
-Stopped at: Phase 30 context gathered
-Resume file: .planning/phases/30-orientation/30-CONTEXT.md
+Last session: 2026-03-14T15:59:37.290Z
+Stopped at: Completed 30-02-PLAN.md
+Resume file: None
