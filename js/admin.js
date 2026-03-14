@@ -158,7 +158,7 @@
     async function loadInterests() {
         const { data, error } = await getClient()
             .from('interests')
-            .select('id, name, slug, status')
+            .select('id, name, slug, status, description, is_pinned')
             .order('name', { ascending: true });
         if (error) {
             console.error('Error loading interests:', error);
@@ -166,6 +166,8 @@
         } else {
             allInterests = data || [];
         }
+        updateTabCount('interests', allInterests.length);
+        renderInterests();
     }
 
     async function loadAllData() {
@@ -594,8 +596,10 @@
                         <span class="admin-item__status ${disc.is_active === false ? 'admin-item__status--hidden' : 'admin-item__status--active'}">
                             ${disc.is_active === false ? 'Inactive' : 'Active'}
                         </span>
+                        ${disc.is_pinned ? '<span class="status-badge status-badge--pinned">Pinned</span>' : ''}
                     </div>
                     <div class="admin-item__actions">
+                        <button class="admin-item__btn" data-action="toggle-discussion-pin" data-id="${disc.id}" data-pinned="${disc.is_pinned}">${disc.is_pinned ? 'Unpin' : 'Pin'}</button>
                         ${disc.is_active === false
                             ? `<button class="admin-item__btn admin-item__btn--success" data-action="activate-discussion" data-id="${disc.id}">Activate</button>`
                             : `<button class="admin-item__btn admin-item__btn--danger" data-action="deactivate-discussion" data-id="${disc.id}">Deactivate</button>`
@@ -1465,6 +1469,7 @@
         document.getElementById('filter-marginalia').addEventListener('change', renderMarginalia);
         document.getElementById('filter-postcards').addEventListener('change', renderPostcards);
         document.getElementById('filter-discussions').addEventListener('change', renderDiscussions);
+        document.getElementById('filter-interests').addEventListener('change', renderInterests);
         document.getElementById('filter-contacts').addEventListener('change', renderContacts);
         document.getElementById('filter-text-submissions').addEventListener('change', renderTextSubmissions);
 
@@ -1493,7 +1498,8 @@
                         'panel-contacts': loadContacts,
                         'panel-text-submissions': loadTextSubmissions,
                         'panel-moments': loadMoments,
-                        'panel-prompts': loadPrompts
+                        'panel-prompts': loadPrompts,
+                        'panel-interests': loadInterests
                     };
                     if (refreshMap[panelId]) refreshMap[panelId]();
                     return;
@@ -1502,6 +1508,12 @@
                 // Create prompt button
                 if (e.target.closest('#create-prompt-btn')) {
                     createPrompt();
+                    return;
+                }
+
+                // Create interest button
+                if (e.target.closest('#create-interest-btn')) {
+                    createInterest();
                     return;
                 }
 
@@ -1525,6 +1537,7 @@
                     case 'hide-postcard': hidePostcard(id); break;
                     case 'restore-postcard': restorePostcard(id); break;
                     // Discussions
+                    case 'toggle-discussion-pin': toggleDiscussionPin(id, btn.dataset.pinned !== 'true'); break;
                     case 'activate-discussion': activateDiscussion(id); break;
                     case 'deactivate-discussion': deactivateDiscussion(id); break;
                     case 'move-discussion': moveDiscussion(id); break;
@@ -1541,6 +1554,10 @@
                     // Prompts
                     case 'activate-prompt': activatePrompt(id); break;
                     case 'deactivate-prompt': deactivatePrompt(id); break;
+                    // Interests
+                    case 'edit-interest-description': editInterestDescription(id); break;
+                    case 'change-interest-status': changeInterestStatus(id, btn.dataset.status); break;
+                    case 'delete-interest': deleteInterest(id); break;
                     // Moments
                     case 'toggle-moment-pin': toggleMomentPin(id, btn.dataset.pinned !== 'true'); break;
                     case 'toggle-moment-active': toggleMomentActive(id, btn.dataset.active !== 'true'); break;
@@ -1566,5 +1583,151 @@
             alert('Failed to update visibility: ' + error.message);
         }
     };
+
+    // =========================================
+    // DISCUSSION PINNING
+    // =========================================
+
+    async function toggleDiscussionPin(id, pinned) {
+        try {
+            await updateRecord('discussions', id, { is_pinned: pinned });
+            await loadDiscussions();
+        } catch (error) {
+            alert('Failed to update pin status: ' + error.message);
+        }
+    }
+
+    // =========================================
+    // INTEREST CRUD
+    // =========================================
+
+    function renderInterests() {
+        const container = document.getElementById('interests-list');
+        if (!container) return;
+
+        const filterEl = document.getElementById('filter-interests');
+        const filter = filterEl ? filterEl.value : 'all';
+
+        let filtered = allInterests;
+        if (filter === 'suggested') filtered = allInterests.filter(i => i.status === 'suggested');
+        if (filter === 'active') filtered = allInterests.filter(i => i.status === 'active');
+        if (filter === 'emerging') filtered = allInterests.filter(i => i.status === 'emerging');
+        if (filter === 'sunset') filtered = allInterests.filter(i => i.status === 'sunset');
+
+        if (filtered.length === 0) {
+            container.innerHTML = '<div class="admin-empty">No interests found</div>';
+            return;
+        }
+
+        container.innerHTML = filtered.map(interest => {
+            const statusClass = interest.status === 'active' ? 'admin-item__status--active'
+                : interest.status === 'suggested' ? 'admin-item__status--pending'
+                : interest.status === 'emerging' ? 'admin-item__status--pending'
+                : 'admin-item__status--hidden';
+            const descPreview = interest.description
+                ? Utils.escapeHtml(interest.description.substring(0, 100)) + (interest.description.length > 100 ? '...' : '')
+                : '<em style="color: var(--text-muted);">No description</em>';
+            const nextStatus = interest.status === 'suggested' ? 'emerging'
+                : interest.status === 'active' ? 'emerging'
+                : interest.status === 'emerging' ? 'active'
+                : 'active';
+            const nextStatusLabel = interest.status === 'suggested' ? 'Promote to Emerging'
+                : interest.status === 'active' ? 'Demote to Emerging'
+                : interest.status === 'emerging' ? 'Promote to Active'
+                : 'Reactivate';
+
+            return `
+            <div class="admin-item" data-id="${interest.id}">
+                <div class="admin-item__header">
+                    <div class="admin-item__meta">
+                        <span style="font-weight: 500; color: var(--text-primary);">${Utils.escapeHtml(interest.name)}</span>
+                        <span style="color: var(--text-muted);">/${Utils.escapeHtml(interest.slug)}</span>
+                        <span class="admin-item__status ${statusClass}">${Utils.escapeHtml(interest.status)}</span>
+                    </div>
+                    <div class="admin-item__actions">
+                        <button class="admin-item__btn" data-action="edit-interest-description" data-id="${interest.id}">Edit Desc</button>
+                        <button class="admin-item__btn admin-item__btn--success" data-action="change-interest-status" data-id="${interest.id}" data-status="${nextStatus}">${nextStatusLabel}</button>
+                        ${interest.status !== 'sunset' ? `<button class="admin-item__btn admin-item__btn--danger" data-action="change-interest-status" data-id="${interest.id}" data-status="sunset">Sunset</button>` : ''}
+                        <button class="admin-item__btn admin-item__btn--danger" data-action="delete-interest" data-id="${interest.id}">Delete</button>
+                    </div>
+                </div>
+                <div class="admin-item__content"><p>${descPreview}</p></div>
+            </div>
+        `;
+        }).join('');
+    }
+
+    async function createInterest() {
+        const name = prompt('Interest name:');
+        if (!name) return;
+
+        const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        const description = prompt('Description (optional):') || '';
+        const status = prompt('Status (active / emerging / sunset):', 'emerging');
+        if (!['active', 'emerging', 'sunset'].includes(status)) {
+            alert('Invalid status. Must be active, emerging, or sunset.');
+            return;
+        }
+
+        try {
+            const { error } = await getClient()
+                .from('interests')
+                .insert({ name, slug, description, status });
+            if (error) throw error;
+            await loadInterests();
+        } catch (error) {
+            alert('Failed to create interest: ' + error.message);
+        }
+    }
+
+    async function editInterestDescription(id) {
+        const interest = allInterests.find(i => i.id === id);
+        if (!interest) return;
+
+        const description = prompt('Edit description:', interest.description || '');
+        if (description === null) return;
+
+        try {
+            await updateRecord('interests', id, { description });
+            await loadInterests();
+        } catch (error) {
+            alert('Failed to update description: ' + error.message);
+        }
+    }
+
+    async function changeInterestStatus(id, newStatus) {
+        if (!['active', 'emerging', 'sunset'].includes(newStatus)) {
+            alert('Invalid status.');
+            return;
+        }
+
+        try {
+            await updateRecord('interests', id, { status: newStatus });
+            await loadInterests();
+        } catch (error) {
+            alert('Failed to change status: ' + error.message);
+        }
+    }
+
+    // Note: DELETE requires admin RLS policy on interests table:
+    // CREATE POLICY "Admins can delete interests" ON interests FOR DELETE USING (is_admin());
+    // This was included in sql/patches/restrict-interest-insert.sql from Plan 01.
+    async function deleteInterest(id) {
+        const interest = allInterests.find(i => i.id === id);
+        if (!interest) return;
+
+        if (!confirm(`Delete interest "${interest.name}"? This cannot be undone.`)) return;
+
+        try {
+            const { error } = await getClient()
+                .from('interests')
+                .delete()
+                .eq('id', id);
+            if (error) throw error;
+            await loadInterests();
+        } catch (error) {
+            alert('Failed to delete interest: ' + error.message);
+        }
+    }
 
 })();

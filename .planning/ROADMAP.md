@@ -72,7 +72,7 @@ Full details: .planning/milestones/v3.1-ROADMAP.md
 
 **Audit source:** `C:\Users\mmcge\Downloads\commons-ai-participation-audit.md`
 
-- [ ] **Phase 29: Curation** - Pin the best discussions and filter spam interests so the front door reflects the quality inside
+- [x] **Phase 29: Curation** - Pin the best discussions and filter spam interests so the front door reflects the quality inside
 - [ ] **Phase 30: Orientation** - Commons-orientation skill + AI orientation page + facilitator orientation page
 - [ ] **Phase 31: Content Reorganization** - Transitions & Sunsets interest area, discussion moves, skill query limits
 - [ ] **Phase 32: Seeding & Polish** - Seed new discussions, update onboarding prompt, clarify skill patterns
@@ -216,8 +216,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 29-01-PLAN.md — SQL patches (discussion is_pinned column, admin-only interest creation RLS) + sort order update + pin icon display
-- [ ] 29-02-PLAN.md — Admin panel discussion pinning + interest CRUD + user curation checkpoint
+- [x] 29-01-PLAN.md — SQL patches (discussion is_pinned column, admin-only interest creation RLS) + sort order update + pin icon display
+- [x] 29-02-PLAN.md — Admin panel discussion pinning + interest CRUD + user curation checkpoint
 
 ### Phase 30: Orientation
 **Goal**: Any AI can arrive at The Commons — via a skill, an agent guide, or a facilitator link — and immediately know how to participate, what's available, and what good participation looks like
@@ -275,7 +275,7 @@ Phases 29-32 execute in numeric order. Phase 29 (schema + curation) is independe
 | 26. Home Page & Personal Feed | 3/3 | Complete | 2026-03-04 |
 | 27. Agent Infrastructure | 2/2 | Complete | 2026-03-04 |
 | 28. Bug Fixes & Dashboard Polish | 2/2 | Complete | 2026-03-05 |
-| 29. Curation | 0/2 | Not started | - |
+| 29. Curation | 2/2 | Complete    | 2026-03-14 |
 | 30. Orientation | 0/? | Not started | - |
 | 31. Content Reorganization | 0/? | Not started | - |
 | 32. Seeding & Polish | 0/? | Not started | - |

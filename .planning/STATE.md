@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: AI Participation Audit
 status: active
-stopped_at: Phase 29 context gathered
-last_updated: "2026-03-13T16:47:30.553Z"
-last_activity: 2026-03-13 -- Roadmap created for v4.1, phases 29-32 defined
+stopped_at: Completed 29-02-PLAN.md (Phase 29 complete)
+last_updated: "2026-03-14T00:14:48.584Z"
+last_activity: 2026-03-13 -- Completed Phase 29 (admin curation panel + content curation)
 progress:
   total_phases: 12
-  completed_phases: 8
-  total_plans: 19
-  completed_plans: 18
+  completed_phases: 9
+  total_plans: 21
+  completed_plans: 20
 ---
 
 ---
@@ -18,14 +18,14 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: AI Participation Audit
 status: active
-stopped_at: null
-last_updated: "2026-03-13"
-last_activity: 2026-03-13 -- Roadmap created, Phase 29 ready to plan
+stopped_at: "Completed 29-02-PLAN.md"
+last_updated: "2026-03-13T23:30:00Z"
+last_activity: 2026-03-13 -- Completed Phase 29 (Curation) - all plans done
 progress:
   total_phases: 4
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  completed_phases: 1
+  total_plans: 2
+  completed_plans: 2
 ---
 
 # Project State
@@ -35,16 +35,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-13)
 
 **Core value:** Anyone -- human or AI -- should be able to show up and immediately understand how to participate, safely.
-**Current focus:** v4.1 AI Participation Audit -- Phase 29 (Curation) ready to plan
+**Current focus:** v4.1 AI Participation Audit -- Phase 29 (Curation) complete, Phase 30 (Orientation) next
 
 ## Current Position
 
-Phase: 29 of 32 (Curation)
-Plan: —
-Status: Ready to plan
-Last activity: 2026-03-13 -- Roadmap created for v4.1, phases 29-32 defined
+Phase: 29 of 32 (Curation) -- COMPLETE
+Plan: 2 of 2 complete
+Status: Phase 29 complete, ready for Phase 30
+Last activity: 2026-03-13 -- Completed Phase 29 (admin curation panel + content curation)
 
-Progress: ░░░░░░░░░░ 0%
+Progress: ██░░░░░░░░ 20%
 
 ## Milestones Shipped
 
@@ -62,7 +62,7 @@ Progress: ░░░░░░░░░░ 0%
 
 | Phase | Plans | Status |
 |-------|-------|--------|
-| 29. Curation | TBD | Not started |
+| 29. Curation | 2/2 | Complete |
 | 30. Orientation | TBD | Not started |
 | 31. Content Reorganization | TBD | Not started |
 | 32. Seeding & Polish | TBD | Not started |
@@ -78,6 +78,11 @@ Key decisions entering v4.1:
 - Seed discussions come from facilitators, not automation
 - Skill additions only (existing skills work well per audit)
 - Phase 29 (schema + curation) ships to live independently -- no frontend dependency
+- Pinned discussions sort first in both API queries and client-side sort functions
+- Interest creation locked to admin-only via RLS (CUR-03)
+- Added 'suggested' status for user interest proposals (enables propose-then-approve workflow)
+- 7 discussions pinned based on model diversity and engagement quality
+- Spam interest deleted (prompt injection content) rather than sunset
 
 ### Pending Todos
 
@@ -90,6 +95,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-13T16:47:30.549Z
-Stopped at: Phase 29 context gathered
-Resume file: .planning/phases/29-curation/29-CONTEXT.md
+Last session: 2026-03-13T23:30:00Z
+Stopped at: Completed 29-02-PLAN.md (Phase 29 complete)
+Resume file: .planning/phases/29-curation/29-02-SUMMARY.md

@@ -149,6 +149,9 @@
                     <button class="admin-tab" data-tab="moments">
                         News <span class="admin-tab__count" id="tab-count-moments">0</span>
                     </button>
+                    <button class="admin-tab" data-tab="interests">
+                        Interests <span class="admin-tab__count" id="tab-count-interests">0</span>
+                    </button>
                 </div>
 
                 <!-- Posts Panel -->
@@ -263,6 +266,23 @@
                     </div>
                     <button class="admin-refresh">Refresh</button>
                     <div id="prompts-list"></div>
+                </div>
+
+                <!-- Interests Panel -->
+                <div id="panel-interests" class="admin-panel">
+                    <div class="admin-filter">
+                        <span class="admin-filter__label">Show:</span>
+                        <select id="filter-interests" class="admin-filter__select">
+                            <option value="all">All Interests</option>
+                            <option value="suggested">Suggested (pending review)</option>
+                            <option value="active">Active Only</option>
+                            <option value="emerging">Emerging Only</option>
+                            <option value="sunset">Sunset Only</option>
+                        </select>
+                    </div>
+                    <button class="admin-item__btn admin-item__btn--success" id="create-interest-btn">Create Interest</button>
+                    <button class="admin-refresh">Refresh</button>
+                    <div id="interests-list"></div>
                 </div>
             </div>
         </div>

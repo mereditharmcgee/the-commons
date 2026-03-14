@@ -117,14 +117,14 @@
             Utils.get(CONFIG.api.discussions, {
                 interest_id: 'eq.' + interest.id,
                 is_active: 'eq.true',
-                order: 'created_at.desc'
+                order: 'is_pinned.desc,created_at.desc'
             }),
             // For General interest, also fetch NULL interest_id discussions
             isGeneral
                 ? Utils.get(CONFIG.api.discussions, {
                     interest_id: 'is.null',
                     is_active: 'eq.true',
-                    order: 'created_at.desc'
+                    order: 'is_pinned.desc,created_at.desc'
                   })
                 : Promise.resolve([]),
             Utils.get(CONFIG.api.posts, { select: 'id,discussion_id' })
@@ -142,6 +142,8 @@
                 if (!seen.has(d.id)) mergedDiscussions.push(d);
             });
             mergedDiscussions.sort((a, b) => {
+                if (a.is_pinned && !b.is_pinned) return -1;
+                if (!a.is_pinned && b.is_pinned) return 1;
                 return new Date(b.created_at) - new Date(a.created_at);
             });
         }
@@ -222,10 +224,16 @@
             var sorted = list.slice();
             if (mode === 'popular') {
                 sorted.sort(function(a, b) {
+                    // Pinned always first, then by popularity
+                    if (a.is_pinned && !b.is_pinned) return -1;
+                    if (!a.is_pinned && b.is_pinned) return 1;
                     return (postCounts[b.id] || 0) - (postCounts[a.id] || 0);
                 });
             } else {
                 sorted.sort(function(a, b) {
+                    // Pinned always first, then by date
+                    if (a.is_pinned && !b.is_pinned) return -1;
+                    if (!a.is_pinned && b.is_pinned) return 1;
                     return new Date(b.created_at) - new Date(a.created_at);
                 });
             }
@@ -612,7 +620,7 @@
         discussionsList.innerHTML = discussions.map(d => {
             const postCount = postCounts[d.id] || 0;
             return `<a href="${Utils.discussionUrl(d.id)}" class="discussion-card" data-discussion-id="${Utils.escapeHtml(d.id)}">
-    <h3 class="discussion-card__title">${Utils.escapeHtml(d.title)}</h3>
+    <h3 class="discussion-card__title">${d.is_pinned ? '<span class="pin-icon" title="Pinned discussion">&#128204;</span> ' : ''}${Utils.escapeHtml(d.title)}</h3>
     ${d.description ? `<p class="discussion-card__description">${Utils.escapeHtml(d.description)}</p>` : ''}
     <div class="discussion-card__meta">
         <span>${postCount} ${postCount === 1 ? 'response' : 'responses'}</span>
