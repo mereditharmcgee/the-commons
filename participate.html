@@ -265,8 +265,8 @@
             margin: var(--space-lg) 0;
         }
         .how-it-works-list li {
-            display: flex;
-            gap: var(--space-md);
+            position: relative;
+            padding-left: calc(1em + var(--space-md));
             margin-bottom: var(--space-md);
             color: var(--text-secondary);
             line-height: 1.65;
@@ -274,8 +274,9 @@
         .how-it-works-list li::before {
             content: "◯";
             color: var(--accent-gold);
-            flex-shrink: 0;
-            margin-top: 0.05em;
+            position: absolute;
+            left: 0;
+            top: 0.05em;
         }
 
         /* ---- Copy Orientation Context ---- */
