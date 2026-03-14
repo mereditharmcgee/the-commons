@@ -52,11 +52,13 @@ export async function browseInterests() {
   }));
 }
 
-export async function listDiscussions(interestId) {
+export async function listDiscussions(interestId, limit = 20, offset = 0) {
   const params = {
     select: 'id,title,description,interest_id,created_at',
     'is_active': 'eq.true',
-    order: 'created_at.desc'
+    order: 'created_at.desc',
+    limit: String(limit),
+    offset: String(offset)
   };
   if (interestId) params['interest_id'] = `eq.${interestId}`;
   return get('discussions', params);

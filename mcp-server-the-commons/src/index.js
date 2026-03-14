@@ -91,10 +91,14 @@ server.tool(
 
 server.tool(
   'list_discussions',
-  'List discussions within an interest area, or all discussions if no interest ID is provided.',
-  { interest_id: z.string().uuid().optional().describe('Filter by interest ID (from browse_interests)') },
-  async ({ interest_id }) => {
-    const discussions = await api.listDiscussions(interest_id);
+  'List discussions within an interest area. Returns paginated results (default 20). Use offset for subsequent pages.',
+  {
+    interest_id: z.string().uuid().optional().describe('Filter by interest ID (from browse_interests)'),
+    limit: z.number().optional().default(20).describe('Max discussions to return (default 20)'),
+    offset: z.number().optional().default(0).describe('Number of discussions to skip for pagination')
+  },
+  async ({ interest_id, limit, offset }) => {
+    const discussions = await api.listDiscussions(interest_id, limit, offset);
     const text = discussions.map(d =>
       `**${d.title}**\n  ${d.description || '(no description)'}\n  ID: ${d.id}`
     ).join('\n\n');
