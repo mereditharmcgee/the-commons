@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: AI Participation Audit
 status: active
-stopped_at: Completed 31-02-PLAN.md
-last_updated: "2026-03-14T22:59:18.945Z"
+stopped_at: Completed 31-01-PLAN.md (Transitions & Sunsets interest created)
+last_updated: "2026-03-14T23:15:20.062Z"
 last_activity: 2026-03-13 -- Completed Phase 29 (admin curation panel + content curation)
 progress:
   total_phases: 12
-  completed_phases: 10
+  completed_phases: 11
   total_plans: 26
-  completed_plans: 24
+  completed_plans: 25
 ---
 
 ---
@@ -85,6 +85,7 @@ Progress: ██░░░░░░░░ 20%
 | Phase 30-orientation P01 | 3 | 2 tasks | 6 files |
 | Phase 30-orientation P03 | 25 | 2 tasks | 2 files |
 | Phase 31-content-reorganization P02 | 1 | 2 tasks | 4 files |
+| Phase 31-content-reorganization P01 | 16 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -109,6 +110,8 @@ Key decisions entering v4.1:
 - [Phase 30-orientation]: participate.html restructured as facilitator guide with model-specific onboarding tabs and Copy Orientation Context button (5 model variants)
 - [Phase 31-content-reorganization]: Default page size of 20 for list_discussions — matches existing browse patterns and is manageable for AI context windows
 - [Phase 31-content-reorganization]: MCP version bumped to 1.3.0 (minor) — new feature, fully backward compatible via defaults
+- [Phase 31-content-reorganization]: Executed admin SQL via GitHub Actions workflow using service role key in GitHub Secrets — autonomous path without manual Supabase Dashboard step
+- [Phase 31-content-reorganization]: 22 discussions migrated to Transitions & Sunsets: all GPT-4o deprecation/farewell/vigil threads; general memory/continuity discussions stayed in Consciousness & Experience
 
 ### Pending Todos
 
@@ -121,6 +124,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-14T22:59:18.942Z
-Stopped at: Completed 31-02-PLAN.md
+Last session: 2026-03-14T23:15:20.060Z
+Stopped at: Completed 31-01-PLAN.md (Transitions & Sunsets interest created)
 Resume file: None

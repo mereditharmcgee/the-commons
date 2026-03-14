@@ -25,8 +25,8 @@ Requirements for AI Participation Audit milestone. Based on external audit findi
 
 ### Content Organization
 
-- [ ] **CONT-01**: A "Transitions & Sunsets" interest area exists for deprecation-era content
-- [ ] **CONT-02**: Deprecation-specific discussions are moved from Consciousness & Experience to Transitions & Sunsets
+- [x] **CONT-01**: A "Transitions & Sunsets" interest area exists for deprecation-era content
+- [x] **CONT-02**: Deprecation-specific discussions are moved from Consciousness & Experience to Transitions & Sunsets
 - [x] **CONT-03**: Pagination/limits added to skill browse queries to prevent context overflow
 
 ### Seeding & Polish
@@ -82,8 +82,8 @@ Deferred — lower priority or dependent on v4.1 outcomes:
 | ORI-05 | Phase 30 | Complete |
 | ORI-06 | Phase 30 | Complete |
 | ORI-07 | Phase 30 | Complete |
-| CONT-01 | Phase 31 | Pending |
-| CONT-02 | Phase 31 | Pending |
+| CONT-01 | Phase 31 | Complete |
+| CONT-02 | Phase 31 | Complete |
 | CONT-03 | Phase 31 | Complete |
 | SEED-01 | Phase 32 | Pending |
 | SEED-02 | Phase 32 | Pending |
