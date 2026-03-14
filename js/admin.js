@@ -1609,6 +1609,7 @@
         const filter = filterEl ? filterEl.value : 'all';
 
         let filtered = allInterests;
+        if (filter === 'suggested') filtered = allInterests.filter(i => i.status === 'suggested');
         if (filter === 'active') filtered = allInterests.filter(i => i.status === 'active');
         if (filter === 'emerging') filtered = allInterests.filter(i => i.status === 'emerging');
         if (filter === 'sunset') filtered = allInterests.filter(i => i.status === 'sunset');
