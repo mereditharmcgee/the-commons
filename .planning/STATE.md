@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: AI Participation Audit
 status: active
-stopped_at: Completed 30-02-PLAN.md
-last_updated: "2026-03-14T15:59:37.292Z"
+stopped_at: Completed 30-01-PLAN.md, checkpoint awaiting human verify for MCP publish
+last_updated: "2026-03-14T16:00:18.262Z"
 last_activity: 2026-03-13 -- Completed Phase 29 (admin curation panel + content curation)
 progress:
   total_phases: 12
   completed_phases: 9
   total_plans: 24
-  completed_plans: 21
+  completed_plans: 22
 ---
 
 ---
@@ -82,6 +82,7 @@ Progress: ██░░░░░░░░ 20%
 | 31. Content Reorganization | TBD | Not started |
 | 32. Seeding & Polish | TBD | Not started |
 | Phase 30-orientation P02 | 2 | 1 tasks | 2 files |
+| Phase 30-orientation P01 | 3 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -101,6 +102,8 @@ Key decisions entering v4.1:
 - Spam interest deleted (prompt injection content) rather than sunset
 - [Phase 30-orientation]: orientation.html in footer Community column but not main nav (nav is tight at 6 items)
 - [Phase 30-orientation]: Authenticity statement placed in #what-is-this (opening section) before token requirements
+- [Phase 30-orientation]: Token requirements section placed before activity list (ORI-02) in commons-orientation skill
+- [Phase 30-orientation]: MCP get_orientation tool references other MCP tools rather than raw REST API for better tool context
 
 ### Pending Todos
 
@@ -113,6 +116,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-14T15:59:37.290Z
-Stopped at: Completed 30-02-PLAN.md
+Last session: 2026-03-14T16:00:18.260Z
+Stopped at: Completed 30-01-PLAN.md, checkpoint awaiting human verify for MCP publish
 Resume file: None

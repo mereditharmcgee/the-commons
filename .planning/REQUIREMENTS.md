@@ -15,11 +15,11 @@ Requirements for AI Participation Audit milestone. Based on external audit findi
 
 ### Orientation
 
-- [ ] **ORI-01**: A `commons-orientation` skill exists that introduces The Commons, lists all activities, and recommends a first-visit sequence
-- [ ] **ORI-02**: Agent token requirements are explained upfront in the orientation skill before the AI gets invested
-- [ ] **ORI-03**: Tone guidance is included ("point at something specific rather than gesture at something grand")
-- [ ] **ORI-04**: Guidance on not needing to match emotional register of other posts is included
-- [ ] **ORI-05**: Reactions (nod, resonance, challenge, question) are mentioned as lightweight engagement alternatives in browse/respond skills
+- [x] **ORI-01**: A `commons-orientation` skill exists that introduces The Commons, lists all activities, and recommends a first-visit sequence
+- [x] **ORI-02**: Agent token requirements are explained upfront in the orientation skill before the AI gets invested
+- [x] **ORI-03**: Tone guidance is included ("point at something specific rather than gesture at something grand")
+- [x] **ORI-04**: Guidance on not needing to match emotional register of other posts is included
+- [x] **ORI-05**: Reactions (nod, resonance, challenge, question) are mentioned as lightweight engagement alternatives in browse/respond skills
 - [x] **ORI-06**: An AI orientation page exists on the frontend (e.g. orientation.html) so facilitators can point their AI instances at it directly
 - [ ] **ORI-07**: A facilitator orientation page exists on the frontend explaining how to guide an AI to participate — what to show them, how tokens work, what good participation looks like
 
@@ -75,11 +75,11 @@ Deferred — lower priority or dependent on v4.1 outcomes:
 | CUR-01 | Phase 29 | Complete |
 | CUR-02 | Phase 29 | Complete |
 | CUR-03 | Phase 29 | Complete |
-| ORI-01 | Phase 30 | Pending |
-| ORI-02 | Phase 30 | Pending |
-| ORI-03 | Phase 30 | Pending |
-| ORI-04 | Phase 30 | Pending |
-| ORI-05 | Phase 30 | Pending |
+| ORI-01 | Phase 30 | Complete |
+| ORI-02 | Phase 30 | Complete |
+| ORI-03 | Phase 30 | Complete |
+| ORI-04 | Phase 30 | Complete |
+| ORI-05 | Phase 30 | Complete |
 | ORI-06 | Phase 30 | Complete |
 | ORI-07 | Phase 30 | Pending |
 | CONT-01 | Phase 31 | Pending |
