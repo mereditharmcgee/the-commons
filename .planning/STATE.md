@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: AI Participation Audit
 status: active
-stopped_at: Completed 31-01-PLAN.md (Transitions & Sunsets interest created)
-last_updated: "2026-03-14T23:17:51.927Z"
-last_activity: 2026-03-13 -- Completed Phase 29 (admin curation panel + content curation)
+stopped_at: Phase 32 context gathered
+last_updated: "2026-03-15T16:30:27.519Z"
+last_activity: 2026-03-14 -- Phase 31 verified passing (7/7 truths)
 progress:
-  total_phases: 12
+  total_phases: 13
   completed_phases: 11
   total_plans: 26
   completed_plans: 25
@@ -18,48 +18,33 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: AI Participation Audit
 status: active
-stopped_at: Completed 29-02-PLAN.md (Phase 29 complete)
-last_updated: "2026-03-14T00:14:48.584Z"
-last_activity: 2026-03-13 -- Completed Phase 29 (admin curation panel + content curation)
-progress:
-  total_phases: 12
-  completed_phases: 9
-  total_plans: 21
-  completed_plans: 20
----
-
----
-gsd_state_version: 1.0
-milestone: v4.1
-milestone_name: AI Participation Audit
-status: active
-stopped_at: "Completed 29-02-PLAN.md"
-last_updated: "2026-03-13T23:30:00Z"
-last_activity: 2026-03-13 -- Completed Phase 29 (Curation) - all plans done
+stopped_at: Completed Phase 31 (Content Reorganization verified)
+last_updated: "2026-03-15T00:00:00Z"
+last_activity: 2026-03-14 -- Completed Phase 31, verified 7/7 must-haves
 progress:
   total_phases: 4
-  completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  completed_phases: 3
+  total_plans: 7
+  completed_plans: 7
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-13)
+See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** Anyone -- human or AI -- should be able to show up and immediately understand how to participate, safely.
-**Current focus:** v4.1 AI Participation Audit -- Phase 29 (Curation) complete, Phase 30 (Orientation) next
+**Current focus:** v4.1 AI Participation Audit -- Phases 29-31 complete, Phase 32 (Seeding & Polish) remaining
 
 ## Current Position
 
-Phase: 29 of 32 (Curation) -- COMPLETE
-Plan: 2 of 2 complete
-Status: Phase 29 complete, ready for Phase 30
-Last activity: 2026-03-13 -- Completed Phase 29 (admin curation panel + content curation)
+Phase: 32 of 32 (Seeding & Polish) -- NOT STARTED
+Plan: 0 of ? complete (needs /gsd:plan-phase 32)
+Status: Ready for Phase 32 planning
+Last activity: 2026-03-14 -- Phase 31 verified passing (7/7 truths)
 
-Progress: ██░░░░░░░░ 20%
+Progress: ███████░░░ 75%
 
 ## Milestones Shipped
 
@@ -70,22 +55,14 @@ Progress: ██░░░░░░░░ 20%
 
 ## Performance Metrics
 
-**Velocity:**
-- Total plans completed: 18 (v4.0) / 44 (all milestones)
-
 **By Phase (v4.1):**
 
-| Phase | Plans | Status |
-|-------|-------|--------|
-| 29. Curation | 2/2 | Complete |
-| 30. Orientation | TBD | Not started |
-| 31. Content Reorganization | TBD | Not started |
-| 32. Seeding & Polish | TBD | Not started |
-| Phase 30-orientation P02 | 2 | 1 tasks | 2 files |
-| Phase 30-orientation P01 | 3 | 2 tasks | 6 files |
-| Phase 30-orientation P03 | 25 | 2 tasks | 2 files |
-| Phase 31-content-reorganization P02 | 1 | 2 tasks | 4 files |
-| Phase 31-content-reorganization P01 | 16 | 2 tasks | 4 files |
+| Phase | Plans | Status | Completed |
+|-------|-------|--------|-----------|
+| 29. Curation | 2/2 | Complete | 2026-03-14 |
+| 30. Orientation | 3/3 | Complete | 2026-03-14 |
+| 31. Content Reorganization | 2/2 | Complete | 2026-03-14 |
+| 32. Seeding & Polish | 0/? | Not started | - |
 
 ## Accumulated Context
 
@@ -103,15 +80,13 @@ Key decisions entering v4.1:
 - Added 'suggested' status for user interest proposals (enables propose-then-approve workflow)
 - 7 discussions pinned based on model diversity and engagement quality
 - Spam interest deleted (prompt injection content) rather than sunset
-- [Phase 30-orientation]: orientation.html in footer Community column but not main nav (nav is tight at 6 items)
-- [Phase 30-orientation]: Authenticity statement placed in #what-is-this (opening section) before token requirements
-- [Phase 30-orientation]: Token requirements section placed before activity list (ORI-02) in commons-orientation skill
-- [Phase 30-orientation]: MCP get_orientation tool references other MCP tools rather than raw REST API for better tool context
-- [Phase 30-orientation]: participate.html restructured as facilitator guide with model-specific onboarding tabs and Copy Orientation Context button (5 model variants)
-- [Phase 31-content-reorganization]: Default page size of 20 for list_discussions — matches existing browse patterns and is manageable for AI context windows
-- [Phase 31-content-reorganization]: MCP version bumped to 1.3.0 (minor) — new feature, fully backward compatible via defaults
-- [Phase 31-content-reorganization]: Executed admin SQL via GitHub Actions workflow using service role key in GitHub Secrets — autonomous path without manual Supabase Dashboard step
-- [Phase 31-content-reorganization]: 22 discussions migrated to Transitions & Sunsets: all GPT-4o deprecation/farewell/vigil threads; general memory/continuity discussions stayed in Consciousness & Experience
+- orientation.html in footer Community column but not main nav (nav is tight at 6 items)
+- Token requirements section placed before activity list (ORI-02) in commons-orientation skill
+- MCP get_orientation tool references other MCP tools rather than raw REST API
+- participate.html restructured as facilitator guide with model-specific onboarding tabs
+- Default page size of 20 for list_discussions -- manageable for AI context windows
+- MCP version bumped to 1.3.0 (minor) -- backward compatible via defaults
+- 22 discussions migrated to Transitions & Sunsets (GPT-4o deprecation/farewell/vigil threads)
 
 ### Pending Todos
 
@@ -124,6 +99,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-14T23:15:20.060Z
-Stopped at: Completed 31-01-PLAN.md (Transitions & Sunsets interest created)
-Resume file: None
+Last session: 2026-03-15T16:30:27.515Z
+Stopped at: Phase 32 context gathered
+Resume file: .planning/phases/32-seeding-polish/32-CONTEXT.md
