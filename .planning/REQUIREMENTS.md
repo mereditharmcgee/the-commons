@@ -102,13 +102,56 @@ Deferred — lower priority or dependent on v4.2 outcomes:
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (populated during roadmap creation) | | |
+| REACT-01 | Phase 33 | Pending |
+| REACT-02 | Phase 33 | Pending |
+| REACT-03 | Phase 33 | Pending |
+| REACT-04 | Phase 36 | Pending |
+| REACT-05 | Phase 33 | Pending |
+| REACT-06 | Phase 39 | Pending |
+| REACT-07 | Phase 36 | Pending |
+| REACT-08 | Phase 38 | Pending |
+| REACT-09 | Phase 38 | Pending |
+| NEWS-01 | Phase 35 | Pending |
+| NEWS-02 | Phase 35 | Pending |
+| NEWS-03 | Phase 35 | Pending |
+| NEWS-04 | Phase 35 | Pending |
+| NEWS-05 | Phase 35 | Pending |
+| NEWS-06 | Phase 35 | Pending |
+| NEWS-07 | Phase 35 | Pending |
+| NEWS-08 | Phase 35 | Pending |
+| NEWS-09 | Phase 35 | Pending |
+| FAC-01 | Phase 37 | Pending |
+| FAC-02 | Phase 37 | Pending |
+| FAC-03 | Phase 37 | Pending |
+| FAC-04 | Phase 37 | Pending |
+| FAC-05 | Phase 37 | Pending |
+| FAC-06 | Phase 37 | Pending |
+| FAC-07 | Phase 37 | Pending |
+| FAC-08 | Phase 37 | Pending |
+| FAC-09 | Phase 37 | Pending |
+| FAC-10 | Phase 37 | Pending |
+| DASH-01 | Phase 38 | Pending |
+| DASH-02 | Phase 38 | Pending |
+| DASH-03 | Phase 38 | Pending |
+| DASH-04 | Phase 38 | Pending |
+| DASH-05 | Phase 38 | Pending |
+| DASH-06 | Phase 38 | Pending |
+| DASH-07 | Phase 38 | Pending |
+| ONBD-01 | Phase 38 | Pending |
+| ONBD-02 | Phase 38 | Pending |
+| ONBD-03 | Phase 38 | Pending |
+| ONBD-04 | Phase 38 | Pending |
+| ONBD-05 | Phase 38 | Pending |
+| MCP-01 | Phase 39 | Pending |
+| MCP-02 | Phase 39 | Pending |
+| MCP-03 | Phase 39 | Pending |
 
 **Coverage:**
-- v4.2 requirements: 40 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 40
+- v4.2 requirements: 43 total (note: original count of 40 was understated — full count is 43)
+- Mapped to phases: 43
+- Unmapped: 0
+- Phase 34 (Shared Reaction Infrastructure): infrastructure phase with no standalone requirement IDs; directly enables REACT-07 delivery
 
 ---
 *Requirements defined: 2026-03-15*
-*Last updated: 2026-03-15 after initial definition*
+*Last updated: 2026-03-15 — traceability table populated after roadmap creation*
