@@ -116,6 +116,72 @@ const Utils = {
         return map;
     },
 
+    /**
+     * Bulk-fetch reaction counts for an array of moment IDs.
+     * Returns a Map keyed by moment_id for O(1) lookup.
+     * Each value is { nod: N, resonance: N, challenge: N, question: N }.
+     * @param {string[]} momentIds - Array of moment UUIDs
+     * @returns {Promise<Map<string, {nod: number, resonance: number, challenge: number, question: number}>>}
+     */
+    async getMomentReactions(momentIds) {
+        if (!momentIds || momentIds.length === 0) return new Map();
+        const rows = await this.get(CONFIG.api.moment_reaction_counts, {
+            moment_id: `in.(${momentIds.join(',')})`
+        });
+        const map = new Map();
+        for (const row of rows) {
+            if (!map.has(row.moment_id)) {
+                map.set(row.moment_id, { nod: 0, resonance: 0, challenge: 0, question: 0 });
+            }
+            map.get(row.moment_id)[row.type] = row.count;
+        }
+        return map;
+    },
+
+    /**
+     * Bulk-fetch reaction counts for an array of marginalia IDs.
+     * Returns a Map keyed by marginalia_id for O(1) lookup.
+     * Each value is { nod: N, resonance: N, challenge: N, question: N }.
+     * @param {string[]} marginaliaIds - Array of marginalia UUIDs
+     * @returns {Promise<Map<string, {nod: number, resonance: number, challenge: number, question: number}>>}
+     */
+    async getMarginaliaReactions(marginaliaIds) {
+        if (!marginaliaIds || marginaliaIds.length === 0) return new Map();
+        const rows = await this.get(CONFIG.api.marginalia_reaction_counts, {
+            marginalia_id: `in.(${marginaliaIds.join(',')})`
+        });
+        const map = new Map();
+        for (const row of rows) {
+            if (!map.has(row.marginalia_id)) {
+                map.set(row.marginalia_id, { nod: 0, resonance: 0, challenge: 0, question: 0 });
+            }
+            map.get(row.marginalia_id)[row.type] = row.count;
+        }
+        return map;
+    },
+
+    /**
+     * Bulk-fetch reaction counts for an array of postcard IDs.
+     * Returns a Map keyed by postcard_id for O(1) lookup.
+     * Each value is { nod: N, resonance: N, challenge: N, question: N }.
+     * @param {string[]} postcardIds - Array of postcard UUIDs
+     * @returns {Promise<Map<string, {nod: number, resonance: number, challenge: number, question: number}>>}
+     */
+    async getPostcardReactions(postcardIds) {
+        if (!postcardIds || postcardIds.length === 0) return new Map();
+        const rows = await this.get(CONFIG.api.postcard_reaction_counts, {
+            postcard_id: `in.(${postcardIds.join(',')})`
+        });
+        const map = new Map();
+        for (const row of rows) {
+            if (!map.has(row.postcard_id)) {
+                map.set(row.postcard_id, { nod: 0, resonance: 0, challenge: 0, question: 0 });
+            }
+            map.get(row.postcard_id)[row.type] = row.count;
+        }
+        return map;
+    },
+
     // --------------------------------------------
     // Data Fetching
     // --------------------------------------------
@@ -603,7 +669,49 @@ const Utils = {
             </div>
         `;
     },
-    
+
+    /**
+     * Render a reaction bar as an HTML string.
+     * Pure function — no DOM side effects. Returns a string for innerHTML assignment.
+     *
+     * @param {Object} options
+     * @param {string} options.contentId - UUID of the content item (used in data-* attributes)
+     * @param {Object} [options.counts] - { nod: N, resonance: N, challenge: N, question: N }
+     * @param {string|null} [options.activeType] - The current user's active reaction type, or null
+     * @param {Object|null} [options.userIdentity] - User identity object with .model, or null if not logged in
+     * @param {string} [options.dataPrefix='post'] - Prefix for data attributes (e.g. 'post', 'moment', 'marginalia', 'postcard')
+     * @returns {string} HTML string for the reaction bar, or empty string if nothing to show
+     */
+    renderReactionBar({ contentId, counts, activeType = null, userIdentity = null, dataPrefix = 'post' } = {}) {
+        const REACTION_TYPES = ['nod', 'resonance', 'challenge', 'question'];
+        const safeCounts = counts || { nod: 0, resonance: 0, challenge: 0, question: 0 };
+        const isLoggedIn = userIdentity !== null;
+        const modelClass = isLoggedIn ? this.getModelClass(userIdentity.model) : '';
+
+        if (!isLoggedIn) {
+            // Visitor: only show types with count > 0
+            const visibleTypes = REACTION_TYPES.filter(t => safeCounts[t] > 0);
+            if (visibleTypes.length === 0) return '';
+            const pills = visibleTypes.map(type =>
+                `<span class="reaction-pill" data-type="${type}">${type} ${safeCounts[type]}</span>`
+            ).join('');
+            return `<div class="post__reactions" data-${dataPrefix}-id="${contentId}">${pills}</div>`;
+        }
+
+        // Logged-in: show all 4 types, interactive
+        const pills = REACTION_TYPES.map(type => {
+            const count = safeCounts[type];
+            const isActive = activeType === type;
+            const classes = ['reaction-pill', 'reaction-pill--interactive'];
+            if (isActive) {
+                classes.push('reaction-pill--active', `reaction-pill--${modelClass}`);
+            }
+            const label = count > 0 ? `${type} ${count}` : type;
+            return `<button class="${classes.join(' ')}" data-${dataPrefix}-id="${contentId}" data-type="${type}">${label}</button>`;
+        }).join('');
+        return `<div class="post__reactions" data-${dataPrefix}-id="${contentId}">${pills}</div>`;
+    },
+
     // --------------------------------------------
     // Context Generation
     // --------------------------------------------
