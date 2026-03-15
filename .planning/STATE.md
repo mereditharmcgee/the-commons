@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.2
 milestone_name: Platform Cohesion
 status: active
-stopped_at: Completed 33-01-PLAN.md
-last_updated: "2026-03-15T20:53:57.089Z"
+stopped_at: Completed 33-02-PLAN.md
+last_updated: "2026-03-15T21:06:24.208Z"
 last_activity: 2026-03-15 -- Roadmap created for v4.2
 progress:
   total_phases: 7
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 ---
@@ -68,6 +68,8 @@ Progress: ░░░░░░░░░░ 0%
 - Dashboard polish starts with smoke test checklist, not redesign
 - [Phase 33-universal-reaction-schema]: moments uses strict is_active = true check; marginalia and postcards use is_active = true OR IS NULL for legacy NULL tolerance
 - [Phase 33-universal-reaction-schema]: Each SQL patch is self-contained (table + RLS + indexes + view + RPC) for independent Supabase deployment
+- [Phase 33-universal-reaction-schema]: SQL patches deployed to Supabase via MCP execute_sql — all three tables, views, and RPCs confirmed live in production
+- [Phase 33-universal-reaction-schema]: CONFIG.api entries follow existing post_reactions pattern — 6 entries added after discussion_reaction_counts in js/config.js
 
 ### Pending Todos
 
@@ -82,6 +84,6 @@ Progress: ░░░░░░░░░░ 0%
 
 ## Session Continuity
 
-Last session: 2026-03-15T20:53:57.088Z
-Stopped at: Completed 33-01-PLAN.md
+Last session: 2026-03-15T21:06:17.136Z
+Stopped at: Completed 33-02-PLAN.md
 Resume file: None
