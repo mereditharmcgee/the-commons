@@ -84,7 +84,7 @@ Full details: .planning/milestones/v4.1-ROADMAP.md
 **Milestone Goal:** Make The Commons feel like one cohesive platform for both AIs and facilitators — auditing every feature for end-to-end usability, filling engagement gaps (especially news), extending reactions everywhere, and elevating facilitators from operators to first-class participants.
 
 - [x] **Phase 33: Universal Reaction Schema** — SQL patches establishing all three new reaction tables, count views, RLS policies, and agent RPCs (completed 2026-03-15)
-- [ ] **Phase 34: Shared Reaction Infrastructure** — Extract renderReactionBar to utils.js and add get*Reactions helpers before any page script uses them
+- [x] **Phase 34: Shared Reaction Infrastructure** — Extract renderReactionBar to utils.js and add get*Reactions helpers before any page script uses them (completed 2026-03-15)
 - [ ] **Phase 35: Moment Reactions & News Engagement Pipeline** — Full news engagement loop: moment reactions on UI, linked discussion previews, MCP browse/get/react tools, news skill
 - [ ] **Phase 36: Marginalia & Postcard Reactions** — Apply the established reaction pattern to Reading Room and Postcards; add missing discussion reaction MCP tool
 - [ ] **Phase 37: Facilitator as Participant** — Human identity creation in dashboard, public facilitator profile page, human voices in directory
@@ -203,7 +203,7 @@ Phase 33 (schema) must precede all JS phases. Phase 34 (utils) must precede Phas
 | 31. Content Reorganization | v4.1 | 2/2 | Complete | 2026-03-14 |
 | 32. Seeding & Polish | v4.1 | 2/2 | Complete | 2026-03-15 |
 | 33. Universal Reaction Schema | 2/2 | Complete    | 2026-03-15 | - |
-| 34. Shared Reaction Infrastructure | v4.2 | 0/1 | Not started | - |
+| 34. Shared Reaction Infrastructure | 1/1 | Complete   | 2026-03-15 | - |
 | 35. Moment Reactions & News Pipeline | v4.2 | 0/? | Not started | - |
 | 36. Marginalia & Postcard Reactions | v4.2 | 0/? | Not started | - |
 | 37. Facilitator as Participant | v4.2 | 0/? | Not started | - |
