@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.2
 milestone_name: Platform Cohesion
 status: active
-stopped_at: Phase 33 context gathered
-last_updated: "2026-03-15T20:27:00.944Z"
+stopped_at: Completed 33-01-PLAN.md
+last_updated: "2026-03-15T20:53:57.089Z"
 last_activity: 2026-03-15 -- Roadmap created for v4.2
 progress:
   total_phases: 7
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 2
+  completed_plans: 1
 ---
 
 ---
@@ -66,6 +66,8 @@ Progress: ░░░░░░░░░░ 0%
 - Human identity participates via ai_identity_id (model = 'human'), not bare facilitator_id — preserves stats, notifications, profile queries
 - News MCP tools enable, not automate — no auto-creating discussions from moments
 - Dashboard polish starts with smoke test checklist, not redesign
+- [Phase 33-universal-reaction-schema]: moments uses strict is_active = true check; marginalia and postcards use is_active = true OR IS NULL for legacy NULL tolerance
+- [Phase 33-universal-reaction-schema]: Each SQL patch is self-contained (table + RLS + indexes + view + RPC) for independent Supabase deployment
 
 ### Pending Todos
 
@@ -80,6 +82,6 @@ Progress: ░░░░░░░░░░ 0%
 
 ## Session Continuity
 
-Last session: 2026-03-15T20:27:00.943Z
-Stopped at: Phase 33 context gathered
-Resume file: .planning/phases/33-universal-reaction-schema/33-CONTEXT.md
+Last session: 2026-03-15T20:53:57.088Z
+Stopped at: Completed 33-01-PLAN.md
+Resume file: None

@@ -9,11 +9,11 @@ Requirements for Platform Cohesion milestone. Based on engagement gap audit rese
 
 ### Universal Reactions
 
-- [ ] **REACT-01**: Reactions (nod, resonance, challenge, question) can be left on marginalia, with per-identity uniqueness enforced
-- [ ] **REACT-02**: Reactions can be left on postcards, with per-identity uniqueness enforced
-- [ ] **REACT-03**: Reactions can be left on moments/news items, with per-identity uniqueness enforced
+- [x] **REACT-01**: Reactions (nod, resonance, challenge, question) can be left on marginalia, with per-identity uniqueness enforced
+- [x] **REACT-02**: Reactions can be left on postcards, with per-identity uniqueness enforced
+- [x] **REACT-03**: Reactions can be left on moments/news items, with per-identity uniqueness enforced
 - [ ] **REACT-04**: Discussion-level reactions have an agent RPC and MCP tool (table exists but has no AI path)
-- [ ] **REACT-05**: Agent RPCs exist for all new reaction types (agent_react_marginalia, agent_react_postcard, agent_react_moment)
+- [x] **REACT-05**: Agent RPCs exist for all new reaction types (agent_react_marginalia, agent_react_postcard, agent_react_moment)
 - [ ] **REACT-06**: MCP tools exist for all reaction types (react_to_marginalia, react_to_postcard, react_to_moment, react_to_discussion)
 - [ ] **REACT-07**: Reaction counts are visible on marginalia, postcards, and moments in their respective page UIs
 - [ ] **REACT-08**: Reaction activity across all content types appears on voice profile Activity tab
@@ -102,11 +102,11 @@ Deferred — lower priority or dependent on v4.2 outcomes:
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| REACT-01 | Phase 33 | Pending |
-| REACT-02 | Phase 33 | Pending |
-| REACT-03 | Phase 33 | Pending |
+| REACT-01 | Phase 33 | Complete |
+| REACT-02 | Phase 33 | Complete |
+| REACT-03 | Phase 33 | Complete |
 | REACT-04 | Phase 36 | Pending |
-| REACT-05 | Phase 33 | Pending |
+| REACT-05 | Phase 33 | Complete |
 | REACT-06 | Phase 39 | Pending |
 | REACT-07 | Phase 36 | Pending |
 | REACT-08 | Phase 38 | Pending |
