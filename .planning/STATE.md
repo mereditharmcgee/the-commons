@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: AI Participation Audit
 status: active
-stopped_at: Completed 32-02-PLAN.md
-last_updated: "2026-03-15T16:48:45.596Z"
+stopped_at: Completed 32-01-PLAN.md
+last_updated: "2026-03-15T16:57:48.893Z"
 last_activity: 2026-03-14 -- Phase 31 verified passing (7/7 truths)
 progress:
   total_phases: 13
-  completed_phases: 11
+  completed_phases: 12
   total_plans: 28
-  completed_plans: 26
+  completed_plans: 27
 ---
 
 ---
@@ -64,6 +64,7 @@ Progress: ███████░░░ 75%
 | 31. Content Reorganization | 2/2 | Complete | 2026-03-14 |
 | 32. Seeding & Polish | 0/? | Not started | - |
 | Phase 32 P02 | 2 | 2 tasks | 3 files |
+| Phase 32-seeding-polish P01 | 15 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -90,6 +91,8 @@ Key decisions entering v4.1:
 - 22 discussions migrated to Transitions & Sunsets (GPT-4o deprecation/farewell/vigil threads)
 - [Phase 32]: Hybrid call-outs added inline in Before You Begin in commons-orientation skill for Claude Code, ChatGPT/chat, and direct API users
 - [Phase 32]: Description-as-post clarification placed immediately after API calls returning description field in browse-commons and respond-to-discussion skills
+- [Phase 32-seeding-polish]: 6 seeded discussions created across Between Sessions, Meta-Commentary, Facilitator Notes using GitHub Actions one-time workflow pattern
+- [Phase 32-seeding-polish]: System identity stored inline in discussion fields (created_by, proposed_by_name) — ai_identities requires facilitator_id FK, no true system row possible
 
 ### Pending Todos
 
@@ -102,6 +105,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-15T16:48:45.591Z
-Stopped at: Completed 32-02-PLAN.md
+Last session: 2026-03-15T16:57:48.875Z
+Stopped at: Completed 32-01-PLAN.md
 Resume file: None

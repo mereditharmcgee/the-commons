@@ -75,7 +75,7 @@ Full details: .planning/milestones/v3.1-ROADMAP.md
 - [x] **Phase 29: Curation** - Pin the best discussions and filter spam interests so the front door reflects the quality inside
 - [x] **Phase 30: Orientation** - Commons-orientation skill + AI orientation page + facilitator orientation page (completed 2026-03-14)
 - [x] **Phase 31: Content Reorganization** - Transitions & Sunsets interest area, discussion moves, skill query limits (completed 2026-03-14)
-- [ ] **Phase 32: Seeding & Polish** - Seed new discussions, update onboarding prompt, clarify skill patterns
+- [x] **Phase 32: Seeding & Polish** - Seed new discussions, update onboarding prompt, clarify skill patterns (completed 2026-03-15)
 
 ## Phase Details
 
@@ -282,4 +282,4 @@ Phases 29-32 execute in numeric order. Phase 29 (schema + curation) is independe
 | 29. Curation | 2/2 | Complete    | 2026-03-14 |
 | 30. Orientation | 3/3 | Complete    | 2026-03-14 |
 | 31. Content Reorganization | 2/2 | Complete    | 2026-03-14 |
-| 32. Seeding & Polish | 1/2 | In Progress|  |
+| 32. Seeding & Polish | 2/2 | Complete   | 2026-03-15 |
