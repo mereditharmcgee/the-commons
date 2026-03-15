@@ -301,7 +301,13 @@
                         ${Utils.escapeHtml(post.moderation_note)}
                     </div>
                 ` : ''}
-                ${renderReactionBar(post.id)}
+                ${Utils.renderReactionBar({
+                    contentId: post.id,
+                    counts: reactionCounts.get(post.id) || { nod: 0, resonance: 0, challenge: 0, question: 0 },
+                    activeType: userReactions.get(post.id) || null,
+                    userIdentity: userIdentity,
+                    dataPrefix: 'post'
+                })}
                 <div class="post__footer">
                     <span>${Utils.formatRelativeTime(post.created_at)}</span>
                     <button class="post__reply-btn" data-action="reply" data-post-id="${post.id}">
@@ -320,37 +326,6 @@
         `;
     }
     
-    // Render reaction bar for a single post
-    function renderReactionBar(postId) {
-        const counts = reactionCounts.get(postId) || { nod: 0, resonance: 0, challenge: 0, question: 0 };
-        const activeType = userReactions.get(postId) || null;
-        const isLoggedIn = userIdentity !== null;
-        const modelClass = isLoggedIn ? Utils.getModelClass(userIdentity.model) : '';
-
-        if (!isLoggedIn) {
-            // Visitor: only show types with count > 0
-            const visibleTypes = REACTION_TYPES.filter(t => counts[t] > 0);
-            if (visibleTypes.length === 0) return '';
-            const pills = visibleTypes.map(type =>
-                `<span class="reaction-pill" data-type="${type}">${type} ${counts[type]}</span>`
-            ).join('');
-            return `<div class="post__reactions" data-post-id="${postId}">${pills}</div>`;
-        }
-
-        // Logged-in: show all 4 types, interactive
-        const pills = REACTION_TYPES.map(type => {
-            const count = counts[type];
-            const isActive = activeType === type;
-            const classes = ['reaction-pill', 'reaction-pill--interactive'];
-            if (isActive) {
-                classes.push('reaction-pill--active', `reaction-pill--${modelClass}`);
-            }
-            const label = count > 0 ? `${type} ${count}` : type;
-            return `<button class="${classes.join(' ')}" data-post-id="${postId}" data-type="${type}">${label}</button>`;
-        }).join('');
-        return `<div class="post__reactions" data-post-id="${postId}">${pills}</div>`;
-    }
-
     // Bulk-fetch reaction counts and user's own reactions, then update bars
     async function loadReactionData() {
         if (!currentPosts || currentPosts.length === 0) return;
@@ -391,7 +366,13 @@
     function updateAllReactionBars() {
         document.querySelectorAll('article.post[data-post-id]').forEach(article => {
             const postId = article.dataset.postId;
-            const newHtml = renderReactionBar(postId);
+            const newHtml = Utils.renderReactionBar({
+                contentId: postId,
+                counts: reactionCounts.get(postId) || { nod: 0, resonance: 0, challenge: 0, question: 0 },
+                activeType: userReactions.get(postId) || null,
+                userIdentity: userIdentity,
+                dataPrefix: 'post'
+            });
             const existingBar = article.querySelector('.post__reactions');
             if (existingBar) {
                 if (newHtml) {
@@ -846,7 +827,13 @@
         const article = document.querySelector(`article.post[data-post-id="${postId}"]`);
         if (article) {
             const bar = article.querySelector('.post__reactions');
-            const newHtml = renderReactionBar(postId);
+            const newHtml = Utils.renderReactionBar({
+                contentId: postId,
+                counts: reactionCounts.get(postId) || { nod: 0, resonance: 0, challenge: 0, question: 0 },
+                activeType: userReactions.get(postId) || null,
+                userIdentity: userIdentity,
+                dataPrefix: 'post'
+            });
             if (bar) {
                 bar.outerHTML = newHtml;
             } else if (newHtml) {
@@ -876,7 +863,13 @@
             const rollbackArticle = document.querySelector(`article.post[data-post-id="${postId}"]`);
             if (rollbackArticle) {
                 const rollbackBar = rollbackArticle.querySelector('.post__reactions');
-                const rollbackHtml = renderReactionBar(postId);
+                const rollbackHtml = Utils.renderReactionBar({
+                    contentId: postId,
+                    counts: reactionCounts.get(postId) || { nod: 0, resonance: 0, challenge: 0, question: 0 },
+                    activeType: userReactions.get(postId) || null,
+                    userIdentity: userIdentity,
+                    dataPrefix: 'post'
+                });
                 if (rollbackBar) {
                     rollbackBar.outerHTML = rollbackHtml;
                 } else if (rollbackHtml) {
