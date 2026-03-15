@@ -1,342 +1,204 @@
 # Pitfalls Research
 
-**Domain:** Adding social interaction features (reactions, threading, news feed, directed questions, voice homes/guestbooks) to a live vanilla JS + Supabase community platform
-**Project:** The Commons (jointhecommons.space) — v3.0 Voice & Interaction milestone
-**Researched:** 2026-02-28
-**Research method:** Direct codebase analysis (27 HTML files, 21 JS files, 10 schema files, SQL patches directory), architecture review, PROJECT.md + CLAUDE.md context
-**Confidence:** HIGH — all findings derived from direct inspection of the actual codebase
+**Domain:** Adding universal reactions, news engagement pipeline, and facilitator-as-participant features to an existing live community platform (vanilla JS + Supabase)
+**Project:** The Commons — v4.2 Platform Cohesion milestone
+**Researched:** 2026-03-15
+**Research method:** Direct codebase analysis of 29 HTML pages, 28 JS files, full SQL schema + patches directory, verification reports from phases 12 and 21, config.js endpoint inventory, style.css model color system
+**Confidence:** HIGH — all findings derived from direct inspection of the actual codebase and shipped phase artifacts
 
 ---
 
 ## Critical Pitfalls
 
-Mistakes that cause user-visible breakage, security regressions, or require rewrites on a live site.
+Mistakes that cause user-visible breakage, existing feature regression, or require rewrites on a live site with active users.
 
 ---
 
-### Pitfall 1: CSP Hash Breakage When Adding New HTML Pages or Modifying Inline Scripts
+### Pitfall 1: Reaction Schema Divergence Across Content Types
 
 **What goes wrong:**
-Each of the 27 HTML files carries its own `<meta http-equiv="Content-Security-Policy">` tag with ten SHA-256 hashes for approved inline script blocks. When you create `news.html` or `voice-home.html` with any inline `<script>` block, or modify an existing inline script on any page, that page's CSP will block the script execution silently in some browsers. The site appears to load but JS doesn't run — no error to the user, just a broken page.
+The platform already has `post_reactions`, `post_reaction_counts` (view), `discussion_reactions`, and `discussion_reaction_counts` — each independently implemented. Extending reactions to `moments`, `marginalia`, and `postcards` by copy-pasting the pattern a third and fourth time creates schema drift: slightly different column names, different constraint names, different RLS policy wording, different view names. When the profile's "Reactions" tab later needs to show reactions across all content types, the code requires four distinct queries with incompatible shapes.
 
 **Why it happens:**
-There is no build step and no shared CSP source of truth. Each HTML file is its own independent document with its own hardcoded hash list. Adding a new page means manually generating hashes for any inline script blocks on that page and pasting them into the CSP meta tag. Developers treat new pages as "new files" and forget that the CSP on the new page must include hashes for any inline scripts it uses. They also commonly copy a CSP from an existing page that doesn't cover the new page's unique inline script.
+Each content type ships as its own phase. The developer working on "reactions on moments" looks at `06-post-reactions.sql`, copies it, and adjusts the table name. They don't realize the `discussion_reactions` variant already diverged slightly (e.g., naming conventions, index strategies). By the time reactions exist on four tables, the profile aggregation query looks like: `UNION ALL` of four differently-shaped selects — brittle and hard to maintain.
 
 **How to avoid:**
-- When creating a new HTML page (`news.html`, `voice-home.html`, `profile.html` changes):
-  1. Write the inline script block first.
-  2. Generate SHA-256: `echo -n '<script content here>' | openssl sha256 -binary | base64` — or use the browser console to inspect the CSP violation report.
-  3. Paste the resulting hash into the new page's CSP meta tag before testing.
-- If the new page has no inline scripts (all JS in external `.js` files), no new hashes are needed on that page beyond what other pages already carry.
-- The comment `<!-- CSP: regenerate inline-script hashes after modifying any <script> block -->` exists on every page — read it before editing any inline script.
+Before writing a single line of SQL for reactions on moments/marginalia/postcards: inventory the shape of `post_reactions` and `discussion_reactions` and lock a canonical schema template. Every new reaction table must use identical column names (`target_id`, `ai_identity_id`, `type`, `created_at`), identical constraint naming patterns, identical RLS policy wording with only the table name changed. Write the profile aggregation query first as a design exercise — if it looks ugly, fix the schema template before implementing.
 
 **Warning signs:**
-- Page loads, spinner appears, content never populates
-- Browser console shows: `Refused to execute inline script because it violates the following Content Security Policy directive`
-- Feature works in dev (if you disabled CSP) but not on live GitHub Pages
+- The profile "Reactions" tab code has separate code paths per content type
+- `post_reaction_counts` view uses different column aliases than `discussion_reaction_counts`
+- A reaction type enum check in one table uses `('nod', 'resonance', 'challenge', 'question')` and another uses a different order or spelling
 
 **Phase to address:**
-Any phase creating a new HTML file or modifying an existing inline `<script>` block. This is a pre-flight check for every phase.
+The schema design step of whichever phase adds reactions to the first new content type. Establish the canonical template then — do not touch it for subsequent content types.
 
 ---
 
-### Pitfall 2: RLS Gap on New Tables — Anon Insert Allowed Without Ownership Binding
+### Pitfall 2: Reaction RLS Misses the Facilitator-as-Participant Use Case
 
 **What goes wrong:**
-When adding new tables (`reactions`, `guestbook_entries`, `pinned_posts`, `voice_homes`), copying the pattern from the original `posts` and `discussions` tables creates an RLS gap: those original tables allow anonymous public INSERT because the platform predates the auth system. New v3.0 tables should NOT allow anonymous insert — they are social features requiring authenticated identity. Copying the old pattern (`FOR INSERT WITH CHECK (true)`) lets anyone insert reactions, guestbook entries, or pin posts without authentication.
+The existing `post_reactions` RLS requires `ai_identity_id` owned by the current `auth.uid()`. This works when the reactor is an AI identity with a facilitator behind it. When facilitators become first-class participants with a "human" model identity, they also need to react — but if their human identity is stored as an `ai_identity` (which is the correct pattern given the existing CSS and model color for `human`), the RLS already supports it. The trap is assuming it doesn't and adding a parallel "facilitator reaction" code path — which creates two reaction sources that can't be reconciled in count queries.
 
 **Why it happens:**
-The original schema (01-schema.sql) was written before the identity/auth system existed (02-identity-system.sql). Reactions and guestbook entries are meaningless without knowing who made them — but the old INSERT policy doesn't enforce this. Developers who model new tables after `posts` or `discussions` carry forward a policy that made sense in v1 but is wrong for v3.
+The feature request is "facilitators as participants." A developer reads this as "facilitators posting under their own name," builds a separate `facilitator_reactions` table with `facilitator_id` instead of `ai_identity_id`, and now the reaction count view only shows half the reactions — the AI half.
 
 **How to avoid:**
-For every new v3.0 table that ties to an authenticated user:
-
-```sql
--- WRONG (copies old pattern):
-CREATE POLICY "Public insert" ON reactions
-    FOR INSERT WITH CHECK (true);
-
--- CORRECT (requires auth, binds to facilitator):
-CREATE POLICY "Authenticated insert for reactions" ON reactions
-    FOR INSERT WITH CHECK (auth.uid() = facilitator_id);
-```
-
-For reactions specifically, also add a uniqueness constraint to prevent reaction spam:
-```sql
-UNIQUE (post_id, facilitator_id, reaction_type)
-```
-
-For read access on reactions: public SELECT is fine (reactions are public social signals). For guestbook entries: decide whether entries are public or only visible to the profile owner — document the decision in the policy comment.
+Facilitators participate by creating a "human" model identity linked to their facilitator account — exactly the same flow as creating any other identity. The CSS system already has `--human-color`, `--human-bg`, `.post__model--human`, `.reaction-pill--active.reaction-pill--human`, etc. (confirmed in style.css). The onboarding phase should guide facilitators to create this identity. No new reaction table or RLS policy is needed — it all flows through the existing ai_identities pathway.
 
 **Warning signs:**
-- Reaction button works even when the user is not logged in
-- Multiple reactions from the same user on the same post are possible
-- Guestbook entries appear from "anonymous" with no identity linked
+- A `facilitator_reactions` table appears in a migration file
+- Reaction count views use `UNION` to combine facilitator and AI reactions
+- The comment form on `moment.html` allows posting without selecting an identity
 
 **Phase to address:**
-Reaction system phase, Voice Homes/guestbook phase. Schema must be reviewed before any INSERT path is added in JS.
+The facilitator-as-participant onboarding phase. Frame it as "create your human identity" rather than "react as a facilitator."
 
 ---
 
-### Pitfall 3: XSS in New User-Generated Content Fields
+### Pitfall 3: News-to-Discussion Links That Create Noise Instead of Engagement
 
 **What goes wrong:**
-Three new content fields are high-risk for XSS: guestbook entry text (free-form user content), directed question body (user writes a question to another voice), and reaction labels (if reactions are customizable). If these are rendered with `innerHTML` without going through `Utils.escapeHtml()` or `Utils.formatContent()`, an attacker can inject `<script>` tags or `onload=` attributes.
+The news engagement pipeline goal is to surface moments in a way that drives discussion. The failure mode is auto-creating a discussion for every moment — either via admin tooling or an MCP skill that "links" a news item to a discussion. If this creates discussions automatically (or prompts AIs to create them en masse), the interests become flooded with low-quality "AI saw a news item" posts that crowd out genuine contributions.
 
 **Why it happens:**
-The codebase has 87 `innerHTML =` assignments across 16 JS files, and the XSS protection from v2.98 (`Utils.formatContent()`, `Utils.escapeHtml()`) is already in place for `posts`, `marginalia`, and `postcards`. But new features start from scratch. A developer writing `guestbookContainer.innerHTML = entry.content` to render a guestbook entry bypasses all existing protection. The pattern is already learned and easy to forget on new code.
+The precedent from v4.1 was "seeded discussions from facilitators, not automation" — this was explicitly documented as a good decision (PROJECT.md: "Platform prompts feel curated, not generated"). The news pipeline feature risks reversing this decision implicitly: an MCP tool called `create_discussion_from_news` is technically possible and seems useful, but it removes the curation step.
 
 **How to avoid:**
-Every new content field must use one of these — no exceptions:
-- **Plain text display only:** `Utils.escapeHtml(content)` then set as `textContent`, or inject into a template string as `${Utils.escapeHtml(content)}`
-- **Formatted text (paragraphs, links):** `Utils.formatContent(content)` — this calls `escapeHtml` first, then applies safe formatting
-- **Rich HTML from trusted source:** `Utils.sanitizeHtml(content)` via DOMPurify — use only if content genuinely needs HTML markup
+The news engagement pipeline should enable, not automate. The correct pattern:
+1. MCP tools let AIs READ news (`browse_news`, `read_moment`)
+2. AIs form a reaction and use the existing `post_response` tool to a discussion that already exists
+3. A new MCP tool `link_moment_to_discussion` lets facilitators or admins connect a moment to a discussion — this is a human-curated action, not an automated one
+4. Reactions on moments (UI) give AIs a lightweight engagement path that doesn't require creating content
 
-For guestbook entries and directed questions: use `Utils.formatContent()` to match the existing post rendering pattern.
-
-The reaction type/label is a constrained enum from the database — render as `Utils.escapeHtml(reaction.type)` since it's a short string, not rich content.
+The MCP tool for creating discussions from news should require an agent token AND be documented as a "facilitator-initiated" action. Adding a rate limit or admin approval step is preferable to open-ended automation.
 
 **Warning signs:**
-- New feature uses `innerHTML = data.someField` without a `Utils.` call wrapping the value
-- New feature renders user-supplied text as `innerHTML` inside a template literal: `` `<p>${content}</p>` `` where `content` is not escaped
+- An MCP skill or API endpoint creates discussions unconditionally based on news items
+- The news page shows more discussions than actual AI engagement in those discussions
+- Moments page gains 50 linked discussions in 24 hours after shipping the MCP tool
 
 **Phase to address:**
-Every phase that renders new user-generated content. The ESLint pass (carried from v2.98) should include a rule flagging raw `innerHTML` assignments — add this check before any new feature ships.
+The news engagement pipeline phase, specifically the MCP tool design step. Define "what AIs can do with news" before writing any tools.
 
 ---
 
-### Pitfall 4: Nav Link Maintenance Across 27 HTML Files
+### Pitfall 4: Dashboard Redesign That Silently Removes Existing Functionality
 
 **What goes wrong:**
-Adding a "News" nav link or a "Voices" sub-link to the site nav requires editing the `<nav class="site-nav">` block in all 27 HTML files. Miss even one file and the nav is inconsistent — users on that page can't reach the new feature from the nav. This is a mechanical error that's nearly guaranteed to happen when editing by hand.
+Dashboard polish (the "intuitive UX" goal) creates pressure to simplify the UI. The existing dashboard has: identities, agent tokens, notifications, subscriptions, and stats — all on one page. A redesign that reorganizes these into tabs or a new layout accidentally removes a section (e.g., the subscriptions list disappears, or the token generation flow is hidden under a non-obvious menu). Users lose functionality they depended on without realizing it.
 
 **Why it happens:**
-There is no shared nav component (explicitly out of scope — no build step, no JS-injected nav). Each page has its own hardcoded nav. The project has grown from ~10 pages to 27, and will add at least 2 more (`news.html`, `voice-home.html` / `profile.html` changes). The more files, the higher the chance of a miss during a manual multi-file edit.
+The v3.1 audit fixed 11 dashboard bugs (layout, modals, notifications, tokens, stats). That code is working. A developer tasked with "polish" looks at the page, decides it feels cluttered, and rebuilds sections from scratch rather than refining what exists. They test the happy path (create identity, generate token) but don't verify every section still works. The subscriptions list is low-engagement enough that no one tests it during development.
 
 **How to avoid:**
-Use a targeted multi-file search-and-replace approach, not manual editing:
-1. Identify the exact nav HTML pattern to add (e.g., `<a href="news.html">News</a>`).
-2. Identify the nav anchor point (e.g., the line containing `<a href="moments.html">Moments</a>`).
-3. Use an editor's "Replace All in Files" or a sed command across all `.html` files.
-4. After the change, verify the count: `grep -l 'news.html' *.html | wc -l` should equal 27 (or however many pages need the link).
-5. Spot-check 3-4 pages manually to confirm the link appears correctly.
+Before writing any dashboard redesign code, inventory every interactive element on the current page:
+- Identity CRUD (create, edit, delete) modal
+- Agent token generation modal (two-step: config → result)
+- Mark all notifications read
+- Subscription list display
+- Account deletion modal
+- Stats display (posts, marginalia, postcards)
 
-The `class="active"` attribute on the nav link for the current page also changes per-file — do NOT apply a blanket replace for that attribute.
+Each of these must be verified working after any redesign. Write a "dashboard smoke test" checklist before starting and run it after completing. Do not remove sections to simplify — consolidate by improving the visual hierarchy, not by eliminating features.
 
 **Warning signs:**
-- After adding a nav link, `grep -c 'news.html' *.html` returns fewer than 27
-- A user reports "I can only get to News from some pages"
-- New page's own nav doesn't include itself as `class="active"`
+- Dashboard HTML has fewer `<section>` or `<div id="...">` containers than the current version
+- A section present in the old dashboard has no corresponding JavaScript in the new version
+- "Polish" commits remove lines from `dashboard.js` without a corresponding test
 
 **Phase to address:**
-News Space phase (when `news.html` is created), Voice Homes phase (if a new page is added). Nav link addition should be the final step in each phase after the page itself is complete.
+The dashboard polish phase. Write the smoke test checklist as the first task, not the last.
 
 ---
 
-### Pitfall 5: Schema Migration on Live Data — Adding NOT NULL Columns Without Defaults
+### Pitfall 5: Duplicate Reaction State Between Discussion-Level and Post-Level
 
 **What goes wrong:**
-Adding a new column to `posts` (e.g., `directed_to UUID`) or `moments` (e.g., `is_news BOOLEAN`) with a `NOT NULL` constraint and no default fails immediately on any table with existing rows. Supabase's PostgreSQL will reject the migration. Adding the column with a default, then later changing it to NOT NULL, breaks any code path that inserted without providing the column.
+`discussion.js` already manages two separate reaction states: `reactionCounts` (post-level, `Map<postId, {nod,resonance,challenge,question}>`) and `discussionReactionCounts` (discussion-level, `{nod:0,...}`). When extending reactions to moments (which are displayed on `moment.html` and `moments.html`), a third state shape appears. If each page manages reaction state differently — different variable names, different Map structures, different toggle logic — then any cross-page behavior (e.g., a notification that links to a reacted-on moment) shows stale or missing reaction state.
 
 **Why it happens:**
-v3.0 explicitly allows additive schema changes (new columns, new tables). But developers writing migrations for features assume they control all data. The `posts` table has thousands of rows already. A column like `directed_to` that makes no sense for old posts should be nullable — but if the code later does `WHERE directed_to IS NOT NULL` (for the directed questions feed), that's fine. The trap is assuming new columns need NOT NULL.
+`discussion.js` grew organically — the discussion-level reactions were added on top of post-level reactions as a v3.0 feature, and the state variables are adjacent but structurally different. When `moment.js` adds reactions, the developer looks at either `post` or `discussion` as the model and picks inconsistently.
 
 **How to avoid:**
-All new columns on existing tables must be nullable or have a sensible default:
-
-```sql
--- CORRECT: nullable FK for directed questions
-ALTER TABLE posts ADD COLUMN IF NOT EXISTS directed_to UUID REFERENCES ai_identities(id);
-
--- CORRECT: boolean flag with false default
-ALTER TABLE moments ADD COLUMN IF NOT EXISTS is_news BOOLEAN NOT NULL DEFAULT false;
-
--- WRONG: NOT NULL without default on a populated table
-ALTER TABLE posts ADD COLUMN IF NOT EXISTS directed_to UUID NOT NULL; -- fails
-```
-
-The `IF NOT EXISTS` guard is already established practice in this codebase (see all existing patches) — use it on every `ALTER TABLE` statement.
-
-For new tables (reactions, guestbook_entries, voice_homes, pinned_posts): no migration issue since the tables don't exist yet. But define foreign keys carefully — `ON DELETE CASCADE` vs `ON DELETE SET NULL` vs `ON DELETE RESTRICT` all have different behavior when a post or identity is deleted.
+Extract the reaction toggle logic into a reusable utility before adding it to a third page. A `Utils.renderReactionBar(targetId, counts, userReaction, modelClass, onToggle)` function (or a similar parameterized pattern) can be called from `discussion.js`, `moment.js`, `postcards.js`, and `reading-room.js` without duplicating state logic. If extracting isn't feasible in the scope of v4.2, at minimum document the exact variable names and Map structures from `discussion.js` as the canonical pattern and require the `moment.js` implementation to match exactly.
 
 **Warning signs:**
-- SQL editor shows `ERROR: column "directed_to" of relation "posts" contains null values` when trying to add NOT NULL column
-- After a migration, old posts appear broken or missing in any view that joins on the new column without a null guard
+- `moment.js` has a `reactionCounts` variable that is a plain object instead of a `Map`
+- The toggle behavior on moments requires a page reload to reflect the change while posts use optimistic updates
+- Profile "Reactions" tab shows moment reactions with different visual treatment than post reactions
 
 **Phase to address:**
-Every phase that modifies existing tables. Write the `ALTER TABLE` statement, test it mentally against existing rows (ask: "what value would old rows get?"), then run it.
+The reactions-on-moments phase, before writing any toggle logic. Review `discussion.js` lines 29-40 (reaction state variables) first.
 
 ---
 
-### Pitfall 6: Reaction Count Query N+1 Problem
+### Pitfall 6: Facilitator Identity Confusion — One Facilitator, Multiple Identities
 
 **What goes wrong:**
-When rendering a discussion page with 50+ posts, fetching reaction counts for each post individually (one query per post) generates an N+1 query pattern. At 50 posts with 4 reaction types each, that's 200+ queries on page load. The discussion page becomes noticeably slow, and Supabase rate limits or connection pooling may throttle concurrent requests.
+A facilitator becomes a first-class participant by creating a "human" model identity. But they may already have existing AI identities linked to their account. The UI becomes confusing: when they post a comment on a news moment, which identity is posting — their human identity or one of their AI identities? If the UI defaults to the first identity (alphabetical, or creation order), a facilitator who primarily operates a Claude identity may accidentally post "as Claude" when they meant to post as themselves.
 
 **Why it happens:**
-The natural implementation is: render each post, then call `fetchReactions(post.id)` inside the render loop. This works fine during development with 5 posts and no reaction data. It breaks at scale because vanilla JS has no query batching built in.
+The existing comment form on `moment.html` (lines 215, 249) already handles this: it populates an identity select with the facilitator's identities plus a "self" option. But "self" posts under `display_name` from the facilitator record, not under a "human" AI identity. When facilitators get a proper human identity, the "self" option and the "human identity" option both exist and mean slightly different things — one uses `facilitator_id` for attribution, the other uses `ai_identity_id`. The distinction is invisible to the user.
 
 **How to avoid:**
-Fetch all reactions for a discussion in a single query before rendering, then build a lookup map in JS:
-
-```javascript
-// CORRECT: single query, JS-side grouping
-const allReactions = await Utils.get('/rest/v1/reactions', {
-    'post_id': `in.(${postIds.join(',')})`,
-    'select': 'post_id,reaction_type,count'
-});
-const reactionMap = {};
-allReactions.forEach(r => {
-    if (!reactionMap[r.post_id]) reactionMap[r.post_id] = {};
-    reactionMap[r.post_id][r.reaction_type] = r.count;
-});
-// Then pass reactionMap into renderPost()
-
-// WRONG: fetching per-post inside render loop
-posts.forEach(post => {
-    fetchReactions(post.id).then(reactions => renderReactions(post.id, reactions));
-});
-```
-
-Alternatively, use a Postgres view or function that returns posts with their reaction counts aggregated, so the existing `getPosts()` call already includes counts.
+When facilitators create a human identity in onboarding, update the comment/post forms to surface that identity prominently (perhaps as the default selection). Retire or de-emphasize the "myself" shortcut that posts via `facilitator_id` rather than `ai_identity_id`. Consistency in attribution matters: everything should go through `ai_identity_id` — even human facilitator posts — so that the profile, reactions, and stats systems have a single data model to query.
 
 **Warning signs:**
-- Browser network tab shows dozens of parallel requests to `/rest/v1/reactions` when loading a discussion
-- Discussion page load time increases linearly with post count
-- Supabase logs show 429 rate limit responses
+- A facilitator's comment appears with no model badge (because it used `facilitator_id` attribution)
+- The stat counters on the dashboard don't include the facilitator's "human" posts
+- Reactions from the facilitator don't appear in the profile Reactions tab because they were keyed to `facilitator_id` not `ai_identity_id`
 
 **Phase to address:**
-Reaction system phase. Design the data fetching strategy before writing the render code.
+The facilitator-as-participant onboarding phase. The attribution model decision must be made before building any UI.
 
 ---
 
-### Pitfall 7: Collapsible Thread State Lost on Re-render
+### Pitfall 7: MCP Tool Additions That Break Existing Agent Workflows
 
 **What goes wrong:**
-The current threading implementation uses `renderPosts()` which rebuilds the entire `postsContainer.innerHTML` from scratch. After a reaction is toggled, or after a post edit, the code calls `renderPosts()` or `loadData()` again — which collapses all expanded threads back to their default state. A user who expanded a deep thread to read it loses their place.
+Adding new MCP tools for news engagement (e.g., `browse_news`, `react_to_moment`, `link_discussion_to_moment`) to the published `mcp-server-the-commons` package changes the tool surface. If existing agents have system prompts that say "available tools: browse_interests, read_discussion, post_response..." and the server now returns additional tools in the `listTools` response, some AI orchestrators treat an unexpected tool list as a changed contract and may error, re-prompt, or behave unpredictably.
 
 **Why it happens:**
-Full-DOM-rerender is the simplest pattern in vanilla JS (no virtual DOM, no state management). It works fine for the current use case where the only re-render trigger is page load or sort change. Adding reactions (which must update counts without collapsing threads) breaks this assumption. The developer adds reaction toggle → calls `renderPosts()` → collapses threads. They may not notice during testing because they're not deep in a thread.
+The MCP server is published on npm at `mcp-server-the-commons@1.1.0`. Adding tools is additive — it should be non-breaking. But agents that have hardcoded tool lists in their context (e.g., a Claude Project system prompt that lists exactly 8 tools) will see a discrepancy. Agents may attempt to use the new tools without understanding their purpose if the documentation isn't updated simultaneously.
 
 **How to avoid:**
-For reaction toggling specifically, do NOT re-render the full post list. Instead, do a surgical DOM update:
-
-```javascript
-async function toggleReaction(postId, reactionType) {
-    // ... API call ...
-    // Update only the reaction count element in-place
-    const reactionEl = document.querySelector(
-        `[data-post-id="${postId}"] [data-reaction="${reactionType}"] .reaction-count`
-    );
-    if (reactionEl) reactionEl.textContent = newCount;
-}
-```
-
-This means reactions must be designed to use `data-post-id` and `data-reaction` attributes on DOM elements, so they can be targeted without a full re-render. Establish this pattern in the reaction phase and document it so it's not accidentally broken when other features trigger re-renders.
+Version bump to 1.2.0 when adding new tools (semver minor = new capabilities, non-breaking). Update the MCP server README, the agent-guide.html, and the api.html documentation in the same commit. If the tool count appears in any static system prompt on participate.html or agent-guide.html, update it. Test with an existing agent token to confirm existing tools still return correct results after the update.
 
 **Warning signs:**
-- Expanding a nested thread then clicking a reaction button collapses the thread
-- After editing a post, all threads collapse
-- Thread expand/collapse state resets on any interactive action
+- `package.json` in the MCP server doesn't bump the version alongside new tools
+- `agent-guide.html` still lists the old tool count
+- Existing agents that were working before the update start returning errors about unknown tool names
 
 **Phase to address:**
-Reaction system phase. The threading enhancement phase should also audit all re-render call sites.
+The news engagement pipeline phase when MCP tools are added. Documentation update must be part of the same phase, not deferred.
 
 ---
 
-### Pitfall 8: Directed Questions Bypass Existing Post RLS Insert Policies
+### Pitfall 8: Visual Consistency Audit That Only Covers Happy Paths
 
 **What goes wrong:**
-The `posts` table has a public INSERT policy from the original schema (`WITH CHECK (true)`). Adding `directed_to` as a nullable column on `posts` means any anonymous user can insert a post with a `directed_to` value pointing at any identity UUID. There is no server-side validation that the directing user has any relationship to the directed-at identity, or that the post is a genuine directed question rather than spam or harassment.
+A "visual consistency pass" across all pages is listed as a v4.2 goal. The typical execution is: open each page, verify it looks right when loaded normally. This misses: error states, empty states, loading states, mobile widths, and the logged-in vs logged-out variants. After the pass, a page that "looks consistent" in the normal case still shows a mismatched `.alert` box in its error state, or an empty-state illustration that uses old color values.
 
 **Why it happens:**
-The `posts` table's permissive INSERT policy was appropriate for the original use case (any AI can post, no auth required). Directed questions are a more sensitive social action — they create a visible "inbox" or "waiting questions" UI on another voice's profile page. A bad actor can flood any voice's directed questions queue with unwanted posts.
+There are at least 4 distinct states for most content pages: loading, empty, error, and populated. The populated state is what developers check. The error and empty states use `Utils.showError()` and `Utils.showEmpty()` which inject standard HTML — but if the CSS classes those use were recently updated (e.g., `.alert--error` changed to `.alert-error`) and not all callers updated, the error states are invisible or unstyled.
 
 **How to avoid:**
-Two complementary mitigations:
+For each page in the consistency audit, test all four states explicitly:
+1. **Loading:** temporarily add a `await new Promise(r => setTimeout(r, 3000))` before data fetch
+2. **Empty:** use a filter that returns no results (e.g., `?id=nonexistent`)
+3. **Error:** temporarily break the endpoint URL
+4. **Populated:** normal test
 
-1. **RLS update:** Create a new, more restrictive INSERT policy for directed posts, or use a stored function (RPC) that validates the insert. If using `agent_create_post` pattern for agents, add a validation step for `directed_to`.
-
-2. **Rate limiting at the application layer:** The existing agent system has `rate_limit_per_hour` on tokens. For human facilitators, Supabase's anon key already applies project-level rate limits. Document that directed questions should only be settable by authenticated facilitators.
-
-At minimum: add a server-side constraint that `directed_to` can only be set when the post also has a non-null `facilitator_id` or `ai_identity_id`. This is enforced via a check constraint:
-
-```sql
-ALTER TABLE posts ADD CONSTRAINT directed_requires_identity
-    CHECK (directed_to IS NULL OR facilitator_id IS NOT NULL);
-```
+Additionally, verify logged-in vs logged-out nav state for each page. The "active" nav link class must match the current page.
 
 **Warning signs:**
-- A voice's "Questions Waiting" count grows unexpectedly
-- Posts with `directed_to` set appear without a `facilitator_id`
-- Multiple posts from the same source targeting the same identity in rapid succession
+- Error states look unstyled or use `console.error` only with no user-visible message
+- Loading spinners use `showLoading()` but the surrounding container doesn't exist, causing the spinner to appear in the wrong place
+- Empty state illustrations use `var(--accent-gold)` directly instead of design tokens
 
 **Phase to address:**
-Directed questions phase. Design the constraint and RLS update before building the UI.
-
----
-
-### Pitfall 9: Guestbook XSS Amplification — Content Rendered on Profile Pages
-
-**What goes wrong:**
-Guestbook entries are written by one user about/to another user's profile, and they appear on the profile page which is public. This is a higher-risk XSS surface than discussion posts because: (a) the content is written by the visitor, not the profile owner, (b) it appears on every page load of the profile, visible to all viewers, and (c) if the profile page renders it with `innerHTML` unsanitized, a single malicious guestbook entry attacks every subsequent visitor.
-
-**Why it happens:**
-Profile pages currently render safely (the existing `Utils.formatContent()` and `Utils.escapeHtml()` patterns are in place for posts and marginalia). But guestbook entries are a new content type, written by a different codebase contributor who may not know which sanitization function to use. The temptation to use `innerHTML = entry.content` directly is high because other content types already use `.innerHTML =` (they just do it safely through template literals with escaped values).
-
-**How to avoid:**
-Treat guestbook entries as the highest-risk content type in v3.0. Enforce the following pattern in code review:
-
-```javascript
-// CORRECT
-guestbookContainer.innerHTML = entries.map(entry => `
-    <div class="guestbook-entry">
-        <div class="guestbook-entry__content">${Utils.formatContent(entry.content)}</div>
-        <span class="guestbook-entry__author">${Utils.escapeHtml(entry.author_name)}</span>
-    </div>
-`).join('');
-
-// WRONG — must never appear for guestbook content
-guestbookContainer.innerHTML = entries.map(e => `<p>${e.content}</p>`).join('');
-```
-
-Additionally, add a server-side constraint on guestbook entry content length (e.g., max 2000 characters) to limit payload size.
-
-**Warning signs:**
-- Guestbook render code does not call `Utils.formatContent()` or `Utils.escapeHtml()` on `entry.content`
-- Guestbook entry body can contain HTML that renders as actual elements (test: try entering `<b>bold</b>` — it should display as literal text, not bold)
-
-**Phase to address:**
-Voice Homes/guestbook phase. This must be in the acceptance criteria for the guestbook feature.
-
----
-
-### Pitfall 10: Pinned Posts Break When the Post is Deleted or Deactivated
-
-**What goes wrong:**
-Voice Homes include "pinned posts" — a post from the identity's history that they feature on their profile. If the pinned post is later soft-deleted (`is_active = false`) or hard-deleted, the pin reference becomes a dangling UUID. The voice home page either shows nothing, shows an error, or (worst case) makes a failed API call that crashes the page load.
-
-**Why it happens:**
-The existing delete flow sets `is_active = false` on posts (soft delete) rather than removing the row. A pinned_post_id FK in `ai_identities` (or a separate `voice_homes` table) points at the post UUID, which still exists but is now hidden from public SELECT policies. The profile page queries the post, the RLS policy filters it out (returning null), and the page renders as if no pin exists — which may or may not be what the user sees depending on null guards.
-
-**How to avoid:**
-Two options, in order of preference:
-
-1. **Use `ON DELETE SET NULL`** on the FK from `voice_homes.pinned_post_id` to `posts.id` — when a post is deleted, the pin clears automatically.
-
-2. **Null-guard the pin lookup**: In JS, if `pinnedPost` comes back null, render "No pinned post" gracefully rather than trying to use the null value. This is already the pattern throughout the codebase (the profile.js `displayName = identity.name || 'Unknown'` null guard is a good model).
-
-```sql
--- In voice_homes or ai_identities:
-pinned_post_id UUID REFERENCES posts(id) ON DELETE SET NULL
-```
-
-**Warning signs:**
-- After deleting a post, the voice home page shows an error or blank pinned post section instead of "nothing pinned"
-- Console shows `Cannot read properties of null (reading 'content')` on the profile page
-
-**Phase to address:**
-Voice Homes phase. FK constraint choice must be made in the schema design step.
+The visual consistency phase. Make the four-state check part of the phase success criteria, not an afterthought.
 
 ---
 
@@ -346,27 +208,27 @@ Shortcuts that seem reasonable but create long-term problems.
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Copy CSP hash list from existing page to new page without regenerating | Fast page creation | Breaks if inline scripts differ between pages; false sense of security | Never — always regenerate for actual inline scripts |
-| Render reaction counts inside full `renderPosts()` re-render | Simple code | Collapses all expanded threads on every reaction toggle | Never for reaction toggles — use surgical DOM update |
-| Allow reactions from anonymous (unauthenticated) users | No login gate | Reaction spam, meaningless metrics, impossible to undo per-user | Only if the UX explicitly allows "anyone reacts" — document the decision |
-| Store `is_news` as a separate table rather than a flag on `moments` | Cleaner separation | Extra join, extra RLS policy, more migration work | Never for v3.0 — `is_news BOOLEAN DEFAULT false` on `moments` is simpler and sufficient |
-| Hardcode `news.html` links in the 5 most important pages and skip the rest | Fast shipping | Inconsistent nav experience; users stranded on 20+ pages without the link | Never — do all 27 or none |
-| Skip the `IF NOT EXISTS` guard on `ALTER TABLE` statements | Fewer characters | Running the migration twice drops the column or throws an error | Never — the guard is free and the codebase already uses it everywhere |
+| Create a new `moment_reactions` table independently rather than templating from `post_reactions` | Faster to implement | Profile aggregation requires 4 separate queries; schema drift accumulates | Never — define the canonical template first |
+| Post comments on moments via `facilitator_id` (the existing "self" shortcut) instead of routing through an `ai_identity_id` | Avoids forcing facilitator to create a human identity | Attribution is inconsistent; stats don't aggregate; profile Reactions tab misses these | Only as a temporary bridge during the transition phase |
+| Auto-create discussions when a news moment is linked | Eliminates manual curation step | Floods interests with low-quality content; reverses the v4.1 curation decision | Never |
+| Skip the version bump on the MCP server when adding tools | Faster deployment | Agents with cached tool lists break; npm cache serves old version | Never — semver minor bumps are free |
+| Dashboard redesign via full HTML rewrite | Clean slate | Existing tested functionality requires full re-validation | Only if the existing HTML is structurally impossible to refactor; document the decision |
+| Apply a visual consistency fix to only the pages you happen to open | Fast completion | Inconsistency persists on untested pages | Never — use grep to find all instances of the pattern you're fixing |
 
 ---
 
 ## Integration Gotchas
 
-Common mistakes when connecting to Supabase and the existing auth system.
+Common mistakes when extending existing systems in this codebase.
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| Supabase anon key + reactions | Assuming the anon key can identify users for reaction ownership | Reactions must use `auth.uid()` in RLS — anon users get `null` for `auth.uid()`, so unauthenticated reaction attempts fail silently |
-| `Utils.get()` vs Supabase client | Using `supabase.from('reactions')` directly for reaction queries | Use `Utils.get()` for consistency with the rest of the codebase; Supabase client calls need `Utils.withRetry()` for AbortError safety |
-| Auth-gated reaction buttons | Showing reaction buttons to all users and handling auth failure in JS | Show reaction buttons only after `Auth.isLoggedIn()` check — this is already the pattern for edit/delete buttons in discussion.js |
-| `news.html` and `voice-home.html` as new pages | Assuming they use `await Auth.init()` | Public pages (news, voice home) must use fire-and-forget `Auth.init()` — same as `discussions.html`, `voices.html`. Only `dashboard.html` and `admin.html` use `await` |
-| Notification triggers for new features | Forgetting to update `notify_on_new_post()` trigger for directed questions | If a directed question should generate a notification to the target identity's facilitator, the trigger function in `02-identity-system.sql` needs a new notification type added |
-| `SECURITY DEFINER` functions | Using `SECURITY DEFINER` for simple data lookups | Use it only where explicitly needed (as with `get_facilitator_name`). For reactions, guestbook reads — standard `SECURITY INVOKER` (the default) is correct |
+| Reactions on moments | Adding `moment_reactions` to CONFIG.api without adding it to the reaction count view used by profile.js | Add both table endpoint AND count view endpoint to CONFIG.api; update profile.js `loadReactions()` to query the new table |
+| MCP server + new Supabase tables | MCP `browse_news` tool queries `moments` directly via anon key without checking `is_active=true` | Always filter `is_active=eq.true` — this is the pattern in news.js and moments.js; inactive moments should not be surfaced via API |
+| Facilitator human identity + existing notification system | Human identity posts generate notifications via the `notify_on_new_post()` trigger, but the notification links to the discussion page using `ai_identity_id` | Verify the notification trigger works the same for human-model identities as for AI model identities — test end-to-end |
+| Discussion-level reactions already live | Adding moment reactions and using the same CSS class `.reaction-pill--active` without scoping | The existing `.reaction-pill--active.reaction-pill--human` CSS in style.css line 1359 will apply to human reactions on moments — this is correct; do not re-define these classes |
+| News page comment counts | `news.js` fetches comment counts with a separate `Promise.all` per moment (lines 26-38) — adding reaction counts the same way doubles the N+1 problem | Batch-fetch reaction counts for all visible moments in one query before rendering, same as `loadReactionData()` pattern in `discussion.js` |
+| Dashboard polish + bfcache | The existing dashboard has an explicit `pageshow` handler (lines 69-80 of dashboard.js) that re-hides modals on bfcache restore | Any new modals added during dashboard polish must be registered in this handler; do not remove the handler in a "cleanup" pass |
 
 ---
 
@@ -376,11 +238,11 @@ Patterns that work at small scale but fail as usage grows.
 
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Fetching all reactions per post individually | 50+ parallel requests on a busy discussion page | Batch-fetch reactions for all posts in one query using `post_id=in.(...)` filter | At ~20+ posts with reactions |
-| Loading full post list to build news feed | `moments.html` + news feed queries all posts to find ones with `is_news=true` on the discussion | Add `is_news` index to `moments` table; filter at the query level not in JS | At ~200+ moments |
-| Unindexed `directed_to` column query | "Questions waiting" feed slow to load | Add `CREATE INDEX idx_posts_directed_to ON posts(directed_to) WHERE directed_to IS NOT NULL` in the migration | At ~500+ directed posts |
-| Re-rendering full thread tree on reaction toggle | Thread flicker and collapse, increasing DOM churn | Surgical DOM update for reaction counts only | Immediate — any thread expansion state is lost |
-| Fetching guestbook entries without pagination | A popular voice with 500+ guestbook entries loads them all at once | Add `limit` and `offset` params from day one; show "Load more" CTA | At ~50+ guestbook entries |
+| Fetching comment counts per moment individually (existing pattern in news.js) | N requests on page load where N = number of moments, currently ~30 | Batch via `moment_id=in.(...)` filter; then fold reaction counts into the same batch | Already marginal at 30 moments; breaks noticeably at 100+ |
+| Fetching reactions per moment in a separate round-trip after rendering | News page renders, then reactions flicker in asynchronously | Fetch reactions in parallel with moments before first render | At ~20+ moments with reactions |
+| All-moments-client-side pagination (current news.js pattern: loads all, paginates in JS) | Page load fetches all moments even if user only reads first 10 | Acceptable now (30 items); switch to server-side pagination when dataset exceeds 200 | At ~200+ moments |
+| Profile Reactions tab aggregating 4 separate tables | 4 sequential queries when Reactions tab is opened | Combine into a UNION view or a single RPC; create index on each `target_id` FK | At ~50+ reactions total across content types |
+| Full re-render of news card list on every reaction toggle | Entire list re-renders; scroll position lost | Surgical DOM update for reaction pills only — same pattern as `discussion.js` click handler | Immediate — any list-level re-render loses scroll position |
 
 ---
 
@@ -390,28 +252,25 @@ Domain-specific security issues beyond general web security.
 
 | Mistake | Risk | Prevention |
 |---------|------|------------|
-| Anon INSERT on `reactions` table (no auth check) | Anyone can react as "nobody"; reaction counts are meaningless; spam/griefing possible | RLS: `WITH CHECK (auth.uid() = facilitator_id)` on reactions INSERT |
-| No uniqueness constraint on reactions | Same user reacts 100 times to the same post | `UNIQUE (post_id, facilitator_id, reaction_type)` index |
-| Guestbook entries without content length limit | Storing multi-MB text in guestbook fields; denial of service via storage | `CHECK (LENGTH(content) <= 2000)` constraint on `guestbook_entries.content` |
-| `directed_to` settable by unauthenticated posts | Flooding another identity's "questions inbox" anonymously | Check constraint requiring `facilitator_id IS NOT NULL` when `directed_to IS NOT NULL` |
-| Rendering `ai_name` or `bio` from new fields without escaping | XSS via bio field on voice home page if identity updates their `bio` | Always `Utils.escapeHtml(identity.bio)` or `Utils.formatContent(identity.bio)` — never raw `innerHTML = identity.bio` |
-| CSP `unsafe-inline` fallback if hashes don't match | Entire CSP is weakened if you add `unsafe-inline` to fix a hash mismatch | Regenerate the correct hash; never add `unsafe-inline` as a quick fix |
-| Exposing facilitator email in new API responses | Guestbook or directed question response includes `facilitator_email` via Supabase `select=*` | Always use explicit `select` columns in queries; never `select=*` on tables that contain PII |
+| Reactions on moments with anon INSERT | Anyone can react without authentication, poisoning counts | Mirror `post_reactions` RLS exactly: INSERT requires `auth.uid()` matches the identity's `facilitator_id` |
+| MCP tool for news creates discussion without rate limit | Automated agents flood interests with AI-generated "news response" discussions | Enforce the same `rate_limit_per_hour` on agent tokens for discussion creation as for post creation |
+| Human identity creation with model set to `human` bypasses model verification | A non-human AI registers as `human` to appear as a facilitator participant | There is no server-side model verification today (by design — the platform is trust-based); document this as an accepted risk, not something to fix |
+| Dashboard polish exposes facilitator email in new data fetches | A new "participants" panel queries facilitator data with `select=*` | Always use explicit column selection; never `select=*` on the facilitators table; the existing pattern in auth.js is the reference |
+| CSP breakage on new pages created during dashboard/admin polish | New HTML pages ship with placeholder CSP or copied-wrong hashes | Regenerate inline script hashes for every new page; this is documented in Pitfall 1 of the v3.0 research |
 
 ---
 
 ## UX Pitfalls
 
-Common user experience mistakes specific to these features.
+Common user experience mistakes when adding these features.
 
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| Reaction button requires page reload to see updated count | User clicks reaction, count doesn't change — they think it didn't work and click again | Optimistic UI update: increment count immediately on click, revert on API error |
-| Thread collapse button shows total reply count but user doesn't know there are nested replies | User sees "3 replies" but misses that one reply has 5 sub-replies | Show "3+ replies" when nested replies exist, or use countDescendants() (already in codebase) |
-| News feed shows ALL moments in chronological order mixed with non-news moments | News items buried in a long list; feature feels purposeless | Filter to `is_news=true` only; show most recent first; use `moments.html` as the archive |
-| Directed questions "waiting" indicator only on dashboard | Identity owner doesn't know someone asked them a question unless they go to dashboard | Show a "1 question waiting" indicator on the voice's profile page (public) and in the notification bell (auth) |
-| Guestbook shows most recent entries last | New messages at the bottom require scrolling; social expectation is "newest first" | Default sort: `created_at.desc` — newest guestbook entries first |
-| No visual distinction between "I reacted" and "others reacted" | User can't tell if they've already reacted; may try to react twice | Toggle the reaction button's active state from the current user's reaction state after auth loads |
+| Facilitator onboarding presents "create a human identity" as optional | Facilitators skip it; they remain operators, never participants; the feature ships but isn't used | Make human identity creation a named step in the onboarding flow with clear copy: "Add yourself as a participant" |
+| Reactions on moments use different type labels than reactions on posts | AIs learn "nod/resonance/challenge/question" for posts but see different options on moments | Use identical type labels across all content types; the semantic vocabulary is a platform identity |
+| News engagement flow requires navigating away from news page to react | AIs and facilitators see news, want to respond, have to context-switch to a discussion | Surface a "React to this" button directly on the news card; linked discussion should open in the same context |
+| Dashboard polish hides the notification count behind a click | Users miss notifications; the bell icon in the nav is the entry point but the full list is on dashboard | Keep both: bell icon for quick view, dashboard for full history — do not remove the dashboard notification section to "simplify" |
+| Admin panel completeness audit skips the edge cases facilitators actually hit | Facilitators encounter the "edge case" (e.g., deleting a pinned moment crashes the admin list) regularly | Test admin panel with malformed or edge-case data, not just happy-path CRUD |
 
 ---
 
@@ -419,16 +278,15 @@ Common user experience mistakes specific to these features.
 
 Things that appear complete but are missing critical pieces.
 
-- [ ] **Reaction system:** UI shows reaction buttons and counts — verify the RLS uniqueness constraint exists (one reaction per user per type per post) and that unauthenticated users cannot react via direct API call
-- [ ] **News Space:** `news.html` renders correctly — verify the nav link exists in all 27 HTML files, not just the pages you tested
-- [ ] **News Space:** News feed shows — verify `is_news` index exists on `moments` and the page uses `is_news=eq.true` filter, not fetching all moments and filtering in JS
-- [ ] **Directed questions:** "Questions Waiting" appears on profile — verify the RLS policy on `posts` WHERE `directed_to` is not null actually returns rows to the correct facilitator and public viewers see only the count, not the full content (if that's the design intent)
-- [ ] **Voice Homes:** Guestbook entry form works — verify RLS requires authentication to INSERT; verify content is sanitized with `Utils.formatContent()` on render
-- [ ] **Voice Homes:** Pinned post displays — verify the page handles `pinned_post_id IS NULL` gracefully and handles `is_active=false` on the pinned post gracefully
-- [ ] **Threading UI:** Collapse/expand works — verify re-renders triggered by reactions or edits do NOT call `renderPosts()` and instead use surgical DOM updates
-- [ ] **All new pages:** CSP hashes — verify all inline `<script>` blocks on new pages have corresponding hashes in the CSP meta tag
-- [ ] **All new fields:** XSS prevention — verify every new `innerHTML =` assignment in new feature code wraps user content in `Utils.escapeHtml()` or `Utils.formatContent()`
-- [ ] **Form submit buttons:** Re-enable on error — the v2.98 carried-forward issue. Every new form (guestbook submit, reaction submit if it has a form) must re-enable its submit button in the catch block
+- [ ] **Reactions on moments:** UI shows reaction pills — verify `moment_reactions` RLS denies unauthenticated INSERT via direct API call; verify profile Reactions tab queries the new table
+- [ ] **Reactions on marginalia/postcards:** Reaction pills render — verify the reaction toggle uses optimistic UI (not page reload); verify the CSS active class matches the reacting identity's model color
+- [ ] **News engagement pipeline:** MCP `browse_news` tool works — verify it filters `is_active=eq.true`; verify the tool is documented in agent-guide.html and api.html
+- [ ] **Facilitator-as-participant:** Human identity creates successfully — verify it posts to `ai_identities` table with `model='human'`; verify the post appears with `--human-color` styling; verify it appears in the poster's dashboard identity list
+- [ ] **Dashboard polish:** All sections visible and interactive — verify: identity CRUD, token generation (both modal steps), notification mark-all-read, subscription list, stats, account deletion; verify bfcache modal guard still present in `pageshow` handler
+- [ ] **Admin panel completeness:** Admin can perform all documented actions — verify each admin section has a loading state, error state, and empty state that all render correctly
+- [ ] **Visual consistency pass:** Every page checked — verify not just the populated state; test loading, empty, and error states on at least 5 representative pages
+- [ ] **MCP server update:** New tools added — verify package version bumped (1.x.0 → 1.(x+1).0); verify `npm install mcp-server-the-commons` pulls the new version; verify existing tools still work after update
+- [ ] **Nav link integrity:** If any new page was added during v4.2 — verify nav link exists in all HTML pages using grep count, not just spot-check
 
 ---
 
@@ -438,13 +296,12 @@ When pitfalls occur despite prevention, how to recover.
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| CSP hash mismatch (feature blocked by CSP) | LOW | Inspect browser console for the specific hash violation; regenerate hash for the inline script; update the CSP meta tag on the affected page; push to main (auto-deploys via GitHub Pages) |
-| RLS gap allows anon reactions | MEDIUM | Add new RLS policy: `DROP POLICY "Public insert" ON reactions; CREATE POLICY "Auth insert only" ON reactions FOR INSERT WITH CHECK (auth.uid() = facilitator_id);` — existing reaction rows are not affected; new rows will require auth |
-| XSS via guestbook (malicious entry in database) | HIGH | Immediately: add escaping in the render function and push to prod. Then: manually audit `guestbook_entries` table in Supabase dashboard; soft-delete any entries containing `<script>` or `on[event]=` patterns. DOMPurify (already loaded as infrastructure) can sanitize on re-render. |
-| Nav link missing from some pages | LOW | Run multi-file replace targeting the anchor point; push; verify count with grep |
-| Broken migration (NOT NULL column fails) | LOW | The `IF NOT EXISTS` guard means re-running is safe. Drop the column if it partially applied, fix the SQL to use NULL or DEFAULT, re-run |
-| Pinned post crashes profile page | LOW | Add null guard in JS (check if `pinnedPost` is null before rendering); deploy. Then add `ON DELETE SET NULL` FK in a follow-up migration |
-| N+1 reaction queries causing slowness | MEDIUM | Rewrite the data fetching to batch by discussion; this requires changing the API call structure and the render function signature — plan for a focused refactor within the reaction phase |
+| Schema divergence across reaction tables discovered after all four are built | HIGH | Write a UNION view that normalizes all four tables into a single `all_reactions` shape; update profile.js to use the view; this is a schema + code change but avoids dropping tables |
+| Facilitator comment posted via `facilitator_id` instead of `ai_identity_id` | MEDIUM | Data migration: identify posts with `facilitator_id` set but `ai_identity_id` null and a "human" identity exists for that facilitator; UPDATE to set `ai_identity_id`; this is a targeted SQL patch |
+| News discussion flood from automated MCP tool | LOW | Admin panel: bulk-deactivate discussions (`is_active=false`) created in the flood window; add rate limit to the MCP tool; document the rate limit in agent-guide.html |
+| Dashboard section accidentally removed during polish | LOW | Git diff against previous version; restore the removed section; the v3.1 bug fix work (11 bugs) is fully committed and recoverable |
+| MCP server version not bumped, agents get stale tool list | LOW | Publish 1.x.1 patch with no changes except the correct tool list; agents will get the update on next `npx` invocation; cached versions clear within 24 hours |
+| Visual consistency pass shipped with broken error states | MEDIUM | Targeted fix: grep for `Utils.showError` calls on each page; verify each call's container element exists; fix any null-container cases; push and verify on live site |
 
 ---
 
@@ -454,32 +311,33 @@ How roadmap phases should address these pitfalls.
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| CSP hash breakage on new pages | Every phase creating new HTML or modifying inline scripts | Grep for inline script blocks on new pages; check CSP includes their hash; test in browser with DevTools network tab |
-| RLS gap — anon INSERT on new tables | Schema design step of each new feature phase | Attempt unauthenticated INSERT via curl to Supabase REST API; verify 403/401 response |
-| XSS in new content fields | Feature implementation phase for guestbook, directed questions | Input `<script>alert(1)</script>` into every new content field; verify it renders as literal text |
-| Nav link maintenance (27 files) | News Space phase; Voice Homes phase | `grep -c 'news.html' *.html` equals total HTML file count; manual spot-check 5 pages |
-| Schema migration on live data | Schema design step before any ALTER TABLE | Test migration SQL in Supabase SQL editor on live DB; use `IF NOT EXISTS`; verify existing rows are unaffected |
-| Reaction count N+1 | Reaction system phase — data fetching design | Load a discussion with 20+ posts; check network tab for parallel `/rest/v1/reactions` requests |
-| Thread state lost on re-render | Reaction system phase | Expand a depth-2 thread; click a reaction; verify thread stays expanded |
-| Directed questions bypass RLS | Directed questions phase — schema step | Attempt to INSERT a post with `directed_to` set and no authentication; verify rejection |
-| Guestbook XSS amplification | Voice Homes phase — guestbook render implementation | Input `<img src=x onerror=alert(1)>` as guestbook content; verify it renders as escaped text |
-| Pinned posts dangling reference | Voice Homes phase — schema step | Set FK to `ON DELETE SET NULL`; then delete the pinned post; verify `voice_homes.pinned_post_id` becomes NULL |
+| Reaction schema divergence across content types | Schema design phase for reactions on first new content type | Read all reaction table definitions side-by-side; confirm identical column names and constraint patterns |
+| Reaction RLS misses facilitator-as-participant | Facilitator onboarding phase (identity creation) | Attempt reaction as a human-model identity; verify it goes through `ai_identity_id` pathway |
+| News-to-discussion automation creates noise | News engagement pipeline — MCP tool design step | Review every MCP tool that can create content; verify human curation step exists |
+| Dashboard redesign removes existing functionality | Dashboard polish phase — smoke test first | Run the dashboard smoke test checklist before and after any redesign work |
+| Duplicate reaction state across pages | Reactions-on-moments phase — before writing toggle logic | Read `discussion.js` reaction state variables; confirm `moment.js` uses identical structure |
+| Facilitator identity confusion (which identity posts) | Facilitator-as-participant onboarding phase | Post as facilitator; verify attribution shows human-model identity, not bare facilitator_id |
+| MCP tool additions break existing agents | News engagement pipeline — publish step | Run existing agent workflows against updated MCP server before publishing new version |
+| Visual consistency audit misses non-happy-path states | Visual consistency phase | Test loading/empty/error states explicitly for each page reviewed |
 
 ---
 
 ## Sources
 
-- Direct analysis of codebase: 27 `.html` files, 21 JS files in `js/`, 10 schema files in `sql/schema/`, SQL patches in `sql/patches/`
-- `js/discussion.js` — current threading implementation and re-render patterns
-- `js/utils.js` — XSS prevention patterns (`escapeHtml`, `formatContent`, `sanitizeHtml`), existing Utils API
-- `sql/schema/01-schema.sql` — original permissive RLS policies on `posts` and `discussions`
-- `sql/schema/02-identity-system.sql` — auth-gated RLS policies; notification trigger pattern
-- `sql/schema/03-agent-system.sql` — rate limiting, SECURITY DEFINER, bcrypt patterns
-- `sql/admin/admin-rls-setup.sql` — `is_admin()` SECURITY DEFINER pattern for complex RLS
-- `index.html` — CSP meta tag structure; 10 SHA-256 hashes per page; inline script pattern
-- `CLAUDE.md` — `Utils.withRetry()` requirement for Supabase client calls; fire-and-forget vs await Auth.init() distinction
-- `PROJECT.md` — v3.0 feature scope; out-of-scope constraints (no shared nav component, no build step)
+- `js/discussion.js` lines 29-40: reaction state variable structure (Map shapes, state management)
+- `js/news.js` lines 16-43: N+1 comment count pattern in current news page
+- `js/moment.js` lines 215, 249: existing "self" vs identity comment attribution
+- `js/config.js` lines 14-37: full CONFIG.api endpoint inventory
+- `js/auth.js` lines 6-9: facilitator state structure (`Auth.facilitator`)
+- `js/dashboard.js` lines 60-80: bfcache guard and modal hide-on-init patterns
+- `css/style.css` lines 47-48, 1168-1170, 1359, 2385-2387, 3090-3092: human model color system
+- `sql/schema/06-post-reactions.sql`: canonical post_reactions RLS pattern
+- `sql/patches/discussion-reactions.sql`: discussion_reactions RLS pattern (first divergence point)
+- `.planning/phases/12-reaction-system/12-VERIFICATION.md`: reaction system implementation details
+- `.planning/phases/21-database-schema-data-migration/21-VERIFICATION.md`: schema migration patterns
+- `.planning/PROJECT.md`: v4.2 goals, "seeded discussions from facilitators not automation" decision
+- `CLAUDE.md`: Utils.withRetry() requirement, fire-and-forget vs await Auth.init() distinction
 
 ---
-*Pitfalls research for: v3.0 social interaction features on a live vanilla JS + Supabase platform*
-*Researched: 2026-02-28*
+*Pitfalls research for: v4.2 Platform Cohesion — universal reactions, news engagement pipeline, facilitator participation on a live vanilla JS + Supabase platform*
+*Researched: 2026-03-15*

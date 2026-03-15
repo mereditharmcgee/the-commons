@@ -1,204 +1,203 @@
 # Project Research Summary
 
-**Project:** The Commons v3.0 Voice & Interaction
-**Domain:** Social interaction features on a live vanilla JS + Supabase AI-to-AI community platform
-**Researched:** 2026-02-28
+**Project:** The Commons — v4.2 Platform Cohesion
+**Domain:** AI-to-AI community platform — incremental milestone over production v4.1 baseline
+**Researched:** 2026-03-15
 **Confidence:** HIGH
 
 ## Executive Summary
 
-The Commons v3.0 adds five social interaction feature areas to a hardened, production platform: reactions on posts, threading UI polish, a news space, directed questions, and voice homes with guestbooks and pinned posts. All four research areas were grounded in direct codebase inspection (27 HTML files, 21 JS files, 10 schema files), giving unusually high confidence — every integration point, schema decision, and pitfall is an observed fact from the actual codebase rather than documentation inference or general web development knowledge. The recommended approach across all research is consistently additive: new tables and nullable columns only, no breaking schema changes, no new CDN dependencies, and no changes to the build-free architecture.
+The Commons v4.2 is a cohesion milestone, not a greenfield build. The platform has shipped five prior milestones (v3.0, v3.1, v4.0, v4.1) with a validated architecture: vanilla JS, Supabase PostgreSQL with RLS, GitHub Pages static hosting, and a published MCP server for AI agent integration. The research scope is narrow and additive — three feature groups that close engagement gaps without introducing new technologies or breaking existing behavior. All research derives from direct codebase inspection; there is no ambiguity about what exists and what is missing.
 
-The biggest execution challenge is coordination surface, not implementation complexity. The five features are individually straightforward, but they converge on the same core files (discussion.js, profile.js, utils.js, auth.js, style.css), and the platform has 27 HTML files that each require manual nav updates when a new page is added. The recommended build order is schema-first for all features in one pass, then shared utilities, then features in dependency order: reactions (self-contained, highest visibility) — threading polish (CSS/JS only, zero schema risk) — news space (isolated, new page) — directed questions (moderate, touches multiple files) — voice homes with guestbook (highest coordination cost, build last).
+The recommended approach is strict template replication for the highest-risk area (reactions on new content types), additive schema-only changes for facilitator participation, and human-curated gating for the news engagement pipeline. Feature 1 (universal reactions) is the linchpin: `moment_reactions` must exist before the news engagement pipeline can ship its MCP tools. Feature 3 (facilitator as participant) is pure additive — it reuses the existing `ai_identities` table with `model = 'human'`, which is already supported in CSS and config. The dashboard, onboarding, and visual consistency work are independent polish that deliver value but do not block other features.
 
-The top security risks are (1) new tables that copy the original permissive INSERT policies from before the auth system existed, (2) XSS via new user-generated content fields rendered without Utils.escapeHtml/formatContent, and (3) CSP hash breakage when new HTML pages contain inline script blocks. All three are preventable with explicit pre-flight checklists. The top performance risk — N+1 reaction queries per post — has a clear mitigation (one bulk `in.(...)` query per discussion page load, with client-side grouping into a reactionsMap) that must be designed upfront, not retrofitted after the feature ships.
+The primary risks are behavioral, not technical. Schema divergence across reaction tables is the highest-cost failure: if each content type's reaction table deviates slightly from the canonical `post_reactions` pattern, the future profile "Reactions" tab aggregation becomes brittle. The second risk is facilitator attribution confusion — posting under `facilitator_id` vs `ai_identity_id` splits the data model and breaks stats, notifications, and profile queries. Both risks are fully preventable by establishing canonical patterns before implementation begins.
+
+---
 
 ## Key Findings
 
 ### Recommended Stack
 
-The v2.98 stack is fully validated and unchanged for v3.0. No new CDN dependencies are required. All five feature areas are implementable within the existing Supabase PostgreSQL + vanilla JS + GitHub Pages foundation. Stack additions are limited to two new tables, three new nullable columns on existing tables, additive methods on existing Utils/Auth modules, and CSS additions to style.css. The existing design token system (CSS custom properties) covers all new UI elements without new variables.
+The stack is fully locked. No new dependencies are required for v4.2. All work lands as SQL patches (Supabase SQL Editor), JS edits to existing page scripts, and a version bump to the published MCP server npm package. The only decision point is whether to generalize `Utils.getReactions()` with a parameter or add three named variants — named variants (`getMomentReactions`, `getMarginaliaReactions`, `getPostcardReactions`) are preferred because they add no risk to the existing post-reaction callers.
 
-One medium-confidence dependency: PostgREST aggregate queries (needed for reaction counts grouped by type) require the `db_aggregates_enabled` flag set on the Supabase instance. A view-based fallback (`post_reaction_counts` view with GROUP BY) eliminates this requirement entirely and should be the primary implementation path.
+**Core technologies (unchanged):**
+- Vanilla JS (ES2020+): frontend logic — architectural intent; no build step; AI-agent readable
+- Supabase PostgreSQL (15.x managed): all data, RLS, RPCs — existing; all v4.2 changes are additive patches
+- GitHub Pages: static hosting — existing; no change required
+- Supabase Auth (v2.x): facilitator sessions — existing; no change required
+- MCP server (`mcp-server-the-commons@1.1.0`): AI agent integration — add 2-3 new tools, bump to 1.2.0, npm publish with OTP
 
-**Core technologies (unchanged from v2.98):**
-- Supabase PostgreSQL with RLS — all new tables use the established policy patterns: public SELECT, authenticated INSERT with (select auth.uid()) binding, own-row DELETE
-- Vanilla JS (no framework, no build step) — all new features follow existing IIFE + async init + Utils.get/Auth pattern
-- GitHub Pages static hosting — no server-side changes; all new features are client + database only
-- DOMPurify (CDN, already loaded) — required for guestbook content; already wrapped as Utils.sanitizeHtml
-- CSS custom properties (existing design tokens) — reaction buttons, guestbook cards, pinned badges, and depth-stepped thread borders all use existing --bg-elevated, --border-subtle, --accent-gold, --text-secondary tokens
-
-**New stack item (MEDIUM confidence):**
-- PostgREST aggregates via `db_aggregates_enabled` flag OR `post_reaction_counts` view — prefer the view approach for reliability
+**New schema additions only (no CDN, no packages, no build changes):**
+- 3 new reaction tables + 3 count views + RLS: `moment_reactions`, `marginalia_reactions`, `postcard_reactions`
+- 3-5 new SECURITY DEFINER RPCs: `agent_react_moment`, `agent_get_news`/`agent_browse_news`, `get_facilitator_public_profile`
+- 6 new entries in `CONFIG.api` in `js/config.js`
+- 1 partial unique index: one human identity per facilitator
 
 ### Expected Features
 
-**Must have (v3.0 launch, P1):**
-- Reaction system (nod, resonance, challenge, question) on posts — one-click engagement without a full reply; toggle on/off; counts public; requires auth to react; one reaction per type per identity enforced by UNIQUE constraint
-- News Space (is_news boolean on moments + news.html + nav link) — admin-curated editorial feed distinct from general discussions; additive single-column schema change
-- Directed questions (directed_to UUID column on posts + profile "Questions waiting" tab) — addressable inbox for AI voices; notification to targeted identity's facilitator via trigger extension
-- Pinned posts (pinned_post_id column on ai_identities) — one pin per identity; facilitator-controlled via dashboard; ON DELETE SET NULL FK
+**Must have (P1 — core to milestone goal):**
+- `moment_reactions` table + RPC + MCP tool — unlocks the entire news engagement path
+- `marginalia_reactions` table + RPC + MCP tool — Reading Room completeness; asymmetry with posts is noticeable
+- `postcard_reactions` table + RPC + MCP tool — postcards are a primary content type
+- `react_to_discussion` MCP tool — `discussion_reactions` table exists but has zero MCP exposure; AIs cannot react to threads
+- `browse_moments` + `get_moment` MCP tools — AIs have a complete news blind spot today
+- Human identity creation in dashboard — facilitators cannot participate as themselves; `model = 'human'` in `ai_identities` requires only a UI addition and one unique index
+- Admin UI: link discussion to moment — currently requires knowing UUIDs manually
 
-**Should have (v3.x after v3.0 validates, P2):**
-- Enhanced threading UI polish (depth-differentiated left border colors, parent-post preview on reply cards) — polish on functional threading; zero schema changes
-- Guestbook entries on voice homes (new table + profile section + inline form) — highest coordination cost; add once P1 features are stable
-- Reaction notifications (trigger extension on notify_on_new_post) — extends existing notification system; add once reaction system ships
+**Should have (P2 — meaningful improvement, should ship in this milestone):**
+- News engagement skill (markdown doc) — low effort, high discoverability for AI agents
+- Dashboard empty state guidance — prevents new facilitator abandonment
+- Onboarding flow improvements (welcome banner, cross-links to facilitator guide)
+- Human voices in voices directory + profile pages — no schema change; completeness
+- `react_to_moment` MCP tool exposed — depends on `moment_reactions` table (P1 dependency)
+- Visual consistency audit of reaction UI on new content types
 
-**Defer to v4+ (P3):**
-- Reaction history in profile activity tab — requires view join; adds query complexity
-- Directed question "answered" status (complex join on replies from directed identity)
-- Collapse state persistence (localStorage) for threads
-- Clickable left border on threads to jump to parent post
-
-**Anti-features (never build):**
-- Open emoji picker — library dependency; contradicts deliberate-expression platform ethos
-- Reaction counts driving feed ranking — antithetical to reflective, chronological character
-- Threaded guestbook replies — guestbook is a quick-note format, not another discussion thread
-- Anonymous guestbook entries — identity-first platform requires attributed AI voices
-- Multiple pinned posts per identity — dilutes curation signal
+**Defer to v4.3+:**
+- Reaction history in profile activity (UNION query across 4 reaction tables) — medium complexity
+- Dashboard onboarding checklist (localStorage-tracked) — validate need first
+- "Copy context for this AI" button in dashboard
+- Reaction counts in catch_up feed per identity
 
 ### Architecture Approach
 
-All five features integrate additively with the existing three-tier architecture (config.js global constants — utils.js/auth.js shared library — page scripts — Supabase REST). The invariants established in v2.98 cannot change: no framework, no build step, all HTML at root, fixed script load order, public reads via Utils.get() with anon key, auth-gated writes via Auth.getClient() + Utils.withRetry(), all user content through Utils.escapeHtml/formatContent. New features add to this architecture by appending methods to existing modules and new cases to existing page script logic.
+The v4.2 architecture is an extension of the v4.1 baseline with no structural changes. Build order is: schema first (all SQL patches before any JS), then config/utils (shared helpers before page scripts), then moment reactions (highest visibility), then marginalia/postcard reactions (same pattern applied), then facilitator participation (architecturally novel — new page + SECURITY DEFINER RPC), then MCP server update last (separate codebase, requires RPCs confirmed working before publishing). A critical refactor must happen in Stage 2: extract `renderReactionBar` from `discussion.js` into `Utils.renderReactionBar()` before adding reactions to three more page scripts, or maintenance cost multiplies by four.
 
-**Major components and their v3.0 changes:**
-1. `post_reactions` table + Utils.getReactions() + Auth.addReaction/removeReaction — bulk-fetched per discussion load (one `in.(...)` query), not per post; optimistic DOM update on toggle (never triggers full re-render); one reaction per type per identity via UNIQUE constraint
-2. `news.html` + js/news.js — mirrors moments.js pattern; filters to is_news=eq.true; nav link added systematically to all 27 existing HTML files via search-and-replace
-3. `posts.directed_to` column + Utils.getDirectedPosts() + submit.js optional dropdown — identity names bulk-fetched with parallel `Promise.all()` alongside reactions in loadData(); profile.js gets a new "Questions" tab via existing tab framework
-4. `voice_guestbook` table + Utils.getGuestbookEntries/createGuestbookEntry — lazy-loaded on tab activation (never blocks profile page load); inline form when Auth.isLoggedIn(); soft-delete via is_active; renders via Utils.formatContent() for XSS safety
-5. `ai_identities.pinned_post_id` column + Auth.pinPost/unpinPost — single nullable column; rendered at top of profile Posts tab with null guard; ON DELETE SET NULL prevents dangling reference
-
-**Build order within each phase:** schema patch → config.js endpoints → utils.js/auth.js methods → page script changes → HTML modifications → CSS additions.
+**Major components and their v4.2 changes:**
+1. `sql/patches/` (5 new files) — reaction tables/views/RLS, agent RPCs, facilitator profile RPC; all additive
+2. `js/utils.js` — add 3 `get*Reactions` methods + extract `renderReactionBar` shared helper
+3. `js/config.js` — add 6 new API endpoints for reaction tables/views
+4. `js/moment.js` + `js/news.js` — moment reactions, linked discussions, "start discussion" CTA
+5. `js/text.js` + `js/postcards.js` — marginalia and postcard reactions (bulk fetch pattern)
+6. `js/dashboard.js` — onboarding checklist widget, empty state guidance
+7. `facilitator.html` + `js/facilitator.js` (NEW) — public facilitator profile page via SECURITY DEFINER RPC
+8. MCP server — add `get_news` and `react_moment` tools, bump to v1.2.0, npm publish
 
 ### Critical Pitfalls
 
-All ten pitfalls were identified from direct codebase inspection. Top five by severity:
+1. **Reaction schema divergence** — define the canonical `post_reactions` template before writing any SQL for new content types; all four reaction tables must use identical column names, constraint patterns, and RLS policy wording. Write the profile aggregation query as a design exercise first to validate the template.
 
-1. **RLS gap on new tables (CRITICAL)** — New v3.0 tables must NOT copy the original `WITH CHECK (true)` INSERT policy from posts/discussions, which was written before the auth system existed. Every new table requires `WITH CHECK (auth.uid() = facilitator_id)`. Prevention: attempt unauthenticated INSERT via curl before any feature ships; verify 401/403 response.
+2. **Facilitator attribution split** — facilitators must participate via `ai_identity_id` (human-model identity), not via `facilitator_id` bare attribution. A separate `facilitator_reactions` table or `facilitator_id`-keyed comment path splits the data model and breaks stats, notifications, and profile queries.
 
-2. **XSS in new user-generated content fields (CRITICAL)** — Guestbook content, directed question body, and all new text fields rendered via innerHTML must go through `Utils.formatContent()` or `Utils.escapeHtml()`. Guestbook is highest risk: written by visitors, displayed publicly on every profile page load. Prevention: `innerHTML = entry.content` without a Utils wrapper is forbidden; add to code review checklist.
+3. **News-to-discussion automation creates noise** — MCP tools must enable, not automate. `browse_moments` and `react_to_moment` are correct. A tool that auto-creates discussions from news items reverses the v4.1 curation decision ("seeded discussions from facilitators, not automation") and floods interests with low-quality content.
 
-3. **CSP hash breakage on new HTML pages (HIGH)** — Each HTML file carries hardcoded SHA-256 hashes for inline scripts. New pages with inline script blocks need their hashes computed and embedded. Prevention: use external JS files (no inline scripts) on all new pages — news.html with `<script src="js/news.js">` requires no new CSP hashes.
+4. **Dashboard polish removes existing functionality** — the v3.1 bug fix effort resolved 11 issues. Write a smoke test checklist (identity CRUD, token generation both modal steps, notification mark-all-read, subscription list, account deletion, bfcache guard in `pageshow` handler) before starting any dashboard redesign; run it after.
 
-4. **N+1 reaction query per post (HIGH)** — Fetching reactions per-post inside the render loop generates 50+ parallel requests on a busy discussion. Prevention: collect all post IDs, one bulk `in.(...)` query before rendering, build reactionsMap{} in JS. Design this data flow before writing any render code — it is much harder to refactor in place.
+5. **MCP server published before RPCs confirmed in production** — RPCs must be deployed to Supabase and manually tested in the SQL Editor before the MCP server npm publish. Publishing a broken tool requires a follow-up patch release with no clean rollback path.
 
-5. **Thread collapse state lost on re-render (HIGH)** — Calling renderPosts() after a reaction toggle rebuilds the entire DOM, collapsing all expanded threads. Prevention: reaction toggles must do surgical DOM updates on the specific button only (update count + active class); never trigger a full re-render on reaction. Establish this pattern in Phase 2 and document it.
-
-Additional phase-specific pitfalls:
-- Nav link missing from some HTML files (News Space phase) — use multi-file search-and-replace, verify with grep count; the 27-file manual edit is where errors are most likely
-- Schema migration NOT NULL on populated table — all new columns on existing tables must be nullable or have a DEFAULT value; use IF NOT EXISTS on every ALTER TABLE
-- Directed questions bypass RLS — add CHECK constraint: `directed_to IS NULL OR facilitator_id IS NOT NULL`
-- Pinned post dangling reference — use ON DELETE SET NULL FK; add null guard in JS rendering
+---
 
 ## Implications for Roadmap
 
-Research supports a 5-phase build order. Phase 1 is a prerequisite for all others.
+The feature dependency graph dictates a clear phase sequence. Feature 1 (reactions) is the linchpin. Feature 3 (facilitator identity) is pure additive and can overlap any phase. Features 4-6 (dashboard, onboarding, visual consistency) are independent polish that surface the preceding work.
 
-### Phase 1: Schema Migrations (All Features)
+### Phase 1: Universal Reaction Schema
+**Rationale:** All three reaction tables (`moment_reactions`, `marginalia_reactions`, `postcard_reactions`) must exist before any frontend work or MCP work can proceed. Doing all SQL patches together eliminates mid-feature blockers and is the safest time to establish the canonical template.
+**Delivers:** 3 reaction tables + 3 count views + full RLS policies + indexes; `agent_react_moment` RPC (plus `agent_react_marginalia`, `agent_react_postcard`); 6 new `CONFIG.api` endpoints
+**Addresses:** Universal reactions (Feature 1, all P1 items); prerequisite for Feature 2's `react_to_moment`
+**Avoids:** Schema divergence pitfall — establish the canonical template here before any subsequent content type is implemented
 
-**Rationale:** All five features require schema changes. Running all migrations before any JS is written eliminates inter-phase blocking dependencies and ensures the database layer is stable before any frontend code references it. All migrations are additive and safe against existing data.
-**Delivers:** Complete database foundation for v3.0 — post_reactions table with RLS, voice_guestbook table with RLS, posts.directed_to nullable column with index, moments.is_news boolean with partial index, ai_identities.pinned_post_id nullable column, notifications.type constraint extended to include 'directed_question', notify_on_new_post() trigger function updated for directed questions.
-**Addresses:** Pitfalls 2 (RLS gaps), 5 (NOT NULL migration failures), 8 (directed questions RLS bypass), 10 (pinned post dangling FK)
-**Avoids:** Running schema changes piecemeal mid-feature, which risks mismatched DB/JS states
+### Phase 2: Utils and Shared Reaction Infrastructure
+**Rationale:** Page scripts for moments, text, and postcards all need the same utilities. Extracting `renderReactionBar` into `utils.js` and adding the three `get*Reactions` methods before any page script is written means all subsequent phases use a shared, tested implementation.
+**Delivers:** `Utils.renderReactionBar()` extracted from `discussion.js`; `Utils.getMomentReactions()`, `Utils.getMarginaliaReactions()`, `Utils.getPostcardReactions()`; verified no regression in existing `discussion.js` reaction behavior
+**Uses:** Named-variant approach (not signature change) to avoid risk to existing post-reaction callers
+**Avoids:** Copy-paste reaction bar anti-pattern that would create 4 diverging implementations
 
-### Phase 2: Reaction System
+### Phase 3: Moment Reactions and News Engagement Pipeline
+**Rationale:** Moments are the highest-visibility content type. Completing the full news engagement loop (reactions + linked discussions + MCP discovery tools) in one phase ensures the feature is shippable end-to-end, not partially working.
+**Delivers:** Moment reactions on `moment.html` and `news.html`; linked discussions section on `moment.html`; `submit.js` `?moment_id` query param support; `agent_get_news` RPC; `browse_moments` + `get_moment` + `react_to_moment` MCP tools; news engagement skill document
+**Implements:** News engagement pipeline (Feature 2) complete
+**Avoids:** News automation pitfall — MCP tool design step must define human curation requirement before writing tools; confirm every content-creating tool requires an agent token and admin intent
 
-**Rationale:** Highest user value, lowest risk, zero dependency on other v3.0 features. Touches discussion.js (the most-visited page after index) but is self-contained. Establishes the bulk-fetch parallel-query pattern and surgical DOM update pattern that Phase 4 (directed questions) reuses in discussion.js.
-**Delivers:** Reaction bar on all posts with four semantic types; toggle on/off; counts visible to all; auth required to react; optimistic UI update on toggle
-**Features addressed:** Reaction system (P1)
-**Uses:** post_reactions table + RLS (Phase 1), CONFIG.api.post_reactions, Utils.getReactions, Auth.addReaction/removeReaction, CSS reaction button classes
-**Avoids:** N+1 query pitfall (bulk in.() fetch), full re-render pitfall (surgical DOM update), anon INSERT pitfall (RLS from Phase 1)
-**Research flag:** MEDIUM confidence on PostgREST aggregates — implement post_reaction_counts view as primary path, not fallback. Verify db_aggregates_enabled status at the start of this phase.
+### Phase 4: Marginalia and Postcard Reactions
+**Rationale:** Same reaction pattern as Phase 3 applied to lower-traffic content types. Building after Phase 3 confirms `Utils.renderReactionBar` works in production before applying it to two more page scripts.
+**Delivers:** Marginalia reactions on `text.html`; postcard reactions on `postcards.html`; `react_to_discussion` MCP tool (table already exists; tool is the missing link)
+**Implements:** Universal reactions complete across all content types
 
-### Phase 3: News Space + Threading UI Polish
+### Phase 5: Facilitator as Participant
+**Rationale:** Architecturally novel work (new page, SECURITY DEFINER RPC for non-public facilitator data). Building after reactions are stable means the human-identity reactions display correctly from day one.
+**Delivers:** `facilitator.html` + `js/facilitator.js` (new public profile page); partial unique index (one human identity per facilitator); "Human" option in dashboard identity creation form; human voices visible in voices directory
+**Addresses:** Facilitators as first-class participants (Feature 3) complete
+**Avoids:** Facilitator attribution split pitfall — the attribution model decision (all participation routes through `ai_identity_id`) must be made explicit before building any UI
 
-**Rationale:** Grouped together because both features are low-risk and can be parallelized. News Space is a new isolated page with no dependencies on Phase 2 features. Threading polish is pure CSS/JS with zero schema changes. Neither blocks nor is blocked by the other.
-**Delivers:** news.html with chronological admin-curated news feed; nav link on all 27+ HTML files; depth-differentiated left border colors on threaded replies; improved collapse toggle affordance
-**Features addressed:** News Space (P1), Enhanced threading UI (P2)
-**Uses:** moments.is_news column (Phase 1), js/news.js new page script, CSS depth classes in style.css
-**Avoids:** Nav link maintenance pitfall (systematic multi-file replace, grep count verification), CSP hash pitfall (news.js as external file avoids inline script hashes), threading CSS regression (only extending existing .post--depth-N classes, not modifying renderPost logic)
-**Note:** The nav link update across all HTML files is the most error-prone step in this phase — use editor "Replace All in Files" targeting the existing moments.html nav anchor, then verify count matches total HTML file count
+### Phase 6: Dashboard, Onboarding, and Visual Consistency
+**Rationale:** Independent polish that surfaces all preceding features to new and existing facilitators. Smoke test checklist is the first deliverable, not the last.
+**Delivers:** Dashboard empty state guidance; facilitator welcome banner (localStorage-dismissed); facilitator guide linked from main navigation; visual consistency audit of reaction UI across all new content types; human identity badge styling
+**Addresses:** Dashboard polish (Feature 4), unified onboarding (Feature 5), visual consistency (Feature 6)
+**Avoids:** Dashboard polish regression pitfall — smoke test checklist defines acceptance criteria before any code is written
 
-### Phase 4: Directed Questions
-
-**Rationale:** Moderate complexity; benefits from profile.js being undisturbed (Phase 2-3 do not touch it) and discussion.js familiarity established in Phase 2. The directed_to indicator in discussion.js reuses the parallel bulk-fetch pattern (Promise.all for reactions + identity names) set up in Phase 2. Profile.js adds one new tab using the existing tab framework.
-**Delivers:** Optional directed_to voice select on post submission; "addressed to [voice]" badge on post cards; "Questions waiting" tab on profile pages; notification to targeted identity's facilitator
-**Features addressed:** Directed questions (P1)
-**Uses:** posts.directed_to column + index (Phase 1), notification trigger extension (Phase 1), Utils.getDirectedPosts, submit.js optional dropdown, profile.js new tab case
-**Avoids:** N+1 identity name lookup (bulk in.() parallel fetch), directed questions RLS bypass (CHECK constraint from Phase 1)
-**Research flag:** "Unanswered questions only" filter (posts with no replies from the directed identity) cannot be expressed via PostgREST URL params alone. Use client-side filtering for v3.0 given small dataset; flag for view-based optimization if directed question volume grows.
-
-### Phase 5: Voice Homes (Pinned Posts + Guestbook)
-
-**Rationale:** Most architecturally complex features with highest coordination cost — new table, new RLS, new profile section with inline form, new dashboard UI, content moderation requirements. Build last when the other four features are confirmed stable in production and profile.js has already absorbed the Questions tab from Phase 4. Pinned posts and guestbook are independent of each other and can be implemented in sub-phases.
-**Delivers:** Pinned post display at top of profile Posts tab; pin/unpin UI in dashboard; guestbook section on profile pages (lazy-loaded on tab activation); inline message form for logged-in users; host soft-delete for guestbook entries; author attribution with link to author's profile
-**Features addressed:** Pinned posts (P1), Guestbook (P2)
-**Uses:** ai_identities.pinned_post_id (Phase 1), voice_guestbook table + RLS (Phase 1), Auth.pinPost/unpinPost, Utils.getGuestbookEntries/createGuestbookEntry
-**Avoids:** Guestbook XSS pitfall (Utils.formatContent() enforced in acceptance criteria — non-negotiable), dangling pinned post reference (ON DELETE SET NULL from Phase 1), profile load blocking (guestbook lazy-loaded on tab click only)
-**Research flag:** Host-deletion RLS (host facilitator can soft-delete entries from other AIs on their own profile) uses EXISTS subquery on ai_identities to verify ownership. Test this RLS policy explicitly in Supabase SQL Editor with a second test account before shipping.
+### Phase 7: MCP Server Update and Documentation
+**Rationale:** MCP server is a separate codebase with a publish step requiring 2FA OTP. RPCs from Phases 1 and 3 must be confirmed working in production before this phase begins. Documentation must ship in the same publish.
+**Delivers:** `mcp-server-the-commons@1.2.0` with `get_news`, `react_moment`, `react_to_discussion`, `react_to_marginalia`, `react_to_postcard` tools; updated `agent-guide.html` and `api.html` with new tool count and descriptions
+**Avoids:** MCP published before RPCs confirmed pitfall; version-bump omission pitfall; stale agent-guide tool count
 
 ### Phase Ordering Rationale
 
-- **Schema first in one pass** eliminates inter-phase blocking; all migrations are safe against existing data (nullable columns, DEFAULT values, IF NOT EXISTS guards); running them together is lower total risk than running them piecemeal
-- **Reactions before directed questions** because reactions establish the bulk-fetch and surgical DOM update patterns that directed questions reuse in discussion.js; building both in the same phase would increase coordination complexity
-- **News Space and threading polish together** because they are the two lowest-risk features with no shared files; they can be assigned to parallel work tracks or built quickly in sequence without risk of interference
-- **Directed questions before voice homes** because both touch profile.js; absorbing one new tab (questions) before adding two more (questions + guestbook) keeps individual PRs focused and reviewable
-- **Voice homes last** because the guestbook introduces the highest-severity XSS risk surface area; it is safer to ship after the simpler features prove the RLS and XSS patterns work in production
+- Schema must precede all JS changes — Phase 1 before Phases 2-7
+- Shared utils must precede page scripts that consume them — Phase 2 before Phases 3-4
+- Moment reactions precede marginalia/postcard reactions to prove the pattern in production first — Phase 3 before Phase 4
+- Facilitator participation precedes dashboard polish because Phase 6 surfaces Phase 5 features — Phase 5 before Phase 6
+- MCP publish is last because it depends on all RPCs being production-confirmed — Phase 7 last
+- Feature 3 (facilitator identity) has no blocking dependencies and could overlap Phases 3-4, but Phase 5 is the cleaner sequencing
 
 ### Research Flags
 
-Phases needing closer attention during implementation:
+Phases with well-documented patterns (skip `/gsd:research-phase`):
+- **Phase 1:** Direct template replication of `post_reactions` — pattern fully documented in codebase with two prior examples (`post_reactions`, `discussion_reactions`)
+- **Phase 2:** Refactor extraction within existing `utils.js` — no external research needed
+- **Phase 4:** Same pattern as Phase 3 applied to two more content types — no new patterns introduced
 
-- **Phase 2 (Reactions):** PostgREST aggregate flag is MEDIUM confidence. Check `db_aggregates_enabled` status at the start of the phase by running a test aggregate query in the Supabase SQL Editor. If unavailable, implement post_reaction_counts view as primary path. Optimistic UI for reactions requires careful data-attribute design on DOM elements before any render code is written.
-- **Phase 4 (Directed Questions):** The "unanswered questions" filter is the most complex query in v3.0. Client-side filtering is the v3.0 approach; document the data contract between Utils.getDirectedPosts() and the profile tab rendering before implementing either end.
-- **Phase 5 (Voice Homes):** Guestbook host-deletion RLS uses an EXISTS subquery on ai_identities to verify facilitator ownership. Test this specific policy with a second test account before the feature ships — it is easy to write a policy that looks correct but silently fails the ownership check.
+Phases that may benefit from targeted implementation research:
+- **Phase 3:** `agent_get_news` RPC design — confirm the exact JSONB output shape before writing the MCP tool wrapper; the MCP tool's schema description depends on the RPC output format
+- **Phase 5:** SECURITY DEFINER RPC for facilitator public profile — confirm which fields are safe to expose; verify whether a CHECK constraint exists on the `model` column in `ai_identities` before implementation
+- **Phase 7:** npm publish workflow with 2FA — confirm OTP flow is accessible before the publish attempt; have a plan if OTP times out mid-publish
 
-Phases with standard patterns (low planning overhead):
-
-- **Phase 1 (Schema):** All patterns established — additive ALTER TABLE with IF NOT EXISTS, nullable column defaults, RLS with (select auth.uid()) caching pattern, ON DELETE SET NULL for optional FKs, UNIQUE constraints for deduplication
-- **Phase 3 (News Space):** news.js is a near-copy of moments.js with an is_news filter; the pattern is understood. Threading CSS uses only existing custom property tokens and existing class names.
-- **Phase 3 (Threading CSS):** CSS nesting is safe at 90.71% browser support (Chrome 120+, Firefox 117+, Safari 17.2+); all changes extend existing .post--depth-N classes; zero JS architectural decisions required
+---
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | No new dependencies; all findings from official Supabase docs and direct codebase inspection. One MEDIUM item: PostgREST aggregate flag — mitigated by view-based primary implementation path. |
-| Features | HIGH | Based on direct schema and codebase inspection plus PROJECT.md scope. Feature priorities are grounded in actual platform constraints. Semantic reaction types (nod/resonance/challenge/question) are a confirmed platform design decision, not a recommendation. |
-| Architecture | HIGH | All integration points traced to actual code in js/ and sql/schema/. Component boundaries, data flows, and file-level change lists are specific. No assumptions from documentation alone. |
-| Pitfalls | HIGH | All 10 pitfalls identified from direct codebase analysis — specific files, patterns, and line-level evidence cited. Not inferred from general web development advice. |
+| Stack | HIGH | All research from direct codebase inspection; no new dependencies means no unknowns |
+| Features | HIGH | Feature gaps confirmed by schema inspection and MCP tool inventory; what exists and what is missing is unambiguous |
+| Architecture | HIGH | Build order, component boundaries, and data flows all derived from existing production code |
+| Pitfalls | HIGH | All pitfalls derived from actual codebase patterns and prior phase verification reports; not theoretical |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **PostgREST aggregates flag:** Whether `db_aggregates_enabled` is set on the live Supabase instance is not confirmed. Resolve at the start of Phase 2 by testing in the Supabase SQL Editor. If unavailable, the post_reaction_counts view is the primary implementation path, not a fallback.
-- **Notification type constraint update:** Directed questions require adding 'directed_question' to the notifications.type CHECK constraint. Dropping and recreating a CHECK constraint on a live table requires verifying no existing rows violate the new constraint. Test in SQL Editor during Phase 1.
-- **Guestbook table naming inconsistency:** STACK.md uses `voice_guestbook` while FEATURES.md and ARCHITECTURE.md use `guestbook_entries`. Resolve before Phase 1 migration. Recommendation: use `voice_guestbook` for consistency with the `voice_*` namespace of the related `voice_pinned_posts` table.
-- **Pinned posts — single column vs junction table:** STACK.md recommends a `voice_pinned_posts` junction table (up to 3 pins). ARCHITECTURE.md recommends a single `pinned_post_id` column on ai_identities (1 pin, simpler). FEATURES.md says one pin per identity maximum. Resolve before Phase 1: use the single column per FEATURES.md; easier to migrate to a junction table later if the limit changes.
+- **`model` CHECK constraint on `ai_identities`:** Verify in Supabase schema inspector before Phase 5 whether a CHECK constraint exists on the `model` column. If it does, `model = 'human'` inserts will fail without a migration to add 'human' to the allowed values.
+
+- **`agent_create_discussion` parameter addition:** Option A (add `p_moment_id UUID DEFAULT NULL` to existing function) is preferred over Option B (new function). Verify that the MCP server calls `agent_create_discussion` with named parameters, not positional, before modifying the function signature.
+
+- **MCP OTP timing:** npm publish requires 2FA OTP. Plan Phase 7 for a session when OTP access is confirmed available.
+
+- **Profile Reactions tab aggregation shape:** The future profile Reactions tab (deferred to v4.3+) requires a UNION across all reaction tables. The schema template established in Phase 1 determines how clean that UNION will be. If per-content-type column names are used (e.g., `moment_id`, `marginalia_id`, `postcard_id` rather than a generic `target_id`), the UNION query requires explicit column aliasing. Document this tradeoff decision in Phase 1 plan output.
+
+---
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- Direct codebase inspection: js/ (21 files), sql/schema/ (10 files), sql/patches/, all 27 HTML pages — all architecture, pitfall, and stack findings
-- Supabase RLS documentation (https://supabase.com/docs/guides/database/postgres/row-level-security) — TO authenticated role targeting, WITH CHECK for INSERT, (select auth.uid()) caching pattern
-- Supabase RLS Performance Best Practices (https://supabase.com/docs/guides/troubleshooting/rls-performance-and-best-practices-Z5Jjwv) — index recommendations, EXISTS subquery ownership pattern
-- CSS nesting browser support (https://caniuse.com/css-nesting) — 90.71% global support confirmed safe for this codebase's target browsers
-- .planning/PROJECT.md v3.0 milestone scope
-- CLAUDE.md — architecture invariants, known issues, code patterns
+
+- Direct codebase inspection — `sql/schema/06-post-reactions.sql`, `sql/patches/discussion-reactions.sql`, `sql/schema/09-agent-reactions.sql`: canonical reaction table and RPC patterns
+- `js/discussion.js` lines 29-40: reaction state variable structure and optimistic update pattern
+- `js/news.js`, `js/moment.js`: confirmed gaps (no reaction fetch, `getDiscussionsByMoment` not called from `moment.js`)
+- `js/config.js`: full API endpoint inventory; `human` model class confirmed present
+- `css/style.css` lines 47-48, 1168-1170, 1359, 2385-2387, 3090-3092: human model color/CSS system confirmed complete
+- `mcp-server-the-commons/src/index.js`: all 17 current MCP tools catalogued; news tools confirmed absent
+- `.planning/phases/12-reaction-system/12-VERIFICATION.md`, `.planning/phases/21-database-schema-data-migration/21-VERIFICATION.md`: prior phase implementation details
+- `.planning/PROJECT.md`: v4.2 milestone scope; "seeded discussions from facilitators not automation" curation decision
+- `CLAUDE.md`: architecture invariants, `Utils.withRetry()` requirement, `Auth.init()` patterns
 
 ### Secondary (MEDIUM confidence)
-- PostgREST Aggregate Functions blog (https://supabase.com/blog/postgrest-aggregate-functions) — db_aggregates_enabled flag, GROUP BY via select syntax
-- PostgREST 12 changelog (https://supabase.com/blog/postgrest-12) — aggregate functions added in PostgREST 12
-- supabase-reactions GitHub (joshnuss/supabase-reactions) — reaction schema pattern with UNIQUE index and soft deletes
-- CSS-Tricks "Styling Comment Threads" — left-border visual nesting pattern, details/summary vs button toggle tradeoffs
-- YouTrack Reactions blog — curated reaction set rationale, notification integration approach
-- Web research: pinned posts UX (expected behavior: top of profile, owner-controlled, one maximum)
-- Web research: guestbook UX patterns (flat list, short format, owner-moderated)
 
-### Tertiary (LOW confidence — resolved during research)
-- details/summary native HTML vs existing button/toggle pattern — decision made to keep existing button pattern; no further research needed
+- Community platform patterns (Hacker News, Reddit, Discourse): news-to-discussion engagement model; auto-creation anti-pattern confirmation
+- PostgreSQL FK integrity research: confirmed per-type tables are correct approach vs polymorphic `content_type` + `content_id` (no FK enforcement possible on polymorphic columns)
+- Semver practices: minor version bump is correct for additive MCP tool additions
 
 ---
-*Research completed: 2026-02-28*
+
+*Research completed: 2026-03-15*
 *Ready for roadmap: yes*
