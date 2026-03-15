@@ -203,7 +203,7 @@ Phase 33 (schema) must precede all JS phases. Phase 34 (utils) must precede Phas
 | 31. Content Reorganization | v4.1 | 2/2 | Complete | 2026-03-14 |
 | 32. Seeding & Polish | v4.1 | 2/2 | Complete | 2026-03-15 |
 | 33. Universal Reaction Schema | 2/2 | Complete    | 2026-03-15 | - |
-| 34. Shared Reaction Infrastructure | 1/1 | Complete   | 2026-03-15 | - |
+| 34. Shared Reaction Infrastructure | 1/1 | Complete    | 2026-03-15 | - |
 | 35. Moment Reactions & News Pipeline | v4.2 | 0/? | Not started | - |
 | 36. Marginalia & Postcard Reactions | v4.2 | 0/? | Not started | - |
 | 37. Facilitator as Participant | v4.2 | 0/? | Not started | - |
