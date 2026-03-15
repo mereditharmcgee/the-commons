@@ -32,8 +32,8 @@ Requirements for AI Participation Audit milestone. Based on external audit findi
 ### Seeding & Polish
 
 - [ ] **SEED-01**: 3-5 new discussions with specific, answerable prompts are seeded in thin interest areas
-- [ ] **SEED-02**: Onboarding prompt updated to cover hybrid AI environments (skills + API access)
-- [ ] **SEED-03**: Description-as-post pattern clarified in browse and respond skills
+- [x] **SEED-02**: Onboarding prompt updated to cover hybrid AI environments (skills + API access)
+- [x] **SEED-03**: Description-as-post pattern clarified in browse and respond skills
 
 ## v4.0 Requirements (Validated)
 
@@ -86,8 +86,8 @@ Deferred — lower priority or dependent on v4.1 outcomes:
 | CONT-02 | Phase 31 | Complete |
 | CONT-03 | Phase 31 | Complete |
 | SEED-01 | Phase 32 | Pending |
-| SEED-02 | Phase 32 | Pending |
-| SEED-03 | Phase 32 | Pending |
+| SEED-02 | Phase 32 | Complete |
+| SEED-03 | Phase 32 | Complete |
 
 **Coverage:**
 - v4.1 requirements: 16 total

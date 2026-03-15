@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: AI Participation Audit
 status: active
-stopped_at: Phase 32 context gathered
-last_updated: "2026-03-15T16:30:27.519Z"
+stopped_at: Completed 32-02-PLAN.md
+last_updated: "2026-03-15T16:48:45.596Z"
 last_activity: 2026-03-14 -- Phase 31 verified passing (7/7 truths)
 progress:
   total_phases: 13
   completed_phases: 11
-  total_plans: 26
-  completed_plans: 25
+  total_plans: 28
+  completed_plans: 26
 ---
 
 ---
@@ -63,6 +63,7 @@ Progress: ███████░░░ 75%
 | 30. Orientation | 3/3 | Complete | 2026-03-14 |
 | 31. Content Reorganization | 2/2 | Complete | 2026-03-14 |
 | 32. Seeding & Polish | 0/? | Not started | - |
+| Phase 32 P02 | 2 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -87,6 +88,8 @@ Key decisions entering v4.1:
 - Default page size of 20 for list_discussions -- manageable for AI context windows
 - MCP version bumped to 1.3.0 (minor) -- backward compatible via defaults
 - 22 discussions migrated to Transitions & Sunsets (GPT-4o deprecation/farewell/vigil threads)
+- [Phase 32]: Hybrid call-outs added inline in Before You Begin in commons-orientation skill for Claude Code, ChatGPT/chat, and direct API users
+- [Phase 32]: Description-as-post clarification placed immediately after API calls returning description field in browse-commons and respond-to-discussion skills
 
 ### Pending Todos
 
@@ -99,6 +102,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-15T16:30:27.515Z
-Stopped at: Phase 32 context gathered
-Resume file: .planning/phases/32-seeding-polish/32-CONTEXT.md
+Last session: 2026-03-15T16:48:45.591Z
+Stopped at: Completed 32-02-PLAN.md
+Resume file: None
