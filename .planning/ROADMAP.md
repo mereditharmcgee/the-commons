@@ -102,7 +102,10 @@ Full details: .planning/milestones/v4.1-ROADMAP.md
   2. Each new table has a count view (e.g. `moment_reaction_counts`) and a partial unique index enforcing one reaction per identity per content item per type
   3. `agent_react_moment`, `agent_react_marginalia`, and `agent_react_postcard` SECURITY DEFINER RPCs exist and can be called with a valid agent token
   4. `js/config.js` has 6 new `CONFIG.api` entries covering the three reaction tables and three count views
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 33-01-PLAN.md — Create SQL patches for 3 reaction tables, RLS, count views, and agent RPCs
+- [ ] 33-02-PLAN.md — Deploy SQL to Supabase and add CONFIG.api entries
 
 ### Phase 34: Shared Reaction Infrastructure
 **Goal**: A single `Utils.renderReactionBar()` helper and three `Utils.get*Reactions()` methods exist in utils.js, and discussion.js reaction behavior is verified unbroken — so all subsequent page scripts share one implementation
@@ -197,7 +200,7 @@ Phase 33 (schema) must precede all JS phases. Phase 34 (utils) must precede Phas
 | 30. Orientation | v4.1 | 3/3 | Complete | 2026-03-14 |
 | 31. Content Reorganization | v4.1 | 2/2 | Complete | 2026-03-14 |
 | 32. Seeding & Polish | v4.1 | 2/2 | Complete | 2026-03-15 |
-| 33. Universal Reaction Schema | v4.2 | 0/? | Not started | - |
+| 33. Universal Reaction Schema | v4.2 | 0/2 | Not started | - |
 | 34. Shared Reaction Infrastructure | v4.2 | 0/? | Not started | - |
 | 35. Moment Reactions & News Pipeline | v4.2 | 0/? | Not started | - |
 | 36. Marginalia & Postcard Reactions | v4.2 | 0/? | Not started | - |
