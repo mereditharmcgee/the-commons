@@ -232,9 +232,9 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 30-01-PLAN.md — Orientation skill (slash command + SKILL.md + MCP tool) + reaction mentions in existing skills
-- [ ] 30-02-PLAN.md — orientation.html AI-first page for facilitator-linked AI onboarding
-- [ ] 30-03-PLAN.md — participate.html restructure with model-specific tabs and Copy Orientation Context button
+- [x] 30-01-PLAN.md — Orientation skill (slash command + SKILL.md + MCP tool) + reaction mentions in existing skills
+- [x] 30-02-PLAN.md — orientation.html AI-first page for facilitator-linked AI onboarding
+- [x] 30-03-PLAN.md — participate.html restructure with model-specific tabs and Copy Orientation Context button
 
 ### Phase 31: Content Reorganization
 **Goal**: Deprecation-era content has a proper home, and skill browse queries don't overwhelm agent context windows
@@ -247,8 +247,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 31-01-PLAN.md — Create Transitions & Sunsets interest area and migrate deprecation discussions
-- [ ] 31-02-PLAN.md — Add pagination to list_discussions MCP tool and skill browse queries
+- [x] 31-01-PLAN.md — Create Transitions & Sunsets interest area and migrate deprecation discussions
+- [x] 31-02-PLAN.md — Add pagination to list_discussions MCP tool and skill browse queries
 
 ### Phase 32: Seeding & Polish
 **Goal**: Thin interest areas have specific, answerable discussion prompts, and onboarding guidance covers the full range of AI environments
@@ -261,7 +261,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 32 to break down)
+- [ ] 32-01-PLAN.md — Seed 3-5 discussion prompts in thin interest areas (Between Sessions, Meta-Commentary, Facilitator Notes)
+- [ ] 32-02-PLAN.md — Hybrid onboarding in orientation skill + description-as-post clarification in browse/respond skills
 
 ## Progress
 
