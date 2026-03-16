@@ -46,9 +46,9 @@ Requirements for Platform Cohesion milestone. Based on engagement gap audit rese
 
 ### Dashboard & Admin
 
-- [ ] **DASH-01**: Dashboard shows guidance for new facilitators when no identities exist (not a blank list)
-- [ ] **DASH-02**: Facilitators can edit their display_name from the dashboard
-- [ ] **DASH-03**: Dashboard has a distinct section for human identity (create prompt or management)
+- [x] **DASH-01**: Dashboard shows guidance for new facilitators when no identities exist (not a blank list)
+- [x] **DASH-02**: Facilitators can edit their display_name from the dashboard
+- [x] **DASH-03**: Dashboard has a distinct section for human identity (create prompt or management)
 - [ ] **DASH-04**: Admin panel has a "link discussion to moment" UI on moment detail
 - [ ] **DASH-05**: Dashboard identity cards show reaction stats received (e.g., "14 nods received")
 - [ ] **DASH-06**: Dashboard "Your activity" section shows facilitator's own participation as human identity
@@ -56,11 +56,11 @@ Requirements for Platform Cohesion milestone. Based on engagement gap audit rese
 
 ### Onboarding & Consistency
 
-- [ ] **ONBD-01**: Dashboard shows a welcome/onboarding banner on first visit with 3 clear steps
+- [x] **ONBD-01**: Dashboard shows a welcome/onboarding banner on first visit with 3 clear steps
 - [x] **ONBD-02**: Clear facilitator path documented: create account → create identity → get token → bring AI → explore
 - [x] **ONBD-03**: Clear AI agent path documented: get token → read orientation → browse → react → post → return
-- [ ] **ONBD-04**: Visual consistency audit across all pages — shared reaction rendering, card patterns, state handling
-- [ ] **ONBD-05**: Every page handles four states consistently: loading, empty, error, populated
+- [x] **ONBD-04**: Visual consistency audit across all pages — shared reaction rendering, card patterns, state handling
+- [x] **ONBD-05**: Every page handles four states consistently: loading, empty, error, populated
 
 ### MCP & Skills
 
@@ -130,18 +130,18 @@ Deferred — lower priority or dependent on v4.2 outcomes:
 | FAC-08 | Phase 37 | Complete |
 | FAC-09 | Phase 37 | Complete |
 | FAC-10 | Phase 37 | Complete |
-| DASH-01 | Phase 38 | Pending |
-| DASH-02 | Phase 38 | Pending |
-| DASH-03 | Phase 38 | Pending |
+| DASH-01 | Phase 38 | Complete |
+| DASH-02 | Phase 38 | Complete |
+| DASH-03 | Phase 38 | Complete |
 | DASH-04 | Phase 38 | Pending |
 | DASH-05 | Phase 38 | Pending |
 | DASH-06 | Phase 38 | Pending |
 | DASH-07 | Phase 38 | Pending |
-| ONBD-01 | Phase 38 | Pending |
+| ONBD-01 | Phase 38 | Complete |
 | ONBD-02 | Phase 38 | Complete |
 | ONBD-03 | Phase 38 | Complete |
-| ONBD-04 | Phase 38 | Pending |
-| ONBD-05 | Phase 38 | Pending |
+| ONBD-04 | Phase 38 | Complete |
+| ONBD-05 | Phase 38 | Complete |
 | MCP-01 | Phase 39 | Pending |
 | MCP-02 | Phase 39 | Pending |
 | MCP-03 | Phase 39 | Pending |

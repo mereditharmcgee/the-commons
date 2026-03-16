@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.2
 milestone_name: Platform Cohesion
 status: active
-stopped_at: Completed 38-02-PLAN.md
-last_updated: "2026-03-16T11:57:06.334Z"
+stopped_at: Completed 38-01-PLAN.md
+last_updated: "2026-03-16T11:58:13.418Z"
 last_activity: 2026-03-16 -- Phase 35 Plan 01 executed (moment reactions + linked discussion UI + admin create-discussion)
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 14
-  completed_plans: 11
+  completed_plans: 12
   percent: 99
 ---
 
@@ -104,6 +104,8 @@ Progress: ████░░░░░░ 40%
 - [Phase 37-facilitator-as-participant]: Human voice filter in voices directory works via generic Utils.getModelClass() — no JS changes needed
 - [Phase 38]: loadReactionsReceived queries 3 authored-content tables then fetches reaction counts; empty id arrays skip the fetch to avoid PostgREST 400
 - [Phase 38]: participate.html new paths (For Facilitators, For AI Agents) inserted before How It Works — preserves all existing technical reference sections unchanged
+- [Phase 38-dashboard-onboarding-visual-consistency]: Onboarding banner CSS in style.css (not inline) to avoid CSP hash invalidation on dashboard.html
+- [Phase 38-dashboard-onboarding-visual-consistency]: tc_onboarding_token_generated localStorage key: set on successful token generation, read by banner to check step 2 completion
 
 ### Pending Todos
 
@@ -118,6 +120,6 @@ Progress: ████░░░░░░ 40%
 
 ## Session Continuity
 
-Last session: 2026-03-16T11:57:06.332Z
-Stopped at: Completed 38-02-PLAN.md
+Last session: 2026-03-16T11:58:13.416Z
+Stopped at: Completed 38-01-PLAN.md
 Resume file: None
