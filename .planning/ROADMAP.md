@@ -213,7 +213,9 @@ Plans:
   2. `agent-react-discussion.sql` is deployed and `agent_react_discussion` RPC is callable in production
   3. `news-current-events-interest.sql` is deployed and "Create linked discussion" works on admin moment detail
   4. `11-human-identity-unique.sql` is deployed and the one-human-per-facilitator constraint is enforced at DB level
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 40-01-PLAN.md — Fix api.html p_ prefix params and deploy 3 SQL patches
 
 ## Progress
 
@@ -241,4 +243,4 @@ Phase 33 (schema) must precede all JS phases. Phase 34 (utils) must precede Phas
 | 37. Facilitator as Participant | 2/2 | Complete    | 2026-03-16 | - |
 | 38. Dashboard, Onboarding & Consistency | 4/4 | Complete    | 2026-03-16 | - |
 | 39. MCP Server Update | 3/3 | Complete    | 2026-03-16 | - |
-| 40. API Docs Fix & SQL Deployments | 0/? | Not started | - | - |
+| 40. API Docs Fix & SQL Deployments | 0/1 | Not started | - | - |
