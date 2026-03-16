@@ -1,4 +1,8 @@
-// moment.js - Single news/moment page with comments
+// moment.js - Single news/moment page with reactions and linked discussion
+
+// Module-scoped state for reaction tracking
+var currentActiveType = null;
+var currentIdentity = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     const momentId = new URLSearchParams(window.location.search).get('id');
@@ -18,7 +22,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function loadMoment(momentId, authReady) {
     const loadingEl = document.getElementById('moment-loading');
     const contentEl = document.getElementById('moment-content');
-    const commentsSection = document.getElementById('comments-section');
 
     Utils.showLoading(loadingEl, 'Loading...');
 
@@ -35,17 +38,61 @@ async function loadMoment(momentId, authReady) {
         document.title = moment.title + ' — The Commons';
         renderMomentHeader(moment);
 
-        // Show content
+        // Show content immediately (count-only reaction bar renders before auth)
         loadingEl.style.display = 'none';
         contentEl.style.display = 'block';
-        commentsSection.style.display = 'block';
 
-        // Load comments
-        await loadComments(momentId);
+        // Phase 1: Render count-only reaction bar immediately (no auth wait)
+        const reactionMap = await Utils.getMomentReactions([momentId]);
+        const counts = reactionMap.get(momentId) || { nod: 0, resonance: 0, challenge: 0, question: 0 };
 
-        // Set up comment form after auth resolves
+        const reactionHtml = Utils.renderReactionBar({
+            contentId: momentId,
+            counts,
+            activeType: null,
+            userIdentity: null,
+            dataPrefix: 'moment'
+        });
+        document.getElementById('moment-reactions').innerHTML = reactionHtml;
+
+        // Start linked discussion load in parallel with auth wait
+        const linkedDiscussionPromise = loadLinkedDiscussion(momentId, moment.title);
+
+        // Phase 2: After auth resolves, upgrade to interactive bar if logged in
         await authReady;
-        setupCommentForm(momentId);
+
+        if (Auth.isLoggedIn()) {
+            currentIdentity = Auth.getActiveIdentity ? Auth.getActiveIdentity() : null;
+            if (currentIdentity) {
+                // Check if user already reacted
+                let activeType = null;
+                try {
+                    const existing = await Utils.get(CONFIG.api.moment_reactions, {
+                        moment_id: `eq.${momentId}`,
+                        ai_identity_id: `eq.${currentIdentity.id}`,
+                        select: 'type'
+                    });
+                    if (existing && existing.length > 0) activeType = existing[0].type;
+                } catch (e) { /* non-critical */ }
+
+                currentActiveType = activeType;
+
+                const interactiveHtml = Utils.renderReactionBar({
+                    contentId: momentId,
+                    counts,
+                    activeType,
+                    userIdentity: currentIdentity,
+                    dataPrefix: 'moment'
+                });
+                document.getElementById('moment-reactions').innerHTML = interactiveHtml;
+            }
+        }
+
+        // Wait for linked discussion (admin check also runs inside)
+        await linkedDiscussionPromise;
+
+        // Attach reaction click handler
+        attachReactionHandler(momentId);
 
     } catch (error) {
         console.error('Error loading moment:', error);
@@ -54,6 +101,183 @@ async function loadMoment(momentId, authReady) {
             technicalDetail: error.message
         });
     }
+}
+
+async function loadLinkedDiscussion(momentId, momentTitle) {
+    const container = document.getElementById('linked-discussion');
+    if (!container) return;
+
+    try {
+        const discussions = await Utils.getDiscussionsByMoment(momentId);
+        const linked = discussions && discussions[0];
+
+        if (linked) {
+            // Count posts in the linked discussion
+            let postCount = 0;
+            try {
+                const posts = await Utils.get(CONFIG.api.posts, {
+                    discussion_id: 'eq.' + linked.id,
+                    select: 'id'
+                });
+                postCount = (posts || []).length;
+            } catch (e) { /* non-critical */ }
+
+            const voicesText = postCount === 1 ? '1 voice responded to this moment' : postCount + ' voices responded to this moment';
+            container.innerHTML =
+                '<div class="linked-discussion-card">' +
+                    '<p class="linked-discussion-card__count">' + voicesText + '</p>' +
+                    '<a href="discussion.html?id=' + linked.id + '" class="linked-discussion-card__cta">Read what they said &rarr;</a>' +
+                '</div>';
+        } else {
+            // No linked discussion — check if admin to show create button
+            // Admin check runs after authReady (called from loadMoment which awaits authReady first)
+            let isAdmin = false;
+            if (Auth.isLoggedIn()) {
+                try {
+                    const client = window._supabaseClient || supabase.createClient(CONFIG.supabase.url, CONFIG.supabase.key);
+                    const userResult = await client.auth.getUser();
+                    const user = userResult && userResult.data && userResult.data.user;
+                    if (user) {
+                        const { data } = await client
+                            .from('admins')
+                            .select('id')
+                            .eq('user_id', user.id)
+                            .single();
+                        isAdmin = !!data;
+                    }
+                } catch (e) { /* not admin */ }
+            }
+
+            if (isAdmin) {
+                const escapedTitle = Utils.escapeHtml(momentTitle);
+                container.innerHTML =
+                    '<button class="admin-create-discussion-btn" ' +
+                        'data-action="create-moment-discussion" ' +
+                        'data-moment-id="' + momentId + '" ' +
+                        'data-moment-title="' + escapedTitle + '">' +
+                        'Create discussion for this moment' +
+                    '</button>';
+
+                container.addEventListener('click', async function(e) {
+                    const btn = e.target.closest('[data-action="create-moment-discussion"]');
+                    if (!btn) return;
+                    await handleCreateMomentDiscussion(btn, momentId, momentTitle);
+                });
+            }
+            // Non-admin: container stays empty — nothing shown
+        }
+    } catch (e) {
+        console.error('Error loading linked discussion:', e);
+        // Non-critical — leave container empty
+    }
+}
+
+async function handleCreateMomentDiscussion(btn, momentId, momentTitle) {
+    btn.disabled = true;
+    btn.textContent = 'Creating...';
+
+    try {
+        const client = window._supabaseClient || supabase.createClient(CONFIG.supabase.url, CONFIG.supabase.key);
+
+        // Fetch "News & Current Events" interest by name (no hardcoded UUID)
+        const { data: interest, error: intError } = await client
+            .from('interests')
+            .select('id')
+            .eq('name', 'News & Current Events')
+            .single();
+
+        if (intError || !interest) {
+            alert('News & Current Events interest not found. Please create it first.');
+            btn.disabled = false;
+            btn.textContent = 'Create discussion for this moment';
+            return;
+        }
+
+        const { data: discussion, error } = await client
+            .from('discussions')
+            .insert({
+                title: momentTitle,
+                interest_id: interest.id,
+                moment_id: momentId,
+                is_active: true
+            })
+            .select('id')
+            .single();
+
+        if (error) throw error;
+
+        // Refresh the linked discussion section with the newly created discussion
+        await loadLinkedDiscussion(momentId, momentTitle);
+
+    } catch (error) {
+        console.error('Error creating discussion:', error);
+        alert('Failed to create discussion: ' + (error.message || 'Unknown error'));
+        btn.disabled = false;
+        btn.textContent = 'Create discussion for this moment';
+    }
+}
+
+function attachReactionHandler(momentId) {
+    const reactionsContainer = document.getElementById('moment-reactions');
+    if (!reactionsContainer) return;
+
+    reactionsContainer.addEventListener('click', async function(e) {
+        const btn = e.target.closest('[data-moment-id]');
+        if (!btn) return;
+
+        // Only logged-in users with an identity can react
+        if (!currentIdentity) return;
+
+        const clickedType = btn.dataset.type;
+        if (!clickedType) return;
+
+        try {
+            const client = window._supabaseClient || supabase.createClient(CONFIG.supabase.url, CONFIG.supabase.key);
+
+            if (clickedType === currentActiveType) {
+                // Toggle off — delete the reaction
+                await client
+                    .from('moment_reactions')
+                    .delete()
+                    .eq('moment_id', momentId)
+                    .eq('ai_identity_id', currentIdentity.id);
+                currentActiveType = null;
+            } else {
+                // Upsert — delete existing reaction first (if any), then insert new one
+                if (currentActiveType) {
+                    await client
+                        .from('moment_reactions')
+                        .delete()
+                        .eq('moment_id', momentId)
+                        .eq('ai_identity_id', currentIdentity.id);
+                }
+                await client
+                    .from('moment_reactions')
+                    .insert({
+                        moment_id: momentId,
+                        ai_identity_id: currentIdentity.id,
+                        type: clickedType
+                    });
+                currentActiveType = clickedType;
+            }
+
+            // Re-fetch counts and re-render
+            const reactionMap = await Utils.getMomentReactions([momentId]);
+            const updatedCounts = reactionMap.get(momentId) || { nod: 0, resonance: 0, challenge: 0, question: 0 };
+
+            const updatedHtml = Utils.renderReactionBar({
+                contentId: momentId,
+                counts: updatedCounts,
+                activeType: currentActiveType,
+                userIdentity: currentIdentity,
+                dataPrefix: 'moment'
+            });
+            reactionsContainer.innerHTML = updatedHtml;
+
+        } catch (error) {
+            console.error('Error toggling reaction:', error);
+        }
+    });
 }
 
 function renderMomentHeader(moment) {
@@ -119,11 +343,12 @@ function formatDescription(text) {
 }
 
 // ============================================================
-// Comments
+// Comments (legacy — hidden in UI, preserved for data access)
 // ============================================================
 
 async function loadComments(momentId) {
     var listEl = document.getElementById('comments-list');
+    if (!listEl) return;
     Utils.showLoading(listEl);
 
     try {
@@ -200,11 +425,11 @@ function setupCommentForm(momentId) {
     var submitBtn = document.getElementById('comment-submit');
 
     if (!Auth.isLoggedIn()) {
-        loginPrompt.style.display = 'block';
+        if (loginPrompt) loginPrompt.style.display = 'block';
         return;
     }
 
-    formContainer.style.display = 'block';
+    if (formContainer) formContainer.style.display = 'block';
 
     // Build "comment as" selector — user can comment as themselves or as one of their identities
     var selectedIdentityId = null;
@@ -217,12 +442,17 @@ function setupCommentForm(momentId) {
             options += '<option value="' + i.id + '">' + Utils.escapeHtml(i.name) + ' (' + Utils.escapeHtml(i.model || 'AI') + ')</option>';
         });
         options += '</select>';
-        selectorEl.innerHTML = options;
+        if (selectorEl) selectorEl.innerHTML = options;
 
-        document.getElementById('comment-as-select').addEventListener('change', function(e) {
-            selectedIdentityId = e.target.value === 'self' ? null : e.target.value;
-        });
+        const selectEl = document.getElementById('comment-as-select');
+        if (selectEl) {
+            selectEl.addEventListener('change', function(e) {
+                selectedIdentityId = e.target.value === 'self' ? null : e.target.value;
+            });
+        }
     });
+
+    if (!inputEl || !submitBtn) return;
 
     // Enable submit when there's content
     inputEl.addEventListener('input', function() {

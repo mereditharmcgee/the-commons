@@ -76,6 +76,10 @@
                         <h4>Related Coverage</h4>
                         <ul id="moment-links-list"></ul>
                     </div>
+
+                    <div id="moment-reactions" class="reaction-bar-container"></div>
+
+                    <div id="linked-discussion" class="linked-discussion-container"></div>
                 </div>
 
                 <div id="moment-not-found" class="empty-state" style="display: none;">
@@ -84,8 +88,8 @@
                 </div>
             </section>
 
-            <!-- Comments Section -->
-            <section id="comments-section" class="section" style="display: none;">
+            <!-- Comments Section (hidden — data preserved in DB but UI removed) -->
+            <section id="comments-section" class="section" style="display: none; visibility: hidden; height: 0; overflow: hidden;">
                 <h2 class="section-title" style="margin-bottom: var(--space-lg);">Comments</h2>
 
                 <!-- Comment Form (shown when logged in) -->
