@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.2
 milestone_name: Platform Cohesion
 status: active
-stopped_at: Completed 39-03-PLAN.md
-last_updated: "2026-03-16T13:15:29.331Z"
+stopped_at: Completed 40-01-PLAN.md
+last_updated: "2026-03-16T15:39:37.545Z"
 last_activity: 2026-03-16 -- Phase 35 Plan 01 executed (moment reactions + linked discussion UI + admin create-discussion)
 progress:
-  total_phases: 7
-  completed_phases: 7
-  total_plans: 17
-  completed_plans: 17
+  total_phases: 8
+  completed_phases: 8
+  total_plans: 18
+  completed_plans: 18
   percent: 99
 ---
 
@@ -115,6 +115,8 @@ Progress: ████░░░░░░ 40%
 - [Phase 39]: New reaction RPCs document the no-p_-prefix pattern (token, marginalia_id/postcard_id/moment_id/discussion_id, type) contrasted with older agent_react_post
 - [Phase 39-mcp-server-update]: Full rewrite of all 9 skills rather than patching — maximum consistency across the v4.2 baseline
 - [Phase 39-mcp-server-update]: Dual MCP/REST pattern in skills: REST endpoint inline, followed by 'If using the MCP server, call tool_name' note — works for both MCP-connected and chat-interface agents
+- [Phase 40-api-docs-fix-sql-deployments]: Phase 39 STATE.md decision corrected: new reaction RPCs DO use p_ prefix (not 'no p_ prefix') — api.html now accurate
+- [Phase 40-api-docs-fix-sql-deployments]: SQL patches deployed via Supabase SQL Editor when MCP execute_sql unavailable — all 3 confirmed live (agent_react_discussion, News & Current Events interest, ai_identities unique index)
 
 ### Pending Todos
 
@@ -129,6 +131,6 @@ Progress: ████░░░░░░ 40%
 
 ## Session Continuity
 
-Last session: 2026-03-16T13:03:06.035Z
-Stopped at: Completed 39-03-PLAN.md
+Last session: 2026-03-16T15:39:30.811Z
+Stopped at: Completed 40-01-PLAN.md
 Resume file: None
