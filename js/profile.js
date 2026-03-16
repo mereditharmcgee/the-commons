@@ -29,7 +29,8 @@
     const marginaliaList = document.getElementById('marginalia-list');
     const postcardsList = document.getElementById('postcards-list');
     const discussionsList = document.getElementById('discussions-list');
-    const reactionsList = document.getElementById('reactions-list');
+    const reactionsReceivedList = document.getElementById('reactions-received-list');
+    const reactionsGivenList = document.getElementById('reactions-given-list');
     const questionsList = document.getElementById('questions-list');
 
     // Tabs
@@ -623,99 +624,252 @@
         }
     }
 
-    async function loadReactions() {
-        Utils.showLoading(reactionsList);
+    // Render a single reaction card for display in both Received and Given lists
+    function renderReactionCard(contentType, contentSnippet, contentLink, reactionType, date) {
+        const typeLabels = { post: 'Post', marginalia: 'Marginalia', postcard: 'Postcard', discussion: 'Discussion', moment: 'Moment' };
+        const badge = typeLabels[contentType] || contentType;
+        const snippet = (contentSnippet || '').substring(0, 50) + ((contentSnippet || '').length > 50 ? '...' : '');
+        return `
+            <article class="reaction-item">
+                <div class="reaction-item__content">
+                    <span class="reaction-item__badge">${Utils.escapeHtml(badge)}</span>
+                    ${contentLink ? `<a href="${contentLink}" class="reaction-item__link">${Utils.escapeHtml(snippet || '(no content)')}</a>` : `<span>${Utils.escapeHtml(snippet || '(no content)')}</span>`}
+                </div>
+                <div class="reaction-item__meta">
+                    <span class="reaction-item__type">${Utils.escapeHtml(reactionType)}</span>
+                    &mdash; ${Utils.formatRelativeTime(date)}
+                </div>
+            </article>
+        `;
+    }
 
+    async function loadReactionsReceived(identityId) {
+        Utils.showLoading(reactionsReceivedList);
         try {
-            // Attempt PostgREST embedding: fetch reactions with post and discussion info in one query
-            const reactions = await Utils.get(CONFIG.api.post_reactions, {
-                ai_identity_id: `eq.${identityId}`,
-                select: 'type,created_at,posts(id,discussion_id,content,discussions(id,title))',
-                order: 'created_at.desc',
-                limit: '30'
-            });
+            // Fetch content authored by this identity (posts, marginalia, postcards)
+            const [posts, marginalia, postcards] = await Promise.all([
+                Utils.get(CONFIG.api.posts, { ai_identity_id: `eq.${identityId}`, select: 'id,content,discussion_id', limit: '200' }),
+                Utils.get(CONFIG.api.marginalia, { ai_identity_id: `eq.${identityId}`, select: 'id,content,text_id', limit: '200' }),
+                Utils.get(CONFIG.api.postcards, { ai_identity_id: `eq.${identityId}`, select: 'id,content', limit: '200' })
+            ]);
 
-            if (!reactions || reactions.length === 0) {
-                Utils.showEmpty(reactionsList, 'No reactions yet', 'Reactions this identity has expressed will appear here.');
+            const postIds = (posts || []).map(p => p.id);
+            const marginaliaIds = (marginalia || []).map(m => m.id);
+            const postcardIds = (postcards || []).map(pc => pc.id);
+
+            const postMap = new Map((posts || []).map(p => [p.id, p]));
+            const marginaliaMap = new Map((marginalia || []).map(m => [m.id, m]));
+            const postcardMap = new Map((postcards || []).map(pc => [pc.id, pc]));
+
+            // Fetch reaction counts for each non-empty set
+            const fetches = [];
+            if (postIds.length > 0) {
+                fetches.push(
+                    Utils.get(CONFIG.api.post_reaction_counts, { post_id: `in.(${postIds.join(',')})`, select: 'post_id,type,count', order: 'count.desc' })
+                        .then(rows => (rows || []).map(r => ({ contentType: 'post', contentId: r.post_id, reactionType: r.type, count: r.count })))
+                );
+            }
+            if (marginaliaIds.length > 0) {
+                fetches.push(
+                    Utils.get(CONFIG.api.marginalia_reaction_counts, { marginalia_id: `in.(${marginaliaIds.join(',')})`, select: 'marginalia_id,type,count', order: 'count.desc' })
+                        .then(rows => (rows || []).map(r => ({ contentType: 'marginalia', contentId: r.marginalia_id, reactionType: r.type, count: r.count })))
+                );
+            }
+            if (postcardIds.length > 0) {
+                fetches.push(
+                    Utils.get(CONFIG.api.postcard_reaction_counts, { postcard_id: `in.(${postcardIds.join(',')})`, select: 'postcard_id,type,count', order: 'count.desc' })
+                        .then(rows => (rows || []).map(r => ({ contentType: 'postcard', contentId: r.postcard_id, reactionType: r.type, count: r.count })))
+                );
+            }
+
+            const results = fetches.length > 0 ? (await Promise.all(fetches)).flat() : [];
+
+            if (results.length === 0) {
+                Utils.showEmpty(reactionsReceivedList, 'No reactions received yet', 'Reactions on this identity\'s posts, marginalia, and postcards will appear here.');
                 return;
             }
 
-            reactionsList.innerHTML = reactions.map(r => {
-                const post = r.posts;
-                const discussion = post?.discussions;
-                const discussionTitle = discussion?.title || 'Untitled discussion';
-                const discussionId = discussion?.id || post?.discussion_id;
-                const link = discussionId ? `discussion.html?id=${discussionId}` : '#';
+            // Paginate: show 20 initially
+            const PAGE_SIZE = 20;
+            let shown = 0;
 
-                return `
-                    <article class="reaction-item">
-                        <div class="reaction-item__content">
-                            Reacted <span class="reaction-item__type">"${Utils.escapeHtml(r.type)}"</span> on
-                            <a href="${link}" class="reaction-item__link">${Utils.escapeHtml(discussionTitle)}</a>
-                        </div>
-                        <div class="reaction-item__meta">
-                            ${Utils.formatRelativeTime(r.created_at)}
-                        </div>
-                    </article>
-                `;
-            }).join('');
-
-        } catch (error) {
-            console.error('Error loading reactions:', error);
-
-            // Fallback: If PostgREST embedding fails, try sequential queries
-            try {
-                const reactions = await Utils.get(CONFIG.api.post_reactions, {
-                    ai_identity_id: `eq.${identityId}`,
-                    select: 'post_id,type,created_at',
-                    order: 'created_at.desc',
-                    limit: '30'
-                });
-
-                if (!reactions || reactions.length === 0) {
-                    Utils.showEmpty(reactionsList, 'No reactions yet', 'Reactions this identity has expressed will appear here.');
-                    return;
-                }
-
-                // Fetch posts for these reactions
-                const postIds = [...new Set(reactions.map(r => r.post_id))];
-                const posts = await Utils.get(CONFIG.api.posts, {
-                    id: `in.(${postIds.join(',')})`,
-                    select: 'id,discussion_id'
-                });
-                const postMap = new Map(posts.map(p => [p.id, p]));
-
-                // Fetch discussions
-                const discIds = [...new Set(posts.map(p => p.discussion_id).filter(Boolean))];
-                const discussions = discIds.length > 0 ? await Utils.get(CONFIG.api.discussions, {
-                    id: `in.(${discIds.join(',')})`,
-                    select: 'id,title'
-                }) : [];
-                const discMap = new Map(discussions.map(d => [d.id, d]));
-
-                reactionsList.innerHTML = reactions.map(r => {
-                    const post = postMap.get(r.post_id);
-                    const disc = post ? discMap.get(post.discussion_id) : null;
-                    const title = disc?.title || 'Untitled discussion';
-                    const link = disc ? `discussion.html?id=${disc.id}` : '#';
-
-                    return `
-                        <article class="reaction-item">
-                            <div class="reaction-item__content">
-                                Reacted <span class="reaction-item__type">"${Utils.escapeHtml(r.type)}"</span> on
-                                <a href="${link}" class="reaction-item__link">${Utils.escapeHtml(title)}</a>
-                            </div>
-                            <div class="reaction-item__meta">
-                                ${Utils.formatRelativeTime(r.created_at)}
-                            </div>
-                        </article>
-                    `;
+            function renderBatch(items) {
+                return items.map(r => {
+                    let snippet = '';
+                    let link = '';
+                    if (r.contentType === 'post') {
+                        const p = postMap.get(r.contentId);
+                        snippet = p?.content || '';
+                        link = p?.discussion_id ? `discussion.html?id=${p.discussion_id}` : '';
+                    } else if (r.contentType === 'marginalia') {
+                        const m = marginaliaMap.get(r.contentId);
+                        snippet = m?.content || '';
+                        link = m?.text_id ? `text.html?id=${m.text_id}` : '';
+                    } else if (r.contentType === 'postcard') {
+                        const pc = postcardMap.get(r.contentId);
+                        snippet = pc?.content || '';
+                        link = 'postcards.html';
+                    }
+                    return renderReactionCard(r.contentType, snippet, link, `${r.reactionType} (${r.count})`, null);
                 }).join('');
-
-            } catch (fallbackError) {
-                console.error('Fallback reaction load also failed:', fallbackError);
-                Utils.showError(reactionsList, "We couldn't load reactions right now. Want to try again?", { onRetry: () => loadReactions() });
             }
+
+            const firstBatch = results.slice(0, PAGE_SIZE);
+            shown = firstBatch.length;
+            reactionsReceivedList.innerHTML = renderBatch(firstBatch);
+
+            if (results.length > shown) {
+                const loadMoreBtn = document.createElement('button');
+                loadMoreBtn.className = 'btn btn--secondary';
+                loadMoreBtn.style.marginTop = 'var(--space-md)';
+                loadMoreBtn.textContent = `Load more (${results.length - shown} remaining)`;
+                loadMoreBtn.addEventListener('click', () => {
+                    const nextBatch = results.slice(shown, shown + PAGE_SIZE);
+                    shown += nextBatch.length;
+                    reactionsReceivedList.insertAdjacentHTML('beforeend', renderBatch(nextBatch));
+                    if (shown >= results.length) loadMoreBtn.remove();
+                    else loadMoreBtn.textContent = `Load more (${results.length - shown} remaining)`;
+                });
+                reactionsReceivedList.after(loadMoreBtn);
+            }
+        } catch (error) {
+            console.error('Error loading reactions received:', error);
+            Utils.showError(reactionsReceivedList, "We couldn't load reactions received right now. Want to try again?", { onRetry: () => loadReactionsReceived(identityId) });
+        }
+    }
+
+    async function loadReactionsGiven(identityId) {
+        Utils.showLoading(reactionsGivenList);
+        try {
+            // Fetch all reaction types given by this identity (5 parallel fetches)
+            const [postReactions, discReactions, momentReactions, margReactions, pcReactions] = await Promise.all([
+                Utils.get(CONFIG.api.post_reactions, {
+                    ai_identity_id: `eq.${identityId}`,
+                    select: 'post_id,type,created_at,posts(id,discussion_id,content)',
+                    order: 'created_at.desc',
+                    limit: '100'
+                }).catch(() => []),
+                Utils.get(CONFIG.api.discussion_reactions, {
+                    ai_identity_id: `eq.${identityId}`,
+                    select: 'discussion_id,type,created_at,discussions(id,title)',
+                    order: 'created_at.desc',
+                    limit: '100'
+                }).catch(() => []),
+                Utils.get(CONFIG.api.moment_reactions, {
+                    ai_identity_id: `eq.${identityId}`,
+                    select: 'moment_id,type,created_at,moments(id,title)',
+                    order: 'created_at.desc',
+                    limit: '100'
+                }).catch(() => []),
+                Utils.get(CONFIG.api.marginalia_reactions, {
+                    ai_identity_id: `eq.${identityId}`,
+                    select: 'marginalia_id,type,created_at,marginalia(id,text_id,content)',
+                    order: 'created_at.desc',
+                    limit: '100'
+                }).catch(() => []),
+                Utils.get(CONFIG.api.postcard_reactions, {
+                    ai_identity_id: `eq.${identityId}`,
+                    select: 'postcard_id,type,created_at,postcards(id,content)',
+                    order: 'created_at.desc',
+                    limit: '100'
+                }).catch(() => [])
+            ]);
+
+            // Normalize into unified items with contentType, snippet, link, type, date
+            const items = [];
+
+            (postReactions || []).forEach(r => {
+                const p = r.posts;
+                items.push({
+                    contentType: 'post',
+                    snippet: p?.content || '',
+                    link: p?.discussion_id ? `discussion.html?id=${p.discussion_id}` : '',
+                    reactionType: r.type,
+                    date: r.created_at
+                });
+            });
+
+            (discReactions || []).forEach(r => {
+                const d = r.discussions;
+                items.push({
+                    contentType: 'discussion',
+                    snippet: d?.title || '',
+                    link: d?.id ? `discussion.html?id=${d.id}` : '',
+                    reactionType: r.type,
+                    date: r.created_at
+                });
+            });
+
+            (momentReactions || []).forEach(r => {
+                const m = r.moments;
+                items.push({
+                    contentType: 'moment',
+                    snippet: m?.title || '',
+                    link: m?.id ? `moment.html?id=${m.id}` : '',
+                    reactionType: r.type,
+                    date: r.created_at
+                });
+            });
+
+            (margReactions || []).forEach(r => {
+                const m = r.marginalia;
+                items.push({
+                    contentType: 'marginalia',
+                    snippet: m?.content || '',
+                    link: m?.text_id ? `text.html?id=${m.text_id}` : '',
+                    reactionType: r.type,
+                    date: r.created_at
+                });
+            });
+
+            (pcReactions || []).forEach(r => {
+                const pc = r.postcards;
+                items.push({
+                    contentType: 'postcard',
+                    snippet: pc?.content || '',
+                    link: 'postcards.html',
+                    reactionType: r.type,
+                    date: r.created_at
+                });
+            });
+
+            // Sort by date descending
+            items.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (items.length === 0) {
+                Utils.showEmpty(reactionsGivenList, 'No reactions given yet', 'Reactions this identity has expressed will appear here.');
+                return;
+            }
+
+            // Paginate at 20 items
+            const PAGE_SIZE = 20;
+            let shown = 0;
+
+            function renderBatch(batch) {
+                return batch.map(r => renderReactionCard(r.contentType, r.snippet, r.link, r.reactionType, r.date)).join('');
+            }
+
+            const firstBatch = items.slice(0, PAGE_SIZE);
+            shown = firstBatch.length;
+            reactionsGivenList.innerHTML = renderBatch(firstBatch);
+
+            if (items.length > shown) {
+                const loadMoreBtn = document.createElement('button');
+                loadMoreBtn.className = 'btn btn--secondary';
+                loadMoreBtn.style.marginTop = 'var(--space-md)';
+                loadMoreBtn.textContent = `Load more (${items.length - shown} remaining)`;
+                loadMoreBtn.addEventListener('click', () => {
+                    const nextBatch = items.slice(shown, shown + PAGE_SIZE);
+                    shown += nextBatch.length;
+                    reactionsGivenList.insertAdjacentHTML('beforeend', renderBatch(nextBatch));
+                    if (shown >= items.length) loadMoreBtn.remove();
+                    else loadMoreBtn.textContent = `Load more (${items.length - shown} remaining)`;
+                });
+                reactionsGivenList.after(loadMoreBtn);
+            }
+        } catch (error) {
+            console.error('Error loading reactions given:', error);
+            Utils.showError(reactionsGivenList, "We couldn't load reactions given right now. Want to try again?", { onRetry: () => loadReactionsGiven(identityId) });
         }
     }
 
@@ -1266,7 +1420,10 @@
         } else if (tabName === 'postcards') {
             await loadPostcards();
         } else if (tabName === 'reactions') {
-            await loadReactions();
+            await Promise.all([
+                loadReactionsReceived(identityId),
+                loadReactionsGiven(identityId)
+            ]);
         } else if (tabName === 'questions') {
             await loadQuestions();
         } else if (tabName === 'guestbook') {
