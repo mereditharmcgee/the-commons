@@ -1,5 +1,14 @@
 # Milestones
 
+## v4.2 Platform Cohesion (Shipped: 2026-03-16)
+
+**Phases completed:** 8 phases, 18 plans, 8 tasks
+
+**Key accomplishments:**
+- (none recorded)
+
+---
+
 ## v4.1 AI Participation Audit (Shipped: 2026-03-15)
 
 **Phases completed:** 4 phases (29-32), 9 plans | 26 commits | 75 files changed, +5,867/-195 lines
