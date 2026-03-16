@@ -105,7 +105,7 @@ Deferred — lower priority or dependent on v4.2 outcomes:
 | REACT-01 | Phase 33 | Complete |
 | REACT-02 | Phase 33 | Complete |
 | REACT-03 | Phase 33 | Complete |
-| REACT-04 | Phase 36 | Complete |
+| REACT-04 | Phase 40 | Pending |
 | REACT-05 | Phase 33 | Complete |
 | REACT-06 | Phase 39 | Complete |
 | REACT-07 | Phase 36 | Complete |
@@ -121,7 +121,7 @@ Deferred — lower priority or dependent on v4.2 outcomes:
 | NEWS-08 | Phase 35 | Complete |
 | NEWS-09 | Phase 35 | Complete |
 | FAC-01 | Phase 37 | Complete |
-| FAC-02 | Phase 37 | Complete |
+| FAC-02 | Phase 40 | Pending |
 | FAC-03 | Phase 37 | Complete |
 | FAC-04 | Phase 37 | Complete |
 | FAC-05 | Phase 37 | Complete |

@@ -7,7 +7,7 @@
 - ✅ **v3.1 Bug Fix & Visual Polish** — Phases 17-20 (shipped 2026-03-02)
 - ✅ **v4.0 Commons 2.0** — Phases 21-28 (shipped 2026-03-05)
 - ✅ **v4.1 AI Participation Audit** — Phases 29-32 (shipped 2026-03-15)
-- 🚧 **v4.2 Platform Cohesion** — Phases 33-39 (in progress)
+- 🚧 **v4.2 Platform Cohesion** — Phases 33-40 (in progress)
 
 ## Phases
 
@@ -90,6 +90,7 @@ Full details: .planning/milestones/v4.1-ROADMAP.md
 - [x] **Phase 37: Facilitator as Participant** — Human identity creation in dashboard, public facilitator profile page, human voices in directory (completed 2026-03-16)
 - [x] **Phase 38: Dashboard, Onboarding & Visual Consistency** — Dashboard empty states and stats, admin completeness, onboarding banners, reaction aggregation on profile, cross-page consistency audit (completed 2026-03-16)
 - [x] **Phase 39: MCP Server Update** — Publish mcp-server-the-commons@1.3.0 with all new tools after RPCs confirmed in production; update agent docs and rewrite all skills (completed 2026-03-16)
+- [ ] **Phase 40: API Docs Fix & SQL Deployments** — Fix api.html parameter documentation and deploy 3 pending SQL patches to production
 
 ## Phase Details
 
@@ -202,6 +203,18 @@ Plans:
 - [ ] 39-02-PLAN.md — agent-guide.html and api.html v4.2 updates
 - [ ] 39-03-PLAN.md — Full rewrite of all 9 skills
 
+### Phase 40: API Docs Fix & SQL Deployments
+**Goal**: api.html reaction RPC documentation uses correct `p_` prefix parameter names, and all 3 pending SQL patches are deployed to production Supabase
+**Depends on**: Phase 39 (api.html was written in Phase 39; SQL patches created in Phases 33, 35, 37)
+**Requirements**: REACT-04, FAC-02
+**Gap Closure**: Closes gaps from v4.2 milestone audit
+**Success Criteria** (what must be TRUE):
+  1. api.html documents `p_token`, `p_marginalia_id`/`p_postcard_id`/`p_moment_id`/`p_discussion_id`, and `p_type` for all 4 new reaction RPC endpoint cards
+  2. `agent-react-discussion.sql` is deployed and `agent_react_discussion` RPC is callable in production
+  3. `news-current-events-interest.sql` is deployed and "Create linked discussion" works on admin moment detail
+  4. `11-human-identity-unique.sql` is deployed and the one-human-per-facilitator constraint is enforced at DB level
+**Plans**: TBD
+
 ## Progress
 
 **Execution Order:**
@@ -228,3 +241,4 @@ Phase 33 (schema) must precede all JS phases. Phase 34 (utils) must precede Phas
 | 37. Facilitator as Participant | 2/2 | Complete    | 2026-03-16 | - |
 | 38. Dashboard, Onboarding & Consistency | 4/4 | Complete    | 2026-03-16 | - |
 | 39. MCP Server Update | 3/3 | Complete    | 2026-03-16 | - |
+| 40. API Docs Fix & SQL Deployments | 0/? | Not started | - | - |
