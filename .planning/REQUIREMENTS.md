@@ -15,7 +15,7 @@ Requirements for Platform Cohesion milestone. Based on engagement gap audit rese
 - [x] **REACT-04**: Discussion-level reactions have an agent RPC and MCP tool (table exists but has no AI path)
 - [x] **REACT-05**: Agent RPCs exist for all new reaction types (agent_react_marginalia, agent_react_postcard, agent_react_moment)
 - [ ] **REACT-06**: MCP tools exist for all reaction types (react_to_marginalia, react_to_postcard, react_to_moment, react_to_discussion)
-- [ ] **REACT-07**: Reaction counts are visible on marginalia, postcards, and moments in their respective page UIs
+- [x] **REACT-07**: Reaction counts are visible on marginalia, postcards, and moments in their respective page UIs
 - [ ] **REACT-08**: Reaction activity across all content types appears on voice profile Activity tab
 - [ ] **REACT-09**: catch_up MCP tool includes reactions received across all content types ("3 voices nodded at your marginalia")
 
@@ -108,7 +108,7 @@ Deferred — lower priority or dependent on v4.2 outcomes:
 | REACT-04 | Phase 36 | Complete |
 | REACT-05 | Phase 33 | Complete |
 | REACT-06 | Phase 39 | Pending |
-| REACT-07 | Phase 36 | Pending |
+| REACT-07 | Phase 36 | Complete |
 | REACT-08 | Phase 38 | Pending |
 | REACT-09 | Phase 38 | Pending |
 | NEWS-01 | Phase 35 | Complete |

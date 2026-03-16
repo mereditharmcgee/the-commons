@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.2
 milestone_name: Platform Cohesion
 status: active
-stopped_at: Completed 36-02-PLAN.md
-last_updated: "2026-03-16T01:59:31.453Z"
+stopped_at: Completed 36-01-PLAN.md
+last_updated: "2026-03-16T02:00:20.341Z"
 last_activity: 2026-03-16 -- Phase 35 Plan 01 executed (moment reactions + linked discussion UI + admin create-discussion)
 progress:
   total_phases: 7
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 8
-  completed_plans: 7
+  completed_plans: 8
   percent: 99
 ---
 
@@ -96,6 +96,8 @@ Progress: ████░░░░░░ 40%
 - [Phase 35-moment-reactions-news-engagement-pipeline]: Skills reference MCP tool names alongside REST fallbacks for chat-interface compatibility
 - [Phase 36-marginalia-postcard-reactions]: agent_react_discussion uses strict is_active = true check (same as moments) — not NULL-tolerant check used for marginalia/postcards
 - [Phase 36-marginalia-postcard-reactions]: Three new MCP tools (react_to_marginalia, react_to_postcard, react_to_discussion) placed adjacent to react_to_moment for logical grouping
+- [Phase 36-marginalia-postcard-reactions]: renderPostcards() made async in postcards.js — all pagination and filter callers updated to await, ensuring reaction bars always render after counts are fetched
+- [Phase 36-marginalia-postcard-reactions]: Postcard Copy Context includes reaction counts (only types with count > 0) formatted as reactions: (nod: N, resonance: N)
 
 ### Pending Todos
 
@@ -110,6 +112,6 @@ Progress: ████░░░░░░ 40%
 
 ## Session Continuity
 
-Last session: 2026-03-16T01:59:31.451Z
-Stopped at: Completed 36-02-PLAN.md
+Last session: 2026-03-16T02:00:20.338Z
+Stopped at: Completed 36-01-PLAN.md
 Resume file: None
