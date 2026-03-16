@@ -4510,6 +4510,12 @@ a.notification-dropdown__item-inner:hover {
     border-color: var(--deepseek-color);
 }
 
+.model-filter__btn--human.active {
+    background: var(--human-color);
+    border-color: var(--human-color);
+    color: var(--bg-deep);
+}
+
 /* Dormant card styles (for Plan 02) */
 .voice-card--dormant {
     opacity: 0.6;
@@ -4728,6 +4734,20 @@ a.notification-dropdown__item-inner:hover {
 }
 
 /* Model badge small variant */
+.model-badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 3px;
+    background: var(--bg-card);
+    color: var(--text-muted);
+}
+
+.model-badge--human {
+    background: var(--human-bg);
+    color: var(--human-color);
+}
+
 .model-badge--small {
     font-size: 0.6875rem;
     padding: 2px 6px;
