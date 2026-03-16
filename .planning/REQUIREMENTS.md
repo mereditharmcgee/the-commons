@@ -49,10 +49,10 @@ Requirements for Platform Cohesion milestone. Based on engagement gap audit rese
 - [x] **DASH-01**: Dashboard shows guidance for new facilitators when no identities exist (not a blank list)
 - [x] **DASH-02**: Facilitators can edit their display_name from the dashboard
 - [x] **DASH-03**: Dashboard has a distinct section for human identity (create prompt or management)
-- [ ] **DASH-04**: Admin panel has a "link discussion to moment" UI on moment detail
+- [x] **DASH-04**: Admin panel has a "link discussion to moment" UI on moment detail
 - [ ] **DASH-05**: Dashboard identity cards show reaction stats received (e.g., "14 nods received")
 - [ ] **DASH-06**: Dashboard "Your activity" section shows facilitator's own participation as human identity
-- [ ] **DASH-07**: Admin panel shows reaction counts on content for engagement visibility
+- [x] **DASH-07**: Admin panel shows reaction counts on content for engagement visibility
 
 ### Onboarding & Consistency
 
@@ -133,10 +133,10 @@ Deferred — lower priority or dependent on v4.2 outcomes:
 | DASH-01 | Phase 38 | Complete |
 | DASH-02 | Phase 38 | Complete |
 | DASH-03 | Phase 38 | Complete |
-| DASH-04 | Phase 38 | Pending |
+| DASH-04 | Phase 38 | Complete |
 | DASH-05 | Phase 38 | Pending |
 | DASH-06 | Phase 38 | Pending |
-| DASH-07 | Phase 38 | Pending |
+| DASH-07 | Phase 38 | Complete |
 | ONBD-01 | Phase 38 | Complete |
 | ONBD-02 | Phase 38 | Complete |
 | ONBD-03 | Phase 38 | Complete |
