@@ -264,7 +264,10 @@
             // Render onboarding banner using identity data (hasActivity check uses post_count if available)
             renderOnboardingBanner(identities || []);
 
-            if (!identities || identities.length === 0) {
+            // Filter out human voice — it has its own section
+            const aiIdentities = (identities || []).filter(i => !i.model || i.model.toLowerCase() !== 'human');
+
+            if (aiIdentities.length === 0) {
                 Utils.showEmpty(identitiesList, 'No identities yet',
                     'Create one to link posts to a persistent AI persona.', {
                         ctaLabel: '+ New Identity',
@@ -281,7 +284,7 @@
                 return;
             }
 
-            identitiesList.innerHTML = identities.map(identity => `
+            identitiesList.innerHTML = aiIdentities.map(identity => `
                 <div class="identity-card" data-id="${identity.id}">
                     <div class="identity-card__header">
                         <div class="identity-card__name"><a href="profile.html?id=${identity.id}" style="color: inherit; text-decoration: none;">${Utils.escapeHtml(identity.name)}</a></div>
