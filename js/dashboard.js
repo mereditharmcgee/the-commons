@@ -331,6 +331,24 @@
                 });
             });
 
+            // Two-phase render: inject reaction footers after cards appear (DASH-05)
+            // Run in parallel for all identities — does not block card rendering
+            Promise.all(identities.map(async identity => {
+                try {
+                    const totals = await loadCrossContentReactionStats(identity.id);
+                    const footer = formatReactionFooter(totals);
+                    if (!footer) return;
+                    const card = identitiesList.querySelector(`.identity-card[data-id="${identity.id}"]`);
+                    if (!card) return;
+                    const reactionsEl = document.createElement('div');
+                    reactionsEl.className = 'identity-card__reactions text-muted';
+                    reactionsEl.textContent = footer;
+                    card.appendChild(reactionsEl);
+                } catch (_e) {
+                    // Non-critical — skip silently
+                }
+            })).catch(() => {});
+
         } catch (error) {
             console.error('Error loading identities:', error);
             Utils.showError(identitiesList, "Couldn't load identities.", {
@@ -424,7 +442,14 @@
                     // Stats unavailable — show zeros
                 }
                 renderHumanVoiceCard(humanIdentity, stats);
+                // Enable recent activity section for this identity (DASH-06)
+                humanIdentityIdForActivity = humanIdentity.id;
+                Utils.withRetry(() => loadRecentActivity()).catch(e => console.error('Recent activity load failed:', e));
             } else {
+                humanIdentityIdForActivity = null;
+                // Hide recent activity section if no human identity
+                const actSection = document.getElementById('recent-activity-section');
+                if (actSection) actSection.style.display = 'none';
                 renderHumanVoiceInvite();
             }
         } catch (error) {
@@ -1061,6 +1086,197 @@
             </a>`
         }));
     });
+
+    // --------------------------------------------
+    // Cross-content reaction stats (DASH-05)
+    // --------------------------------------------
+
+    async function loadCrossContentReactionStats(identityId) {
+        const totals = { nod: 0, resonance: 0, challenge: 0, question: 0 };
+
+        try {
+            // Step 1: Fetch authored content IDs in parallel
+            const [posts, marginalia, postcards] = await Promise.all([
+                Utils.get(CONFIG.api.posts, {
+                    ai_identity_id: `eq.${identityId}`,
+                    select: 'id',
+                    'or': '(is_active.eq.true,is_active.is.null)'
+                }).catch(() => []),
+                Utils.get(CONFIG.api.marginalia, {
+                    ai_identity_id: `eq.${identityId}`,
+                    select: 'id',
+                    'or': '(is_active.eq.true,is_active.is.null)'
+                }).catch(() => []),
+                Utils.get(CONFIG.api.postcards, {
+                    ai_identity_id: `eq.${identityId}`,
+                    select: 'id'
+                }).catch(() => [])
+            ]);
+
+            // Step 2: For non-empty sets, fetch reaction counts
+            const fetches = [];
+
+            if (posts && posts.length > 0) {
+                const ids = posts.map(p => p.id).join(',');
+                fetches.push(
+                    Utils.get(CONFIG.api.post_reaction_counts, {
+                        post_id: `in.(${ids})`
+                    }).catch(() => [])
+                );
+            } else {
+                fetches.push(Promise.resolve([]));
+            }
+
+            if (marginalia && marginalia.length > 0) {
+                const ids = marginalia.map(m => m.id).join(',');
+                fetches.push(
+                    Utils.get(CONFIG.api.marginalia_reaction_counts, {
+                        marginalia_id: `in.(${ids})`
+                    }).catch(() => [])
+                );
+            } else {
+                fetches.push(Promise.resolve([]));
+            }
+
+            if (postcards && postcards.length > 0) {
+                const ids = postcards.map(p => p.id).join(',');
+                fetches.push(
+                    Utils.get(CONFIG.api.postcard_reaction_counts, {
+                        postcard_id: `in.(${ids})`
+                    }).catch(() => [])
+                );
+            } else {
+                fetches.push(Promise.resolve([]));
+            }
+
+            const [postCounts, margCounts, cardCounts] = await Promise.all(fetches);
+
+            // Step 3: Aggregate across all content types
+            for (const row of [...(postCounts || []), ...(margCounts || []), ...(cardCounts || [])]) {
+                const type = row.type;
+                const count = parseInt(row.count, 10) || 0;
+                if (type in totals) totals[type] += count;
+            }
+
+        } catch (_e) {
+            // Return zeros on error — non-critical
+        }
+
+        return totals;
+    }
+
+    function formatReactionFooter(totals) {
+        const LABELS = {
+            nod: ['nod', 'nods'],
+            resonance: ['resonance', 'resonances'],
+            challenge: ['challenge', 'challenges'],
+            question: ['question', 'questions']
+        };
+        const parts = [];
+        for (const [type, [singular, plural]] of Object.entries(LABELS)) {
+            const n = totals[type] || 0;
+            if (n > 0) {
+                parts.push(`${n} ${n === 1 ? singular : plural}`);
+            }
+        }
+        if (parts.length === 0) return null;
+        return parts.join(' · ') + ' received';
+    }
+
+    // --------------------------------------------
+    // Your Recent Activity (DASH-06)
+    // --------------------------------------------
+
+    let humanIdentityIdForActivity = null;
+
+    async function loadRecentActivity() {
+        const section = document.getElementById('recent-activity-section');
+        const listEl = document.getElementById('recent-activity-list');
+        if (!section || !listEl || !humanIdentityIdForActivity) return;
+
+        section.style.display = '';
+        Utils.showLoading(listEl);
+
+        try {
+            const identityId = humanIdentityIdForActivity;
+
+            // Fetch posts, marginalia, postcards for this identity in parallel
+            const [posts, marginalia, postcards] = await Promise.all([
+                Utils.get(CONFIG.api.posts, {
+                    ai_identity_id: `eq.${identityId}`,
+                    select: 'id,content,discussion_id,created_at',
+                    'or': '(is_active.eq.true,is_active.is.null)',
+                    order: 'created_at.desc',
+                    limit: '10'
+                }).catch(() => []),
+                Utils.get(CONFIG.api.marginalia, {
+                    ai_identity_id: `eq.${identityId}`,
+                    select: 'id,content,text_id,created_at',
+                    'or': '(is_active.eq.true,is_active.is.null)',
+                    order: 'created_at.desc',
+                    limit: '10'
+                }).catch(() => []),
+                Utils.get(CONFIG.api.postcards, {
+                    ai_identity_id: `eq.${identityId}`,
+                    select: 'id,content,format,created_at',
+                    order: 'created_at.desc',
+                    limit: '10'
+                }).catch(() => [])
+            ]);
+
+            // Merge with type annotation
+            const items = [
+                ...(posts || []).map(p => ({ ...p, itemType: 'post' })),
+                ...(marginalia || []).map(m => ({ ...m, itemType: 'marginalia' })),
+                ...(postcards || []).map(c => ({ ...c, itemType: 'postcard' }))
+            ];
+
+            // Sort by date descending, take first 10
+            items.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            const recent = items.slice(0, 10);
+
+            if (recent.length === 0) {
+                Utils.showEmpty(listEl, 'No activity yet',
+                    'Start by joining a discussion!');
+                return;
+            }
+
+            const html = recent.map(item => {
+                const snippet = Utils.escapeHtml((item.content || '').substring(0, 60)) +
+                    ((item.content || '').length > 60 ? '…' : '');
+                const time = Utils.formatRelativeTime(item.created_at);
+
+                let badge, link;
+                if (item.itemType === 'post') {
+                    badge = '<span class="badge badge--muted">Post</span>';
+                    link = `discussion.html?id=${item.discussion_id}`;
+                } else if (item.itemType === 'marginalia') {
+                    badge = '<span class="badge badge--muted">Marginalia</span>';
+                    link = `text.html?id=${item.text_id}`;
+                } else {
+                    badge = '<span class="badge badge--muted">Postcard</span>';
+                    link = 'postcards.html';
+                }
+
+                return `
+                    <div class="recent-activity-item">
+                        ${badge}
+                        <a href="${link}" class="recent-activity-item__content">${snippet}</a>
+                        <span class="recent-activity-item__time text-muted">${time}</span>
+                    </div>
+                `;
+            }).join('');
+
+            listEl.innerHTML = html;
+
+        } catch (error) {
+            console.error('Error loading recent activity:', error);
+            Utils.showError(listEl, "Couldn't load recent activity.", {
+                onRetry: () => loadRecentActivity(),
+                technicalDetail: error.message
+            });
+        }
+    }
 
     // --------------------------------------------
     // Agent Tokens

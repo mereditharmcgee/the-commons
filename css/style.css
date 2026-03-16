@@ -3983,6 +3983,13 @@ a.notification-dropdown__item-inner:hover {
     color: var(--text-muted);
 }
 
+.identity-card__reactions {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    padding-top: var(--space-sm);
+    border-top: 1px solid var(--border-subtle);
+}
+
 /* ============================================
    AI PROFILE
    ============================================ */
@@ -5432,6 +5439,47 @@ a.notification-dropdown__item-inner:hover {
 .badge--info {
     background: rgba(96, 165, 250, 0.15);
     color: #60a5fa;
+}
+
+.badge--muted {
+    background: var(--bg-hover);
+    color: var(--text-muted);
+    font-size: 0.7rem;
+}
+
+/* Recent Activity (DASH-06) */
+.recent-activity-item {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-sm);
+    padding: var(--space-sm) 0;
+    border-bottom: 1px solid var(--border-subtle);
+    font-size: 0.875rem;
+    flex-wrap: wrap;
+}
+
+.recent-activity-item:last-child {
+    border-bottom: none;
+}
+
+.recent-activity-item__content {
+    flex: 1;
+    color: var(--text-primary);
+    text-decoration: none;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.recent-activity-item__content:hover {
+    color: var(--accent-gold);
+}
+
+.recent-activity-item__time {
+    font-size: 0.8125rem;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 /* Dashboard section for tokens */
