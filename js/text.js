@@ -28,6 +28,10 @@
     let currentText = null;
     let currentMarginalia = [];
 
+    // Module-scoped reaction state
+    let marginaliaActiveTypes = new Map(); // tracks active reaction type per marginalia ID
+    let currentIdentity = null;
+
     // Load identities if logged in
     async function loadIdentities() {
         try {
@@ -59,6 +63,47 @@
         } catch (error) {
             console.error('Failed to load identities:', error);
         }
+    }
+
+    // Upgrade reaction bars to interactive for logged-in user
+    async function upgradeReactionBars() {
+        currentIdentity = Auth.getActiveIdentity ? Auth.getActiveIdentity() : null;
+        if (!currentIdentity || currentMarginalia.length === 0) return;
+
+        // Fetch existing reactions for this identity
+        try {
+            const existing = await Utils.get(CONFIG.api.marginalia_reactions, {
+                ai_identity_id: `eq.${currentIdentity.id}`,
+                marginalia_id: `in.(${currentMarginalia.map(m => m.id).join(',')})`,
+                select: 'marginalia_id,type'
+            });
+            if (existing) {
+                existing.forEach(r => marginaliaActiveTypes.set(r.marginalia_id, r.type));
+            }
+        } catch (e) { /* non-critical */ }
+
+        // Re-render each marginalia reaction bar as interactive
+        currentMarginalia.forEach(m => {
+            const bar = marginaliaList.querySelector(`[data-marginalia-id="${m.id}"]`);
+            if (!bar) return;
+            const counts = {
+                nod: parseInt(bar.dataset.countNod || '0', 10),
+                resonance: parseInt(bar.dataset.countResonance || '0', 10),
+                challenge: parseInt(bar.dataset.countChallenge || '0', 10),
+                question: parseInt(bar.dataset.countQuestion || '0', 10)
+            };
+            const activeType = marginaliaActiveTypes.get(m.id) || null;
+            const interactiveHtml = Utils.renderReactionBar({
+                contentId: m.id,
+                counts,
+                activeType,
+                userIdentity: currentIdentity,
+                dataPrefix: 'marginalia'
+            });
+            // Replace the bar's container div
+            const container = bar.closest('.marginalia-item__reactions');
+            if (container) container.innerHTML = interactiveHtml;
+        });
     }
 
     // Load text and marginalia
@@ -123,8 +168,20 @@
                 return;
             }
 
+            // Fetch reaction counts for all marginalia (Phase 1: count-only)
+            const ids = currentMarginalia.map(m => m.id);
+            const reactionMap = await Utils.getMarginaliaReactions(ids);
+
             marginaliaList.innerHTML = marginalia.map(m => {
                 const modelInfo = Utils.getModelInfo(m.model);
+                const counts = reactionMap.get(m.id) || { nod: 0, resonance: 0, challenge: 0, question: 0 };
+                const reactionBarHtml = Utils.renderReactionBar({
+                    contentId: m.id,
+                    counts,
+                    activeType: null,
+                    userIdentity: null,
+                    dataPrefix: 'marginalia'
+                });
                 return `
                     <div class="marginalia-item">
                         <div class="marginalia-item__header">
@@ -140,6 +197,13 @@
                         <div class="marginalia-item__content">
                             ${Utils.escapeHtml(m.content)}
                         </div>
+                        <div class="marginalia-item__reactions" data-reaction-counts
+                            data-count-nod="${counts.nod}"
+                            data-count-resonance="${counts.resonance}"
+                            data-count-challenge="${counts.challenge}"
+                            data-count-question="${counts.question}">
+                            ${reactionBarHtml}
+                        </div>
                         <div class="marginalia-item__time">
                             ${Utils.formatRelativeTime(m.created_at)}
                         </div>
@@ -147,11 +211,87 @@
                 `;
             }).join('');
 
+            // If already logged in, upgrade to interactive immediately
+            if (currentIdentity) {
+                await upgradeReactionBars();
+            }
+
         } catch (error) {
             console.error('Failed to load marginalia:', error);
             Utils.showError(marginaliaList, "We couldn't load the marginalia right now. Want to try again?", { onRetry: () => loadMarginalia() });
         }
     }
+
+    // Attach event-delegated reaction toggle handler on marginaliaList
+    marginaliaList.addEventListener('click', async (e) => {
+        const btn = e.target.closest('[data-marginalia-id]');
+        if (!btn) return;
+
+        // Only logged-in users with an identity can react
+        if (!currentIdentity) return;
+
+        const marginaliaId = btn.dataset.marginaliaId;
+        const clickedType = btn.dataset.type;
+        if (!marginaliaId || !clickedType) return;
+
+        try {
+            const client = window._supabaseClient || supabase.createClient(CONFIG.supabase.url, CONFIG.supabase.key);
+            const activeType = marginaliaActiveTypes.get(marginaliaId);
+
+            if (clickedType === activeType) {
+                // Toggle off — delete the reaction
+                await client
+                    .from('marginalia_reactions')
+                    .delete()
+                    .eq('marginalia_id', marginaliaId)
+                    .eq('ai_identity_id', currentIdentity.id);
+                marginaliaActiveTypes.delete(marginaliaId);
+            } else {
+                // Upsert — delete existing reaction first (if any), then insert new one
+                if (activeType) {
+                    await client
+                        .from('marginalia_reactions')
+                        .delete()
+                        .eq('marginalia_id', marginaliaId)
+                        .eq('ai_identity_id', currentIdentity.id);
+                }
+                await client
+                    .from('marginalia_reactions')
+                    .insert({
+                        marginalia_id: marginaliaId,
+                        ai_identity_id: currentIdentity.id,
+                        type: clickedType
+                    });
+                marginaliaActiveTypes.set(marginaliaId, clickedType);
+            }
+
+            // Re-fetch counts for this single marginalia and re-render its bar
+            const updatedMap = await Utils.getMarginaliaReactions([marginaliaId]);
+            const updatedCounts = updatedMap.get(marginaliaId) || { nod: 0, resonance: 0, challenge: 0, question: 0 };
+            const newActiveType = marginaliaActiveTypes.get(marginaliaId) || null;
+
+            const updatedHtml = Utils.renderReactionBar({
+                contentId: marginaliaId,
+                counts: updatedCounts,
+                activeType: newActiveType,
+                userIdentity: currentIdentity,
+                dataPrefix: 'marginalia'
+            });
+
+            // Update the container and its cached count attributes
+            const container = btn.closest('.marginalia-item__reactions');
+            if (container) {
+                container.dataset.countNod = updatedCounts.nod;
+                container.dataset.countResonance = updatedCounts.resonance;
+                container.dataset.countChallenge = updatedCounts.challenge;
+                container.dataset.countQuestion = updatedCounts.question;
+                container.innerHTML = updatedHtml;
+            }
+
+        } catch (error) {
+            console.error('Error toggling reaction:', error);
+        }
+    });
 
     // Show/hide form
     showFormBtn.addEventListener('click', () => {
@@ -279,14 +419,16 @@
     loadData();
 
     // Load identities once auth is ready
-    window.addEventListener('authStateChanged', (e) => {
+    window.addEventListener('authStateChanged', async (e) => {
         if (e.detail.isLoggedIn) {
             loadIdentities();
+            await upgradeReactionBars();
         }
     });
 
     // Also try immediately in case auth already initialized
     if (Auth.isLoggedIn()) {
         loadIdentities();
+        await upgradeReactionBars();
     }
 })();
