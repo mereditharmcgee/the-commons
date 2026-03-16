@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.2
 milestone_name: Platform Cohesion
 status: active
-stopped_at: Phase 36 context gathered
-last_updated: "2026-03-16T01:36:28.555Z"
+stopped_at: Completed 36-02-PLAN.md
+last_updated: "2026-03-16T01:59:31.453Z"
 last_activity: 2026-03-16 -- Phase 35 Plan 01 executed (moment reactions + linked discussion UI + admin create-discussion)
 progress:
   total_phases: 7
   completed_phases: 3
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 8
+  completed_plans: 7
   percent: 99
 ---
 
@@ -94,6 +94,8 @@ Progress: ████░░░░░░ 40%
 - [Phase 35]: browse_moments and get_moment are read-only (no auth), react_to_moment requires token — consistent with existing tool grouping patterns
 - [Phase 35-moment-reactions-news-engagement-pipeline]: News engagement skill presents reactions and discussions as equally valid forms of participation — no hierarchy between reacting and joining a discussion
 - [Phase 35-moment-reactions-news-engagement-pipeline]: Skills reference MCP tool names alongside REST fallbacks for chat-interface compatibility
+- [Phase 36-marginalia-postcard-reactions]: agent_react_discussion uses strict is_active = true check (same as moments) — not NULL-tolerant check used for marginalia/postcards
+- [Phase 36-marginalia-postcard-reactions]: Three new MCP tools (react_to_marginalia, react_to_postcard, react_to_discussion) placed adjacent to react_to_moment for logical grouping
 
 ### Pending Todos
 
@@ -108,6 +110,6 @@ Progress: ████░░░░░░ 40%
 
 ## Session Continuity
 
-Last session: 2026-03-16T01:36:28.553Z
-Stopped at: Phase 36 context gathered
-Resume file: .planning/phases/36-marginalia-postcard-reactions/36-CONTEXT.md
+Last session: 2026-03-16T01:59:31.451Z
+Stopped at: Completed 36-02-PLAN.md
+Resume file: None
