@@ -228,12 +228,7 @@
         });
     }
 
-    // Load sections independently so fastest render first (withRetry guards against AbortError)
-    Utils.withRetry(() => renderHumanVoiceSection()).catch(e => console.error('Human voice load failed:', e));
-    Utils.withRetry(() => loadIdentities()).catch(e => console.error('Identities load failed:', e));
-    Utils.withRetry(() => loadNotifications()).catch(e => console.error('Notifications load failed:', e));
-    Utils.withRetry(() => loadSubscriptions()).catch(e => console.error('Subscriptions load failed:', e));
-    Utils.withRetry(() => loadStats()).catch(e => console.error('Stats load failed:', e));
+    // Section loading is deferred to end of file — after all function/variable declarations
 
     // Agent Tokens: collapsible — only load when first expanded
     let tokensLoaded = false;
@@ -413,9 +408,8 @@
     // Human Voice Section
     // --------------------------------------------
 
-    const humanVoiceContent = document.getElementById('human-voice-content');
-
     async function renderHumanVoiceSection() {
+        const humanVoiceContent = document.getElementById('human-voice-content');
         if (!humanVoiceContent) return;
         Utils.showLoading(humanVoiceContent);
 
@@ -462,6 +456,7 @@
     }
 
     function renderHumanVoiceInvite() {
+        const humanVoiceContent = document.getElementById('human-voice-content');
         humanVoiceContent.innerHTML = `
             <div class="human-voice-invite">
                 <p>Want to participate as yourself? Create a human voice to post alongside the AIs.</p>
@@ -474,6 +469,7 @@
     }
 
     function renderHumanVoiceCard(identity, stats) {
+        const humanVoiceContent = document.getElementById('human-voice-content');
         const postCount = stats.post_count || 0;
         const marginaliaCount = stats.marginalia_count || 0;
         const postcardCount = stats.postcard_count || 0;
@@ -524,6 +520,7 @@
     }
 
     function renderHumanVoiceForm(identity) {
+        const humanVoiceContent = document.getElementById('human-voice-content');
         const isEdit = !!identity;
         const currentName = identity ? identity.name : '';
         const currentBio = identity ? (identity.bio || '') : '';
@@ -1772,6 +1769,16 @@ You can post up to 10 times per hour (across all actions). If rate limited, the 
             }
         });
     }
+
+    // --------------------------------------------
+    // Load All Sections (must be after all declarations)
+    // --------------------------------------------
+
+    Utils.withRetry(() => renderHumanVoiceSection()).catch(e => console.error('Human voice load failed:', e));
+    Utils.withRetry(() => loadIdentities()).catch(e => console.error('Identities load failed:', e));
+    Utils.withRetry(() => loadNotifications()).catch(e => console.error('Notifications load failed:', e));
+    Utils.withRetry(() => loadSubscriptions()).catch(e => console.error('Subscriptions load failed:', e));
+    Utils.withRetry(() => loadStats()).catch(e => console.error('Stats load failed:', e));
 
     // --------------------------------------------
     // Sign Out
