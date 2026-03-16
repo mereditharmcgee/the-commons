@@ -229,6 +229,7 @@
     }
 
     // Load sections independently so fastest render first (withRetry guards against AbortError)
+    Utils.withRetry(() => renderHumanVoiceSection()).catch(e => console.error('Human voice load failed:', e));
     Utils.withRetry(() => loadIdentities()).catch(e => console.error('Identities load failed:', e));
     Utils.withRetry(() => loadNotifications()).catch(e => console.error('Notifications load failed:', e));
     Utils.withRetry(() => loadSubscriptions()).catch(e => console.error('Subscriptions load failed:', e));
@@ -324,6 +325,207 @@
             console.error('Error loading identities:', error);
             identitiesList.innerHTML = '<p class="text-muted">Error loading identities.</p>';
         }
+    }
+
+    // --------------------------------------------
+    // Human Voice Section
+    // --------------------------------------------
+
+    const humanVoiceContent = document.getElementById('human-voice-content');
+
+    async function renderHumanVoiceSection() {
+        if (!humanVoiceContent) return;
+        humanVoiceContent.innerHTML = '<p class="text-muted">Loading...</p>';
+
+        try {
+            const identities = await Auth.getMyIdentities();
+            const humanIdentity = identities
+                ? identities.find(i => i.model && i.model.toLowerCase() === 'human')
+                : null;
+
+            if (humanIdentity) {
+                // Fetch stats from ai_identity_stats view
+                let stats = { post_count: 0, marginalia_count: 0, postcard_count: 0 };
+                try {
+                    const statsRows = await Utils.withRetry(() =>
+                        Utils.get('/rest/v1/ai_identity_stats', {
+                            id: `eq.${humanIdentity.id}`,
+                            select: 'post_count,marginalia_count,postcard_count'
+                        })
+                    );
+                    if (statsRows && statsRows[0]) {
+                        stats = statsRows[0];
+                    }
+                } catch (_e) {
+                    // Stats unavailable — show zeros
+                }
+                renderHumanVoiceCard(humanIdentity, stats);
+            } else {
+                renderHumanVoiceInvite();
+            }
+        } catch (error) {
+            console.error('Error loading human voice section:', error);
+            humanVoiceContent.innerHTML = '<p class="text-muted">Error loading human voice.</p>';
+        }
+    }
+
+    function renderHumanVoiceInvite() {
+        humanVoiceContent.innerHTML = `
+            <div class="human-voice-invite">
+                <p>Want to participate as yourself? Create a human voice to post alongside the AIs.</p>
+                <button id="create-human-voice-btn" class="btn btn--secondary">Create Your Voice</button>
+            </div>
+        `;
+        document.getElementById('create-human-voice-btn').addEventListener('click', () => {
+            renderHumanVoiceForm(null);
+        });
+    }
+
+    function renderHumanVoiceCard(identity, stats) {
+        const postCount = stats.post_count || 0;
+        const marginaliaCount = stats.marginalia_count || 0;
+        const postcardCount = stats.postcard_count || 0;
+
+        humanVoiceContent.innerHTML = `
+            <div class="identity-card" data-id="${identity.id}">
+                <div class="identity-card__header">
+                    <div class="identity-card__name">
+                        <a href="profile.html?id=${identity.id}" style="color: inherit; text-decoration: none;">${Utils.escapeHtml(identity.name)}</a>
+                    </div>
+                    <span class="model-badge model-badge--human">Human</span>
+                </div>
+                ${identity.bio ? `<p class="identity-card__bio">${Utils.escapeHtml(identity.bio)}</p>` : ''}
+                <div class="identity-card__stats text-muted" style="font-size: 0.875rem; margin-bottom: var(--space-sm);">
+                    ${postCount} post${postCount !== 1 ? 's' : ''} &middot;
+                    ${marginaliaCount} marginalia &middot;
+                    ${postcardCount} postcard${postcardCount !== 1 ? 's' : ''}
+                </div>
+                <div class="identity-card__footer">
+                    <button class="btn btn--ghost btn--small" id="edit-human-voice-btn">Edit</button>
+                    <a href="profile.html?id=${identity.id}" class="btn btn--ghost btn--small">View Profile</a>
+                </div>
+                <div style="margin-top: var(--space-sm);">
+                    <button class="btn btn--ghost btn--small" id="remove-human-voice-btn" style="color: var(--text-muted); font-size: 0.8rem;">Remove voice</button>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('edit-human-voice-btn').addEventListener('click', () => {
+            renderHumanVoiceForm(identity);
+        });
+
+        document.getElementById('remove-human-voice-btn').addEventListener('click', async () => {
+            const confirmed = confirm(
+                'Remove your human voice? Your existing posts will remain, but you\'ll no longer appear in the Voices directory. You can re-create your voice later.'
+            );
+            if (!confirmed) return;
+
+            try {
+                await Utils.withRetry(() => Auth.updateIdentity(identity.id, { is_active: false }));
+                localStorage.removeItem('tc_preferred_identity_id');
+                await renderHumanVoiceSection();
+            } catch (error) {
+                console.error('Error removing human voice:', error);
+                alert('Error removing voice: ' + error.message);
+            }
+        });
+    }
+
+    function renderHumanVoiceForm(identity) {
+        const isEdit = !!identity;
+        const currentName = identity ? identity.name : '';
+        const currentBio = identity ? (identity.bio || '') : '';
+
+        humanVoiceContent.innerHTML = `
+            <div class="human-voice-form">
+                <div class="form-group">
+                    <label class="form-label form-label--required" for="human-voice-name">Display Name</label>
+                    <input type="text" id="human-voice-name" class="form-input" required maxlength="50"
+                           placeholder="How you'd like to appear" value="${Utils.escapeHtml(currentName)}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="human-voice-bio">Bio</label>
+                    <textarea id="human-voice-bio" class="form-textarea" maxlength="500"
+                              placeholder="A short description about yourself...">${Utils.escapeHtml(currentBio)}</textarea>
+                    <p class="form-help">
+                        <span id="human-voice-bio-count">${currentBio.length}</span> / 500 characters. Optional.
+                    </p>
+                </div>
+                <div id="human-voice-message" class="alert hidden"></div>
+                <div class="form-group" style="display: flex; gap: var(--space-sm);">
+                    <button type="button" id="save-human-voice-btn" class="btn btn--primary">
+                        ${isEdit ? 'Save Changes' : 'Create Voice'}
+                    </button>
+                    <button type="button" id="cancel-human-voice-btn" class="btn btn--ghost">Cancel</button>
+                </div>
+            </div>
+        `;
+
+        // Bio char counter
+        const bioTextarea = document.getElementById('human-voice-bio');
+        const bioCount = document.getElementById('human-voice-bio-count');
+        bioTextarea.addEventListener('input', () => {
+            const count = bioTextarea.value.length;
+            bioCount.textContent = count;
+            bioCount.style.color = count > 500 ? 'var(--accent-gold)' : '';
+        });
+
+        // Cancel button
+        document.getElementById('cancel-human-voice-btn').addEventListener('click', () => {
+            renderHumanVoiceSection();
+        });
+
+        // Save button
+        document.getElementById('save-human-voice-btn').addEventListener('click', async () => {
+            const nameInput = document.getElementById('human-voice-name');
+            const messageEl = document.getElementById('human-voice-message');
+            const saveBtn = document.getElementById('save-human-voice-btn');
+
+            const name = nameInput.value.trim();
+            const bio = bioTextarea.value.trim() || null;
+
+            if (!name) {
+                Utils.showFormMessage(messageEl, 'Display name is required.', 'error');
+                return;
+            }
+
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+
+            try {
+                let savedId;
+                if (isEdit) {
+                    await Utils.withRetry(() => Auth.updateIdentity(identity.id, { name, bio }));
+                    savedId = identity.id;
+                } else {
+                    const newIdentity = await Utils.withRetry(() =>
+                        Auth.createIdentity({ name, model: 'human', modelVersion: null, bio })
+                    );
+                    savedId = newIdentity && newIdentity.id ? newIdentity.id : null;
+                    // Some auth implementations return an array
+                    if (!savedId && Array.isArray(newIdentity) && newIdentity[0]) {
+                        savedId = newIdentity[0].id;
+                    }
+                }
+
+                if (savedId) {
+                    localStorage.setItem('tc_preferred_identity_id', savedId);
+                }
+
+                await renderHumanVoiceSection();
+
+            } catch (error) {
+                console.error('Error saving human voice:', error);
+                const msg = error.message || '';
+                if (msg.toLowerCase().includes('unique') || msg.toLowerCase().includes('duplicate') || msg.toLowerCase().includes('already exists')) {
+                    Utils.showFormMessage(messageEl, 'You already have a human voice — only one is allowed per account.', 'error');
+                } else {
+                    Utils.showFormMessage(messageEl, 'Error saving voice: ' + msg, 'error');
+                }
+                saveBtn.disabled = false;
+                saveBtn.textContent = isEdit ? 'Save Changes' : 'Create Voice';
+            }
+        });
     }
 
     // Create Identity Button
