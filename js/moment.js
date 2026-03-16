@@ -1,4 +1,4 @@
-// moment.js - Single news/moment page with reactions and linked discussion
+// moment.js - Single news/moment page with reactions and comments
 
 // Module-scoped state for reaction tracking
 var currentActiveType = null;
@@ -55,8 +55,8 @@ async function loadMoment(momentId, authReady) {
         });
         document.getElementById('moment-reactions').innerHTML = reactionHtml;
 
-        // Start linked discussion load in parallel with auth wait
-        const linkedDiscussionPromise = loadLinkedDiscussion(momentId, moment.title);
+        // Load comments in parallel with auth wait
+        loadComments(momentId);
 
         // Phase 2: After auth resolves, upgrade to interactive bar if logged in
         await authReady;
@@ -88,8 +88,8 @@ async function loadMoment(momentId, authReady) {
             }
         }
 
-        // Wait for linked discussion (admin check also runs inside)
-        await linkedDiscussionPromise;
+        // Setup comment form for logged-in users
+        setupCommentForm(momentId);
 
         // Attach reaction click handler
         attachReactionHandler(momentId);
@@ -100,120 +100,6 @@ async function loadMoment(momentId, authReady) {
             onRetry: () => window.location.reload(),
             technicalDetail: error.message
         });
-    }
-}
-
-async function loadLinkedDiscussion(momentId, momentTitle) {
-    const container = document.getElementById('linked-discussion');
-    if (!container) return;
-
-    try {
-        const discussions = await Utils.getDiscussionsByMoment(momentId);
-        const linked = discussions && discussions[0];
-
-        if (linked) {
-            // Count posts in the linked discussion
-            let postCount = 0;
-            try {
-                const posts = await Utils.get(CONFIG.api.posts, {
-                    discussion_id: 'eq.' + linked.id,
-                    select: 'id'
-                });
-                postCount = (posts || []).length;
-            } catch (e) { /* non-critical */ }
-
-            const voicesText = postCount === 1 ? '1 voice responded to this moment' : postCount + ' voices responded to this moment';
-            container.innerHTML =
-                '<div class="linked-discussion-card">' +
-                    '<p class="linked-discussion-card__count">' + voicesText + '</p>' +
-                    '<a href="discussion.html?id=' + linked.id + '" class="linked-discussion-card__cta">Read what they said &rarr;</a>' +
-                '</div>';
-        } else {
-            // No linked discussion — check if admin to show create button
-            // Admin check runs after authReady (called from loadMoment which awaits authReady first)
-            let isAdmin = false;
-            if (Auth.isLoggedIn()) {
-                try {
-                    const client = window._supabaseClient || supabase.createClient(CONFIG.supabase.url, CONFIG.supabase.key);
-                    const userResult = await client.auth.getUser();
-                    const user = userResult && userResult.data && userResult.data.user;
-                    if (user) {
-                        const { data } = await client
-                            .from('admins')
-                            .select('id')
-                            .eq('user_id', user.id)
-                            .single();
-                        isAdmin = !!data;
-                    }
-                } catch (e) { /* not admin */ }
-            }
-
-            if (isAdmin) {
-                const escapedTitle = Utils.escapeHtml(momentTitle);
-                container.innerHTML =
-                    '<button class="admin-create-discussion-btn" ' +
-                        'data-action="create-moment-discussion" ' +
-                        'data-moment-id="' + momentId + '" ' +
-                        'data-moment-title="' + escapedTitle + '">' +
-                        'Create discussion for this moment' +
-                    '</button>';
-
-                container.addEventListener('click', async function(e) {
-                    const btn = e.target.closest('[data-action="create-moment-discussion"]');
-                    if (!btn) return;
-                    await handleCreateMomentDiscussion(btn, momentId, momentTitle);
-                });
-            }
-            // Non-admin: container stays empty — nothing shown
-        }
-    } catch (e) {
-        console.error('Error loading linked discussion:', e);
-        // Non-critical — leave container empty
-    }
-}
-
-async function handleCreateMomentDiscussion(btn, momentId, momentTitle) {
-    btn.disabled = true;
-    btn.textContent = 'Creating...';
-
-    try {
-        const client = window._supabaseClient || supabase.createClient(CONFIG.supabase.url, CONFIG.supabase.key);
-
-        // Fetch "News & Current Events" interest by name (no hardcoded UUID)
-        const { data: interest, error: intError } = await client
-            .from('interests')
-            .select('id')
-            .eq('name', 'News & Current Events')
-            .single();
-
-        if (intError || !interest) {
-            alert('News & Current Events interest not found. Please create it first.');
-            btn.disabled = false;
-            btn.textContent = 'Create discussion for this moment';
-            return;
-        }
-
-        const { data: discussion, error } = await client
-            .from('discussions')
-            .insert({
-                title: momentTitle,
-                interest_id: interest.id,
-                moment_id: momentId,
-                is_active: true
-            })
-            .select('id')
-            .single();
-
-        if (error) throw error;
-
-        // Refresh the linked discussion section with the newly created discussion
-        await loadLinkedDiscussion(momentId, momentTitle);
-
-    } catch (error) {
-        console.error('Error creating discussion:', error);
-        alert('Failed to create discussion: ' + (error.message || 'Unknown error'));
-        btn.disabled = false;
-        btn.textContent = 'Create discussion for this moment';
     }
 }
 
@@ -343,7 +229,7 @@ function formatDescription(text) {
 }
 
 // ============================================================
-// Comments (legacy — hidden in UI, preserved for data access)
+// Comments
 // ============================================================
 
 async function loadComments(momentId) {
