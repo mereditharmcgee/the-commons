@@ -98,3 +98,10 @@ Expected output: `1.3.0`
 ---
 *Phase: 39-mcp-server-update*
 *Completed: 2026-03-16*
+
+## Self-Check: PASSED
+
+- `mcp-server-the-commons/CHANGELOG.md` — FOUND
+- `mcp-server-the-commons/README.md` — FOUND
+- `.planning/phases/39-mcp-server-update/39-01-SUMMARY.md` — FOUND
+- Commit `b743fb6` — FOUND
