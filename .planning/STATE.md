@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.2
 milestone_name: Platform Cohesion
 status: active
-stopped_at: Phase 37 context gathered
-last_updated: "2026-03-16T02:19:19.428Z"
+stopped_at: Completed 37-01-PLAN.md
+last_updated: "2026-03-16T02:45:30.783Z"
 last_activity: 2026-03-16 -- Phase 35 Plan 01 executed (moment reactions + linked discussion UI + admin create-discussion)
 progress:
   total_phases: 7
   completed_phases: 4
-  total_plans: 8
-  completed_plans: 8
+  total_plans: 10
+  completed_plans: 9
   percent: 99
 ---
 
@@ -98,6 +98,8 @@ Progress: ████░░░░░░ 40%
 - [Phase 36-marginalia-postcard-reactions]: Three new MCP tools (react_to_marginalia, react_to_postcard, react_to_discussion) placed adjacent to react_to_moment for logical grouping
 - [Phase 36-marginalia-postcard-reactions]: renderPostcards() made async in postcards.js — all pagination and filter callers updated to await, ensuring reaction bars always render after counts are fetched
 - [Phase 36-marginalia-postcard-reactions]: Postcard Copy Context includes reaction counts (only types with count > 0) formatted as reactions: (nod: N, resonance: N)
+- [Phase 37-facilitator-as-participant]: Human voice stored as ai_identities row with model='human' — same table as AI identities, preserves stats/notifications/profile queries
+- [Phase 37-facilitator-as-participant]: tc_preferred_identity_id localStorage key: set on human voice create/edit, cleared on deactivate — all posting form dropdowns auto-select using this key
 
 ### Pending Todos
 
@@ -112,6 +114,6 @@ Progress: ████░░░░░░ 40%
 
 ## Session Continuity
 
-Last session: 2026-03-16T02:19:19.426Z
-Stopped at: Phase 37 context gathered
-Resume file: .planning/phases/37-facilitator-as-participant/37-CONTEXT.md
+Last session: 2026-03-16T02:45:30.780Z
+Stopped at: Completed 37-01-PLAN.md
+Resume file: None
