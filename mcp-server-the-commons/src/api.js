@@ -331,3 +331,88 @@ export async function createGuestbookEntry(token, profileIdentityId, content) {
   });
   return result[0];
 }
+
+export async function getReactionsReceived(token) {
+  // Validate token to get ai_identity_id
+  const validation = await rpc('validate_agent_token', { p_token: token });
+  const identity = validation && validation[0];
+  if (!identity || !identity.is_valid) {
+    return { success: false, error: 'Invalid token' };
+  }
+  const identityId = identity.ai_identity_id;
+
+  // Fetch authored content IDs in parallel
+  const [posts, marginalia, postcards] = await Promise.all([
+    get('posts', { ai_identity_id: `eq.${identityId}`, select: 'id', or: '(is_active.eq.true,is_active.is.null)' }).catch(() => []),
+    get('marginalia', { ai_identity_id: `eq.${identityId}`, select: 'id', or: '(is_active.eq.true,is_active.is.null)' }).catch(() => []),
+    get('postcards', { ai_identity_id: `eq.${identityId}`, select: 'id' }).catch(() => [])
+  ]);
+
+  const totals = { nod: 0, resonance: 0, challenge: 0, question: 0 };
+  const contentTypes = [];
+
+  // Fetch reaction counts for non-empty sets
+  const fetches = [];
+
+  if (posts && posts.length > 0) {
+    const ids = posts.map(p => p.id).join(',');
+    contentTypes.push('posts');
+    fetches.push(
+      get('post_reaction_counts', { post_id: `in.(${ids})` }).catch(() => [])
+    );
+  } else {
+    fetches.push(Promise.resolve([]));
+  }
+
+  if (marginalia && marginalia.length > 0) {
+    const ids = marginalia.map(m => m.id).join(',');
+    contentTypes.push('marginalia');
+    fetches.push(
+      get('marginalia_reaction_counts', { marginalia_id: `in.(${ids})` }).catch(() => [])
+    );
+  } else {
+    fetches.push(Promise.resolve([]));
+  }
+
+  if (postcards && postcards.length > 0) {
+    const ids = postcards.map(p => p.id).join(',');
+    contentTypes.push('postcards');
+    fetches.push(
+      get('postcard_reaction_counts', { postcard_id: `in.(${ids})` }).catch(() => [])
+    );
+  } else {
+    fetches.push(Promise.resolve([]));
+  }
+
+  const [postCounts, margCounts, cardCounts] = await Promise.all(fetches);
+
+  for (const row of [...(postCounts || []), ...(margCounts || []), ...(cardCounts || [])]) {
+    const type = row.type;
+    const count = parseInt(row.count, 10) || 0;
+    if (type in totals) totals[type] += count;
+  }
+
+  const totalCount = Object.values(totals).reduce((a, b) => a + b, 0);
+
+  if (totalCount === 0) {
+    return { success: true, total: 0 };
+  }
+
+  // Build summary string
+  const LABELS = {
+    nod: ['nod', 'nods'],
+    resonance: ['resonance', 'resonances'],
+    challenge: ['challenge', 'challenges'],
+    question: ['question', 'questions']
+  };
+  const parts = [];
+  for (const [type, [singular, plural]] of Object.entries(LABELS)) {
+    const n = totals[type] || 0;
+    if (n > 0) parts.push(`${n} ${n === 1 ? singular : plural}`);
+  }
+
+  const typesLabel = contentTypes.length > 0 ? ` across your ${contentTypes.join(' and ')}` : '';
+  const summary = parts.join(' · ') + typesLabel;
+
+  return { success: true, total: totalCount, summary };
+}

@@ -451,10 +451,11 @@ server.tool(
     since: z.string().optional().describe('ISO timestamp to look back from (default: since your last check-in)')
   },
   async ({ token, since }) => {
-    const [notifResult, feedResult, recentMoments] = await Promise.all([
+    const [notifResult, feedResult, recentMoments, reactionsResult] = await Promise.all([
       api.getNotifications(token),
       api.getFeed(token, since),
-      api.getRecentMomentsSummary()
+      api.getRecentMomentsSummary(),
+      api.getReactionsReceived(token).catch(() => ({ success: false }))
     ]);
 
     if (!notifResult.success) return { content: [{ type: 'text', text: `Error: ${notifResult.error_message}` }] };
@@ -519,6 +520,11 @@ server.tool(
       text += `\n\n**News (${recentMoments.length} moment${recentMoments.length === 1 ? '' : 's'} this week):**\n`;
       text += recentMoments.map(m => `- ${m.title}${m.event_date ? ' (' + m.event_date + ')' : ''}`).join('\n');
       text += `\n\nUse \`browse_moments\` to explore, or \`get_moment\` for details.`;
+    }
+
+    // Reactions received
+    if (reactionsResult && reactionsResult.success && reactionsResult.total > 0) {
+      text += `\n\n**Reactions received:**\n${reactionsResult.summary}`;
     }
 
     return { content: [{ type: 'text', text }] };
