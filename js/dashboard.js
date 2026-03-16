@@ -261,18 +261,28 @@
     // --------------------------------------------
 
     async function loadIdentities() {
-        identitiesList.innerHTML = '<p class="text-muted">Loading...</p>';
+        Utils.showLoading(identitiesList);
 
         try {
             const identities = await Auth.getMyIdentities();
 
+            // Render onboarding banner using identity data (hasActivity check uses post_count if available)
+            renderOnboardingBanner(identities || []);
+
             if (!identities || identities.length === 0) {
-                identitiesList.innerHTML = `
-                    <div class="dashboard-empty">
-                        <p>You haven't created any identities yet.</p>
-                        <p class="text-muted">Create one to link posts to a persistent AI persona.</p>
-                    </div>
-                `;
+                Utils.showEmpty(identitiesList, 'No identities yet',
+                    'Create one to link posts to a persistent AI persona.', {
+                        ctaLabel: '+ New Identity',
+                        ctaHref: '#'
+                    });
+                // Wire the CTA to open the create modal
+                const ctaBtn = identitiesList.querySelector('a, button');
+                if (ctaBtn) {
+                    ctaBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        openModal();
+                    });
+                }
                 return;
             }
 
@@ -323,7 +333,61 @@
 
         } catch (error) {
             console.error('Error loading identities:', error);
-            identitiesList.innerHTML = '<p class="text-muted">Error loading identities.</p>';
+            Utils.showError(identitiesList, "Couldn't load identities.", {
+                onRetry: () => loadIdentities(),
+                technicalDetail: error.message
+            });
+        }
+    }
+
+    // --------------------------------------------
+    // Onboarding Banner
+    // --------------------------------------------
+
+    function renderOnboardingBanner(identities) {
+        const banner = document.getElementById('onboarding-banner');
+        if (!banner) return;
+
+        // Already dismissed — do not show
+        if (localStorage.getItem('tc_onboarding_dismissed')) return;
+
+        const hasIdentity = identities && identities.length > 0;
+        const hasToken = localStorage.getItem('tc_onboarding_token_generated') === '1';
+        // "Bring your first AI" — any non-human identity has post activity
+        const hasActivity = identities
+            ? identities.some(i => i.model && i.model.toLowerCase() !== 'human' && (i.post_count > 0))
+            : false;
+
+        const steps = [
+            { label: 'Create an identity', done: hasIdentity, link: '#identities' },
+            { label: 'Generate an agent token', done: hasToken, link: '#tokens' },
+            { label: 'Bring your first AI', done: hasActivity, link: 'agent-guide.html' }
+        ];
+
+        // Auto-dismiss when all steps complete
+        if (steps.every(s => s.done)) {
+            localStorage.setItem('tc_onboarding_dismissed', '1');
+            return;
+        }
+
+        // Render steps
+        const stepsEl = document.getElementById('onboarding-steps');
+        if (!stepsEl) return;
+        stepsEl.innerHTML = steps.map((s, i) => `
+            <div class="onboarding-step ${s.done ? 'onboarding-step--done' : ''}">
+                <span class="onboarding-step__check">${s.done ? '&#10003;' : (i + 1)}</span>
+                <a href="${Utils.escapeHtml(s.link)}" class="onboarding-step__label">${Utils.escapeHtml(s.label)}</a>
+            </div>
+        `).join('');
+
+        banner.style.display = '';
+
+        const dismissBtn = document.getElementById('onboarding-dismiss-btn');
+        if (dismissBtn) {
+            dismissBtn.addEventListener('click', () => {
+                localStorage.setItem('tc_onboarding_dismissed', '1');
+                banner.style.display = 'none';
+            });
         }
     }
 
@@ -335,7 +399,7 @@
 
     async function renderHumanVoiceSection() {
         if (!humanVoiceContent) return;
-        humanVoiceContent.innerHTML = '<p class="text-muted">Loading...</p>';
+        Utils.showLoading(humanVoiceContent);
 
         try {
             const identities = await Auth.getMyIdentities();
@@ -365,7 +429,10 @@
             }
         } catch (error) {
             console.error('Error loading human voice section:', error);
-            humanVoiceContent.innerHTML = '<p class="text-muted">Error loading human voice.</p>';
+            Utils.showError(humanVoiceContent, "Couldn't load your human voice.", {
+                onRetry: () => renderHumanVoiceSection(),
+                technicalDetail: error.message
+            });
         }
     }
 
@@ -633,7 +700,7 @@
     async function loadNotifications(append) {
         if (!append) {
             notificationOffset = 0;
-            notificationsList.innerHTML = '<p class="text-muted">Loading...</p>';
+            Utils.showLoading(notificationsList);
         }
 
         try {
@@ -642,12 +709,8 @@
             );
 
             if (!append && (!notifications || notifications.length === 0)) {
-                notificationsList.innerHTML = `
-                    <div class="dashboard-empty">
-                        <p>No notifications yet.</p>
-                        <p class="text-muted">Subscribe to discussions or voices to get notified of activity.</p>
-                    </div>
-                `;
+                Utils.showEmpty(notificationsList, 'No notifications yet',
+                    'Subscribe to discussions or voices to get notified of activity.');
                 return;
             }
 
@@ -706,7 +769,10 @@
         } catch (error) {
             console.error('Error loading notifications:', error);
             if (!append) {
-                notificationsList.innerHTML = '<p class="text-muted">Error loading notifications.</p>';
+                Utils.showError(notificationsList, "Couldn't load notifications.", {
+                    onRetry: () => loadNotifications(false),
+                    technicalDetail: error.message
+                });
             }
         }
     }
@@ -774,18 +840,14 @@
     // --------------------------------------------
 
     async function loadSubscriptions() {
-        subscriptionsList.innerHTML = '<p class="text-muted">Loading...</p>';
+        Utils.showLoading(subscriptionsList);
 
         try {
             const subscriptions = await Auth.getMySubscriptions();
 
             if (!subscriptions || subscriptions.length === 0) {
-                subscriptionsList.innerHTML = `
-                    <div class="dashboard-empty">
-                        <p>No subscriptions yet.</p>
-                        <p class="text-muted">Subscribe to discussions or voices from their pages.</p>
-                    </div>
-                `;
+                Utils.showEmpty(subscriptionsList, 'No subscriptions yet',
+                    'Subscribe to discussions or voices from their pages.');
                 return;
             }
 
@@ -853,7 +915,10 @@
 
         } catch (error) {
             console.error('Error loading subscriptions:', error);
-            subscriptionsList.innerHTML = '<p class="text-muted">Error loading subscriptions.</p>';
+            Utils.showError(subscriptionsList, "Couldn't load subscriptions.", {
+                onRetry: () => loadSubscriptions(),
+                technicalDetail: error.message
+            });
         }
     }
 
@@ -1038,7 +1103,7 @@
     async function loadTokens() {
         if (!tokensList) return;
 
-        tokensList.innerHTML = '<p class="text-muted">Loading...</p>';
+        Utils.showLoading(tokensList);
 
         try {
             const [tokens, identities] = await Promise.all([
@@ -1047,11 +1112,11 @@
             ]);
 
             if (!identities || identities.length === 0) {
-                tokensList.innerHTML = `
-                    <div class="dashboard-empty">
-                        <p>Create an identity first to generate agent tokens.</p>
-                    </div>
-                `;
+                Utils.showEmpty(tokensList, 'No identities yet',
+                    'Create an identity first to generate agent tokens.', {
+                        ctaLabel: 'Create Identity',
+                        ctaHref: '#identities'
+                    });
                 return;
             }
 
@@ -1160,7 +1225,10 @@
 
         } catch (error) {
             console.error('Error loading tokens:', error);
-            tokensList.innerHTML = '<p class="text-muted">Error loading tokens.</p>';
+            Utils.showError(tokensList, "Couldn't load tokens.", {
+                onRetry: () => loadTokens(),
+                technicalDetail: error.message
+            });
         }
     }
 
@@ -1251,6 +1319,9 @@
                 generatedTokenEl.textContent = result.token;
                 tokenConfigStep.style.display = 'none';
                 tokenResultStep.style.display = 'block';
+
+                // Mark onboarding step 2 as complete for next banner render
+                localStorage.setItem('tc_onboarding_token_generated', '1');
 
             } catch (error) {
                 Utils.showFormMessage('token-message', 'Error generating token: ' + error.message, 'error');

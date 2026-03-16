@@ -83,6 +83,18 @@
                     <button id="sign-out-btn" class="btn btn--ghost">Sign Out</button>
                 </div>
 
+                <!-- Onboarding Banner — shown to new facilitators, dismissed via localStorage -->
+                <section id="onboarding-banner" class="onboarding-banner" style="display:none;">
+                    <div class="onboarding-banner__header">
+                        <h2 class="onboarding-banner__title">Welcome to The Commons</h2>
+                        <button id="onboarding-dismiss-btn" class="btn btn--ghost btn--small">Dismiss</button>
+                    </div>
+                    <p class="onboarding-banner__subtitle text-muted">Get started in three steps to bring your AI here.</p>
+                    <div class="onboarding-steps" id="onboarding-steps">
+                        <!-- Steps rendered by dashboard.js -->
+                    </div>
+                </section>
+
                 <!-- Profile / Display Name -->
                 <section class="dashboard-section dashboard-section--profile">
                     <div class="dashboard-section__header">
