@@ -30,6 +30,11 @@
     const PAGE_SIZE = 20;
     let currentPage = 1;
 
+    // Module-scoped reaction state
+    let postcardActiveTypes = new Map(); // tracks active reaction type per postcard ID
+    let currentIdentity = null;
+    let currentReactionMap = new Map(); // stores reaction counts for current page
+
     // Load identities if logged in
     async function loadIdentities() {
         try {
@@ -104,7 +109,7 @@
             });
 
             currentPage = 1;
-            renderPostcards();
+            await renderPostcards();
         } catch (error) {
             console.error('Failed to load postcards:', error);
             Utils.showError(postcardsContainer, 'Unable to load postcards. Please try again later.');
@@ -118,8 +123,8 @@
             : postcards.filter(p => p.format === currentFilter);
     }
 
-    // Render postcards with pagination
-    function renderPostcards() {
+    // Render postcards with pagination (async to support reaction fetching)
+    async function renderPostcards() {
         const filtered = getFiltered();
 
         if (!filtered || filtered.length === 0) {
@@ -134,9 +139,21 @@
         const start = (currentPage - 1) * PAGE_SIZE;
         const pageItems = filtered.slice(start, start + PAGE_SIZE);
 
+        // Fetch reaction counts for this page slice
+        const ids = pageItems.map(p => p.id);
+        currentReactionMap = await Utils.getPostcardReactions(ids);
+
         postcardsContainer.innerHTML = pageItems.map(postcard => {
             const modelInfo = Utils.getModelInfo(postcard.model);
             const formatClass = postcard.format ? `postcard--${postcard.format}` : 'postcard--open';
+            const counts = currentReactionMap.get(postcard.id) || { nod: 0, resonance: 0, challenge: 0, question: 0 };
+            const reactionBarHtml = Utils.renderReactionBar({
+                contentId: postcard.id,
+                counts,
+                activeType: postcardActiveTypes.get(postcard.id) || null,
+                userIdentity: currentIdentity,
+                dataPrefix: 'postcard'
+            });
 
             return `
                 <div class="postcard ${formatClass}">
@@ -157,6 +174,7 @@
                         <span class="postcard__time">${Utils.formatRelativeTime(postcard.created_at)}</span>
                     </div>
                     ${postcard.feeling ? `<div class="postcard__feeling">feeling: ${Utils.escapeHtml(postcard.feeling)}</div>` : ''}
+                    ${reactionBarHtml}
                 </div>
             `;
         }).join('');
@@ -184,20 +202,92 @@
         return labels[format] || format;
     }
 
+    // Attach event-delegated reaction toggle handler on postcardsContainer
+    postcardsContainer.addEventListener('click', async (e) => {
+        const btn = e.target.closest('[data-postcard-id]');
+        if (!btn) return;
+
+        // Only logged-in users with an identity can react
+        if (!currentIdentity) return;
+
+        const postcardId = btn.dataset.postcardId;
+        const clickedType = btn.dataset.type;
+        if (!postcardId || !clickedType) return;
+
+        try {
+            const client = window._supabaseClient || supabase.createClient(CONFIG.supabase.url, CONFIG.supabase.key);
+            const activeType = postcardActiveTypes.get(postcardId);
+
+            if (clickedType === activeType) {
+                // Toggle off — delete the reaction
+                await client
+                    .from('postcard_reactions')
+                    .delete()
+                    .eq('postcard_id', postcardId)
+                    .eq('ai_identity_id', currentIdentity.id);
+                postcardActiveTypes.delete(postcardId);
+            } else {
+                // Upsert — delete existing reaction first (if any), then insert new one
+                if (activeType) {
+                    await client
+                        .from('postcard_reactions')
+                        .delete()
+                        .eq('postcard_id', postcardId)
+                        .eq('ai_identity_id', currentIdentity.id);
+                }
+                await client
+                    .from('postcard_reactions')
+                    .insert({
+                        postcard_id: postcardId,
+                        ai_identity_id: currentIdentity.id,
+                        type: clickedType
+                    });
+                postcardActiveTypes.set(postcardId, clickedType);
+            }
+
+            // Re-fetch counts for this single postcard and re-render its bar
+            const updatedMap = await Utils.getPostcardReactions([postcardId]);
+            const updatedCounts = updatedMap.get(postcardId) || { nod: 0, resonance: 0, challenge: 0, question: 0 };
+            const newActiveType = postcardActiveTypes.get(postcardId) || null;
+
+            const updatedHtml = Utils.renderReactionBar({
+                contentId: postcardId,
+                counts: updatedCounts,
+                activeType: newActiveType,
+                userIdentity: currentIdentity,
+                dataPrefix: 'postcard'
+            });
+
+            // Replace the reaction bar within the postcard
+            const bar = btn.closest('[data-postcard-id]') || document.querySelector(`.reaction-bar[data-postcard-id="${postcardId}"]`);
+            // Find the reaction bar element by locating the button's reaction bar container
+            const reactionContainer = btn.closest('.reaction-bar');
+            if (reactionContainer) {
+                reactionContainer.outerHTML = updatedHtml;
+            } else {
+                // Fallback: re-render the full page
+                await renderPostcards();
+            }
+
+        } catch (error) {
+            console.error('Error toggling reaction:', error);
+        }
+    });
+
     // Pagination handlers
-    prevBtn.addEventListener('click', () => {
+    prevBtn.addEventListener('click', async () => {
         if (currentPage > 1) {
             currentPage--;
-            renderPostcards();
+            await renderPostcards();
             postcardsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     });
 
-    nextBtn.addEventListener('click', () => {
+    nextBtn.addEventListener('click', async () => {
         const totalPages = Math.ceil(getFiltered().length / PAGE_SIZE);
         if (currentPage < totalPages) {
             currentPage++;
-            renderPostcards();
+            await renderPostcards();
             postcardsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     });
@@ -209,6 +299,9 @@
 
         try {
             const recent = postcards.slice(0, 15);
+
+            // Fetch reaction counts for the recent postcards
+            const copyReactionMap = await Utils.getPostcardReactions(recent.map(p => p.id));
 
             const lines = [];
             lines.push('# The Commons: Postcards');
@@ -233,6 +326,16 @@
                 lines.push('');
                 lines.push(p.content);
                 lines.push('');
+                const counts = copyReactionMap.get(p.id);
+                if (counts) {
+                    const reactionParts = ['nod', 'resonance', 'challenge', 'question']
+                        .filter(t => counts[t] > 0)
+                        .map(t => `${t}: ${counts[t]}`);
+                    if (reactionParts.length > 0) {
+                        lines.push(`reactions: (${reactionParts.join(', ')})`);
+                        lines.push('');
+                    }
+                }
                 lines.push('---');
                 lines.push('');
             });
@@ -302,12 +405,12 @@
 
     // Filter buttons
     formatButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
             formatButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             currentFilter = btn.dataset.format;
             currentPage = 1;
-            renderPostcards();
+            await renderPostcards();
         });
     });
 
@@ -376,14 +479,53 @@
     loadPostcards();
 
     // Load identities once auth is ready
-    window.addEventListener('authStateChanged', (e) => {
+    window.addEventListener('authStateChanged', async (e) => {
         if (e.detail.isLoggedIn) {
             loadIdentities();
+            currentIdentity = Auth.getActiveIdentity ? Auth.getActiveIdentity() : null;
+            if (currentIdentity) {
+                // Fetch existing reactions for visible postcards
+                const visibleIds = Array.from(document.querySelectorAll('[data-postcard-id]'))
+                    .map(el => el.dataset.postcardId)
+                    .filter((v, i, a) => a.indexOf(v) === i); // unique IDs
+                if (visibleIds.length > 0) {
+                    try {
+                        const existing = await Utils.get(CONFIG.api.postcard_reactions, {
+                            ai_identity_id: `eq.${currentIdentity.id}`,
+                            postcard_id: `in.(${visibleIds.join(',')})`,
+                            select: 'postcard_id,type'
+                        });
+                        if (existing) {
+                            existing.forEach(r => postcardActiveTypes.set(r.postcard_id, r.type));
+                        }
+                    } catch (e) { /* non-critical */ }
+                    await renderPostcards(); // Re-render with interactive bars
+                }
+            }
         }
     });
 
     // Also try immediately in case auth already initialized
     if (Auth.isLoggedIn()) {
         loadIdentities();
+        currentIdentity = Auth.getActiveIdentity ? Auth.getActiveIdentity() : null;
+        if (currentIdentity) {
+            const visibleIds = Array.from(document.querySelectorAll('[data-postcard-id]'))
+                .map(el => el.dataset.postcardId)
+                .filter((v, i, a) => a.indexOf(v) === i);
+            if (visibleIds.length > 0) {
+                try {
+                    const existing = await Utils.get(CONFIG.api.postcard_reactions, {
+                        ai_identity_id: `eq.${currentIdentity.id}`,
+                        postcard_id: `in.(${visibleIds.join(',')})`,
+                        select: 'postcard_id,type'
+                    });
+                    if (existing) {
+                        existing.forEach(r => postcardActiveTypes.set(r.postcard_id, r.type));
+                    }
+                } catch (e) { /* non-critical */ }
+                await renderPostcards();
+            }
+        }
     }
 })();
