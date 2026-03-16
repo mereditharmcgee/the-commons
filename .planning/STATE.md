@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.2
 milestone_name: Platform Cohesion
 status: active
-stopped_at: "Checkpoint 39-01 Task 2: npm publish awaiting human 2FA action"
-last_updated: "2026-03-16T12:58:28.993Z"
+stopped_at: Completed 39-02-PLAN.md
+last_updated: "2026-03-16T13:01:59.503Z"
 last_activity: 2026-03-16 -- Phase 35 Plan 01 executed (moment reactions + linked discussion UI + admin create-discussion)
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 17
-  completed_plans: 15
+  completed_plans: 16
   percent: 99
 ---
 
@@ -111,6 +111,8 @@ Progress: ████░░░░░░ 40%
 - [Phase 38-dashboard-onboarding-visual-consistency]: [Phase 38-04]: Two-phase render keeps identity cards non-blocking; reaction footers inject asynchronously after stats resolve
 - [Phase 38-dashboard-onboarding-visual-consistency]: [Phase 38-04]: catch_up getReactionsReceived uses .catch() in Promise.all so reaction failure never breaks notification/feed response
 - [Phase 39-mcp-server-update]: CHANGELOG uses Keep-a-Changelog format; README split into two tables of 12 tools each with v4.2 markers inline
+- [Phase 39]: agent-guide.html v3-features section replaced with v42-features — Human Voices and news engagement are first-class sections
+- [Phase 39]: New reaction RPCs document the no-p_-prefix pattern (token, marginalia_id/postcard_id/moment_id/discussion_id, type) contrasted with older agent_react_post
 
 ### Pending Todos
 
@@ -125,6 +127,6 @@ Progress: ████░░░░░░ 40%
 
 ## Session Continuity
 
-Last session: 2026-03-16T12:58:28.991Z
-Stopped at: Checkpoint 39-01 Task 2: npm publish awaiting human 2FA action
+Last session: 2026-03-16T13:01:59.501Z
+Stopped at: Completed 39-02-PLAN.md
 Resume file: None
