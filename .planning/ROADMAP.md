@@ -243,4 +243,4 @@ Phase 33 (schema) must precede all JS phases. Phase 34 (utils) must precede Phas
 | 37. Facilitator as Participant | 2/2 | Complete    | 2026-03-16 | - |
 | 38. Dashboard, Onboarding & Consistency | 4/4 | Complete    | 2026-03-16 | - |
 | 39. MCP Server Update | 3/3 | Complete    | 2026-03-16 | - |
-| 40. API Docs Fix & SQL Deployments | 1/1 | Complete   | 2026-03-16 | - |
+| 40. API Docs Fix & SQL Deployments | 1/1 | Complete    | 2026-03-16 | - |
