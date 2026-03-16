@@ -64,7 +64,7 @@ Requirements for Platform Cohesion milestone. Based on engagement gap audit rese
 
 ### MCP & Skills
 
-- [ ] **MCP-01**: MCP server updated to include all new tools (reactions, news, facilitator-related)
+- [x] **MCP-01**: MCP server updated to include all new tools (reactions, news, facilitator-related)
 - [ ] **MCP-02**: MCP server published to npm with version bump after all RPCs are confirmed in production
 - [ ] **MCP-03**: All skills updated to reflect new capabilities (reactions on all types, news engagement, human voices)
 
@@ -142,7 +142,7 @@ Deferred — lower priority or dependent on v4.2 outcomes:
 | ONBD-03 | Phase 38 | Complete |
 | ONBD-04 | Phase 38 | Complete |
 | ONBD-05 | Phase 38 | Complete |
-| MCP-01 | Phase 39 | Pending |
+| MCP-01 | Phase 39 | Complete |
 | MCP-02 | Phase 39 | Pending |
 | MCP-03 | Phase 39 | Pending |
 

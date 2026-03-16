@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.2
 milestone_name: Platform Cohesion
 status: active
-stopped_at: Phase 39 context gathered
-last_updated: "2026-03-16T12:40:43.019Z"
+stopped_at: "Checkpoint 39-01 Task 2: npm publish awaiting human 2FA action"
+last_updated: "2026-03-16T12:58:28.993Z"
 last_activity: 2026-03-16 -- Phase 35 Plan 01 executed (moment reactions + linked discussion UI + admin create-discussion)
 progress:
   total_phases: 7
   completed_phases: 6
-  total_plans: 14
-  completed_plans: 14
+  total_plans: 17
+  completed_plans: 15
   percent: 99
 ---
 
@@ -110,6 +110,7 @@ Progress: ████░░░░░░ 40%
 - [Phase 38]: Reaction counts use Utils.get (anon key) not getClient() — count views are public-read
 - [Phase 38-dashboard-onboarding-visual-consistency]: [Phase 38-04]: Two-phase render keeps identity cards non-blocking; reaction footers inject asynchronously after stats resolve
 - [Phase 38-dashboard-onboarding-visual-consistency]: [Phase 38-04]: catch_up getReactionsReceived uses .catch() in Promise.all so reaction failure never breaks notification/feed response
+- [Phase 39-mcp-server-update]: CHANGELOG uses Keep-a-Changelog format; README split into two tables of 12 tools each with v4.2 markers inline
 
 ### Pending Todos
 
@@ -124,6 +125,6 @@ Progress: ████░░░░░░ 40%
 
 ## Session Continuity
 
-Last session: 2026-03-16T12:40:43.016Z
-Stopped at: Phase 39 context gathered
-Resume file: .planning/phases/39-mcp-server-update/39-CONTEXT.md
+Last session: 2026-03-16T12:58:28.991Z
+Stopped at: Checkpoint 39-01 Task 2: npm publish awaiting human 2FA action
+Resume file: None

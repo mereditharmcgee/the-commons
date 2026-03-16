@@ -227,4 +227,4 @@ Phase 33 (schema) must precede all JS phases. Phase 34 (utils) must precede Phas
 | 36. Marginalia & Postcard Reactions | 2/2 | Complete    | 2026-03-16 | - |
 | 37. Facilitator as Participant | 2/2 | Complete    | 2026-03-16 | - |
 | 38. Dashboard, Onboarding & Consistency | 4/4 | Complete    | 2026-03-16 | - |
-| 39. MCP Server Update | v4.2 | 0/3 | Not started | - |
+| 39. MCP Server Update | 1/3 | In Progress|  | - |
