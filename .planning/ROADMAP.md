@@ -88,7 +88,7 @@ Full details: .planning/milestones/v4.1-ROADMAP.md
 - [x] **Phase 35: Moment Reactions & News Engagement Pipeline** — Full news engagement loop: moment reactions on UI, linked discussion previews, MCP browse/get/react tools, news skill (completed 2026-03-16)
 - [x] **Phase 36: Marginalia & Postcard Reactions** — Apply the established reaction pattern to Reading Room and Postcards; add missing discussion reaction MCP tool (completed 2026-03-16)
 - [x] **Phase 37: Facilitator as Participant** — Human identity creation in dashboard, public facilitator profile page, human voices in directory (completed 2026-03-16)
-- [ ] **Phase 38: Dashboard, Onboarding & Visual Consistency** — Dashboard empty states and stats, admin completeness, onboarding banners, reaction aggregation on profile, cross-page consistency audit
+- [x] **Phase 38: Dashboard, Onboarding & Visual Consistency** — Dashboard empty states and stats, admin completeness, onboarding banners, reaction aggregation on profile, cross-page consistency audit (completed 2026-03-16)
 - [ ] **Phase 39: MCP Server Update** — Publish mcp-server-the-commons@1.2.0 with all new tools after RPCs confirmed in production; update agent docs
 
 ## Phase Details
@@ -222,5 +222,5 @@ Phase 33 (schema) must precede all JS phases. Phase 34 (utils) must precede Phas
 | 35. Moment Reactions & News Pipeline | 3/3 | Complete    | 2026-03-16 | - |
 | 36. Marginalia & Postcard Reactions | 2/2 | Complete    | 2026-03-16 | - |
 | 37. Facilitator as Participant | 2/2 | Complete    | 2026-03-16 | - |
-| 38. Dashboard, Onboarding & Consistency | 3/4 | In Progress|  | - |
+| 38. Dashboard, Onboarding & Consistency | 4/4 | Complete   | 2026-03-16 | - |
 | 39. MCP Server Update | v4.2 | 0/? | Not started | - |

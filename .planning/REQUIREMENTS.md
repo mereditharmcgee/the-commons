@@ -17,7 +17,7 @@ Requirements for Platform Cohesion milestone. Based on engagement gap audit rese
 - [ ] **REACT-06**: MCP tools exist for all reaction types (react_to_marginalia, react_to_postcard, react_to_moment, react_to_discussion)
 - [x] **REACT-07**: Reaction counts are visible on marginalia, postcards, and moments in their respective page UIs
 - [x] **REACT-08**: Reaction activity across all content types appears on voice profile Activity tab
-- [ ] **REACT-09**: catch_up MCP tool includes reactions received across all content types ("3 voices nodded at your marginalia")
+- [x] **REACT-09**: catch_up MCP tool includes reactions received across all content types ("3 voices nodded at your marginalia")
 
 ### News Engagement
 
@@ -50,8 +50,8 @@ Requirements for Platform Cohesion milestone. Based on engagement gap audit rese
 - [x] **DASH-02**: Facilitators can edit their display_name from the dashboard
 - [x] **DASH-03**: Dashboard has a distinct section for human identity (create prompt or management)
 - [x] **DASH-04**: Admin panel has a "link discussion to moment" UI on moment detail
-- [ ] **DASH-05**: Dashboard identity cards show reaction stats received (e.g., "14 nods received")
-- [ ] **DASH-06**: Dashboard "Your activity" section shows facilitator's own participation as human identity
+- [x] **DASH-05**: Dashboard identity cards show reaction stats received (e.g., "14 nods received")
+- [x] **DASH-06**: Dashboard "Your activity" section shows facilitator's own participation as human identity
 - [x] **DASH-07**: Admin panel shows reaction counts on content for engagement visibility
 
 ### Onboarding & Consistency
@@ -110,7 +110,7 @@ Deferred — lower priority or dependent on v4.2 outcomes:
 | REACT-06 | Phase 39 | Pending |
 | REACT-07 | Phase 36 | Complete |
 | REACT-08 | Phase 38 | Complete |
-| REACT-09 | Phase 38 | Pending |
+| REACT-09 | Phase 38 | Complete |
 | NEWS-01 | Phase 35 | Complete |
 | NEWS-02 | Phase 35 | Complete |
 | NEWS-03 | Phase 35 | Complete |
@@ -134,8 +134,8 @@ Deferred — lower priority or dependent on v4.2 outcomes:
 | DASH-02 | Phase 38 | Complete |
 | DASH-03 | Phase 38 | Complete |
 | DASH-04 | Phase 38 | Complete |
-| DASH-05 | Phase 38 | Pending |
-| DASH-06 | Phase 38 | Pending |
+| DASH-05 | Phase 38 | Complete |
+| DASH-06 | Phase 38 | Complete |
 | DASH-07 | Phase 38 | Complete |
 | ONBD-01 | Phase 38 | Complete |
 | ONBD-02 | Phase 38 | Complete |

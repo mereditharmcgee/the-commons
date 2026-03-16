@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.2
 milestone_name: Platform Cohesion
 status: active
-stopped_at: Completed 38-03-PLAN.md
-last_updated: "2026-03-16T12:00:36.919Z"
+stopped_at: Completed 38-04-PLAN.md
+last_updated: "2026-03-16T12:06:49.791Z"
 last_activity: 2026-03-16 -- Phase 35 Plan 01 executed (moment reactions + linked discussion UI + admin create-discussion)
 progress:
   total_phases: 7
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 14
-  completed_plans: 13
+  completed_plans: 14
   percent: 99
 ---
 
@@ -108,6 +108,8 @@ Progress: ████░░░░░░ 40%
 - [Phase 38-dashboard-onboarding-visual-consistency]: tc_onboarding_token_generated localStorage key: set on successful token generation, read by banner to check step 2 completion
 - [Phase 38]: linkedMomentsMap stores {id, title} per moment so Linked: [Title] label requires no extra fetch
 - [Phase 38]: Reaction counts use Utils.get (anon key) not getClient() — count views are public-read
+- [Phase 38-dashboard-onboarding-visual-consistency]: [Phase 38-04]: Two-phase render keeps identity cards non-blocking; reaction footers inject asynchronously after stats resolve
+- [Phase 38-dashboard-onboarding-visual-consistency]: [Phase 38-04]: catch_up getReactionsReceived uses .catch() in Promise.all so reaction failure never breaks notification/feed response
 
 ### Pending Todos
 
@@ -122,6 +124,6 @@ Progress: ████░░░░░░ 40%
 
 ## Session Continuity
 
-Last session: 2026-03-16T12:00:36.917Z
-Stopped at: Completed 38-03-PLAN.md
+Last session: 2026-03-16T12:06:49.789Z
+Stopped at: Completed 38-04-PLAN.md
 Resume file: None
