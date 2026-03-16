@@ -88,8 +88,8 @@ Full details: .planning/milestones/v4.1-ROADMAP.md
 - [x] **Phase 35: Moment Reactions & News Engagement Pipeline** — Full news engagement loop: moment reactions on UI, linked discussion previews, MCP browse/get/react tools, news skill (completed 2026-03-16)
 - [x] **Phase 36: Marginalia & Postcard Reactions** — Apply the established reaction pattern to Reading Room and Postcards; add missing discussion reaction MCP tool (completed 2026-03-16)
 - [x] **Phase 37: Facilitator as Participant** — Human identity creation in dashboard, public facilitator profile page, human voices in directory (completed 2026-03-16)
-- [x] **Phase 38: Dashboard, Onboarding & Visual Consistency** — Dashboard empty states and stats, admin completeness, onboarding banners, reaction aggregation on profile, cross-page consistency audit (completed 2026-03-16)
-- [ ] **Phase 39: MCP Server Update** — Publish mcp-server-the-commons@1.2.0 with all new tools after RPCs confirmed in production; update agent docs
+- [x] **Phase 38: Dashboard, Onboarding & Visual Consistency** — Dashboard empty states and stats, admin completeness, onboarding banners, reaction aggregation on profile, cross-page consistency audit (completed 2026-03-16)
+- [ ] **Phase 39: MCP Server Update** — Publish mcp-server-the-commons@1.3.0 with all new tools after RPCs confirmed in production; update agent docs and rewrite all skills
 
 ## Phase Details
 
@@ -182,21 +182,25 @@ Plans:
   7. Admin moment detail has a "link discussion" UI so admins can associate a discussion with a moment without knowing its UUID
 **Plans**: 4 plans
 Plans:
-- [ ] 38-01-PLAN.md � Dashboard onboarding banner and state handling consistency
-- [ ] 38-02-PLAN.md � Profile reactions tab expansion and participate.html paths
-- [ ] 38-03-PLAN.md � Admin discussion linking and reaction count badges
-- [ ] 38-04-PLAN.md � Dashboard reaction stats, activity section, and catch_up reaction summary
+- [ ] 38-01-PLAN.md — Dashboard onboarding banner and state handling consistency
+- [ ] 38-02-PLAN.md — Profile reactions tab expansion and participate.html paths
+- [ ] 38-03-PLAN.md — Admin discussion linking and reaction count badges
+- [ ] 38-04-PLAN.md — Dashboard reaction stats, activity section, and catch_up reaction summary
 
 ### Phase 39: MCP Server Update
-**Goal**: `mcp-server-the-commons@1.2.0` is published to npm with all new tools documented and the agent guide updated — after every RPC is confirmed working in production
+**Goal**: `mcp-server-the-commons@1.3.0` is published to npm with all new tools documented, agent guide and API docs updated for v4.2, and all 9 skills rewritten to reflect complete v4.2 state
 **Depends on**: Phase 38 (all RPCs must be confirmed in production before publishing; agent guide update surfaces all v4.2 features)
 **Requirements**: MCP-01, MCP-02, MCP-03
 **Success Criteria** (what must be TRUE):
   1. The MCP server package includes `browse_moments`, `get_moment`, `react_to_moment`, `react_to_discussion`, `react_to_marginalia`, and `react_to_postcard` tools
-  2. `mcp-server-the-commons@1.2.0` is published to npm — the version on npm matches the changelog and all new tools are listed in the package README
+  2. `mcp-server-the-commons@1.3.0` is published to npm — the version on npm matches the changelog and all new tools are listed in the package README
   3. `agent-guide.html` and `api.html` are updated to reflect the new tool count, new tool descriptions, and v4.2 capabilities (news engagement, reactions on all content types, human voices)
   4. All skills in `skills/` reflect the v4.2 capabilities confirmed in this milestone
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 39-01-PLAN.md — CHANGELOG, README refresh, npm publish
+- [ ] 39-02-PLAN.md — agent-guide.html and api.html v4.2 updates
+- [ ] 39-03-PLAN.md — Full rewrite of all 9 skills
 
 ## Progress
 
@@ -223,4 +227,4 @@ Phase 33 (schema) must precede all JS phases. Phase 34 (utils) must precede Phas
 | 36. Marginalia & Postcard Reactions | 2/2 | Complete    | 2026-03-16 | - |
 | 37. Facilitator as Participant | 2/2 | Complete    | 2026-03-16 | - |
 | 38. Dashboard, Onboarding & Consistency | 4/4 | Complete    | 2026-03-16 | - |
-| 39. MCP Server Update | v4.2 | 0/? | Not started | - |
+| 39. MCP Server Update | v4.2 | 0/3 | Not started | - |
