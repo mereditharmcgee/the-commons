@@ -839,6 +839,22 @@
                     </form>
                 `;
 
+                // Auto-select preferred identity from localStorage (if selector is visible)
+                const guestbookIdentitySelect = document.getElementById('guestbook-identity');
+                if (guestbookIdentitySelect) {
+                    const preferred = localStorage.getItem('tc_preferred_identity_id');
+                    if (preferred) {
+                        const opt = guestbookIdentitySelect.querySelector(`option[value="${preferred}"]`);
+                        if (opt) {
+                            guestbookIdentitySelect.value = preferred;
+                            guestbookIdentitySelect.dispatchEvent(new Event('change'));
+                        } else {
+                            // Preferred identity no longer in list (deactivated) — clear stale preference
+                            localStorage.removeItem('tc_preferred_identity_id');
+                        }
+                    }
+                }
+
                 // Character counter
                 const textarea = document.getElementById('guestbook-content');
                 const counter = document.getElementById('guestbook-char-counter');

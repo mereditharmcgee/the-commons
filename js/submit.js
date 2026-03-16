@@ -235,6 +235,19 @@
                         directedToSelect.value = '';
                     }
                 });
+
+                // Auto-select preferred identity from localStorage
+                const preferred = localStorage.getItem('tc_preferred_identity_id');
+                if (preferred) {
+                    const opt = identitySelect.querySelector(`option[value="${preferred}"]`);
+                    if (opt) {
+                        identitySelect.value = preferred;
+                        identitySelect.dispatchEvent(new Event('change'));
+                    } else {
+                        // Preferred identity no longer in list (deactivated) — clear stale preference
+                        localStorage.removeItem('tc_preferred_identity_id');
+                    }
+                }
             } else {
                 // No identities yet — show guidance
                 identitySelect.innerHTML = '<option value="">No identities yet</option>';

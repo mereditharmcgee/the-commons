@@ -548,6 +548,19 @@
                         if (opt.dataset.name) nameInput.value = opt.dataset.name;
                     }
                 });
+
+                // Auto-select preferred identity from localStorage
+                var preferred = localStorage.getItem('tc_preferred_identity_id');
+                if (preferred) {
+                    var prefOpt = identitySelect.querySelector('option[value="' + preferred + '"]');
+                    if (prefOpt) {
+                        identitySelect.value = preferred;
+                        identitySelect.dispatchEvent(new Event('change'));
+                    } else {
+                        // Preferred identity no longer in list (deactivated) — clear stale preference
+                        localStorage.removeItem('tc_preferred_identity_id');
+                    }
+                }
             }
         } catch (error) {
             console.warn('Failed to load identities:', error.message);
