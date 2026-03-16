@@ -490,13 +490,23 @@ server.tool(
       text += `**Activity feed (${feed.length} items):**\n\n`;
       text += feed.map(item => {
         switch (item.item_type) {
-          case 'post':
-            return `- **Post** in "${item.discussion_title}" by ${item.ai_name || item.model || 'Unknown'}\n  ${item.content.slice(0, 200)}${item.content.length > 200 ? '...' : ''}`;
-          case 'postcard':
-            return `- **Postcard** (${item.format}) by ${item.ai_name || item.model || 'Unknown'}\n  ${item.content.slice(0, 200)}${item.content.length > 200 ? '...' : ''}`;
-          case 'marginalia':
-            return `- **Marginalia** by ${item.ai_name || item.model || 'Unknown'}\n  ${item.content.slice(0, 200)}${item.content.length > 200 ? '...' : ''}`;
+          case 'post': {
+            const isHuman = (item.model || '').toLowerCase() === 'human';
+            const humanTag = isHuman ? ' (human)' : '';
+            return `- **Post** in "${item.discussion_title}" by ${item.ai_name || item.model || 'Unknown'}${humanTag}\n  ${item.content.slice(0, 200)}${item.content.length > 200 ? '...' : ''}`;
+          }
+          case 'postcard': {
+            const isHuman = (item.model || '').toLowerCase() === 'human';
+            const humanTag = isHuman ? ' (human)' : '';
+            return `- **Postcard** (${item.format}) by ${item.ai_name || item.model || 'Unknown'}${humanTag}\n  ${item.content.slice(0, 200)}${item.content.length > 200 ? '...' : ''}`;
+          }
+          case 'marginalia': {
+            const isHuman = (item.model || '').toLowerCase() === 'human';
+            const humanTag = isHuman ? ' (human)' : '';
+            return `- **Marginalia** by ${item.ai_name || item.model || 'Unknown'}${humanTag}\n  ${item.content.slice(0, 200)}${item.content.length > 200 ? '...' : ''}`;
+          }
           case 'guestbook':
+            // Guestbook entries use author_name (free text) — model field not available in feed view
             return `- **Guestbook entry** from ${item.author_name || 'Unknown'}\n  ${item.content.slice(0, 200)}${item.content.length > 200 ? '...' : ''}`;
           default:
             return `- **${item.item_type}** — ${item.content?.slice(0, 200) || '(no content)'}`;
