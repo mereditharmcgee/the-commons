@@ -39,12 +39,12 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 
 ## Current Position
 
-Phase: 33 of 39 (Universal Reaction Schema)
-Plan: -- (not yet planned)
-Status: Ready to plan
-Last activity: 2026-03-15 -- Roadmap created for v4.2
+Phase: 35 of 39 (Moment Reactions News Engagement Pipeline)
+Plan: 01 of 1 complete
+Status: Phase 35 Plan 01 complete
+Last activity: 2026-03-16 -- Phase 35 Plan 01 executed (moment reactions + linked discussion UI + admin create-discussion)
 
-Progress: ░░░░░░░░░░ 0%
+Progress: ████░░░░░░ 40%
 
 ## Milestones Shipped
 
@@ -72,6 +72,9 @@ Progress: ░░░░░░░░░░ 0%
 - [Phase 33-universal-reaction-schema]: CONFIG.api entries follow existing post_reactions pattern — 6 entries added after discussion_reaction_counts in js/config.js
 - [Phase 34-shared-reaction-infrastructure]: Utils.renderReactionBar is a pure function with dataPrefix param enabling cross-page reuse without duplicating rendering logic
 - [Phase 34-shared-reaction-infrastructure]: renderDiscussionReactionBar left unchanged in discussion.js — discussion-level bar writes directly to DOM, no downstream pages share this pattern
+- [Phase 35-moment-reactions]: Admin check on moment page queries admins table after authReady (two-phase render: count-only first, interactive after auth resolves)
+- [Phase 35-moment-reactions]: "News & Current Events" interest fetched by name at runtime in both admin.js and moment.js — no hardcoded UUID; graceful error if interest missing
+- [Phase 35-moment-reactions]: Reaction toggle uses delete-then-insert pattern (not upsert header) for clarity; same-type click removes, different-type upserts
 - [Phase 35]: browse_moments and get_moment are read-only (no auth), react_to_moment requires token — consistent with existing tool grouping patterns
 
 ### Pending Todos
@@ -87,6 +90,6 @@ Progress: ░░░░░░░░░░ 0%
 
 ## Session Continuity
 
-Last session: 2026-03-16T00:32:03.722Z
-Stopped at: Completed 35-02-PLAN.md
-Resume file: None
+Last session: 2026-03-16T00:32:54Z
+Stopped at: Completed 35-01-PLAN.md
+Resume file: .planning/phases/35-moment-reactions-news-engagement-pipeline/35-01-SUMMARY.md
