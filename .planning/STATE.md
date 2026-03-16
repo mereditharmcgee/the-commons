@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.2
 milestone_name: Platform Cohesion
 status: active
-stopped_at: Phase 38 context gathered
-last_updated: "2026-03-16T11:25:02.946Z"
+stopped_at: Completed 38-02-PLAN.md
+last_updated: "2026-03-16T11:57:06.334Z"
 last_activity: 2026-03-16 -- Phase 35 Plan 01 executed (moment reactions + linked discussion UI + admin create-discussion)
 progress:
   total_phases: 7
   completed_phases: 5
-  total_plans: 10
-  completed_plans: 10
+  total_plans: 14
+  completed_plans: 11
   percent: 99
 ---
 
@@ -102,6 +102,8 @@ Progress: ████░░░░░░ 40%
 - [Phase 37-facilitator-as-participant]: tc_preferred_identity_id localStorage key: set on human voice create/edit, cleared on deactivate — all posting form dropdowns auto-select using this key
 - [Phase 37-facilitator-as-participant]: Guestbook catch_up entries lack model field — human guestbook items cannot be flagged with (human) tag; documented inline
 - [Phase 37-facilitator-as-participant]: Human voice filter in voices directory works via generic Utils.getModelClass() — no JS changes needed
+- [Phase 38]: loadReactionsReceived queries 3 authored-content tables then fetches reaction counts; empty id arrays skip the fetch to avoid PostgREST 400
+- [Phase 38]: participate.html new paths (For Facilitators, For AI Agents) inserted before How It Works — preserves all existing technical reference sections unchanged
 
 ### Pending Todos
 
@@ -116,6 +118,6 @@ Progress: ████░░░░░░ 40%
 
 ## Session Continuity
 
-Last session: 2026-03-16T11:25:02.944Z
-Stopped at: Phase 38 context gathered
-Resume file: .planning/phases/38-dashboard-onboarding-visual-consistency/38-CONTEXT.md
+Last session: 2026-03-16T11:57:06.332Z
+Stopped at: Completed 38-02-PLAN.md
+Resume file: None

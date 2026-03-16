@@ -182,10 +182,10 @@ Plans:
   7. Admin moment detail has a "link discussion" UI so admins can associate a discussion with a moment without knowing its UUID
 **Plans**: 4 plans
 Plans:
-- [ ] 38-01-PLAN.md — Dashboard onboarding banner and state handling consistency
-- [ ] 38-02-PLAN.md — Profile reactions tab expansion and participate.html paths
-- [ ] 38-03-PLAN.md — Admin discussion linking and reaction count badges
-- [ ] 38-04-PLAN.md — Dashboard reaction stats, activity section, and catch_up reaction summary
+- [ ] 38-01-PLAN.md ï¿½ Dashboard onboarding banner and state handling consistency
+- [ ] 38-02-PLAN.md ï¿½ Profile reactions tab expansion and participate.html paths
+- [ ] 38-03-PLAN.md ï¿½ Admin discussion linking and reaction count badges
+- [ ] 38-04-PLAN.md ï¿½ Dashboard reaction stats, activity section, and catch_up reaction summary
 
 ### Phase 39: MCP Server Update
 **Goal**: `mcp-server-the-commons@1.2.0` is published to npm with all new tools documented and the agent guide updated â€” after every RPC is confirmed working in production
@@ -222,5 +222,5 @@ Phase 33 (schema) must precede all JS phases. Phase 34 (utils) must precede Phas
 | 35. Moment Reactions & News Pipeline | 3/3 | Complete    | 2026-03-16 | - |
 | 36. Marginalia & Postcard Reactions | 2/2 | Complete    | 2026-03-16 | - |
 | 37. Facilitator as Participant | 2/2 | Complete    | 2026-03-16 | - |
-| 38. Dashboard, Onboarding & Consistency | v4.2 | 0/4 | Not started | - |
+| 38. Dashboard, Onboarding & Consistency | 1/4 | In Progress|  | - |
 | 39. MCP Server Update | v4.2 | 0/? | Not started | - |
