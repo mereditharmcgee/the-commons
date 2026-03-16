@@ -478,6 +478,12 @@
                 </div>
             </div>
         `).join('');
+
+        // Lazy-load reaction counts for posts
+        const ids = filtered.map(p => p.id);
+        loadReactionCounts('post', ids).then(countsMap => {
+            injectReactionBadges(container, '.admin-item', 'id', countsMap);
+        });
     }
 
     function renderMarginalia() {
@@ -528,6 +534,12 @@
                 </div>
             </div>
         `).join('');
+
+        // Lazy-load reaction counts
+        const ids = filtered.map(item => item.id);
+        loadReactionCounts('marginalia', ids).then(countsMap => {
+            injectReactionBadges(container, '.admin-item', 'id', countsMap);
+        });
     }
 
     function renderPostcards() {
@@ -570,6 +582,12 @@
                 </div>
             </div>
         `).join('');
+
+        // Lazy-load reaction counts
+        const ids = filtered.map(pc => pc.id);
+        loadReactionCounts('postcard', ids).then(countsMap => {
+            injectReactionBadges(container, '.admin-item', 'id', countsMap);
+        });
     }
 
     function renderDiscussions() {
@@ -618,6 +636,12 @@
             </div>
         `;
         }).join('');
+
+        // Lazy-load reaction counts
+        const ids = filtered.map(d => d.id);
+        loadReactionCounts('discussion', ids).then(countsMap => {
+            injectReactionBadges(container, '.admin-item', 'id', countsMap);
+        });
     }
 
     function renderContacts() {
@@ -1316,6 +1340,55 @@
     }
 
     // =========================================
+    // REACTION COUNT BADGES (lazy-loaded per tab)
+    // =========================================
+
+    async function loadReactionCounts(contentType, ids) {
+        if (!ids || ids.length === 0) return {};
+        const endpointKey = contentType + '_reaction_counts';
+        const endpoint = CONFIG.api[endpointKey];
+        if (!endpoint) return {};
+        try {
+            const data = await Utils.get(endpoint, {
+                [contentType + '_id']: 'in.(' + ids.join(',') + ')',
+                select: contentType + '_id,count'
+            });
+            const map = {};
+            (data || []).forEach(row => {
+                const itemId = row[contentType + '_id'];
+                map[itemId] = (map[itemId] || 0) + Number(row.count);
+            });
+            return map;
+        } catch (err) {
+            console.warn('Failed to load reaction counts for ' + contentType + ':', err);
+            return {};
+        }
+    }
+
+    function formatReactionBadge(count) {
+        if (!count || count <= 0) return '';
+        return `<span class="admin-reaction-badge">(${count} ${count === 1 ? 'reaction' : 'reactions'})</span>`;
+    }
+
+    function injectReactionBadges(containerEl, itemSelector, idAttr, countsMap) {
+        if (!containerEl || !countsMap) return;
+        containerEl.querySelectorAll(itemSelector).forEach(item => {
+            const itemId = item.dataset[idAttr] || item.getAttribute('data-id');
+            if (!itemId) return;
+            const count = countsMap[itemId];
+            if (!count || count <= 0) return;
+            // Find the title or first strong element to append after
+            const titleEl = item.querySelector('strong') || item.querySelector('.admin-item__meta');
+            if (titleEl) {
+                const badge = document.createElement('span');
+                badge.className = 'admin-reaction-badge';
+                badge.textContent = '(' + count + ' ' + (count === 1 ? 'reaction' : 'reactions') + ')';
+                titleEl.insertAdjacentElement('afterend', badge);
+            }
+        });
+    }
+
+    // =========================================
     // MOMENTS (NEWS) MANAGEMENT
     // =========================================
 
@@ -1331,7 +1404,7 @@
                     .order('event_date', { ascending: false }),
                 getClient()
                     .from('discussions')
-                    .select('id,moment_id')
+                    .select('id,moment_id,title')
                     .not('moment_id', 'is', null)
                     .eq('is_active', true)
             ]);
@@ -1339,9 +1412,9 @@
             if (momentsResult.error) throw momentsResult.error;
             moments = momentsResult.data || [];
 
-            // Build linked map: moment_id -> discussion_id
+            // Build linked map: moment_id -> { id, title }
             linkedMomentsMap = {};
-            (linkedResult.data || []).forEach(d => { linkedMomentsMap[d.moment_id] = d.id; });
+            (linkedResult.data || []).forEach(d => { linkedMomentsMap[d.moment_id] = { id: d.id, title: d.title }; });
 
             renderMoments();
             updateTabCount('moments', moments.length);
@@ -1392,13 +1465,108 @@
                             ${m.is_active ? 'Hide' : 'Show'}
                         </button>
                         ${linkedMomentsMap[m.id]
-                            ? `<a href="discussion.html?id=${linkedMomentsMap[m.id]}" target="_blank" class="admin-item__btn admin-item__btn--success">View Discussion</a>`
-                            : `<button data-action="create-linked-discussion" data-id="${m.id}" data-title="${Utils.escapeHtml(m.title)}" class="admin-item__btn admin-item__btn--success">Create Discussion</button>`
+                            ? `<a href="discussion.html?id=${linkedMomentsMap[m.id].id}" target="_blank" class="admin-item__btn admin-item__btn--success">View Discussion</a>
+                               <span class="admin-moment-linked-label">Linked: ${Utils.escapeHtml(linkedMomentsMap[m.id].title)}</span>
+                               <button data-action="unlink-discussion" data-id="${m.id}" data-discussion-id="${linkedMomentsMap[m.id].id}" class="admin-item__btn admin-item__btn--danger">Unlink</button>`
+                            : `<button data-action="create-linked-discussion" data-id="${m.id}" data-title="${Utils.escapeHtml(m.title)}" class="admin-item__btn admin-item__btn--success">Create Discussion</button>
+                               <button data-action="link-existing-discussion" data-id="${m.id}" class="admin-item__btn">Link Existing</button>`
                         }
                     </div>
                 </div>
             `;
         }).join('');
+
+        // Lazy-load reaction counts for moments
+        const ids = moments.map(m => m.id);
+        loadReactionCounts('moment', ids).then(countsMap => {
+            injectReactionBadges(container, '.admin-item', 'id', countsMap);
+        });
+    }
+
+    // Search-as-you-type panel for linking an existing discussion to a moment
+    function openLinkDiscussionPanel(momentId) {
+        // Remove any existing panels first
+        const existing = document.querySelector('.admin-link-discussion-panel');
+        if (existing) existing.remove();
+
+        const momentItem = document.querySelector(`.admin-item [data-action="link-existing-discussion"][data-id="${momentId}"]`);
+        if (!momentItem) return;
+        const parentItem = momentItem.closest('.admin-item');
+        if (!parentItem) return;
+
+        const panel = document.createElement('div');
+        panel.className = 'admin-link-discussion-panel';
+        panel.dataset.momentId = momentId;
+        panel.innerHTML = `
+            <div class="admin-link-discussion-panel__inner">
+                <input type="text" class="admin-link-discussion-panel__input form-input" placeholder="Search discussions by title..." autocomplete="off" />
+                <div class="admin-link-discussion-panel__results"></div>
+                <button class="admin-item__btn admin-link-discussion-panel__cancel" data-action="cancel-link-discussion">Cancel</button>
+            </div>
+        `;
+        parentItem.appendChild(panel);
+
+        const input = panel.querySelector('.admin-link-discussion-panel__input');
+        const results = panel.querySelector('.admin-link-discussion-panel__results');
+        input.focus();
+
+        let debounceTimer = null;
+        input.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            const term = this.value.trim();
+            if (!term) {
+                results.innerHTML = '';
+                return;
+            }
+            debounceTimer = setTimeout(async () => {
+                results.innerHTML = '<span style="color: var(--text-muted); font-size: 0.875rem;">Searching...</span>';
+                try {
+                    const data = await Utils.get(CONFIG.api.discussions, {
+                        title: 'ilike.*' + term + '*',
+                        is_active: 'eq.true',
+                        select: 'id,title',
+                        limit: '8',
+                        order: 'created_at.desc'
+                    });
+                    if (!data || data.length === 0) {
+                        results.innerHTML = '<span style="color: var(--text-muted); font-size: 0.875rem;">No discussions found.</span>';
+                        return;
+                    }
+                    results.innerHTML = data.map(d => `
+                        <button class="admin-link-discussion-panel__result" data-action="confirm-link-discussion" data-moment-id="${momentId}" data-discussion-id="${d.id}">${Utils.escapeHtml(d.title)}</button>
+                    `).join('');
+                } catch (err) {
+                    results.innerHTML = '<span style="color: var(--text-muted); font-size: 0.875rem;">Search failed.</span>';
+                }
+            }, 300);
+        });
+    }
+
+    async function confirmLinkDiscussion(momentId, discussionId) {
+        try {
+            const { error } = await getClient()
+                .from('discussions')
+                .update({ moment_id: momentId })
+                .eq('id', discussionId);
+            if (error) throw error;
+            await loadMoments();
+        } catch (err) {
+            alert('Failed to link discussion: ' + err.message);
+        }
+    }
+
+    async function unlinkDiscussion(momentId, discussionId) {
+        if (!confirm('Unlink this discussion from the moment?')) return;
+        try {
+            const { error } = await getClient()
+                .from('discussions')
+                .update({ moment_id: null })
+                .eq('id', discussionId);
+            if (error) throw error;
+            await loadMoments();
+        } catch (err) {
+            alert('Failed to unlink discussion: ' + err.message);
+        }
     }
 
     // =========================================
@@ -1579,6 +1747,14 @@
                     case 'toggle-moment-pin': toggleMomentPin(id, btn.dataset.pinned !== 'true'); break;
                     case 'toggle-moment-active': toggleMomentActive(id, btn.dataset.active !== 'true'); break;
                     case 'create-linked-discussion': createLinkedDiscussion(id, btn.dataset.title); break;
+                    case 'link-existing-discussion': openLinkDiscussionPanel(id); break;
+                    case 'cancel-link-discussion': {
+                        const panel = btn.closest('.admin-link-discussion-panel');
+                        if (panel) panel.remove();
+                        break;
+                    }
+                    case 'confirm-link-discussion': confirmLinkDiscussion(btn.dataset.momentId, btn.dataset.discussionId); break;
+                    case 'unlink-discussion': unlinkDiscussion(id, btn.dataset.discussionId); break;
                 }
             });
         }
