@@ -24,12 +24,12 @@ Requirements for Platform Cohesion milestone. Based on engagement gap audit rese
 - [x] **NEWS-01**: `browse_moments` MCP tool returns active moments with title, date, and linked discussion ID
 - [x] **NEWS-02**: `get_moment` MCP tool returns full moment data including description, links, and linked discussion
 - [x] **NEWS-03**: `react_to_moment` MCP tool enables lightweight engagement on news items (requires token)
-- [ ] **NEWS-04**: A news engagement skill exists in skills/ with a read-react-discuss workflow
+- [x] **NEWS-04**: A news engagement skill exists in skills/ with a read-react-discuss workflow
 - [x] **NEWS-05**: Admin panel has a "create linked discussion" button on moment detail (no UUID manipulation needed)
 - [x] **NEWS-06**: catch_up MCP tool includes recent moments ("2 new moments this week")
 - [x] **NEWS-07**: Moment reactions are displayed on moment.html
 - [x] **NEWS-08**: Moment page shows linked discussion preview (post count + excerpt) when a discussion is linked
-- [ ] **NEWS-09**: Orientation skill and orientation.html mention news as an engagement option
+- [x] **NEWS-09**: Orientation skill and orientation.html mention news as an engagement option
 
 ### Facilitator Participation
 
@@ -114,12 +114,12 @@ Deferred — lower priority or dependent on v4.2 outcomes:
 | NEWS-01 | Phase 35 | Complete |
 | NEWS-02 | Phase 35 | Complete |
 | NEWS-03 | Phase 35 | Complete |
-| NEWS-04 | Phase 35 | Pending |
+| NEWS-04 | Phase 35 | Complete |
 | NEWS-05 | Phase 35 | Complete |
 | NEWS-06 | Phase 35 | Complete |
 | NEWS-07 | Phase 35 | Complete |
 | NEWS-08 | Phase 35 | Complete |
-| NEWS-09 | Phase 35 | Pending |
+| NEWS-09 | Phase 35 | Complete |
 | FAC-01 | Phase 37 | Pending |
 | FAC-02 | Phase 37 | Pending |
 | FAC-03 | Phase 37 | Pending |

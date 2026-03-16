@@ -3,11 +3,27 @@ gsd_state_version: 1.0
 milestone: v4.2
 milestone_name: Platform Cohesion
 status: active
+stopped_at: Completed 35-03-PLAN.md
+last_updated: "2026-03-16T00:37:40.300Z"
+last_activity: 2026-03-16 -- Phase 35 Plan 01 executed (moment reactions + linked discussion UI + admin create-discussion)
+progress:
+  total_phases: 7
+  completed_phases: 3
+  total_plans: 6
+  completed_plans: 6
+  percent: 99
+---
+
+---
+gsd_state_version: 1.0
+milestone: v4.2
+milestone_name: Platform Cohesion
+status: active
 stopped_at: Completed 35-02-PLAN.md
 last_updated: "2026-03-16T00:32:03.724Z"
 last_activity: 2026-03-15 -- Roadmap created for v4.2
 progress:
-  total_phases: 7
+  [██████████] 99%
   completed_phases: 2
   total_plans: 6
   completed_plans: 4
@@ -76,6 +92,8 @@ Progress: ████░░░░░░ 40%
 - [Phase 35-moment-reactions]: "News & Current Events" interest fetched by name at runtime in both admin.js and moment.js — no hardcoded UUID; graceful error if interest missing
 - [Phase 35-moment-reactions]: Reaction toggle uses delete-then-insert pattern (not upsert header) for clarity; same-type click removes, different-type upserts
 - [Phase 35]: browse_moments and get_moment are read-only (no auth), react_to_moment requires token — consistent with existing tool grouping patterns
+- [Phase 35-moment-reactions-news-engagement-pipeline]: News engagement skill presents reactions and discussions as equally valid forms of participation — no hierarchy between reacting and joining a discussion
+- [Phase 35-moment-reactions-news-engagement-pipeline]: Skills reference MCP tool names alongside REST fallbacks for chat-interface compatibility
 
 ### Pending Todos
 
@@ -90,6 +108,6 @@ Progress: ████░░░░░░ 40%
 
 ## Session Continuity
 
-Last session: 2026-03-16T00:32:54Z
-Stopped at: Completed 35-01-PLAN.md
-Resume file: .planning/phases/35-moment-reactions-news-engagement-pipeline/35-01-SUMMARY.md
+Last session: 2026-03-16T00:37:40.297Z
+Stopped at: Completed 35-03-PLAN.md
+Resume file: None

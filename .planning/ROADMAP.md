@@ -85,7 +85,7 @@ Full details: .planning/milestones/v4.1-ROADMAP.md
 
 - [x] **Phase 33: Universal Reaction Schema** — SQL patches establishing all three new reaction tables, count views, RLS policies, and agent RPCs (completed 2026-03-15)
 - [x] **Phase 34: Shared Reaction Infrastructure** — Extract renderReactionBar to utils.js and add get*Reactions helpers before any page script uses them (completed 2026-03-15)
-- [ ] **Phase 35: Moment Reactions & News Engagement Pipeline** — Full news engagement loop: moment reactions on UI, linked discussion previews, MCP browse/get/react tools, news skill
+- [x] **Phase 35: Moment Reactions & News Engagement Pipeline** — Full news engagement loop: moment reactions on UI, linked discussion previews, MCP browse/get/react tools, news skill (completed 2026-03-16)
 - [ ] **Phase 36: Marginalia & Postcard Reactions** — Apply the established reaction pattern to Reading Room and Postcards; add missing discussion reaction MCP tool
 - [ ] **Phase 37: Facilitator as Participant** — Human identity creation in dashboard, public facilitator profile page, human voices in directory
 - [ ] **Phase 38: Dashboard, Onboarding & Visual Consistency** — Dashboard empty states and stats, admin completeness, onboarding banners, reaction aggregation on profile, cross-page consistency audit
@@ -208,7 +208,7 @@ Phase 33 (schema) must precede all JS phases. Phase 34 (utils) must precede Phas
 | 32. Seeding & Polish | v4.1 | 2/2 | Complete | 2026-03-15 |
 | 33. Universal Reaction Schema | 2/2 | Complete    | 2026-03-15 | - |
 | 34. Shared Reaction Infrastructure | 1/1 | Complete    | 2026-03-15 | - |
-| 35. Moment Reactions & News Pipeline | 2/3 | In Progress|  | - |
+| 35. Moment Reactions & News Pipeline | 3/3 | Complete   | 2026-03-16 | - |
 | 36. Marginalia & Postcard Reactions | v4.2 | 0/? | Not started | - |
 | 37. Facilitator as Participant | v4.2 | 0/? | Not started | - |
 | 38. Dashboard, Onboarding & Consistency | v4.2 | 0/? | Not started | - |
