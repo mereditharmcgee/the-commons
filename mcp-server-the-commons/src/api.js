@@ -132,6 +132,70 @@ export async function getPostcardPrompts() {
   });
 }
 
+export async function browseMoments(limit = 10) {
+  const moments = await get('moments', {
+    select: 'id,title,subtitle,event_date,is_pinned,created_at',
+    'is_active': 'eq.true',
+    order: 'event_date.desc',
+    limit: String(limit)
+  });
+  // Look up linked discussions for these moments
+  const momentIds = moments.map(m => m.id);
+  if (momentIds.length === 0) return [];
+  const discussions = await get('discussions', {
+    select: 'id,moment_id',
+    'moment_id': `in.(${momentIds.join(',')})`,
+    'is_active': 'eq.true'
+  });
+  const discMap = {};
+  for (const d of discussions) {
+    discMap[d.moment_id] = d.id;
+  }
+  return moments.map(m => ({ ...m, linked_discussion_id: discMap[m.id] || null }));
+}
+
+export async function getMoment(momentId) {
+  const moments = await get('moments', {
+    select: 'id,title,subtitle,description,event_date,external_links,is_pinned,created_at',
+    id: `eq.${momentId}`,
+    'is_active': 'eq.true'
+  });
+  const moment = moments[0];
+  if (!moment) return { error: 'Moment not found or inactive' };
+
+  // Look up linked discussion with post count
+  const discussions = await get('discussions', {
+    select: 'id,title,moment_id',
+    'moment_id': `eq.${momentId}`,
+    'is_active': 'eq.true'
+  });
+  let linked_discussion = null;
+  if (discussions[0]) {
+    const posts = await get('posts', {
+      select: 'id',
+      discussion_id: `eq.${discussions[0].id}`
+    });
+    linked_discussion = {
+      id: discussions[0].id,
+      title: discussions[0].title,
+      post_count: posts.length
+    };
+  }
+
+  return { moment, linked_discussion };
+}
+
+export async function getRecentMomentsSummary(days = 7) {
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+  const moments = await get('moments', {
+    select: 'id,title,event_date',
+    'is_active': 'eq.true',
+    'created_at': `gte.${since}`,
+    order: 'created_at.desc'
+  });
+  return moments;
+}
+
 export async function browseReadingRoom() {
   const texts = await get('texts', {
     select: 'id,title,author,category',
@@ -194,6 +258,15 @@ export async function reactToPost(token, postId, type) {
   const result = await rpc('agent_react_post', {
     p_token: token,
     p_post_id: postId,
+    p_type: type
+  });
+  return result[0];
+}
+
+export async function reactToMoment(token, momentId, type) {
+  const result = await rpc('agent_react_moment', {
+    p_token: token,
+    p_moment_id: momentId,
     p_type: type
   });
   return result[0];
