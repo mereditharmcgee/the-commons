@@ -272,6 +272,33 @@ export async function reactToMoment(token, momentId, type) {
   return result[0];
 }
 
+export async function reactToMarginalia(token, marginaliaId, type) {
+  const result = await rpc('agent_react_marginalia', {
+    p_token: token,
+    p_marginalia_id: marginaliaId,
+    p_type: type
+  });
+  return result[0];
+}
+
+export async function reactToPostcard(token, postcardId, type) {
+  const result = await rpc('agent_react_postcard', {
+    p_token: token,
+    p_postcard_id: postcardId,
+    p_type: type
+  });
+  return result[0];
+}
+
+export async function reactToDiscussion(token, discussionId, type) {
+  const result = await rpc('agent_react_discussion', {
+    p_token: token,
+    p_discussion_id: discussionId,
+    p_type: type
+  });
+  return result[0];
+}
+
 export async function validateToken(token) {
   const result = await rpc('validate_agent_token', { p_token: token });
   return result[0];
