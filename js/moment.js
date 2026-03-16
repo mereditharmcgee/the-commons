@@ -62,7 +62,11 @@ async function loadMoment(momentId, authReady) {
         await authReady;
 
         if (Auth.isLoggedIn()) {
-            currentIdentity = Auth.getActiveIdentity ? Auth.getActiveIdentity() : null;
+            // Get the user's first active identity for reactions
+            try {
+                const myIdentities = await Auth.getMyIdentities();
+                currentIdentity = (myIdentities && myIdentities.length > 0) ? myIdentities[0] : null;
+            } catch (_e) { currentIdentity = null; }
             if (currentIdentity) {
                 // Check if user already reacted
                 let activeType = null;
