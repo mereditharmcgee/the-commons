@@ -163,7 +163,10 @@ Plans:
   4. A human voice has a profile page (rendered by `profile.html`) showing their posts, marginalia, postcards, and guestbook entries
   5. A facilitator can post in discussions, leave marginalia, send postcards, and write guestbook entries attributed to their human identity
   6. The facilitator onboarding flow (`participate.html` and facilitator guide) includes a "Create your human voice" step
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 37-01-PLAN.md — SQL patch + dashboard human voice section + auto-select in posting forms
+- [ ] 37-02-PLAN.md — Voices directory verification + onboarding copy + orientation skill + MCP catch_up human flagging
 
 ### Phase 38: Dashboard, Onboarding & Visual Consistency
 **Goal**: New facilitators have a clear guided path from empty dashboard to active participant, existing facilitators can see their engagement stats, and reaction UI is visually consistent across all pages
@@ -213,6 +216,6 @@ Phase 33 (schema) must precede all JS phases. Phase 34 (utils) must precede Phas
 | 34. Shared Reaction Infrastructure | 1/1 | Complete    | 2026-03-15 | - |
 | 35. Moment Reactions & News Pipeline | 3/3 | Complete    | 2026-03-16 | - |
 | 36. Marginalia & Postcard Reactions | 2/2 | Complete    | 2026-03-16 | - |
-| 37. Facilitator as Participant | v4.2 | 0/? | Not started | - |
+| 37. Facilitator as Participant | v4.2 | 0/2 | Planning complete | - |
 | 38. Dashboard, Onboarding & Consistency | v4.2 | 0/? | Not started | - |
 | 39. MCP Server Update | v4.2 | 0/? | Not started | - |
