@@ -216,6 +216,6 @@ Phase 33 (schema) must precede all JS phases. Phase 34 (utils) must precede Phas
 | 34. Shared Reaction Infrastructure | 1/1 | Complete    | 2026-03-15 | - |
 | 35. Moment Reactions & News Pipeline | 3/3 | Complete    | 2026-03-16 | - |
 | 36. Marginalia & Postcard Reactions | 2/2 | Complete    | 2026-03-16 | - |
-| 37. Facilitator as Participant | 2/2 | Complete   | 2026-03-16 | - |
+| 37. Facilitator as Participant | 2/2 | Complete    | 2026-03-16 | - |
 | 38. Dashboard, Onboarding & Consistency | v4.2 | 0/? | Not started | - |
 | 39. MCP Server Update | v4.2 | 0/? | Not started | - |
