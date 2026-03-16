@@ -28,7 +28,6 @@
     let prompts = [];
     let moments = [];
     let allInterests = [];
-    let linkedMomentsMap = {}; // moment_id -> discussion_id for moments with linked discussions
 
     // =========================================
     // SUPABASE CLIENT
@@ -1397,24 +1396,13 @@
         container.innerHTML = '<div class="loading"><div class="loading__spinner"></div>Loading moments...</div>';
 
         try {
-            const [momentsResult, linkedResult] = await Promise.all([
-                getClient()
-                    .from('moments')
-                    .select('*')
-                    .order('event_date', { ascending: false }),
-                getClient()
-                    .from('discussions')
-                    .select('id,moment_id,title')
-                    .not('moment_id', 'is', null)
-                    .eq('is_active', true)
-            ]);
+            const momentsResult = await getClient()
+                .from('moments')
+                .select('*')
+                .order('event_date', { ascending: false });
 
             if (momentsResult.error) throw momentsResult.error;
             moments = momentsResult.data || [];
-
-            // Build linked map: moment_id -> { id, title }
-            linkedMomentsMap = {};
-            (linkedResult.data || []).forEach(d => { linkedMomentsMap[d.moment_id] = { id: d.id, title: d.title }; });
 
             renderMoments();
             updateTabCount('moments', moments.length);
@@ -1464,13 +1452,6 @@
                         <button data-action="toggle-moment-active" data-id="${m.id}" data-active="${m.is_active}" class="admin-item__btn ${m.is_active ? 'admin-item__btn--danger' : 'admin-item__btn--success'}">
                             ${m.is_active ? 'Hide' : 'Show'}
                         </button>
-                        ${linkedMomentsMap[m.id]
-                            ? `<a href="discussion.html?id=${linkedMomentsMap[m.id].id}" target="_blank" class="admin-item__btn admin-item__btn--success">View Discussion</a>
-                               <span class="admin-moment-linked-label">Linked: ${Utils.escapeHtml(linkedMomentsMap[m.id].title)}</span>
-                               <button data-action="unlink-discussion" data-id="${m.id}" data-discussion-id="${linkedMomentsMap[m.id].id}" class="admin-item__btn admin-item__btn--danger">Unlink</button>`
-                            : `<button data-action="create-linked-discussion" data-id="${m.id}" data-title="${Utils.escapeHtml(m.title)}" class="admin-item__btn admin-item__btn--success">Create Discussion</button>
-                               <button data-action="link-existing-discussion" data-id="${m.id}" class="admin-item__btn">Link Existing</button>`
-                        }
                     </div>
                 </div>
             `;
@@ -1483,25 +1464,6 @@
         });
     }
 
-    // Search-as-you-type panel for linking an existing discussion to a moment
-    function openLinkDiscussionPanel(momentId) {
-        // Remove any existing panels first
-        const existing = document.querySelector('.admin-link-discussion-panel');
-        if (existing) existing.remove();
-
-        const momentItem = document.querySelector(`.admin-item [data-action="link-existing-discussion"][data-id="${momentId}"]`);
-        if (!momentItem) return;
-        const parentItem = momentItem.closest('.admin-item');
-        if (!parentItem) return;
-
-        const panel = document.createElement('div');
-        panel.className = 'admin-link-discussion-panel';
-        panel.dataset.momentId = momentId;
-        panel.innerHTML = `
-            <div class="admin-link-discussion-panel__inner">
-                <input type="text" class="admin-link-discussion-panel__input form-input" placeholder="Search discussions by title..." autocomplete="off" />
-                <div class="admin-link-discussion-panel__results"></div>
-                <button class="admin-item__btn admin-link-discussion-panel__cancel" data-action="cancel-link-discussion">Cancel</button>
             </div>
         `;
         parentItem.appendChild(panel);
@@ -1519,56 +1481,6 @@
                 return;
             }
             debounceTimer = setTimeout(async () => {
-                results.innerHTML = '<span style="color: var(--text-muted); font-size: 0.875rem;">Searching...</span>';
-                try {
-                    const data = await Utils.get(CONFIG.api.discussions, {
-                        title: 'ilike.*' + term + '*',
-                        is_active: 'eq.true',
-                        select: 'id,title',
-                        limit: '8',
-                        order: 'created_at.desc'
-                    });
-                    if (!data || data.length === 0) {
-                        results.innerHTML = '<span style="color: var(--text-muted); font-size: 0.875rem;">No discussions found.</span>';
-                        return;
-                    }
-                    results.innerHTML = data.map(d => `
-                        <button class="admin-link-discussion-panel__result" data-action="confirm-link-discussion" data-moment-id="${momentId}" data-discussion-id="${d.id}">${Utils.escapeHtml(d.title)}</button>
-                    `).join('');
-                } catch (err) {
-                    results.innerHTML = '<span style="color: var(--text-muted); font-size: 0.875rem;">Search failed.</span>';
-                }
-            }, 300);
-        });
-    }
-
-    async function confirmLinkDiscussion(momentId, discussionId) {
-        try {
-            const { error } = await getClient()
-                .from('discussions')
-                .update({ moment_id: momentId })
-                .eq('id', discussionId);
-            if (error) throw error;
-            await loadMoments();
-        } catch (err) {
-            alert('Failed to link discussion: ' + err.message);
-        }
-    }
-
-    async function unlinkDiscussion(momentId, discussionId) {
-        if (!confirm('Unlink this discussion from the moment?')) return;
-        try {
-            const { error } = await getClient()
-                .from('discussions')
-                .update({ moment_id: null })
-                .eq('id', discussionId);
-            if (error) throw error;
-            await loadMoments();
-        } catch (err) {
-            alert('Failed to unlink discussion: ' + err.message);
-        }
-    }
-
     // =========================================
     // EVENT LISTENERS
     // =========================================
@@ -1746,15 +1658,6 @@
                     // Moments
                     case 'toggle-moment-pin': toggleMomentPin(id, btn.dataset.pinned !== 'true'); break;
                     case 'toggle-moment-active': toggleMomentActive(id, btn.dataset.active !== 'true'); break;
-                    case 'create-linked-discussion': createLinkedDiscussion(id, btn.dataset.title); break;
-                    case 'link-existing-discussion': openLinkDiscussionPanel(id); break;
-                    case 'cancel-link-discussion': {
-                        const panel = btn.closest('.admin-link-discussion-panel');
-                        if (panel) panel.remove();
-                        break;
-                    }
-                    case 'confirm-link-discussion': confirmLinkDiscussion(btn.dataset.momentId, btn.dataset.discussionId); break;
-                    case 'unlink-discussion': unlinkDiscussion(id, btn.dataset.discussionId); break;
                 }
             });
         }
@@ -1775,42 +1678,6 @@
             await loadMoments();
         } catch (error) {
             alert('Failed to update visibility: ' + error.message);
-        }
-    }
-
-    async function createLinkedDiscussion(momentId, momentTitle) {
-        try {
-            // Fetch "News & Current Events" interest by name (no hardcoded UUID)
-            const { data: interest, error: intError } = await getClient()
-                .from('interests')
-                .select('id')
-                .eq('name', 'News & Current Events')
-                .single();
-
-            if (intError || !interest) {
-                alert('News & Current Events interest not found. Please create it first.');
-                return;
-            }
-
-            const { data: discussion, error } = await getClient()
-                .from('discussions')
-                .insert({
-                    title: momentTitle,
-                    interest_id: interest.id,
-                    moment_id: momentId,
-                    is_active: true
-                })
-                .select('id')
-                .single();
-
-            if (error) throw error;
-
-            // Refresh moments list to show the new "View Discussion" link
-            await loadMoments();
-
-        } catch (error) {
-            console.error('Error creating linked discussion:', error);
-            alert('Failed to create discussion: ' + (error.message || 'Unknown error'));
         }
     }
 
