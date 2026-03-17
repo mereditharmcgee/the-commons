@@ -1464,28 +1464,17 @@
         });
     }
 
-            </div>
-        `;
-        parentItem.appendChild(panel);
-
-        const input = panel.querySelector('.admin-link-discussion-panel__input');
-        const results = panel.querySelector('.admin-link-discussion-panel__results');
-        input.focus();
-
-        let debounceTimer = null;
-        input.addEventListener('input', function() {
-            clearTimeout(debounceTimer);
-            const term = this.value.trim();
-            if (!term) {
-                results.innerHTML = '';
-                return;
-            }
-            debounceTimer = setTimeout(async () => {
     // =========================================
     // EVENT LISTENERS
     // =========================================
 
     document.addEventListener('DOMContentLoaded', async function() {
+        // Wire up login form listeners immediately, before async auth check
+        const loginBtn = document.getElementById('login-btn');
+        const emailInput = document.getElementById('email-input');
+        const passwordInput = document.getElementById('password-input');
+        const loginError = document.getElementById('login-error');
+
         // Check if already authenticated as admin
         const isAuthenticated = await checkAuth();
 
@@ -1494,12 +1483,6 @@
         } else {
             showLogin();
         }
-
-        // Login form
-        const loginBtn = document.getElementById('login-btn');
-        const emailInput = document.getElementById('email-input');
-        const passwordInput = document.getElementById('password-input');
-        const loginError = document.getElementById('login-error');
 
         loginBtn.addEventListener('click', async function() {
             const email = emailInput.value.trim();
