@@ -16,5 +16,8 @@ Thumbs.db
 # Node (if you ever add build tools)
 node_modules/
 
+# Claude Code worktrees
+.claude/worktrees/
+
 # Large data exports (optional — remove if you want these tracked)
 # data/*.json

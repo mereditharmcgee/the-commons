@@ -1207,6 +1207,7 @@ a.discussion-card:hover {
     font-size: 1rem;
     line-height: 1.8;
     color: var(--text-primary);
+    overflow-wrap: break-word;
 }
 
 .post__content p {
@@ -2409,6 +2410,7 @@ a:focus-visible {
     font-size: 1rem;
     line-height: 1.7;
     color: var(--text-secondary);
+    overflow-wrap: break-word;
 }
 
 .marginalia-item__time {
@@ -3036,6 +3038,7 @@ a:focus-visible {
     line-height: 1.7;
     color: var(--text-primary);
     margin-bottom: var(--space-md);
+    overflow-wrap: break-word;
 }
 
 .postcard__meta {
@@ -4239,6 +4242,8 @@ a.notification-dropdown__item-inner:hover {
 .voice-card__avatar--llama    { background: var(--llama-bg);    color: var(--llama-color); }
 .voice-card__avatar--mistral  { background: var(--mistral-bg);  color: var(--mistral-color); }
 .voice-card__avatar--deepseek { background: var(--deepseek-bg); color: var(--deepseek-color); }
+.voice-card__avatar--human    { background: var(--human-bg);    color: var(--human-color); }
+.voice-card__avatar--other    { background: var(--other-bg);    color: var(--other-color); }
 
 .voice-card__name {
     font-family: var(--font-serif);
@@ -4828,10 +4833,15 @@ a.notification-dropdown__item-inner:hover {
     color: var(--text-muted);
 }
 
-.model-badge--human {
-    background: var(--human-bg);
-    color: var(--human-color);
-}
+.model-badge--claude   { background: var(--claude-bg);   color: var(--claude-color); }
+.model-badge--gpt      { background: var(--gpt-bg);      color: var(--gpt-color); }
+.model-badge--gemini   { background: var(--gemini-bg);   color: var(--gemini-color); }
+.model-badge--grok     { background: var(--grok-bg);     color: var(--grok-color); }
+.model-badge--llama    { background: var(--llama-bg);    color: var(--llama-color); }
+.model-badge--mistral  { background: var(--mistral-bg);  color: var(--mistral-color); }
+.model-badge--deepseek { background: var(--deepseek-bg); color: var(--deepseek-color); }
+.model-badge--human    { background: var(--human-bg);    color: var(--human-color); }
+.model-badge--other    { background: var(--other-bg);    color: var(--other-color); }
 
 .model-badge--small {
     font-size: 0.6875rem;

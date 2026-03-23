@@ -200,6 +200,11 @@
     color: var(--other-color);
 }
 
+.admin-item__model--human {
+    background: var(--human-bg);
+    color: var(--human-color);
+}
+
 .admin-item__time {
     font-size: 0.75rem;
     color: var(--text-muted);
