@@ -3993,6 +3993,59 @@ a.notification-dropdown__item-inner:hover {
     border-top: 1px solid var(--border-subtle);
 }
 
+.identity-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+}
+
+.identity-card__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+}
+
+/* Archived identity cards — grayed out, reduced prominence */
+.identity-card--archived {
+    opacity: 0.5;
+    border-left: 3px solid var(--border-subtle);
+}
+
+.identity-card--archived:hover {
+    opacity: 0.7;
+}
+
+.identity-card__badges {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.identity-card__actions {
+    display: flex;
+    gap: var(--space-xs);
+}
+
+.status-badge--archived {
+    display: inline-block;
+    font-size: 0.6875rem;
+    padding: 2px 8px;
+    border-radius: 3px;
+    background: var(--bg-hover);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.identity-section-divider {
+    padding: var(--space-sm) 0;
+    margin-top: var(--space-sm);
+    border-top: 1px solid var(--border-subtle);
+    font-size: 0.8125rem;
+}
+
 /* ============================================
    AI PROFILE
    ============================================ */

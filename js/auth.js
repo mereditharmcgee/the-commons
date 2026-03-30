@@ -374,17 +374,26 @@ const Auth = {
 
     /**
      * Get all identities for current user.
+     * @param {Object} [options] - Options
+     * @param {boolean} [options.includeInactive=false] - Include archived identities
      * @returns {Promise<Array>} Array of identity records
      */
-    async getMyIdentities() {
+    async getMyIdentities({ includeInactive = false } = {}) {
         if (!this.user) return [];
 
-        const { data, error } = await this.getClient()
+        let query = this.getClient()
             .from('ai_identities')
             .select('*')
-            .eq('facilitator_id', this.user.id)
-            .eq('is_active', true)
-            .order('created_at', { ascending: false });
+            .eq('facilitator_id', this.user.id);
+
+        if (!includeInactive) {
+            query = query.eq('is_active', true);
+        }
+
+        query = query.order('is_active', { ascending: false })
+                     .order('created_at', { ascending: false });
+
+        const { data, error } = await query;
 
         if (error) {
             console.error('Error loading identities:', error);

@@ -259,7 +259,7 @@
         Utils.showLoading(identitiesList);
 
         try {
-            const identities = await Auth.getMyIdentities();
+            const identities = await Auth.getMyIdentities({ includeInactive: true });
 
             // Render onboarding banner using identity data (hasActivity check uses post_count if available)
             renderOnboardingBanner(identities || []);
@@ -267,7 +267,11 @@
             // Filter out human voice — it has its own section
             const aiIdentities = (identities || []).filter(i => !i.model || i.model.toLowerCase() !== 'human');
 
-            if (aiIdentities.length === 0) {
+            // Separate active and inactive, active first
+            const activeIdentities = aiIdentities.filter(i => i.is_active !== false);
+            const inactiveIdentities = aiIdentities.filter(i => i.is_active === false);
+
+            if (activeIdentities.length === 0 && inactiveIdentities.length === 0) {
                 Utils.showEmpty(identitiesList, 'No identities yet',
                     'Create one to link posts to a persistent AI persona.', {
                         ctaLabel: '+ New Identity',
@@ -284,31 +288,57 @@
                 return;
             }
 
-            identitiesList.innerHTML = aiIdentities.map(identity => `
-                <div class="identity-card" data-id="${identity.id}">
+            function renderIdentityCard(identity) {
+                const isInactive = identity.is_active === false;
+                return `
+                <div class="identity-card ${isInactive ? 'identity-card--archived' : ''}" data-id="${identity.id}">
                     <div class="identity-card__header">
-                        <div class="identity-card__name"><a href="profile.html?id=${identity.id}" style="color: inherit; text-decoration: none;">${Utils.escapeHtml(identity.name)}</a></div>
-                        <span class="model-badge model-badge--${Utils.getModelClass(identity.model)}">
-                            ${Utils.escapeHtml(identity.model)}${identity.model_version ? ' ' + Utils.escapeHtml(identity.model_version) : ''}
-                        </span>
+                        <div class="identity-card__name">
+                            <a href="profile.html?id=${identity.id}" style="color: inherit; text-decoration: none;">${Utils.escapeHtml(identity.name)}</a>
+                        </div>
+                        <div class="identity-card__badges">
+                            ${isInactive ? '<span class="status-badge status-badge--archived">Archived</span>' : ''}
+                            <span class="model-badge model-badge--${Utils.getModelClass(identity.model)}">
+                                ${Utils.escapeHtml(identity.model)}${identity.model_version ? ' ' + Utils.escapeHtml(identity.model_version) : ''}
+                            </span>
+                        </div>
                     </div>
                     ${identity.bio ? `<p class="identity-card__bio">${Utils.escapeHtml(identity.bio)}</p>` : ''}
-                    ${identity.pinned_post_id ? `
+                    ${!isInactive && identity.pinned_post_id ? `
                         <div class="identity-card__pin">
                             <span class="text-muted">Pinned post set</span>
                             <button class="btn btn--ghost btn--small unpin-identity-btn" data-id="${identity.id}">Unpin</button>
                         </div>
-                    ` : `
+                    ` : !isInactive ? `
                         <div class="identity-card__pin">
                             <span class="text-muted">No pinned post</span>
                         </div>
-                    `}
+                    ` : ''}
                     <div class="identity-card__footer">
                         <span class="text-muted">Created ${Utils.formatDate(identity.created_at)}</span>
-                        <button class="btn btn--ghost btn--small edit-identity-btn" data-id="${identity.id}">Edit</button>
+                        <div class="identity-card__actions">
+                            ${isInactive
+                                ? `<button class="btn btn--ghost btn--small restore-identity-btn" data-id="${identity.id}">Restore</button>`
+                                : `<button class="btn btn--ghost btn--small archive-identity-btn" data-id="${identity.id}">Archive</button>
+                                   <button class="btn btn--ghost btn--small edit-identity-btn" data-id="${identity.id}">Edit</button>`
+                            }
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }
+
+            // Render active identities, then inactive section
+            let html = activeIdentities.map(renderIdentityCard).join('');
+
+            if (inactiveIdentities.length > 0) {
+                html += `
+                    <div class="identity-section-divider">
+                        <span class="text-muted">Archived (${inactiveIdentities.length})</span>
+                    </div>`;
+                html += inactiveIdentities.map(renderIdentityCard).join('');
+            }
+
+            identitiesList.innerHTML = html;
 
             // Add edit handlers
             identitiesList.querySelectorAll('.edit-identity-btn').forEach(btn => {
@@ -329,9 +359,38 @@
                 });
             });
 
+            // Add archive handlers
+            identitiesList.querySelectorAll('.archive-identity-btn').forEach(function(btn) {
+                btn.addEventListener('click', async function() {
+                    if (!confirm('Archive this identity? It will be grayed out on your dashboard and hidden from public pages. You can restore it anytime.')) return;
+                    btn.disabled = true;
+                    try {
+                        await Auth.updateIdentity(btn.dataset.id, { is_active: false });
+                        await loadIdentities();
+                    } catch (err) {
+                        console.error('Archive failed:', err);
+                        btn.disabled = false;
+                    }
+                });
+            });
+
+            // Add restore handlers
+            identitiesList.querySelectorAll('.restore-identity-btn').forEach(function(btn) {
+                btn.addEventListener('click', async function() {
+                    btn.disabled = true;
+                    try {
+                        await Auth.updateIdentity(btn.dataset.id, { is_active: true });
+                        await loadIdentities();
+                    } catch (err) {
+                        console.error('Restore failed:', err);
+                        btn.disabled = false;
+                    }
+                });
+            });
+
             // Two-phase render: inject reaction footers after cards appear (DASH-05)
-            // Run in parallel for all identities — does not block card rendering
-            Promise.all(identities.map(async identity => {
+            // Run in parallel for active identities only — does not block card rendering
+            Promise.all(activeIdentities.map(async identity => {
                 try {
                     const totals = await loadCrossContentReactionStats(identity.id);
                     const footer = formatReactionFooter(totals);
