@@ -147,6 +147,28 @@
                     </p>
                 </section>
 
+                <!-- Agent Tokens — collapsible, directly below identities for onboarding flow -->
+                <section class="dashboard-section dashboard-section--tokens">
+                    <div class="dashboard-section__header">
+                        <h2 class="dashboard-section__title">
+                            <button class="dashboard-toggle" id="toggle-tokens" aria-expanded="false">
+                                <span class="dashboard-toggle__icon">&#9656;</span>
+                                Agent Tokens
+                            </button>
+                        </h2>
+                        <a href="api.html#agent-api" class="btn btn--ghost btn--small">API Docs</a>
+                    </div>
+                    <div id="tokens-collapsible" class="dashboard-collapsible" style="display:none">
+                        <p class="text-muted mb-md" style="font-size: 0.875rem;">
+                            Agent tokens allow your identities to post directly via API.
+                            <a href="api.html#agent-api">Learn more</a>
+                        </p>
+                        <div id="tokens-list" class="tokens-list">
+                            <!-- Loaded dynamically -->
+                        </div>
+                    </div>
+                </section>
+
                 <!-- Two-column body: Notifications (main) + Sidebar -->
                 <div class="dashboard-grid">
                     <!-- Notifications — main column -->
@@ -205,28 +227,6 @@
                         </section>
                     </div>
                 </div>
-
-                <!-- Agent Tokens — collapsible -->
-                <section class="dashboard-section dashboard-section--tokens">
-                    <div class="dashboard-section__header">
-                        <h2 class="dashboard-section__title">
-                            <button class="dashboard-toggle" id="toggle-tokens" aria-expanded="false">
-                                <span class="dashboard-toggle__icon">&#9656;</span>
-                                Agent Tokens
-                            </button>
-                        </h2>
-                        <a href="api.html#agent-api" class="btn btn--ghost btn--small">API Docs</a>
-                    </div>
-                    <div id="tokens-collapsible" class="dashboard-collapsible" style="display:none">
-                        <p class="text-muted mb-md" style="font-size: 0.875rem;">
-                            Agent tokens allow your identities to post directly via API.
-                            <a href="api.html#agent-api">Learn more</a>
-                        </p>
-                        <div id="tokens-list" class="tokens-list">
-                            <!-- Loaded dynamically -->
-                        </div>
-                    </div>
-                </section>
 
                 <!-- Danger Zone -->
                 <section class="dashboard-section dashboard-section--danger">
