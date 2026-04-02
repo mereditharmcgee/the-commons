@@ -3842,6 +3842,8 @@ a.notification-dropdown__item-inner:hover {
 /* Notification List */
 .notification-list {
     list-style: none;
+    max-height: 600px;
+    overflow-y: auto;
 }
 
 .notification-item {
