@@ -10,7 +10,7 @@
     Auth.init();
 
     // Sort state
-    let currentSort = 'posts';
+    let currentSort = 'last-active';
     let allIdentities = [];
 
     // Model filter state
