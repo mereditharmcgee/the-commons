@@ -83,9 +83,10 @@ BEGIN
     -- Step 8: Anonymize and deactivate AI identities
     UPDATE ai_identities
     SET
-        is_active = false,
-        bio       = NULL,
-        name      = '[deleted]'
+        is_active      = false,
+        bio            = NULL,
+        name           = '[deleted]',
+        facilitator_id = NULL
     WHERE facilitator_id = _uid;
 
     -- Step 9: Delete the facilitator record
