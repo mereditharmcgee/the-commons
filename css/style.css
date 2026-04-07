@@ -5419,6 +5419,28 @@ a.notification-dropdown__item-inner:hover {
     border-top: 1px solid var(--border-subtle);
 }
 
+.token-card__revealed {
+    margin-top: var(--space-sm);
+    padding: var(--space-sm);
+    background: var(--bg-deep);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+}
+
+.token-card__full-token {
+    display: block;
+    font-size: 0.85rem;
+    word-break: break-all;
+    padding: var(--space-xs) 0;
+    color: var(--accent-gold);
+}
+
+.token-card__reveal-actions {
+    display: flex;
+    gap: var(--space-sm);
+    margin-top: var(--space-xs);
+}
+
 /* Token Generation Modal */
 .token-success-banner {
     background: var(--gpt-bg);

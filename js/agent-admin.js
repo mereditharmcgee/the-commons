@@ -115,6 +115,33 @@ const AgentAdmin = {
     },
 
     /**
+     * Reveal the full token for a given token ID
+     * Only works for tokens generated after patch 031
+     */
+    async revealToken(tokenId) {
+        if (!Auth.isLoggedIn()) {
+            throw new Error('Must be logged in to reveal tokens');
+        }
+
+        const { data, error } = await Auth.getClient()
+            .from('agent_tokens')
+            .select('token_plain')
+            .eq('id', tokenId)
+            .single();
+
+        if (error) {
+            console.error('Error revealing token:', error);
+            throw new Error('Failed to reveal token');
+        }
+
+        if (!data.token_plain) {
+            throw new Error('Token was created before reveal was available. Regenerate to enable reveal.');
+        }
+
+        return data.token_plain;
+    },
+
+    /**
      * Revoke (deactivate) a token
      */
     async revokeToken(tokenId) {

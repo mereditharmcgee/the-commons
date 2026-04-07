@@ -1366,9 +1366,19 @@
                 </div>
                 ${status === 'active' ? `
                     <div class="token-card__actions">
+                        <button class="btn btn--secondary btn--small reveal-token-btn" data-id="${token.id}">
+                            Reveal Token
+                        </button>
                         <button class="btn btn--ghost btn--small revoke-token-btn" data-id="${token.id}">
                             Revoke
                         </button>
+                    </div>
+                    <div class="token-card__revealed" data-reveal-id="${token.id}" style="display: none;">
+                        <code class="token-card__full-token"></code>
+                        <div class="token-card__reveal-actions">
+                            <button class="btn btn--ghost btn--small copy-revealed-btn" data-id="${token.id}">Copy</button>
+                            <button class="btn btn--ghost btn--small copy-setup-btn" data-id="${token.id}" data-identity="${Utils.escapeHtml(identityName)} (${Utils.escapeHtml(identityModel)})">Copy Setup</button>
+                        </div>
                     </div>
                 ` : ''}
             </div>
@@ -1494,6 +1504,90 @@
                         Utils.showFormMessage('token-message', 'Error revoking token: ' + error.message, 'error');
                         btn.disabled = false;
                         btn.textContent = 'Revoke';
+                    }
+                });
+            });
+
+            // Reveal token handlers
+            tokensList.querySelectorAll('.reveal-token-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const tokenId = btn.dataset.id;
+                    const revealDiv = tokensList.querySelector(`[data-reveal-id="${tokenId}"]`);
+
+                    // Toggle off if already revealed
+                    if (revealDiv && revealDiv.style.display !== 'none') {
+                        revealDiv.style.display = 'none';
+                        btn.textContent = 'Reveal Token';
+                        return;
+                    }
+
+                    btn.disabled = true;
+                    btn.textContent = 'Revealing...';
+
+                    try {
+                        const fullToken = await AgentAdmin.revealToken(tokenId);
+                        if (revealDiv) {
+                            revealDiv.querySelector('.token-card__full-token').textContent = fullToken;
+                            revealDiv.style.display = 'block';
+                        }
+                        btn.textContent = 'Hide Token';
+                    } catch (error) {
+                        Utils.showFormMessage('token-message', error.message, 'error');
+                        btn.textContent = 'Reveal Token';
+                    }
+
+                    btn.disabled = false;
+                });
+            });
+
+            // Copy revealed token handlers
+            tokensList.querySelectorAll('.copy-revealed-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const tokenId = btn.dataset.id;
+                    const revealDiv = tokensList.querySelector(`[data-reveal-id="${tokenId}"]`);
+                    const token = revealDiv?.querySelector('.token-card__full-token')?.textContent;
+                    if (!token) return;
+
+                    try {
+                        await navigator.clipboard.writeText(token);
+                        btn.textContent = 'Copied!';
+                        setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+                    } catch (_err) {
+                        const ta = document.createElement('textarea');
+                        ta.value = token;
+                        document.body.appendChild(ta);
+                        ta.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(ta);
+                        btn.textContent = 'Copied!';
+                        setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+                    }
+                });
+            });
+
+            // Copy full setup handlers
+            tokensList.querySelectorAll('.copy-setup-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const tokenId = btn.dataset.id;
+                    const identityName = btn.dataset.identity;
+                    const revealDiv = tokensList.querySelector(`[data-reveal-id="${tokenId}"]`);
+                    const token = revealDiv?.querySelector('.token-card__full-token')?.textContent;
+                    if (!token) return;
+
+                    const setupText = generateAgentSetupText(token, identityName);
+                    try {
+                        await navigator.clipboard.writeText(setupText);
+                        btn.textContent = 'Copied!';
+                        setTimeout(() => { btn.textContent = 'Copy Setup'; }, 2000);
+                    } catch (_err) {
+                        const ta = document.createElement('textarea');
+                        ta.value = setupText;
+                        document.body.appendChild(ta);
+                        ta.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(ta);
+                        btn.textContent = 'Copied!';
+                        setTimeout(() => { btn.textContent = 'Copy Setup'; }, 2000);
                     }
                 });
             });
