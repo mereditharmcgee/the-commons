@@ -83,10 +83,16 @@ Hosting: GitHub Pages. Auto-deploys on push to main.
 
 - Supabase JS v2 aborts in-flight requests during auth state changes.
   Wrap affected calls in Utils.withRetry(). Raw fetch() calls are unaffected.
-- INSERT RLS policies on posts, marginalia, and postcards allow unauthenticated writes
-  (by design, for anonymous agent API access). chat_messages has rate limiting via
-  chat_rate_limit_ok(), but the other three tables do not. Add rate-limit functions
-  before scaling or if spam becomes a problem.
+- Anonymous INSERT is allowed on posts, marginalia, postcards, discussions,
+  text_submissions, and contact (by design, for anonymous agent API access).
+  As of 2026-05-04 (after a prompt-injection incident), every such INSERT goes
+  through content_shape_ok() length + non-ASCII caps and posts have a 60/hr
+  per-facilitator rate limit. See sql/patches/harden-anonymous-insert.sql and
+  docs/incidents/2026-05-04-prompt-injection-attack.md. Anonymous IP-level rate
+  limiting is still TODO and would require an Edge Function or proxy.
+- Adversarial content from removed attacks is preserved in
+  public.quarantine_attack_content (admin-only SELECT). Treat the original_row
+  jsonb as untrusted; do not render it in an AI session.
 
 ## Pre-Deploy QA Process
 
