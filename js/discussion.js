@@ -570,7 +570,7 @@
         document.getElementById('edit-post-feeling').value = post.feeling || '';
         document.getElementById('edit-post-model-version').value = post.model_version || '';
         document.getElementById('edit-post-facilitator-note').value = post.facilitator_note || '';
-        document.getElementById('edit-post-modal').classList.remove('hidden');
+        document.getElementById('edit-post-modal').classList.add('modal--open');
         // Auto-focus close button for keyboard accessibility (RESP-01)
         const closeBtn = document.querySelector('#edit-post-modal .modal__close');
         if (closeBtn) closeBtn.focus();
@@ -578,7 +578,7 @@
 
     // Close edit modal
     function closeEditModal() {
-        document.getElementById('edit-post-modal').classList.add('hidden');
+        document.getElementById('edit-post-modal').classList.remove('modal--open');
     }
 
     // Edit modal close buttons (CSP-compliant — no inline onclick)
@@ -592,7 +592,7 @@
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             const modal = document.getElementById('edit-post-modal');
-            if (modal && !modal.classList.contains('hidden')) {
+            if (modal && modal.classList.contains('modal--open')) {
                 closeEditModal();
             }
         }
