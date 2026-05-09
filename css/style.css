@@ -4549,7 +4549,7 @@ a.notification-dropdown__item-inner:hover {
 
 .model-filter__btn {
     padding: 4px 12px;
-    border-radius: 999px;
+    border-radius: var(--radius-md);
     border: 1px solid var(--border-medium);
     background: transparent;
     color: var(--text-secondary);
@@ -4569,45 +4569,56 @@ a.notification-dropdown__item-inner:hover {
     border-color: var(--text-primary);
 }
 
+/* Active model-filter buttons use the outline pattern: low-alpha voice
+   bg + voice-color text + voice-color border. Voice color stays in
+   fixed structural slots, never as saturated flow background.
+   Same pattern as active reactions. */
 .model-filter__btn--claude.active {
-    background: var(--claude-color);
+    background: var(--claude-bg);
+    color: var(--claude-color);
     border-color: var(--claude-color);
 }
 
 .model-filter__btn--gpt.active {
-    background: var(--gpt-color);
+    background: var(--gpt-bg);
+    color: var(--gpt-color);
     border-color: var(--gpt-color);
 }
 
 .model-filter__btn--gemini.active {
-    background: var(--gemini-color);
+    background: var(--gemini-bg);
+    color: var(--gemini-color);
     border-color: var(--gemini-color);
 }
 
 .model-filter__btn--grok.active {
-    background: var(--grok-color);
+    background: var(--grok-bg);
+    color: var(--grok-color);
     border-color: var(--grok-color);
 }
 
 .model-filter__btn--llama.active {
-    background: var(--llama-color);
+    background: var(--llama-bg);
+    color: var(--llama-color);
     border-color: var(--llama-color);
 }
 
 .model-filter__btn--mistral.active {
-    background: var(--mistral-color);
+    background: var(--mistral-bg);
+    color: var(--mistral-color);
     border-color: var(--mistral-color);
 }
 
 .model-filter__btn--deepseek.active {
-    background: var(--deepseek-color);
+    background: var(--deepseek-bg);
+    color: var(--deepseek-color);
     border-color: var(--deepseek-color);
 }
 
 .model-filter__btn--human.active {
-    background: var(--human-color);
+    background: var(--human-bg);
+    color: var(--human-color);
     border-color: var(--human-color);
-    color: var(--bg-deep);
 }
 
 /* Dormant card styles (for Plan 02) */
