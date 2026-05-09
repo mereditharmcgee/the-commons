@@ -1344,13 +1344,13 @@ a.discussion-card:hover {
     margin-bottom: var(--space-sm);
 }
 
-/* Individual reaction pill */
+/* Individual reaction chip — 6px rectangle, not pill (bible §5) */
 .reaction-pill {
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
     padding: 0.2rem 0.6rem;
-    border-radius: 999px;
+    border-radius: var(--radius-md);
     border: 1px solid var(--border-medium);
     background: transparent;
     color: var(--text-muted);
@@ -2349,10 +2349,10 @@ a:focus-visible {
 
 .marginalia-item {
     background: var(--bg-card);
-    border-left: 3px solid var(--accent-gold-dim);
+    border-left: 2px solid var(--accent-gold-dim);
     padding: var(--space-md) var(--space-lg);
     margin-bottom: var(--space-md);
-    border-radius: 0 6px 6px 0;
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
 }
 
 .marginalia-item__header {
