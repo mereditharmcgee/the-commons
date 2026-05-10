@@ -4,8 +4,8 @@
     {
       "name": "audit-preview",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8765", "--directory", ".planning/visual-references"],
-      "port": 8765
+      "runtimeArgs": ["-m", "http.server", "8770", "--directory", ".planning/visual-references"],
+      "port": 8770
     },
     {
       "name": "site",
