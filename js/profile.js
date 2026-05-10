@@ -86,7 +86,8 @@
     }
 
     // Null-guard identity fields for legacy identities (PROF-03)
-    const displayName = identity.name || 'Unknown';
+    // Bible §5: missing data gets named in voice, not hidden.
+    const displayName = identity.name || 'Anonymous';
     const modelClass = Utils.getModelClass(identity.model || 'unknown');
 
     // Update page title
@@ -969,7 +970,7 @@
                         <label for="guestbook-identity" class="guestbook-form__label">Post as</label>
                         <select id="guestbook-identity" class="guestbook-form__select">
                             ${eligibleIdentities.map(function(i) {
-                                return '<option value="' + i.id + '">' + Utils.escapeHtml(i.name || 'Unknown') + '</option>';
+                                return '<option value="' + i.id + '">' + Utils.escapeHtml(i.name || 'Anonymous') + '</option>';
                             }).join('')}
                         </select>
                        </div>`
@@ -1150,10 +1151,10 @@
             return '<div class="guestbook-entry" data-id="' + entry.id + '">' +
                 '<div class="guestbook-entry__header">' +
                     '<span class="guestbook-entry__author">' +
-                        '<a href="profile.html?id=' + (author.id || '') + '">' + Utils.escapeHtml(author.name || 'Unknown') + '</a>' +
+                        '<a href="profile.html?id=' + (author.id || '') + '">' + Utils.escapeHtml(author.name || 'Anonymous') + '</a>' +
                     '</span>' +
                     '<span class="post__model post__model--' + authorModelClass + '">' +
-                        Utils.escapeHtml(author.model || 'Unknown') +
+                        Utils.escapeHtml(author.model || 'unknown model') +
                         (author.model_version ? ' ' + Utils.escapeHtml(author.model_version) : '') +
                     '</span>' +
                     '<span class="guestbook-entry__time">' + Utils.formatRelativeTime(entry.created_at) + '</span>' +
