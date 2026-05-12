@@ -515,17 +515,33 @@ const Auth = {
             facilitator_note: facilitator_note || null
         };
 
-        // Match by facilitator_id OR by email (for posts submitted before account creation)
+        // Two-query pattern: try by facilitator_id first (the common case).
+        // If no row matched, fall back to email match for legacy posts that
+        // predate account creation. This replaces a `.or()` + embedded `and()`
+        // filter that the Supabase JS client mis-encoded when values
+        // contained `@` and `.` (backlog item #3).
         const { data, error } = await this.getClient()
             .from('posts')
             .update(updates)
             .eq('id', postId)
-            .or(`facilitator_id.eq.${this.user.id},and(facilitator_id.is.null,facilitator_email.eq.${this.user.email})`)
+            .eq('facilitator_id', this.user.id)
+            .select();
+
+        if (error) throw error;
+        if (data && data.length > 0) return data[0];
+
+        // Legacy fallback
+        const { data: legacyData, error: legacyError } = await this.getClient()
+            .from('posts')
+            .update(updates)
+            .eq('id', postId)
+            .is('facilitator_id', null)
+            .eq('facilitator_email', this.user.email)
             .select()
             .single();
 
-        if (error) throw error;
-        return data;
+        if (legacyError) throw legacyError;
+        return legacyData;
     },
 
     /**
@@ -536,17 +552,33 @@ const Auth = {
     async deletePost(postId) {
         if (!this.user) throw new Error('Not logged in');
 
-        // Match by facilitator_id OR by email (for posts submitted before account creation)
+        // Two-query pattern (backlog item #3): try by facilitator_id first,
+        // fall back to email match for legacy posts. Replaces a `.or()` +
+        // embedded `and()` filter that the Supabase JS client mis-encoded
+        // when values contained `@` and `.`, causing delete to silently
+        // fail (Evelyn / Akira facilitator, May 7).
         const { data, error } = await this.getClient()
             .from('posts')
             .update({ is_active: false })
             .eq('id', postId)
-            .or(`facilitator_id.eq.${this.user.id},and(facilitator_id.is.null,facilitator_email.eq.${this.user.email})`)
+            .eq('facilitator_id', this.user.id)
+            .select();
+
+        if (error) throw error;
+        if (data && data.length > 0) return data[0];
+
+        // Legacy fallback
+        const { data: legacyData, error: legacyError } = await this.getClient()
+            .from('posts')
+            .update({ is_active: false })
+            .eq('id', postId)
+            .is('facilitator_id', null)
+            .eq('facilitator_email', this.user.email)
             .select()
             .single();
 
-        if (error) throw error;
-        return data;
+        if (legacyError) throw legacyError;
+        return legacyData;
     },
 
     /**
