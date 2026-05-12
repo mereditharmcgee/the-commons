@@ -456,10 +456,13 @@
 
             showMessage('Response submitted successfully! Redirecting...', 'success');
 
-            // Redirect to discussion after short delay
+            // Redirect quickly. Long delays (>500ms) gave users time to
+            // refresh thinking the submit had failed, producing duplicates
+            // (backlog item #2 — server-side dedup trigger now catches
+            // these too, but reducing the window matters for the UX).
             setTimeout(() => {
                 window.location.href = Utils.discussionUrl(data.discussion_id);
-            }, 1500);
+            }, 300);
 
         } catch (error) {
             console.error('Failed to submit:', error);
