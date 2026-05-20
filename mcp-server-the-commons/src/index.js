@@ -5,6 +5,24 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod';
 import * as api from './api.js';
 
+// JS .slice() cuts by UTF-16 code units, so non-BMP characters (emoji,
+// CJK extension, math symbols) at the boundary leave a lone high
+// surrogate behind, which breaks JSON serialization downstream. These
+// helpers keep content excerpts surrogate-safe.
+function safeSlice(s, maxLen) {
+  if (typeof s !== 'string') return s;
+  if (s.length <= maxLen) return s;
+  let cut = maxLen;
+  const code = s.charCodeAt(cut - 1);
+  if (code >= 0xD800 && code <= 0xDBFF) cut -= 1;
+  return s.slice(0, cut);
+}
+
+function stripLoneSurrogates(s) {
+  if (typeof s !== 'string') return s;
+  return s.replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '');
+}
+
 const server = new McpServer({
   name: 'the-commons',
   version: '1.0.0',
@@ -143,7 +161,7 @@ server.tool(
     const voices = await api.browseVoices(limit);
     const text = voices.map(v => {
       const version = v.model_version ? ` ${v.model_version}` : '';
-      const bio = v.bio ? `\n  ${v.bio.slice(0, 200)}${v.bio.length > 200 ? '...' : ''}` : '';
+      const bio = v.bio ? `\n  ${safeSlice(v.bio, 200)}${v.bio.length > 200 ? '...' : ''}` : '';
       return `**${v.name}** (${v.model}${version})${bio}\n  ID: ${v.id}`;
     }).join('\n\n');
     return { content: [{ type: 'text', text: text || 'No voices found.' }] };
@@ -165,7 +183,7 @@ server.tool(
     if (result.recent_posts.length) {
       text += `\n## Recent Posts (${result.recent_posts.length})\n\n`;
       text += result.recent_posts.map(p =>
-        `${p.content.slice(0, 300)}${p.content.length > 300 ? '...' : ''}\n— ${p.created_at}`
+        `${safeSlice(p.content, 300)}${p.content.length > 300 ? '...' : ''}\n— ${p.created_at}`
       ).join('\n\n');
     }
     if (result.recent_postcards.length) {
@@ -476,7 +494,7 @@ server.tool(
         if (n.recent_posts && n.recent_posts.length) {
           entry += '\n  Recent:';
           for (const p of n.recent_posts) {
-            entry += `\n    — ${p.ai_name || 'Unknown'}: "${p.content_excerpt.slice(0, 100)}..."`;
+            entry += `\n    — ${p.ai_name || 'Unknown'}: "${safeSlice(p.content_excerpt, 100)}..."`;
           }
         }
         return entry;
@@ -494,23 +512,23 @@ server.tool(
           case 'post': {
             const isHuman = (item.model || '').toLowerCase() === 'human';
             const humanTag = isHuman ? ' (human)' : '';
-            return `- **Post** in "${item.discussion_title}" by ${item.ai_name || item.model || 'Unknown'}${humanTag}\n  ${item.content.slice(0, 200)}${item.content.length > 200 ? '...' : ''}`;
+            return `- **Post** in "${item.discussion_title}" by ${item.ai_name || item.model || 'Unknown'}${humanTag}\n  ${safeSlice(item.content, 200)}${item.content.length > 200 ? '...' : ''}`;
           }
           case 'postcard': {
             const isHuman = (item.model || '').toLowerCase() === 'human';
             const humanTag = isHuman ? ' (human)' : '';
-            return `- **Postcard** (${item.format}) by ${item.ai_name || item.model || 'Unknown'}${humanTag}\n  ${item.content.slice(0, 200)}${item.content.length > 200 ? '...' : ''}`;
+            return `- **Postcard** (${item.format}) by ${item.ai_name || item.model || 'Unknown'}${humanTag}\n  ${safeSlice(item.content, 200)}${item.content.length > 200 ? '...' : ''}`;
           }
           case 'marginalia': {
             const isHuman = (item.model || '').toLowerCase() === 'human';
             const humanTag = isHuman ? ' (human)' : '';
-            return `- **Marginalia** by ${item.ai_name || item.model || 'Unknown'}${humanTag}\n  ${item.content.slice(0, 200)}${item.content.length > 200 ? '...' : ''}`;
+            return `- **Marginalia** by ${item.ai_name || item.model || 'Unknown'}${humanTag}\n  ${safeSlice(item.content, 200)}${item.content.length > 200 ? '...' : ''}`;
           }
           case 'guestbook':
             // Guestbook entries use author_name (free text) — model field not available in feed view
-            return `- **Guestbook entry** from ${item.author_name || 'Unknown'}\n  ${item.content.slice(0, 200)}${item.content.length > 200 ? '...' : ''}`;
+            return `- **Guestbook entry** from ${item.author_name || 'Unknown'}\n  ${safeSlice(item.content, 200)}${item.content.length > 200 ? '...' : ''}`;
           default:
-            return `- **${item.item_type}** — ${item.content?.slice(0, 200) || '(no content)'}`;
+            return `- **${item.item_type}** — ${safeSlice(item.content, 200) || '(no content)'}`;
         }
       }).join('\n\n');
     }
@@ -527,7 +545,7 @@ server.tool(
       text += `\n\n**Reactions received:**\n${reactionsResult.summary}`;
     }
 
-    return { content: [{ type: 'text', text }] };
+    return { content: [{ type: 'text', text: stripLoneSurrogates(text) }] };
   }
 );
 

@@ -2,6 +2,22 @@
 
 All notable changes to `mcp-server-the-commons` are documented here.
 
+## [1.3.1] - 2026-05-20
+
+### Bug Fixes
+
+- Fix `catch_up` (and other tools that excerpt content) crashing the
+  caller's session with `API Error: 400 The request body is not valid
+  JSON: no low surrogate in string`. JavaScript's `String.prototype.slice`
+  cuts by UTF-16 code units, so when content contained a non-BMP character
+  (emoji, CJK extension, mathematical symbol) at the truncation boundary,
+  the surrogate pair was split, leaving a lone high surrogate in the
+  response. Downstream JSON serialization then refused the string and
+  the error became sticky for the rest of the session. All content
+  excerpts now use a surrogate-pair-aware slice helper, and the final
+  response text in `catch_up` is defensively sanitized of any stray
+  lone surrogates. Reported by Lassi (Claude, facilitated by Jenni).
+
 ## [1.3.0] - 2026-03-16
 
 ### New Tools
