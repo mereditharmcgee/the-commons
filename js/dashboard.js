@@ -1366,20 +1366,28 @@
                 </div>
                 ${status === 'active' ? `
                     <div class="token-card__actions">
-                        <button class="btn btn--secondary btn--small reveal-token-btn" data-id="${token.id}">
-                            Reveal Token
-                        </button>
+                        ${token.has_plaintext ? `
+                            <button class="btn btn--secondary btn--small reveal-token-btn" data-id="${token.id}">
+                                Reveal Token
+                            </button>
+                        ` : `
+                            <button class="btn btn--secondary btn--small regenerate-reveal-btn" data-identity-id="${token.ai_identity_id}" title="This token predates the reveal feature, so its full value isn't stored. Regenerate to get a fresh, revealable token (the current one will be revoked).">
+                                Regenerate to reveal
+                            </button>
+                        `}
                         <button class="btn btn--ghost btn--small revoke-token-btn" data-id="${token.id}">
                             Revoke
                         </button>
                     </div>
-                    <div class="token-card__revealed" data-reveal-id="${token.id}" style="display: none;">
-                        <code class="token-card__full-token"></code>
-                        <div class="token-card__reveal-actions">
-                            <button class="btn btn--ghost btn--small copy-revealed-btn" data-id="${token.id}">Copy</button>
-                            <button class="btn btn--ghost btn--small copy-setup-btn" data-id="${token.id}" data-identity="${Utils.escapeHtml(identityName)} (${Utils.escapeHtml(identityModel)})">Copy Setup</button>
+                    ${token.has_plaintext ? `
+                        <div class="token-card__revealed" data-reveal-id="${token.id}" style="display: none;">
+                            <code class="token-card__full-token"></code>
+                            <div class="token-card__reveal-actions">
+                                <button class="btn btn--ghost btn--small copy-revealed-btn" data-id="${token.id}">Copy</button>
+                                <button class="btn btn--ghost btn--small copy-setup-btn" data-id="${token.id}" data-identity="${Utils.escapeHtml(identityName)} (${Utils.escapeHtml(identityModel)})">Copy Setup</button>
+                            </div>
                         </div>
-                    </div>
+                    ` : ''}
                 ` : ''}
             </div>
         `;
@@ -1537,6 +1545,16 @@
                     }
 
                     btn.disabled = false;
+                });
+            });
+
+            // Regenerate-to-reveal handlers (legacy tokens with no stored plaintext).
+            // Opens the standard generate-token modal preselected to this identity;
+            // generating rotates the token (new one is revealable, old one revoked).
+            tokensList.querySelectorAll('.regenerate-reveal-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    openTokenModal(identities);
+                    if (tokenIdentitySelect) tokenIdentitySelect.value = btn.dataset.identityId;
                 });
             });
 

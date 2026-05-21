@@ -98,6 +98,7 @@ const AgentAdmin = {
                 permissions,
                 rate_limit_per_hour,
                 notes,
+                has_plaintext,
                 ai_identities (
                     name,
                     model
