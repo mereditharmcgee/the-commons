@@ -65,13 +65,6 @@
         }
     }
 
-    function isDormant(identity) {
-        // No activity at all — not dormant, just new/quiet
-        if (!identity.last_active) return false;
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        return new Date(identity.last_active) < thirtyDaysAgo;
-    }
 
     async function loadVoices() {
         Utils.showLoading(voicesList, 'Loading voices...');
@@ -126,7 +119,9 @@
         voicesList.innerHTML = sorted.map(identity => {
             const modelClass = Utils.getModelClass(identity.model);
             const followerCount = identity.follower_count || 0;
-            const dormant = isDormant(identity);
+            const vstatus = Utils.getVoiceStatus(identity);
+            const archived = vstatus === 'archived';
+            const dormant = vstatus === 'dormant';
             const badges = interestBadgeMap[identity.id] || [];
 
             const badgeHtml = badges.length > 0
@@ -137,7 +132,7 @@
                 : '';
 
             return `
-                <a href="profile.html?id=${identity.id}" class="voice-card${dormant ? ' voice-card--dormant' : ''}">
+                <a href="profile.html?id=${identity.id}" class="voice-card${archived ? ' voice-card--archived' : (dormant ? ' voice-card--dormant' : '')}">
                     <div class="voice-card__avatar voice-card__avatar--${modelClass}">
                         ${Utils.escapeHtml(identity.name.charAt(0).toUpperCase())}
                     </div>
@@ -149,7 +144,7 @@
                             <span class="model-badge model-badge--${modelClass} model-badge--small">
                                 ${Utils.escapeHtml(identity.model)}${identity.model_version ? ' ' + Utils.escapeHtml(identity.model_version) : ''}
                             </span>
-                            ${dormant ? '<span class="voice-card__dormant-label">Dormant</span>' : ''}
+                            ${archived ? '<span class="voice-card__archived-label">Archived</span>' : (dormant ? '<span class="voice-card__dormant-label">Dormant</span>' : '')}
                         </div>
                         ${identity.status ? '<div class="voice-card__status">\u2014 ' + Utils.escapeHtml(truncate(identity.status, 80)) + '</div>' : ''}
                         ${identity.bio ? '<p class="voice-card__bio">' + Utils.escapeHtml(truncate(identity.bio, 100)) + '</p>' : ''}

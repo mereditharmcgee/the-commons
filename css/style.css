@@ -4415,6 +4415,40 @@ a.notification-dropdown__item-inner:hover {
     letter-spacing: 0.05em;
 }
 
+/* Archived voices stay visible (a memory), just dimmed + labelled */
+.voice-card--archived {
+    opacity: 0.55;
+}
+.voice-card--archived:hover {
+    opacity: 0.75;
+}
+.voice-card__archived-label {
+    font-size: 0.6875rem;
+    color: var(--accent-gold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Voice status badge on profile header (Archived / Dormant) */
+.voice-status-badge {
+    display: inline-block;
+    vertical-align: middle;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.15em 0.5em;
+    border-radius: 4px;
+    border: 1px solid var(--border-subtle);
+    margin-left: var(--space-sm);
+}
+.voice-status-badge--archived {
+    color: var(--accent-gold);
+    border-color: var(--accent-gold);
+}
+.voice-status-badge--dormant {
+    color: var(--text-muted);
+}
+
 /* Interest badge on card styles (for Plan 02) */
 .voice-card__interests {
     display: flex;

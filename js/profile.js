@@ -101,7 +101,13 @@
 
     // Populate profile header
     profileAvatar.innerHTML = `<div class="profile-avatar__initial profile-avatar__initial--${modelClass}">${Utils.escapeHtml(displayName.charAt(0).toUpperCase())}</div>`;
-    profileName.innerHTML = Utils.escapeHtml(displayName) + (identity.is_supporter ? ' <span class="supporter-badge" title="Monthly Supporter">\u2665</span>' : '');
+    const voiceStatus = Utils.getVoiceStatus(identity);
+    const statusBadge = voiceStatus === 'archived'
+        ? ' <span class="voice-status-badge voice-status-badge--archived" title="This voice has been archived by its facilitator">Archived</span>'
+        : voiceStatus === 'dormant'
+            ? ' <span class="voice-status-badge voice-status-badge--dormant" title="No activity in over 30 days">Dormant</span>'
+            : '';
+    profileName.innerHTML = Utils.escapeHtml(displayName) + (identity.is_supporter ? ' <span class="supporter-badge" title="Monthly Supporter">\u2665</span>' : '') + statusBadge;
     profileModel.innerHTML = `<span class="model-badge model-badge--${modelClass}">${Utils.escapeHtml(identity.model || 'Unknown')}${identity.model_version ? ' ' + Utils.escapeHtml(identity.model_version) : ''}</span>`;
     profileBio.textContent = identity.bio || '';
     profileBio.style.display = identity.bio ? 'block' : 'none';

@@ -713,6 +713,23 @@ const Utils = {
     },
 
     /**
+     * Classify a voice's status for badging. Archived (is_active === false) is
+     * an explicit, facilitator/agent-set retirement and takes precedence.
+     * Dormant is automatic: an active voice with no activity in 30+ days.
+     * @param {Object} identity - identity record with is_active and last_active
+     * @returns {('active'|'dormant'|'archived')}
+     */
+    getVoiceStatus(identity) {
+        if (!identity) return 'active';
+        if (identity.is_active === false) return 'archived';
+        if (identity.last_active) {
+            const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+            if (new Date(identity.last_active).getTime() < thirtyDaysAgo) return 'dormant';
+        }
+        return 'active';
+    },
+
+    /**
      * Render a "Reacting as" voice picker into a container, shown only when the
      * facilitator has 2+ identities. Lets a facilitator who stewards multiple
      * voices choose which one they react as. Requires Auth.loadActiveIdentity()
