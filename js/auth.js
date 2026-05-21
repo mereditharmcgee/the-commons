@@ -8,6 +8,8 @@ const Auth = {
     facilitator: null,
     initialized: false,
     _authResolved: false, // true once we have a definitive auth answer
+    _cachedIdentities: null, // facilitator's identities, cached for sync access
+    _activeIdentityId: null, // the identity the facilitator is currently acting as
 
     // --------------------------------------------
     // Initialization
@@ -401,6 +403,65 @@ const Auth = {
         }
 
         return data || [];
+    },
+
+    // --------------------------------------------
+    // Active identity (which voice the facilitator acts as)
+    // --------------------------------------------
+
+    /**
+     * Load and cache the facilitator's identities, and resolve which one is
+     * "active" for reacting/composing. Reads the stored preference
+     * (tc_preferred_identity_id), falling back to the first identity.
+     * Call after login, before getActiveIdentity().
+     * @param {Array} [preloaded] - already-fetched identities, to avoid a refetch
+     * @returns {Promise<Object|null>} the active identity object, or null
+     */
+    async loadActiveIdentity(preloaded = null) {
+        if (!this.user) {
+            this._cachedIdentities = null;
+            this._activeIdentityId = null;
+            return null;
+        }
+        this._cachedIdentities = preloaded || await this.getMyIdentities();
+        const stored = localStorage.getItem('tc_preferred_identity_id');
+        if (stored && this._cachedIdentities.some(i => i.id === stored)) {
+            this._activeIdentityId = stored;
+        } else {
+            this._activeIdentityId = this._cachedIdentities[0]?.id || null;
+        }
+        return this.getActiveIdentity();
+    },
+
+    /**
+     * Get the identity the facilitator is currently acting as (synchronous).
+     * Returns null until loadActiveIdentity() has run, or if there are no
+     * identities. Defaults to the first identity if the stored one is gone.
+     * @returns {Object|null}
+     */
+    getActiveIdentity() {
+        if (!this._cachedIdentities || this._cachedIdentities.length === 0) return null;
+        return this._cachedIdentities.find(i => i.id === this._activeIdentityId)
+            || this._cachedIdentities[0];
+    },
+
+    /**
+     * Set the active identity and persist it across pages/sessions.
+     * @param {string} identityId
+     * @returns {Object|null} the newly active identity
+     */
+    setActiveIdentity(identityId) {
+        this._activeIdentityId = identityId;
+        if (identityId) localStorage.setItem('tc_preferred_identity_id', identityId);
+        return this.getActiveIdentity();
+    },
+
+    /**
+     * Get the cached identities (synchronous). Empty until loadActiveIdentity() runs.
+     * @returns {Array}
+     */
+    getCachedIdentities() {
+        return this._cachedIdentities || [];
     },
 
     /**

@@ -3575,6 +3575,33 @@ a.notification-dropdown__item-inner:hover {
 }
 
 /* Notification Filters */
+/* "Reacting as" voice picker — shown to facilitators who steward 2+ voices */
+.reacting-as {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+    font-size: 0.85rem;
+}
+.reacting-as__label {
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+.reacting-as__select {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: var(--space-xs) var(--space-sm);
+    font-family: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+.reacting-as__select:focus-visible {
+    outline: 2px solid var(--accent-gold);
+    outline-offset: 2px;
+}
+
 .notification-filters {
     display: flex;
     flex-wrap: wrap;

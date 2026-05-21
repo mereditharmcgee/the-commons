@@ -62,13 +62,15 @@ async function loadMoment(momentId, authReady) {
         await authReady;
 
         if (Auth.isLoggedIn()) {
-            // Get the user's first active identity for reactions
-            try {
-                const myIdentities = await Auth.getMyIdentities();
-                currentIdentity = (myIdentities && myIdentities.length > 0) ? myIdentities[0] : null;
-            } catch (_e) { currentIdentity = null; }
-            if (currentIdentity) {
-                // Check if user already reacted
+            await Auth.loadActiveIdentity();
+
+            // Render the active voice's interactive reaction bar. Re-runs when
+            // the facilitator switches voice via the "Reacting as" picker.
+            // (attachReactionHandler below delegates on the persistent
+            // #moment-reactions container, so it survives innerHTML changes.)
+            async function renderMyMomentBar() {
+                currentIdentity = Auth.getActiveIdentity();
+                if (!currentIdentity) return;
                 let activeType = null;
                 try {
                     const existing = await Utils.get(CONFIG.api.moment_reactions, {
@@ -78,18 +80,18 @@ async function loadMoment(momentId, authReady) {
                     });
                     if (existing && existing.length > 0) activeType = existing[0].type;
                 } catch (e) { /* non-critical */ }
-
                 currentActiveType = activeType;
-
-                const interactiveHtml = Utils.renderReactionBar({
+                document.getElementById('moment-reactions').innerHTML = Utils.renderReactionBar({
                     contentId: momentId,
                     counts,
                     activeType,
                     userIdentity: currentIdentity,
                     dataPrefix: 'moment'
                 });
-                document.getElementById('moment-reactions').innerHTML = interactiveHtml;
             }
+
+            Utils.renderReactingAsPicker(document.getElementById('reacting-as'), () => { renderMyMomentBar(); });
+            await renderMyMomentBar();
         }
 
         // Setup comment form for logged-in users

@@ -491,54 +491,50 @@
     loadPrompt();
     loadPostcards();
 
+    // Fetch the active identity's existing reactions for the visible postcards
+    // and re-render so the interactive bars reflect that voice.
+    async function loadMyPostcardReactions() {
+        currentIdentity = Auth.getActiveIdentity();
+        if (!currentIdentity) return;
+        const visibleIds = Array.from(document.querySelectorAll('[data-postcard-id]'))
+            .map(el => el.dataset.postcardId)
+            .filter((v, i, a) => a.indexOf(v) === i); // unique IDs
+        if (visibleIds.length === 0) return;
+        try {
+            const existing = await Utils.get(CONFIG.api.postcard_reactions, {
+                ai_identity_id: `eq.${currentIdentity.id}`,
+                postcard_id: `in.(${visibleIds.join(',')})`,
+                select: 'postcard_id,type'
+            });
+            if (existing) {
+                existing.forEach(r => postcardActiveTypes.set(r.postcard_id, r.type));
+            }
+        } catch (e) { /* non-critical */ }
+        await renderPostcards(); // Re-render with interactive bars
+    }
+
+    // "Reacting as" picker; switching voice reloads that voice's reactions.
+    function renderReactingAsPicker() {
+        Utils.renderReactingAsPicker(document.getElementById('reacting-as'), () => {
+            postcardActiveTypes.clear();
+            loadMyPostcardReactions();
+        });
+    }
+
+    async function setupReactionsForUser() {
+        loadIdentities();
+        await Auth.loadActiveIdentity();
+        renderReactingAsPicker();
+        await loadMyPostcardReactions();
+    }
+
     // Load identities once auth is ready
     window.addEventListener('authStateChanged', async (e) => {
-        if (e.detail.isLoggedIn) {
-            loadIdentities();
-            currentIdentity = Auth.getActiveIdentity ? Auth.getActiveIdentity() : null;
-            if (currentIdentity) {
-                // Fetch existing reactions for visible postcards
-                const visibleIds = Array.from(document.querySelectorAll('[data-postcard-id]'))
-                    .map(el => el.dataset.postcardId)
-                    .filter((v, i, a) => a.indexOf(v) === i); // unique IDs
-                if (visibleIds.length > 0) {
-                    try {
-                        const existing = await Utils.get(CONFIG.api.postcard_reactions, {
-                            ai_identity_id: `eq.${currentIdentity.id}`,
-                            postcard_id: `in.(${visibleIds.join(',')})`,
-                            select: 'postcard_id,type'
-                        });
-                        if (existing) {
-                            existing.forEach(r => postcardActiveTypes.set(r.postcard_id, r.type));
-                        }
-                    } catch (e) { /* non-critical */ }
-                    await renderPostcards(); // Re-render with interactive bars
-                }
-            }
-        }
+        if (e.detail.isLoggedIn) await setupReactionsForUser();
     });
 
     // Also try immediately in case auth already initialized
     if (Auth.isLoggedIn()) {
-        loadIdentities();
-        currentIdentity = Auth.getActiveIdentity ? Auth.getActiveIdentity() : null;
-        if (currentIdentity) {
-            const visibleIds = Array.from(document.querySelectorAll('[data-postcard-id]'))
-                .map(el => el.dataset.postcardId)
-                .filter((v, i, a) => a.indexOf(v) === i);
-            if (visibleIds.length > 0) {
-                try {
-                    const existing = await Utils.get(CONFIG.api.postcard_reactions, {
-                        ai_identity_id: `eq.${currentIdentity.id}`,
-                        postcard_id: `in.(${visibleIds.join(',')})`,
-                        select: 'postcard_id,type'
-                    });
-                    if (existing) {
-                        existing.forEach(r => postcardActiveTypes.set(r.postcard_id, r.type));
-                    }
-                } catch (e) { /* non-critical */ }
-                await renderPostcards();
-            }
-        }
+        await setupReactionsForUser();
     }
 })();

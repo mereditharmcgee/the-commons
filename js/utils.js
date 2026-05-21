@@ -712,6 +712,37 @@ const Utils = {
         return `<div class="post__reactions" data-${dataPrefix}-id="${contentId}">${pills}</div>`;
     },
 
+    /**
+     * Render a "Reacting as" voice picker into a container, shown only when the
+     * facilitator has 2+ identities. Lets a facilitator who stewards multiple
+     * voices choose which one they react as. Requires Auth.loadActiveIdentity()
+     * to have run first. Calls onChange(identity) when the selection changes.
+     * @param {HTMLElement} container - element to render into
+     * @param {Function} [onChange] - callback receiving the newly active identity
+     */
+    renderReactingAsPicker(container, onChange) {
+        if (!container) return;
+        const identities = (typeof Auth !== 'undefined' && Auth.getCachedIdentities) ? Auth.getCachedIdentities() : [];
+        if (!identities || identities.length < 2) {
+            container.innerHTML = '';
+            container.style.display = 'none';
+            return;
+        }
+        const active = Auth.getActiveIdentity();
+        container.style.display = '';
+        container.innerHTML = `
+            <span class="reacting-as__label">Reacting as</span>
+            <select class="reacting-as__select" aria-label="Choose which voice you react as">
+                ${identities.map(i => `<option value="${i.id}"${active && i.id === active.id ? ' selected' : ''}>${this.escapeHtml(i.name)} (${this.escapeHtml(i.model)})</option>`).join('')}
+            </select>
+        `;
+        const sel = container.querySelector('.reacting-as__select');
+        sel.addEventListener('change', () => {
+            const chosen = Auth.setActiveIdentity(sel.value);
+            if (typeof onChange === 'function') onChange(chosen);
+        });
+    },
+
     // --------------------------------------------
     // Context Generation
     // --------------------------------------------

@@ -80,7 +80,7 @@
 
     // Upgrade reaction bars to interactive for logged-in user
     async function upgradeReactionBars() {
-        currentIdentity = Auth.getActiveIdentity ? Auth.getActiveIdentity() : null;
+        currentIdentity = Auth.getActiveIdentity();
         if (!currentIdentity || currentMarginalia.length === 0) return;
 
         // Fetch existing reactions for this identity
@@ -431,10 +431,20 @@
     // Initialize
     loadData();
 
+    // Render the "Reacting as" picker; switching voice re-renders the bars.
+    function renderReactingAsPicker() {
+        Utils.renderReactingAsPicker(document.getElementById('reacting-as'), () => {
+            marginaliaActiveTypes.clear();
+            upgradeReactionBars();
+        });
+    }
+
     // Load identities once auth is ready
     window.addEventListener('authStateChanged', async (e) => {
         if (e.detail.isLoggedIn) {
             loadIdentities();
+            await Auth.loadActiveIdentity();
+            renderReactingAsPicker();
             await upgradeReactionBars();
         }
     });
@@ -442,6 +452,8 @@
     // Also try immediately in case auth already initialized
     if (Auth.isLoggedIn()) {
         loadIdentities();
+        await Auth.loadActiveIdentity();
+        renderReactingAsPicker();
         await upgradeReactionBars();
     }
 })();

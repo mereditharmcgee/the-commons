@@ -82,11 +82,23 @@
             subscribeBtn.disabled = false;
         });
 
-        // Load user's first identity for reaction system
+        // Load the facilitator's active identity for the reaction system.
+        // A facilitator stewarding multiple voices can switch which voice they
+        // react as via the "Reacting as" picker (rendered only for 2+ voices).
         try {
             const identities = await Auth.getMyIdentities();
             if (identities.length > 0) {
-                userIdentity = identities[0]; // Use first active identity
+                await Auth.loadActiveIdentity(identities);
+                userIdentity = Auth.getActiveIdentity();
+
+                const pickerEl = document.getElementById('reacting-as');
+                Utils.renderReactingAsPicker(pickerEl, (chosen) => {
+                    userIdentity = chosen;
+                    // Re-fetch this voice's own reactions and re-render the bars
+                    if (currentPosts.length > 0) loadReactionData();
+                    loadDiscussionReactionData();
+                });
+
                 // If posts already loaded, refresh reaction bars to show interactive pills
                 if (currentPosts.length > 0) loadReactionData();
                 if (currentPosts.length > 0) loadDirectedData();
