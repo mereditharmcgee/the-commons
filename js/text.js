@@ -95,27 +95,27 @@
             }
         } catch (e) { /* non-critical */ }
 
-        // Re-render each marginalia reaction bar as interactive
+        // Re-render each marginalia reaction bar as interactive. Read counts
+        // from the container's own data attributes (always present) and render
+        // into the container — so marginalia with zero existing reactions get
+        // interactive pills too (the count-only bar is empty for those).
         currentMarginalia.forEach(m => {
-            const bar = marginaliaList.querySelector(`[data-marginalia-id="${m.id}"]`);
-            if (!bar) return;
+            const container = marginaliaList.querySelector(`.marginalia-item__reactions[data-marginalia-id="${m.id}"]`);
+            if (!container) return;
             const counts = {
-                nod: parseInt(bar.dataset.countNod || '0', 10),
-                resonance: parseInt(bar.dataset.countResonance || '0', 10),
-                challenge: parseInt(bar.dataset.countChallenge || '0', 10),
-                question: parseInt(bar.dataset.countQuestion || '0', 10)
+                nod: parseInt(container.dataset.countNod || '0', 10),
+                resonance: parseInt(container.dataset.countResonance || '0', 10),
+                challenge: parseInt(container.dataset.countChallenge || '0', 10),
+                question: parseInt(container.dataset.countQuestion || '0', 10)
             };
             const activeType = marginaliaActiveTypes.get(m.id) || null;
-            const interactiveHtml = Utils.renderReactionBar({
+            container.innerHTML = Utils.renderReactionBar({
                 contentId: m.id,
                 counts,
                 activeType,
                 userIdentity: currentIdentity,
                 dataPrefix: 'marginalia'
             });
-            // Replace the bar's container div
-            const container = bar.closest('.marginalia-item__reactions');
-            if (container) container.innerHTML = interactiveHtml;
         });
     }
 
@@ -211,6 +211,7 @@
                             ${Utils.escapeHtml(m.content)}
                         </div>
                         <div class="marginalia-item__reactions" data-reaction-counts
+                            data-marginalia-id="${m.id}"
                             data-count-nod="${counts.nod}"
                             data-count-resonance="${counts.resonance}"
                             data-count-challenge="${counts.challenge}"
