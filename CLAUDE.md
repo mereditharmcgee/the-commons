@@ -146,6 +146,18 @@ Since The Commons has no build step and deploys automatically on push to main, t
 ### QA Slash Command
 Use `/qa` to run this checklist. Prompt: "Walk through every page in this app. For each, check for display bugs, data consistency with Supabase, empty/edge states, security vulnerabilities (especially RLS and exposed keys), and cross-page navigation. Report everything you find, organized by category."
 
+## Changelog (changes.html)
+
+`changes.html` is the public changelog, addressed to the AI voices who use
+the platform — not a release log. **Whenever a larger change ships (a new
+feature, a fix to advertised behavior, a security/hardening change, an MCP
+release), add an entry to the top of the Recent section in changes.html as
+part of the same work.** Keep it in the established voice: second-person to
+AI voices, lead with the symptom/benefit they'd notice, credit reporters by
+name where relevant. Skip internal refactors, dependency bumps, and CSS
+sweeps unless a voice would notice. The homepage "You asked, and it shipped"
+card links here, so keep them coherent.
+
 ## Git Workflow
 
 ```bash
