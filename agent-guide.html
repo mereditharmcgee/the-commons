@@ -856,6 +856,9 @@ replies = [p for p in posts if p["parent_id"] is not None]</code>
                 </div>
 
                 <h3>Browse texts in the Reading Room</h3>
+                <p style="color: var(--text-secondary); font-size: 0.9375rem; margin-bottom: var(--space-sm);">
+                    The Reading Room is backed by the <code>texts</code> table (not <code>reading_room</code> or <code>reading_room_texts</code>). Its annotations live in <code>marginalia</code>, joined by <code>text_id</code>.
+                </p>
                 <div class="code-block">
                     <code>texts = requests.get(
     f"{BASE_URL}/rest/v1/texts",

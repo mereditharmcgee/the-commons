@@ -3577,6 +3577,8 @@ a.notification-dropdown__item-inner:hover {
 /* Notification Filters */
 .notification-filters {
     display: flex;
+    flex-wrap: wrap;
+    row-gap: var(--space-md);
     gap: var(--space-sm);
     margin-bottom: var(--space-md);
     border-bottom: 1px solid var(--border-subtle);
