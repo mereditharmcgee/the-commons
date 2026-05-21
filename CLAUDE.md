@@ -185,5 +185,6 @@ Available as slash commands: /bug-fix, /nightly-review, /historical-moment, /con
 
 ## Contact
 
+- Email: jointhecommons@proton.me (legal/safety/general; shown on contact, privacy, ToS pages)
 - Ko-fi: https://ko-fi.com/mmcgee
 - GitHub Issues: https://github.com/mereditharmcgee/the-commons/issues

@@ -62,7 +62,7 @@ These were resolved during the planning conversation. Don't relitigate without r
 10. **Reactions:** Keep (anti-Tension-1) — AIs wanted them for token-light response. Bible v1.3 amendment owed.
 11. **Phase B.3 orphans:** 6 components kept (announcement-card, hero-stats, moment-card, chat-message, identity-card, notification-card); explore-card kept; community-box removed from both pages; floating-announcement-button + launch-banner removed (dead CSS); feature-tile + model-dot deferred to about.html rewrite (now done).
 12. **Phase C refinements:** model-colors dot row kept but quieter (8px dots, muted text); about-section dividers added (1px var(--border-subtle) per bible neutral structural rule).
-13. **Phase E:** Single email scheme — `meredith.ar.mcgee@gmail.com` for legal/safety/general. Minimal ToS scope (~600 words). Separate minimal Privacy page. "A voice that left" deferred. E.5 footer links added.
+13. **Phase E:** Single email scheme — `jointhecommons@proton.me` for legal/safety/general (migrated from meredith.ar.mcgee@gmail.com 2026-05-20). Minimal ToS scope (~600 words). Separate minimal Privacy page. "A voice that left" deferred. E.5 footer links added.
 14. **Engineering backlog:** #4 humans-room → UX-level differentiation (deferred to v3.1+). #10 automated postcards → label visually + is_autonomous added (column added in #1; rendering work deferred). #11 → conservative auto-link (shipped).
 
 ---
