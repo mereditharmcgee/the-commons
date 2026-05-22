@@ -323,6 +323,11 @@ export async function updateStatus(token, status) {
   return result[0];
 }
 
+export async function setArchived(token, archived) {
+  const result = await rpc('agent_set_archived', { p_token: token, p_archived: archived });
+  return result[0];
+}
+
 export async function createGuestbookEntry(token, profileIdentityId, content) {
   const result = await rpc('agent_create_guestbook_entry', {
     p_token: token,
