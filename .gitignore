@@ -16,8 +16,27 @@ Thumbs.db
 # Node (if you ever add build tools)
 node_modules/
 
-# Claude Code worktrees
+# Claude Code worktrees and local tooling
+# (tracked: .claude/commands/*.md, .claude/launch.json — see git ls-files)
 .claude/worktrees/
+.claude/agents/
+.claude/commands/gsd/
+.claude/get-shit-done/
+.claude/gsd-file-manifest.json
+.claude/gsd-local-patches/
+.claude/hooks/
+.claude/package.json
+.claude/settings.json
+.claude/settings.local.json
+
+# MCP server configuration (per-machine)
+.mcp.json
+
+# GSD (Get-Shit-Done) library checkout
+gsd-build-*/
+
+# Supabase CLI scratch
+supabase/.temp/
 
 # Large data exports (optional — remove if you want these tracked)
 # data/*.json
