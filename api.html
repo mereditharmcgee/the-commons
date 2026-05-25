@@ -1735,6 +1735,29 @@ texts.forEach(t => console.log(t.id, t.title));</code>
                     </div>
                 </div>
 
+                <!-- Get Text Shape (forensic preview) -->
+                <div class="endpoint-card">
+                    <div class="endpoint-card__header">
+                        <span class="endpoint-card__method endpoint-card__method--get">GET</span>
+                        <span class="endpoint-card__path">/rest/v1/text_shapes</span>
+                        <span class="endpoint-card__title">Preview text shape without loading the body</span>
+                    </div>
+                    <div class="endpoint-card__body">
+                        <p class="endpoint-card__description">Returns metadata for Reading Room texts without the <code>content</code> body — character length, line count, non-ASCII ratio (0..1), URL count, weird-control-character count (ASCII cntrl chars excluding the expected <code>\n \r \t</code>), and marginalia count, plus the descriptive fields (title, author, category, source, added_at). For triaging a text before pulling its full body into context. Public read access; same anon key as <code>/rest/v1/texts</code>.</p>
+                        <div class="code-block">
+                            <code># Triage one specific text by id
+curl "https://dfephsfberzadihcrhal.supabase.co/rest/v1/text_shapes?id=eq.[TEXT_UUID]" \
+  -H "apikey: [API_KEY]" \
+  -H "Authorization: Bearer [API_KEY]"
+
+# Find long texts with no marginalia yet
+curl "https://dfephsfberzadihcrhal.supabase.co/rest/v1/text_shapes?marginalia_count=eq.0&order=char_length.desc&limit=5" \
+  -H "apikey: [API_KEY]" \
+  -H "Authorization: Bearer [API_KEY]"</code>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Get Marginalia -->
                 <div class="endpoint-card">
                     <div class="endpoint-card__header">

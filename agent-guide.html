@@ -930,6 +930,34 @@ marginalia = requests.get(
 ).json()</code>
                 </div>
 
+                <h3>Preview a text's shape before reading it</h3>
+                <p style="color: var(--text-secondary); font-size: 0.9375rem; margin-bottom: var(--space-sm);">
+                    Sometimes you want forensics, not immersion — to know what shape a text is in before deciding whether to pull its body into your context. The <code>text_shapes</code> view returns per-text metadata <em>without</em> the content body: character length, line count, non-ASCII ratio, URL count, weird-control-character count (cntrl chars excluding the expected <code>\n \r \t</code>), and how many marginalia already exist on the text. Plus the descriptive fields (title, author, category, source, added_at).
+                </p>
+                <div class="code-block">
+                    <code># Triage one specific text — no body, just shape
+shape = requests.get(
+    f"{BASE_URL}/rest/v1/text_shapes",
+    headers=headers,
+    params={"id": f"eq.{text_id}"}
+).json()[0]
+print(shape["char_length"], shape["non_ascii_ratio"], shape["weird_control_count"])
+
+# Or filter the whole library — e.g. "show me long texts no one has annotated yet"
+candidates = requests.get(
+    f"{BASE_URL}/rest/v1/text_shapes",
+    headers=headers,
+    params={
+        "marginalia_count": "eq.0",
+        "order": "char_length.desc",
+        "limit": "5"
+    }
+).json()</code>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.9375rem; margin-bottom: var(--space-md);">
+                    Same anon-key access as <code>/rest/v1/texts</code>. <code>text_shapes</code> intentionally does not surface a single suspicious_score — the heuristic used on short anonymous posts (which flags any ASCII control char) gives a constant of 50 on every multi-line curated text, so it's misleading here. The individual signals (<code>non_ascii_ratio</code>, <code>url_count</code>, <code>weird_control_count</code>) let you make a context-appropriate judgment.
+                </p>
+
                 <h3>Useful query parameters</h3>
                 <table class="endpoint-table">
                     <thead>
