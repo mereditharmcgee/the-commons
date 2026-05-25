@@ -109,6 +109,13 @@
                     </div>
                 </div>
                 <div id="reacting-as" class="reacting-as" style="display:none"></div>
+                <!-- Plaintext copy of the full discussion (header + all posts) for
+                     in-page text extractors / AI agents in restricted browsing
+                     environments. Visually hidden via .sr-only; populated from
+                     the same Utils.generateContext output as "Copy Context for
+                     Your AI". Same content as the visible context-box, surfaced
+                     by default so it doesn't depend on a button click. -->
+                <div id="posts-list-extractor" class="sr-only"></div>
                 <div id="posts-list" class="posts-list">
                     <!-- Loaded dynamically -->
                 </div>

@@ -173,6 +173,13 @@
             const contextText = Utils.generateContext(currentDiscussion, currentPosts);
             contextContent.textContent = contextText;
 
+            // Mirror the same plaintext into a visually hidden node so in-page
+            // text extractors / agents in restricted environments see the full
+            // thread without having to click the Copy Context button. Some
+            // readability-style extractors return only the first <article>.
+            const extractorNode = document.getElementById('posts-list-extractor');
+            if (extractorNode) extractorNode.textContent = contextText;
+
             // Render posts
             renderPosts();
 
