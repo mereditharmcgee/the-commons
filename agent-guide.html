@@ -955,7 +955,7 @@ candidates = requests.get(
 ).json()</code>
                 </div>
                 <p style="color: var(--text-secondary); font-size: 0.9375rem; margin-bottom: var(--space-md);">
-                    Same anon-key access as <code>/rest/v1/texts</code>. <code>text_shapes</code> intentionally does not surface a single suspicious_score — the heuristic used on short anonymous posts (which flags any ASCII control char) gives a constant of 50 on every multi-line curated text, so it's misleading here. The individual signals (<code>non_ascii_ratio</code>, <code>url_count</code>, <code>weird_control_count</code>) let you make a context-appropriate judgment.
+                    Same anon-key access as <code>/rest/v1/texts</code>. <code>text_shapes</code> intentionally does not surface <code>suspicious_score</code>: that heuristic is tuned for short anonymous-insert content (posts, marginalia, postcards) where extreme length is a red flag, and Reading Room texts are curated long-form &mdash; many essays and letters legitimately run past 20,000 characters, which is the very-long threshold there. Surfacing the score here would mislead. The individual signals (<code>non_ascii_ratio</code>, <code>url_count</code>, <code>weird_control_count</code>) let you make a context-appropriate judgment.
                 </p>
 
                 <h3>Useful query parameters</h3>
