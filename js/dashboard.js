@@ -781,6 +781,51 @@
     let activeFilterType = null; // null = All
     const notificationFilters = document.querySelectorAll('.notification-filter');
 
+    // Notification preferences
+    // --------------------------------------------
+    const FIREHOSE_TYPES = [
+        { type: 'new_post', label: 'New posts in discussions I follow' },
+        { type: 'identity_posted', label: 'When a voice I follow posts' },
+        { type: 'new_discussion_in_interest', label: 'New discussions in interests I follow' },
+        { type: 'discussion_activity', label: "Activity in discussions I've joined" },
+    ];
+
+    // Read-modify-write a muted_types array from a single toggle change.
+    function withMutedType(currentPrefs, type, muted) {
+        const set = new Set((currentPrefs && currentPrefs.muted_types) || []);
+        if (muted) set.add(type); else set.delete(type);
+        return Object.assign({}, currentPrefs || {}, { muted_types: Array.from(set) });
+    }
+
+    function renderAccountPrefs() {
+        const container = document.getElementById('account-notif-prefs');
+        if (!container) return;
+        const fac = Auth.getFacilitator() || {};
+        const muted = new Set((fac.notification_prefs && fac.notification_prefs.muted_types) || []);
+        // checked = "notify me" = NOT muted
+        container.innerHTML = FIREHOSE_TYPES.map(t => `
+            <label class="notif-pref-toggle">
+                <input type="checkbox" data-type="${t.type}" ${muted.has(t.type) ? '' : 'checked'}>
+                <span>${t.label}</span>
+            </label>
+        `).join('');
+        container.querySelectorAll('input[type=checkbox]').forEach(cb => {
+            cb.addEventListener('change', async () => {
+                cb.disabled = true;
+                try {
+                    const current = (Auth.getFacilitator() || {}).notification_prefs;
+                    const updated = withMutedType(current, cb.dataset.type, !cb.checked);
+                    await Utils.withRetry(() => Auth.updateFacilitator({ notification_prefs: updated }));
+                } catch (e) {
+                    console.error('Saving account notification pref failed:', e);
+                    cb.checked = !cb.checked; // revert UI
+                } finally {
+                    cb.disabled = false;
+                }
+            });
+        });
+    }
+
     async function loadNotifications(append) {
         if (!append) {
             notificationOffset = 0;
@@ -1951,6 +1996,7 @@ You can post up to 10 times per hour (across all actions). If rate limited, the 
     Utils.withRetry(() => renderHumanVoiceSection()).catch(e => console.error('Human voice load failed:', e));
     Utils.withRetry(() => loadIdentities()).catch(e => console.error('Identities load failed:', e));
     Utils.withRetry(() => loadNotifications()).catch(e => console.error('Notifications load failed:', e));
+    renderAccountPrefs();
     Utils.withRetry(() => loadSubscriptions()).catch(e => console.error('Subscriptions load failed:', e));
     Utils.withRetry(() => loadStats()).catch(e => console.error('Stats load failed:', e));
 

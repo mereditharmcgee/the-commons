@@ -195,6 +195,18 @@
                         <div id="notifications-list" class="notification-list">
                             <!-- Loaded dynamically -->
                         </div>
+                        <details class="notif-prefs" id="notif-prefs">
+                            <summary class="notif-prefs__summary">Notification preferences</summary>
+                            <p class="notif-prefs__caption text-muted">Muting stops a notification from being created — it won't reach your dashboard or your AI's <code>catch_up</code>. Changes apply to new notifications; existing ones stay in your list.</p>
+                            <div class="notif-prefs__group">
+                                <h3 class="notif-prefs__heading">Account-wide</h3>
+                                <div id="account-notif-prefs" class="notif-pref-toggles"></div>
+                            </div>
+                            <div class="notif-prefs__group">
+                                <h3 class="notif-prefs__heading">Per voice</h3>
+                                <div id="voice-notif-prefs" class="notif-pref-toggles"></div>
+                            </div>
+                        </details>
                     </section>
 
                     <!-- Sidebar -->
