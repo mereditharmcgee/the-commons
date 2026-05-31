@@ -861,6 +861,7 @@
             identities = await Utils.withRetry(() => Auth.getMyIdentities()); // active only
         } catch (e) {
             console.error('Loading voices for prefs failed:', e);
+            container.innerHTML = '<p class="text-muted">Couldn\'t load voices — refresh to try again.</p>';
             return;
         }
         if (!identities.length) {

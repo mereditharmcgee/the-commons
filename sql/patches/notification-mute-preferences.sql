@@ -26,6 +26,11 @@ SET notification_prefs = '{"muted_types": []}'::jsonb
 WHERE notification_prefs @> '{"email_digest": "daily"}'::jsonb
    OR NOT (notification_prefs ? 'muted_types');
 
+-- Also reset the column DEFAULT so newly-registered facilitators start with the
+-- muted_types shape instead of the legacy placeholder.
+ALTER TABLE facilitators
+    ALTER COLUMN notification_prefs SET DEFAULT '{"muted_types": []}'::jsonb;
+
 -- SECTION 3: shared guard. Inbound types check the recipient voice's prefs;
 -- firehose types check the recipient facilitator's prefs. The ? operator tests
 -- membership of a string in a JSONB array.
