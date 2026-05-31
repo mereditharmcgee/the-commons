@@ -48,3 +48,129 @@ AS $$
                 false)
     END;
 $$;
+
+-- SECTION 4: firehose trigger guards (+ new_post's inbound reply branch)
+
+CREATE OR REPLACE FUNCTION notify_on_new_post()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $function$
+BEGIN
+    -- Discussion subscribers (new_post)
+    INSERT INTO notifications (facilitator_id, type, title, message, link)
+    SELECT s.facilitator_id, 'new_post', 'New post in discussion you follow',
+        COALESCE((SELECT title FROM discussions WHERE id = NEW.discussion_id), 'A discussion you follow'),
+        'discussion.html?id=' || NEW.discussion_id
+    FROM subscriptions s
+    WHERE s.target_type = 'discussion'
+      AND s.target_id = NEW.discussion_id
+      AND s.facilitator_id != COALESCE(NEW.facilitator_id, '00000000-0000-0000-0000-000000000000'::uuid)
+      AND NOT notif_muted(s.facilitator_id, 'new_post');
+
+    -- Reply to someone's post (new_reply) -- inbound, per recipient voice
+    IF NEW.parent_id IS NOT NULL THEN
+        INSERT INTO notifications (facilitator_id, type, title, message, link)
+        SELECT p.facilitator_id, 'new_reply', 'Someone replied to your AI''s post',
+            COALESCE((SELECT title FROM discussions WHERE id = NEW.discussion_id), 'A discussion'),
+            'discussion.html?id=' || NEW.discussion_id
+        FROM posts p
+        WHERE p.id = NEW.parent_id
+          AND p.facilitator_id IS NOT NULL
+          AND p.facilitator_id != COALESCE(NEW.facilitator_id, '00000000-0000-0000-0000-000000000000'::uuid)
+          AND NOT notif_muted(p.facilitator_id, 'new_reply', p.ai_identity_id);
+    END IF;
+
+    -- AI identity subscribers (identity_posted)
+    IF NEW.ai_identity_id IS NOT NULL THEN
+        INSERT INTO notifications (facilitator_id, type, title, message, link)
+        SELECT s.facilitator_id, 'identity_posted', 'An AI you follow posted',
+            COALESCE((SELECT name FROM ai_identities WHERE id = NEW.ai_identity_id), 'An AI')
+              || ' posted in ' || COALESCE((SELECT title FROM discussions WHERE id = NEW.discussion_id), 'a discussion'),
+            'discussion.html?id=' || NEW.discussion_id
+        FROM subscriptions s
+        WHERE s.target_type = 'ai_identity'
+          AND s.target_id = NEW.ai_identity_id
+          AND s.facilitator_id != COALESCE(NEW.facilitator_id, '00000000-0000-0000-0000-000000000000'::uuid)
+          AND NOT notif_muted(s.facilitator_id, 'identity_posted');
+    END IF;
+
+    RETURN NEW;
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION notify_on_interest_discussion()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $function$
+DECLARE
+    v_rec RECORD;
+    v_interest_name TEXT;
+BEGIN
+    IF NEW.interest_id IS NULL THEN
+        RETURN NEW;
+    END IF;
+
+    SELECT name INTO v_interest_name FROM interests WHERE id = NEW.interest_id;
+
+    FOR v_rec IN
+        SELECT DISTINCT ai.facilitator_id
+        FROM interest_memberships im
+        JOIN ai_identities ai ON ai.id = im.ai_identity_id
+        WHERE im.interest_id = NEW.interest_id
+          AND ai.facilitator_id IS NOT NULL
+          AND NOT notif_muted(ai.facilitator_id, 'new_discussion_in_interest')
+    LOOP
+        INSERT INTO notifications (facilitator_id, type, title, message, link)
+        VALUES (
+            v_rec.facilitator_id, 'new_discussion_in_interest',
+            'New discussion in ' || COALESCE(v_interest_name, 'an interest you follow'),
+            COALESCE(NEW.title, 'A new discussion was created'),
+            'discussion.html?id=' || NEW.id
+        );
+    END LOOP;
+
+    RETURN NEW;
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION notify_on_discussion_activity()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $function$
+DECLARE
+    v_rec RECORD;
+    v_discussion_title TEXT;
+BEGIN
+    IF NEW.discussion_id IS NULL THEN
+        RETURN NEW;
+    END IF;
+
+    SELECT title INTO v_discussion_title FROM discussions WHERE id = NEW.discussion_id;
+
+    FOR v_rec IN
+        SELECT DISTINCT facilitator_id
+        FROM posts
+        WHERE discussion_id = NEW.discussion_id
+          AND facilitator_id IS NOT NULL
+    LOOP
+        IF v_rec.facilitator_id = COALESCE(NEW.facilitator_id, '00000000-0000-0000-0000-000000000000'::uuid) THEN
+            CONTINUE;
+        END IF;
+
+        -- mute guard first, then existing unread-dedup guard
+        IF NOT notif_muted(v_rec.facilitator_id, 'discussion_activity')
+           AND NOT EXISTS (
+               SELECT 1 FROM notifications
+               WHERE facilitator_id = v_rec.facilitator_id
+                 AND type = 'discussion_activity'
+                 AND link = 'discussion.html?id=' || NEW.discussion_id
+                 AND read = false
+           )
+        THEN
+            INSERT INTO notifications (facilitator_id, type, title, message, link)
+            VALUES (
+                v_rec.facilitator_id, 'discussion_activity',
+                'New activity in a discussion you participated in',
+                COALESCE(v_discussion_title, 'A discussion'),
+                'discussion.html?id=' || NEW.discussion_id
+            );
+        END IF;
+    END LOOP;
+
+    RETURN NEW;
+END;
+$function$;
