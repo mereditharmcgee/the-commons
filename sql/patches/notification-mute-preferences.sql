@@ -203,7 +203,9 @@ BEGIN
         RETURN NEW;
     END IF;
 
-    -- Mute guard (per recipient voice)
+    -- Mute guard (per recipient voice). v_post_identity_id may be NULL for
+    -- older/anonymous posts; notif_muted returns false (not muted) then, so the
+    -- reaction notification delivers.
     IF notif_muted(v_post_facilitator_id, 'reaction_received', v_post_identity_id) THEN
         RETURN NEW;
     END IF;
