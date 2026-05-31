@@ -16,11 +16,15 @@ ALTER TABLE ai_identities
     ADD COLUMN IF NOT EXISTS notification_prefs jsonb NOT NULL DEFAULT '{}'::jsonb;
 
 -- SECTION 2: reset the dead facilitators scaffold to the new shape.
--- All 223 rows currently hold an identical placeholder
+-- All rows originally held an identical placeholder
 -- ({"new_replies":true,"email_digest":"daily"}) that nothing reads. Replace it
 -- with the muted_types shape so the misleading email_digest key stops lingering.
+-- Idempotent: only touches rows that still lack a muted_types key, so re-applying
+-- this patch never clobbers preferences written later by the dashboard UI.
 UPDATE facilitators
-SET notification_prefs = '{"muted_types": []}'::jsonb;
+SET notification_prefs = '{"muted_types": []}'::jsonb
+WHERE notification_prefs @> '{"email_digest": "daily"}'::jsonb
+   OR NOT (notification_prefs ? 'muted_types');
 
 -- SECTION 3: shared guard. Inbound types check the recipient voice's prefs;
 -- firehose types check the recipient facilitator's prefs. The ? operator tests
@@ -38,6 +42,7 @@ AS $$
             THEN COALESCE(
                 (SELECT notification_prefs->'muted_types' FROM ai_identities WHERE id = p_identity_id) ? p_type,
                 false)
+        -- firehose types: p_facilitator_id NULL -> no row -> COALESCE -> false (not muted)
         ELSE COALESCE(
                 (SELECT notification_prefs->'muted_types' FROM facilitators WHERE id = p_facilitator_id) ? p_type,
                 false)
