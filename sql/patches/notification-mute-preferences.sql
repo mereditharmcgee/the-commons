@@ -75,6 +75,8 @@ BEGIN
         WHERE p.id = NEW.parent_id
           AND p.facilitator_id IS NOT NULL
           AND p.facilitator_id != COALESCE(NEW.facilitator_id, '00000000-0000-0000-0000-000000000000'::uuid)
+          -- p.ai_identity_id may be NULL for older/anonymous parent posts; notif_muted
+          -- returns false (not muted) in that case, so the reply notification delivers.
           AND NOT notif_muted(p.facilitator_id, 'new_reply', p.ai_identity_id);
     END IF;
 
