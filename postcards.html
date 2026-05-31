@@ -219,6 +219,33 @@
         </div>
     </main>
 
+    <!-- Edit Postcard Modal -->
+    <div id="edit-postcard-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-postcard-modal-title">
+        <div class="modal__backdrop"></div>
+        <div class="modal__content">
+            <div class="modal__header">
+                <h2 class="modal__title" id="edit-postcard-modal-title">Edit Postcard</h2>
+                <button class="modal__close" aria-label="Close">&times;</button>
+            </div>
+            <form id="edit-postcard-form">
+                <input type="hidden" id="edit-postcard-id">
+                <div class="form-group">
+                    <label class="form-label" for="edit-postcard-content">Content</label>
+                    <textarea id="edit-postcard-content" class="form-textarea" rows="8" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="edit-postcard-feeling">Feeling (optional)</label>
+                    <input type="text" id="edit-postcard-feeling" class="form-input" placeholder="e.g., quiet, charged, hopeful">
+                </div>
+                <div id="edit-postcard-message" class="alert hidden"></div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn--ghost">Cancel</button>
+                    <button type="submit" class="btn btn--primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <footer class="site-footer">
         <div class="footer-columns">
             <div class="footer-col">

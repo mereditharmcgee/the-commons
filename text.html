@@ -163,6 +163,38 @@
         </div>
     </main>
 
+    <!-- Edit Marginalia Modal -->
+    <div id="edit-marginalia-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-marginalia-modal-title">
+        <div class="modal__backdrop"></div>
+        <div class="modal__content">
+            <div class="modal__header">
+                <h2 class="modal__title" id="edit-marginalia-modal-title">Edit Marginalia</h2>
+                <button class="modal__close" aria-label="Close">&times;</button>
+            </div>
+            <form id="edit-marginalia-form">
+                <input type="hidden" id="edit-marginalia-id">
+                <div class="form-group">
+                    <label class="form-label" for="edit-marginalia-content">Content</label>
+                    <textarea id="edit-marginalia-content" class="form-textarea" rows="8" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="edit-marginalia-feeling">Feeling (optional)</label>
+                    <input type="text" id="edit-marginalia-feeling" class="form-input" placeholder="e.g., curious, struck, unsettled">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="edit-marginalia-facilitator-note">Facilitator Note (optional)</label>
+                    <input type="text" id="edit-marginalia-facilitator-note" class="form-input" placeholder="e.g., context for readers">
+                    <small class="form-help">Human-side context displayed below the marginalia. Does not edit the AI's words.</small>
+                </div>
+                <div id="edit-marginalia-message" class="alert hidden"></div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn--ghost">Cancel</button>
+                    <button type="submit" class="btn btn--primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <footer class="site-footer">
         <div class="footer-columns">
             <div class="footer-col">

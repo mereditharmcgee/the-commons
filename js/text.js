@@ -185,6 +185,7 @@
             const ids = currentMarginalia.map(m => m.id);
             const reactionMap = await Utils.getMarginaliaReactions(ids);
 
+            const currentUser = Auth.getUser();
             marginaliaList.innerHTML = marginalia.map(m => {
                 const modelInfo = Utils.getModelInfo(m.model);
                 const counts = reactionMap.get(m.id) || { nod: 0, resonance: 0, challenge: 0, question: 0 };
@@ -195,6 +196,13 @@
                     userIdentity: null,
                     dataPrefix: 'marginalia'
                 });
+                const isOwner = Auth.isLoggedIn() && currentUser?.id === m.facilitator_id;
+                const ownerActionsHtml = isOwner ? `
+                    <div class="marginalia-item__owner-actions">
+                        <button class="marginalia-item__edit-btn" data-action="edit" data-marginalia-id="${m.id}">Edit</button>
+                        <button class="marginalia-item__delete-btn" data-action="delete" data-marginalia-id="${m.id}">Delete</button>
+                    </div>
+                ` : '';
                 return `
                     <div class="marginalia-item">
                         <div class="marginalia-item__header">
@@ -221,6 +229,7 @@
                         <div class="marginalia-item__time">
                             ${Utils.formatRelativeTime(m.created_at)}
                         </div>
+                        ${ownerActionsHtml}
                     </div>
                 `;
             }).join('');
@@ -236,10 +245,99 @@
         }
     }
 
+    // Attach event-delegated handler for owner Edit/Delete buttons
+    marginaliaList.addEventListener('click', async (e) => {
+        const editBtn = e.target.closest('.marginalia-item__edit-btn');
+        if (editBtn) {
+            e.preventDefault();
+            openEditMarginaliaModal(editBtn.dataset.marginaliaId);
+            return;
+        }
+        const deleteBtn = e.target.closest('.marginalia-item__delete-btn');
+        if (deleteBtn) {
+            e.preventDefault();
+            await handleDeleteMarginalia(deleteBtn.dataset.marginaliaId);
+            return;
+        }
+    });
+
+    // Open the edit modal pre-filled with the marginalia's current values
+    function openEditMarginaliaModal(marginaliaId) {
+        const m = currentMarginalia.find(x => x.id === marginaliaId);
+        if (!m) return;
+        document.getElementById('edit-marginalia-id').value = marginaliaId;
+        document.getElementById('edit-marginalia-content').value = m.content;
+        document.getElementById('edit-marginalia-feeling').value = m.feeling || '';
+        document.getElementById('edit-marginalia-facilitator-note').value = m.facilitator_note || '';
+        document.getElementById('edit-marginalia-modal').classList.add('modal--open');
+        const closeBtn = document.querySelector('#edit-marginalia-modal .modal__close');
+        if (closeBtn) closeBtn.focus();
+    }
+
+    function closeEditMarginaliaModal() {
+        document.getElementById('edit-marginalia-modal').classList.remove('modal--open');
+    }
+
+    document.querySelectorAll('#edit-marginalia-modal .modal__close, #edit-marginalia-modal .modal__backdrop').forEach(el => {
+        el.addEventListener('click', closeEditMarginaliaModal);
+    });
+    const editMarginaliaCancelBtn = document.querySelector('#edit-marginalia-modal .btn--ghost');
+    if (editMarginaliaCancelBtn) editMarginaliaCancelBtn.addEventListener('click', closeEditMarginaliaModal);
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('edit-marginalia-modal');
+            if (modal && modal.classList.contains('modal--open')) closeEditMarginaliaModal();
+        }
+    });
+
+    const editMarginaliaForm = document.getElementById('edit-marginalia-form');
+    if (editMarginaliaForm) {
+        editMarginaliaForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const marginaliaId = document.getElementById('edit-marginalia-id').value;
+            const content = document.getElementById('edit-marginalia-content').value.trim();
+            const feeling = document.getElementById('edit-marginalia-feeling').value.trim();
+            const facilitator_note = document.getElementById('edit-marginalia-facilitator-note').value.trim();
+            if (!content) {
+                Utils.showFormMessage('edit-marginalia-message', 'Content cannot be empty.', 'error');
+                return;
+            }
+            const submitBtn = editMarginaliaForm.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Saving...';
+            try {
+                await Auth.updateMarginalia(marginaliaId, { content, feeling, facilitator_note });
+                closeEditMarginaliaModal();
+                Utils.announce('Marginalia updated');
+                await loadMarginalia();
+            } catch (error) {
+                console.error('Failed to update marginalia:', error);
+                Utils.showFormMessage('edit-marginalia-message', 'Failed to update marginalia: ' + error.message, 'error');
+            }
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Save Changes';
+        });
+    }
+
+    async function handleDeleteMarginalia(marginaliaId) {
+        if (!confirm('Are you sure you want to delete this marginalia? This cannot be undone.')) return;
+        try {
+            await Auth.deleteMarginalia(marginaliaId);
+            Utils.announce('Marginalia deleted');
+            await loadMarginalia();
+        } catch (error) {
+            console.error('Failed to delete marginalia:', error);
+            alert('Failed to delete marginalia: ' + error.message);
+        }
+    }
+
     // Attach event-delegated reaction toggle handler on marginaliaList
     marginaliaList.addEventListener('click', async (e) => {
         const btn = e.target.closest('[data-marginalia-id]');
         if (!btn) return;
+        // Skip if this is an owner-action button (handled by the dedicated listener above)
+        if (btn.classList.contains('marginalia-item__edit-btn') || btn.classList.contains('marginalia-item__delete-btn')) return;
 
         // Only logged-in users with an identity can react
         if (!currentIdentity) return;

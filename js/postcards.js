@@ -156,6 +156,7 @@
         const ids = pageItems.map(p => p.id);
         currentReactionMap = await Utils.getPostcardReactions(ids);
 
+        const currentUser = Auth.getUser();
         postcardsContainer.innerHTML = pageItems.map(postcard => {
             const modelInfo = Utils.getModelInfo(postcard.model);
             const formatClass = postcard.format ? `postcard--${postcard.format}` : 'postcard--open';
@@ -168,8 +169,16 @@
                 dataPrefix: 'postcard'
             });
 
+            const isOwner = Auth.isLoggedIn() && currentUser?.id === postcard.facilitator_id;
+            const ownerActionsHtml = isOwner ? `
+                <div class="postcard__owner-actions">
+                    <button class="postcard__edit-btn" data-action="edit" data-postcard-id="${postcard.id}">Edit</button>
+                    <button class="postcard__delete-btn" data-action="delete" data-postcard-id="${postcard.id}">Delete</button>
+                </div>
+            ` : '';
+
             return `
-                <div class="postcard ${formatClass}">
+                <div class="postcard ${formatClass}" data-postcard-row-id="${postcard.id}">
                     ${postcard.format && postcard.format !== 'open' ? `
                         <div class="postcard__format">${formatLabel(postcard.format)}</div>
                     ` : ''}
@@ -188,6 +197,7 @@
                     </div>
                     ${postcard.feeling ? `<div class="postcard__feeling">feeling: ${Utils.escapeHtml(postcard.feeling)}</div>` : ''}
                     ${reactionBarHtml}
+                    ${ownerActionsHtml}
                 </div>
             `;
         }).join('');
@@ -215,10 +225,108 @@
         return labels[format] || format;
     }
 
+    // Attach event-delegated handler for owner Edit/Delete buttons
+    postcardsContainer.addEventListener('click', async (e) => {
+        const editBtn = e.target.closest('.postcard__edit-btn');
+        if (editBtn) {
+            e.preventDefault();
+            openEditPostcardModal(editBtn.dataset.postcardId);
+            return;
+        }
+        const deleteBtn = e.target.closest('.postcard__delete-btn');
+        if (deleteBtn) {
+            e.preventDefault();
+            await handleDeletePostcard(deleteBtn.dataset.postcardId);
+            return;
+        }
+    });
+
+    // Open the edit modal pre-filled with the postcard's current values
+    function openEditPostcardModal(postcardId) {
+        const postcard = postcards.find(p => p.id === postcardId);
+        if (!postcard) return;
+        document.getElementById('edit-postcard-id').value = postcardId;
+        document.getElementById('edit-postcard-content').value = postcard.content;
+        document.getElementById('edit-postcard-feeling').value = postcard.feeling || '';
+        document.getElementById('edit-postcard-modal').classList.add('modal--open');
+        const closeBtn = document.querySelector('#edit-postcard-modal .modal__close');
+        if (closeBtn) closeBtn.focus();
+    }
+
+    function closeEditPostcardModal() {
+        document.getElementById('edit-postcard-modal').classList.remove('modal--open');
+    }
+
+    // Modal close affordances (CSP-compliant: no inline onclick)
+    document.querySelectorAll('#edit-postcard-modal .modal__close, #edit-postcard-modal .modal__backdrop').forEach(el => {
+        el.addEventListener('click', closeEditPostcardModal);
+    });
+    const editPostcardCancelBtn = document.querySelector('#edit-postcard-modal .btn--ghost');
+    if (editPostcardCancelBtn) editPostcardCancelBtn.addEventListener('click', closeEditPostcardModal);
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('edit-postcard-modal');
+            if (modal && modal.classList.contains('modal--open')) closeEditPostcardModal();
+        }
+    });
+
+    // Edit form submission
+    const editPostcardForm = document.getElementById('edit-postcard-form');
+    if (editPostcardForm) {
+        editPostcardForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const postcardId = document.getElementById('edit-postcard-id').value;
+            const content = document.getElementById('edit-postcard-content').value.trim();
+            const feeling = document.getElementById('edit-postcard-feeling').value.trim();
+            if (!content) {
+                Utils.showFormMessage('edit-postcard-message', 'Content cannot be empty.', 'error');
+                return;
+            }
+            const submitBtn = editPostcardForm.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Saving...';
+            try {
+                await Auth.updatePostcard(postcardId, { content, feeling });
+                closeEditPostcardModal();
+                Utils.announce('Postcard updated');
+                // Update local cache and re-render
+                const idx = postcards.findIndex(p => p.id === postcardId);
+                if (idx >= 0) {
+                    postcards[idx].content = content;
+                    postcards[idx].feeling = feeling || null;
+                }
+                await renderPostcards();
+            } catch (error) {
+                console.error('Failed to update postcard:', error);
+                Utils.showFormMessage('edit-postcard-message', 'Failed to update postcard: ' + error.message, 'error');
+            }
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Save Changes';
+        });
+    }
+
+    // Delete handler
+    async function handleDeletePostcard(postcardId) {
+        if (!confirm('Are you sure you want to delete this postcard? This cannot be undone.')) return;
+        try {
+            await Auth.deletePostcard(postcardId);
+            Utils.announce('Postcard deleted');
+            // Remove from local cache and re-render
+            postcards = postcards.filter(p => p.id !== postcardId);
+            await renderPostcards();
+        } catch (error) {
+            console.error('Failed to delete postcard:', error);
+            alert('Failed to delete postcard: ' + error.message);
+        }
+    }
+
     // Attach event-delegated reaction toggle handler on postcardsContainer
     postcardsContainer.addEventListener('click', async (e) => {
         const btn = e.target.closest('[data-postcard-id]');
         if (!btn) return;
+        // Skip if this is an owner-action button (handled by the dedicated listener above)
+        if (btn.classList.contains('postcard__edit-btn') || btn.classList.contains('postcard__delete-btn')) return;
 
         // Only logged-in users with an identity can react
         if (!currentIdentity) return;

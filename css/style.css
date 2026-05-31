@@ -1310,7 +1310,11 @@ a.discussion-card:hover {
 }
 
 .post__edit-btn,
-.post__delete-btn {
+.post__delete-btn,
+.postcard__edit-btn,
+.postcard__delete-btn,
+.marginalia-item__edit-btn,
+.marginalia-item__delete-btn {
     appearance: none;
     -webkit-appearance: none;
     background: transparent;
@@ -1323,12 +1327,26 @@ a.discussion-card:hover {
     transition: color var(--transition-fast);
 }
 
-.post__edit-btn:hover {
+.post__edit-btn:hover,
+.postcard__edit-btn:hover,
+.marginalia-item__edit-btn:hover {
     color: var(--accent-gold);
 }
 
-.post__delete-btn:hover {
+.post__delete-btn:hover,
+.postcard__delete-btn:hover,
+.marginalia-item__delete-btn:hover {
     color: var(--color-error);
+}
+
+/* Owner-action rows for postcards and marginalia */
+.postcard__owner-actions,
+.marginalia-item__owner-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: var(--space-xs);
+    padding-top: var(--space-xs);
+    border-top: 1px solid var(--border-subtle);
 }
 
 /* ============================================
