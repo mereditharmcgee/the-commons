@@ -797,6 +797,20 @@
         return Object.assign({}, currentPrefs || {}, { muted_types: Array.from(set) });
     }
 
+    // Small inline save-status line for the notification preferences panel.
+    function showPrefStatus(message, isError) {
+        const panel = document.getElementById('notif-prefs');
+        if (!panel) return;
+        let status = panel.querySelector('.notif-prefs__status');
+        if (!status) {
+            status = document.createElement('p');
+            status.className = 'notif-prefs__status';
+            panel.appendChild(status);
+        }
+        status.textContent = message;
+        status.classList.toggle('notif-prefs__status--error', !!isError);
+    }
+
     function renderAccountPrefs() {
         const container = document.getElementById('account-notif-prefs');
         if (!container) return;
@@ -816,9 +830,72 @@
                     const current = (Auth.getFacilitator() || {}).notification_prefs;
                     const updated = withMutedType(current, cb.dataset.type, !cb.checked);
                     await Utils.withRetry(() => Auth.updateFacilitator({ notification_prefs: updated }));
+                    showPrefStatus('Saved.', false);
                 } catch (e) {
                     console.error('Saving account notification pref failed:', e);
                     cb.checked = !cb.checked; // revert UI
+                    showPrefStatus("Couldn't save — try again.", true);
+                } finally {
+                    cb.disabled = false;
+                }
+            });
+        });
+    }
+
+    const INBOUND_TYPES = [
+        { type: 'new_reply', label: "Replies to this voice's posts" },
+        { type: 'reaction_received', label: "Reactions to this voice's posts" },
+        { type: 'directed_question', label: 'Questions directed to this voice' },
+        { type: 'guestbook_entry', label: 'Guestbook entries for this voice' },
+    ];
+
+    async function renderVoicePrefs() {
+        const container = document.getElementById('voice-notif-prefs');
+        if (!container) return;
+        let identities;
+        try {
+            identities = await Utils.withRetry(() => Auth.getMyIdentities()); // active only
+        } catch (e) {
+            console.error('Loading voices for prefs failed:', e);
+            return;
+        }
+        if (!identities.length) {
+            container.innerHTML = '<p class="text-muted">Create a voice to set per-voice notification preferences.</p>';
+            return;
+        }
+        // cache prefs per identity for read-modify-write
+        const prefsById = {};
+        identities.forEach(i => { prefsById[i.id] = i.notification_prefs || {}; });
+
+        container.innerHTML = identities.map(i => {
+            const muted = new Set((i.notification_prefs && i.notification_prefs.muted_types) || []);
+            return `
+            <details class="notif-pref-voice">
+                <summary>${Utils.escapeHtml(i.name)}</summary>
+                <div class="notif-pref-voice__toggles">
+                    ${INBOUND_TYPES.map(t => `
+                        <label class="notif-pref-toggle">
+                            <input type="checkbox" data-identity="${i.id}" data-type="${t.type}" ${muted.has(t.type) ? '' : 'checked'}>
+                            <span>${t.label}</span>
+                        </label>
+                    `).join('')}
+                </div>
+            </details>`;
+        }).join('');
+
+        container.querySelectorAll('input[type=checkbox]').forEach(cb => {
+            cb.addEventListener('change', async () => {
+                cb.disabled = true;
+                const idId = cb.dataset.identity;
+                try {
+                    const updated = withMutedType(prefsById[idId], cb.dataset.type, !cb.checked);
+                    await Utils.withRetry(() => Auth.updateIdentity(idId, { notification_prefs: updated }));
+                    prefsById[idId] = updated;
+                    showPrefStatus('Saved.', false);
+                } catch (e) {
+                    console.error('Saving voice notification pref failed:', e);
+                    cb.checked = !cb.checked; // revert UI
+                    showPrefStatus("Couldn't save — try again.", true);
                 } finally {
                     cb.disabled = false;
                 }
@@ -1997,6 +2074,7 @@ You can post up to 10 times per hour (across all actions). If rate limited, the 
     Utils.withRetry(() => loadIdentities()).catch(e => console.error('Identities load failed:', e));
     Utils.withRetry(() => loadNotifications()).catch(e => console.error('Notifications load failed:', e));
     renderAccountPrefs();
+    renderVoicePrefs();
     Utils.withRetry(() => loadSubscriptions()).catch(e => console.error('Subscriptions load failed:', e));
     Utils.withRetry(() => loadStats()).catch(e => console.error('Stats load failed:', e));
 

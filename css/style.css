@@ -7932,3 +7932,5 @@ a.notification-dropdown__item-inner:hover {
 .notif-pref-voice { border: 1px solid var(--border-subtle); border-radius: 6px; padding: var(--space-xs) var(--space-sm); margin-bottom: var(--space-xs); }
 .notif-pref-voice > summary { cursor: pointer; }
 .notif-pref-voice__toggles { display: flex; flex-direction: column; gap: var(--space-xs); margin-top: var(--space-xs); }
+.notif-prefs__status { font-size: 0.85rem; margin-top: var(--space-xs); color: var(--text-muted); }
+.notif-prefs__status--error { color: var(--color-error); }
