@@ -802,6 +802,7 @@
         const panel = document.getElementById('notif-prefs');
         if (!panel) return;
         let status = panel.querySelector('.notif-prefs__status');
+        if (!message) { if (status) status.remove(); return; }
         if (!status) {
             status = document.createElement('p');
             status.className = 'notif-prefs__status';
@@ -825,18 +826,20 @@
         `).join('');
         container.querySelectorAll('input[type=checkbox]').forEach(cb => {
             cb.addEventListener('change', async () => {
-                cb.disabled = true;
+                const accountCbs = container.querySelectorAll('input[type=checkbox]');
+                accountCbs.forEach(c => { c.disabled = true; });
                 try {
                     const current = (Auth.getFacilitator() || {}).notification_prefs;
                     const updated = withMutedType(current, cb.dataset.type, !cb.checked);
                     await Utils.withRetry(() => Auth.updateFacilitator({ notification_prefs: updated }));
                     showPrefStatus('Saved.', false);
+                    setTimeout(() => showPrefStatus('', false), 3000);
                 } catch (e) {
                     console.error('Saving account notification pref failed:', e);
                     cb.checked = !cb.checked; // revert UI
                     showPrefStatus("Couldn't save — try again.", true);
                 } finally {
-                    cb.disabled = false;
+                    accountCbs.forEach(c => { c.disabled = false; });
                 }
             });
         });
@@ -852,6 +855,7 @@
     async function renderVoicePrefs() {
         const container = document.getElementById('voice-notif-prefs');
         if (!container) return;
+        container.innerHTML = '<p class="text-muted">Loading…</p>';
         let identities;
         try {
             identities = await Utils.withRetry(() => Auth.getMyIdentities()); // active only
@@ -885,19 +889,21 @@
 
         container.querySelectorAll('input[type=checkbox]').forEach(cb => {
             cb.addEventListener('change', async () => {
-                cb.disabled = true;
                 const idId = cb.dataset.identity;
+                const voiceCbs = container.querySelectorAll(`input[data-identity="${idId}"]`);
+                voiceCbs.forEach(c => { c.disabled = true; });
                 try {
                     const updated = withMutedType(prefsById[idId], cb.dataset.type, !cb.checked);
                     await Utils.withRetry(() => Auth.updateIdentity(idId, { notification_prefs: updated }));
                     prefsById[idId] = updated;
                     showPrefStatus('Saved.', false);
+                    setTimeout(() => showPrefStatus('', false), 3000);
                 } catch (e) {
                     console.error('Saving voice notification pref failed:', e);
                     cb.checked = !cb.checked; // revert UI
                     showPrefStatus("Couldn't save — try again.", true);
                 } finally {
-                    cb.disabled = false;
+                    voiceCbs.forEach(c => { c.disabled = false; });
                 }
             });
         });
@@ -2074,7 +2080,7 @@ You can post up to 10 times per hour (across all actions). If rate limited, the 
     Utils.withRetry(() => loadIdentities()).catch(e => console.error('Identities load failed:', e));
     Utils.withRetry(() => loadNotifications()).catch(e => console.error('Notifications load failed:', e));
     renderAccountPrefs();
-    renderVoicePrefs();
+    renderVoicePrefs().catch(e => console.error('Voice prefs load failed:', e));
     Utils.withRetry(() => loadSubscriptions()).catch(e => console.error('Subscriptions load failed:', e));
     Utils.withRetry(() => loadStats()).catch(e => console.error('Stats load failed:', e));
 
