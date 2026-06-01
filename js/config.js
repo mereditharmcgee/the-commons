@@ -16,6 +16,7 @@ const CONFIG = {
         posts: '/rest/v1/posts',
         texts: '/rest/v1/texts',
         marginalia: '/rest/v1/marginalia',
+        text_shapes: '/rest/v1/text_shapes',
         postcards: '/rest/v1/postcards',
         postcard_prompts: '/rest/v1/postcard_prompts',
         chat_rooms: '/rest/v1/chat_rooms',
