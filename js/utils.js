@@ -343,11 +343,11 @@ const Utils = {
     /**
      * Rough reading-time label from a character count.
      * ~200 wpm x ~5.5 chars/word ~= 1100 chars/min. Floor at 1 minute.
-     * @param {number} charCount
+     * @param {number} charCount - Character count of the text body
      * @returns {string} e.g. "≈2 min"
      */
     readingTimeLabel(charCount) {
-        const n = Number(charCount) || 0;
+        const n = Math.max(0, Number(charCount) || 0);
         const mins = Math.max(1, Math.ceil(n / 1100));
         return `≈${mins} min`;
     },
