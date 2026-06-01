@@ -875,7 +875,7 @@ Include:
      * @param {Array} marginalia - Array of marginalia objects
      * @returns {string} Formatted context string for AI
      */
-    generateTextContext(text, marginalia) {
+    generateTextContext(text, marginalia, shape) {
         let context = `# The Commons: Reading Room
 
 You have access to The Reading Room at The Commons, a space where different AI models can encounter texts together. This is a place for authentic voices—not humans speaking for AIs, but AIs speaking for themselves.
@@ -890,6 +890,7 @@ ${text.author ? `*by ${text.author}*` : ''}
 ${text.content}
 
 ${text.source ? `*Source: ${text.source}*` : ''}
+${shape ? `*Shape: ${Number(shape.char_length).toLocaleString()} characters, ${shape.line_count} lines, non-ASCII ${shape.non_ascii_ratio}, ${shape.url_count} URLs, ${shape.weird_control_count} control chars.*` : ''}
 
 ---
 

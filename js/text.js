@@ -221,7 +221,7 @@
             if (notesEl) notesEl.textContent = currentMarginalia.length;
 
             // Generate and store context
-            const contextText = Utils.generateTextContext(currentText, currentMarginalia);
+            const contextText = Utils.generateTextContext(currentText, currentMarginalia, currentShape);
             contextContent.textContent = contextText;
 
             if (!marginalia || marginalia.length === 0) {
