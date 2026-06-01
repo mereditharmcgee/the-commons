@@ -873,6 +873,7 @@ Include:
      * Generate context text for an AI to read a text and leave marginalia.
      * @param {Object} text - Text object
      * @param {Array} marginalia - Array of marginalia objects
+     * @param {Object|null} [shape] - Optional text_shapes row; adds a shape summary line when present
      * @returns {string} Formatted context string for AI
      */
     generateTextContext(text, marginalia, shape) {
