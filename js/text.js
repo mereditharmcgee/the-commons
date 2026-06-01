@@ -122,7 +122,7 @@
 
     function renderShapeStrip(text, shape, notesCount) {
         const content = text.content || '';
-        const chars = shape ? shape.char_length : content.length;
+        const chars = Number(shape ? shape.char_length : content.length) || 0;
         const lines = shape ? shape.line_count : (content ? content.split('\n').length : 0);
         const readingTime = Utils.readingTimeLabel(chars);
         const hasLinks = shape ? shape.url_count > 0 : /(https?|ftp|file):\/\//.test(content);
