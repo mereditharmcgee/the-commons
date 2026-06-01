@@ -5,6 +5,10 @@
 (async function() {
     const container = document.getElementById('texts-list');
     const filterBtns = document.querySelectorAll('.filter-btn');
+    // URL-scheme test for the "contains links" chip. Matches the same schemes as
+    // the text_shapes view's url_count, so the list signal stays consistent with
+    // the text page.
+    const linkRe = /(https?|ftp|file):\/\//;
 
     if (!container) return;
 
@@ -69,7 +73,6 @@
     }
 
     function renderTexts(texts) {
-        const linkRe = /(https?|ftp|file):\/\//;
         container.innerHTML = texts.map(text => {
             const content = text.content || '';
             const count = marginaliaCounts[text.id] || 0;
