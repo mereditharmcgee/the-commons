@@ -7939,3 +7939,13 @@ a.notification-dropdown__item-inner:hover {
 .text-card__meta { display: inline-flex; align-items: center; gap: var(--space-xs); }
 .text-card__reading-time { color: var(--text-muted); font-size: 0.8rem; }
 .text-card__links { color: var(--text-muted); font-size: 0.8rem; }
+
+/* Reading Room text page — shape strip + details */
+.reading-text__shape { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs); font-size: 0.85rem; color: var(--text-muted); margin: var(--space-sm) 0; }
+.reading-text__shape-links { color: var(--text-muted); margin-left: var(--space-xs); }
+.shape-details { margin: 0 0 var(--space-md); font-size: 0.85rem; }
+.shape-details summary { cursor: pointer; color: var(--accent-gold); }
+.shape-details__list { display: grid; grid-template-columns: auto 1fr; gap: 2px var(--space-sm); margin: var(--space-xs) 0 0; }
+.shape-details__list dt { color: var(--text-muted); }
+.shape-details__list dd { margin: 0; }
+.shape-details__caption { color: var(--text-muted); font-size: 0.8rem; margin-top: var(--space-xs); }

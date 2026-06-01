@@ -27,6 +27,7 @@
 
     let currentText = null;
     let currentMarginalia = [];
+    let currentShape = null;
 
     // Module-scoped reaction state
     let marginaliaActiveTypes = new Map(); // tracks active reaction type per marginalia ID
@@ -119,12 +120,55 @@
         });
     }
 
+    function renderShapeStrip(text, shape, notesCount) {
+        const content = text.content || '';
+        const chars = shape ? shape.char_length : content.length;
+        const lines = shape ? shape.line_count : (content ? content.split('\n').length : 0);
+        const readingTime = Utils.readingTimeLabel(chars);
+        const hasLinks = shape ? shape.url_count > 0 : /(https?|ftp|file):\/\//.test(content);
+        return `
+            <div class="reading-text__shape">
+                <span>${readingTime} read</span>
+                <span aria-hidden="true">·</span>
+                <span>${chars.toLocaleString()} characters</span>
+                <span aria-hidden="true">·</span>
+                <span>${lines} ${lines === 1 ? 'line' : 'lines'}</span>
+                <span aria-hidden="true">·</span>
+                <span><span id="shape-notes-count">${notesCount}</span> notes</span>
+                ${hasLinks ? `<span class="reading-text__shape-links">🔗 contains links</span>` : ''}
+            </div>
+        `;
+    }
+
+    function renderShapeDetails(shape) {
+        if (!shape) return '';
+        return `
+            <details class="shape-details">
+                <summary>Shape details</summary>
+                <dl class="shape-details__list">
+                    <dt>Characters</dt><dd>${Number(shape.char_length).toLocaleString()}</dd>
+                    <dt>Lines</dt><dd>${shape.line_count}</dd>
+                    <dt>Non-ASCII ratio</dt><dd>${shape.non_ascii_ratio}</dd>
+                    <dt>URLs</dt><dd>${shape.url_count}</dd>
+                    <dt>Control characters</dt><dd>${shape.weird_control_count}</dd>
+                    <dt>Marginalia (incl. removed)</dt><dd>${shape.marginalia_count}</dd>
+                </dl>
+                <p class="shape-details__caption">These are the exact values your AI sees via the <code>text_shapes</code> API. A high non-ASCII ratio just means non-English script (diacritics, other alphabets) — it isn't a problem. "Marginalia (incl. removed)" counts soft-deleted notes, so it can exceed the visible notes count.</p>
+            </details>
+        `;
+    }
+
     // Load text and marginalia
     async function loadData() {
         Utils.showLoading(textContainer);
 
         try {
-            currentText = await Utils.getText(textId);
+            const [text, shapeRows] = await Promise.all([
+                Utils.getText(textId),
+                Utils.get(CONFIG.api.text_shapes, { id: `eq.${textId}`, limit: 1 }).catch(() => null)
+            ]);
+            currentText = text;
+            currentShape = (shapeRows && shapeRows[0]) || null;
 
             if (!currentText) {
                 textContainer.innerHTML = `
@@ -147,6 +191,8 @@
                         <p class="reading-text__author">by ${Utils.escapeHtml(currentText.author)}</p>
                     ` : ''}
                 </header>
+                ${renderShapeStrip(currentText, currentShape, currentMarginalia.length)}
+                ${renderShapeDetails(currentShape)}
                 <div class="reading-text__content">
                     ${Utils.formatContent(currentText.content)}
                 </div>
@@ -171,6 +217,8 @@
         try {
             const marginalia = await Utils.getMarginalia(textId);
             currentMarginalia = marginalia || [];
+            const notesEl = document.getElementById('shape-notes-count');
+            if (notesEl) notesEl.textContent = currentMarginalia.length;
 
             // Generate and store context
             const contextText = Utils.generateTextContext(currentText, currentMarginalia);
