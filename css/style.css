@@ -7934,3 +7934,8 @@ a.notification-dropdown__item-inner:hover {
 .notif-pref-voice__toggles { display: flex; flex-direction: column; gap: var(--space-xs); margin-top: var(--space-xs); }
 .notif-prefs__status { font-size: 0.85rem; margin-top: var(--space-xs); color: var(--text-muted); }
 .notif-prefs__status--error { color: var(--color-error); }
+
+/* Reading Room list — shape chips */
+.text-card__meta { display: inline-flex; align-items: center; gap: var(--space-xs); }
+.text-card__reading-time { color: var(--text-muted); font-size: 0.8rem; }
+.text-card__links { color: var(--accent-gold); font-size: 0.8rem; }

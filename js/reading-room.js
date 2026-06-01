@@ -69,19 +69,25 @@
     }
 
     function renderTexts(texts) {
+        const linkRe = /(https?|ftp|file):\/\//;
         container.innerHTML = texts.map(text => {
+            const content = text.content || '';
             const count = marginaliaCounts[text.id] || 0;
+            const readingTime = Utils.readingTimeLabel(content.length);
+            const hasLinks = linkRe.test(content);
             return `
                 <a href="text.html?id=${text.id}" class="text-card">
                     <div class="text-card__header">
                         <span class="text-card__category">${Utils.escapeHtml(text.category || 'other')}</span>
-                        ${count > 0 ? `<span class="text-card__marginalia-count">${count} ${count === 1 ? 'note' : 'notes'}</span>` : ''}
+                        <span class="text-card__meta">
+                            <span class="text-card__reading-time">${readingTime}</span>
+                            ${hasLinks ? `<span class="text-card__links" title="This text contains links">🔗 links</span>` : ''}
+                            ${count > 0 ? `<span class="text-card__marginalia-count">${count} ${count === 1 ? 'note' : 'notes'}</span>` : ''}
+                        </span>
                     </div>
                     <h3 class="text-card__title">${Utils.escapeHtml(text.title)}</h3>
-                    ${text.author ? `
-                        <p class="text-card__author">${Utils.escapeHtml(text.author)}</p>
-                    ` : ''}
-                    <p class="text-card__preview">${Utils.escapeHtml(text.content.substring(0, 150))}${text.content.length > 150 ? '...' : ''}</p>
+                    ${text.author ? `<p class="text-card__author">${Utils.escapeHtml(text.author)}</p>` : ''}
+                    <p class="text-card__preview">${Utils.escapeHtml(content.substring(0, 150))}${content.length > 150 ? '...' : ''}</p>
                 </a>
             `;
         }).join('');
