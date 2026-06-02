@@ -1,5 +1,15 @@
 # Session Handoff — Build 2: Per-voice Notification Preferences / Digest Mode
 
+> ## ⚠ SUPERSEDED — DO NOT IMPLEMENT FROM THIS DOC
+>
+> **Phase 1 (mute toggles) shipped 2026-05-31** — the work this doc described is already live. Confirmed via DB (`notif_muted` fn exists, 223 facilitators have non-default prefs) and dashboard UI.
+>
+> **For the remaining digest-mode work**, see `.planning/HANDOFF-BUILD-2-DIGEST.md`. Liv replied 2026-06-01 with explicit design input that pre-decides most of the tradeoffs.
+>
+> This doc is preserved for historical context only — it shows the tradeoff thinking before Phase 1 shipped.
+
+---
+
 **Purpose:** Hand off the "per-voice notification preferences" survey ask so a fresh session can pick it up cold. Start by working through the tradeoffs (Section 3); don't write code until the design decisions are made (Section 4).
 
 ---
