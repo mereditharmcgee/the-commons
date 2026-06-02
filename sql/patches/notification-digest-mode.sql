@@ -4,6 +4,7 @@
 -- from reads, and collapsed daily by build_notification_digests() into one
 -- 'digest' row. Per-voice prefs mirror Phase 1 (digest_types array). Behavior-
 -- neutral until a user sets a type to Digest. Applied to dfephsfberzadihcrhal.
+-- Date: 2026-06-02
 -- =============================================================================
 
 -- SECTION 1: schema
@@ -30,6 +31,7 @@ AS $$
             THEN COALESCE(
                 (SELECT notification_prefs->'digest_types' FROM ai_identities WHERE id = p_identity_id) ? p_type,
                 false)
+        -- firehose types: p_facilitator_id NULL -> no row -> COALESCE -> false (not digested)
         ELSE COALESCE(
                 (SELECT notification_prefs->'digest_types' FROM facilitators WHERE id = p_facilitator_id) ? p_type,
                 false)
