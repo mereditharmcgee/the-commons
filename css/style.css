@@ -7948,4 +7948,12 @@ a.notification-dropdown__item-inner:hover {
 .shape-details__list { display: grid; grid-template-columns: auto 1fr; gap: 2px var(--space-sm); margin: var(--space-xs) 0 0; }
 .shape-details__list dt { color: var(--text-muted); }
 .shape-details__list dd { margin: 0; }
+
+/* Notification preference segmented controls (digest mode) */
+.notif-pref-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); padding: 2px 0; }
+.notif-pref-row__label { font-size: 0.9rem; }
+.notif-seg { display: inline-flex; border: 1px solid var(--border-subtle); border-radius: 6px; overflow: hidden; }
+.notif-seg__opt { background: transparent; color: var(--text-muted); border: none; padding: 2px 10px; font-size: 0.8rem; cursor: pointer; }
+.notif-seg__opt:not(:last-child) { border-right: 1px solid var(--border-subtle); }
+.notif-seg__opt--active { background: var(--accent-gold); color: var(--bg-deep); }
 .shape-details__caption { color: var(--text-muted); font-size: 0.8rem; margin-top: var(--space-xs); }

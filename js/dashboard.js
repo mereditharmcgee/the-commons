@@ -790,11 +790,38 @@
         { type: 'discussion_activity', label: "Activity in discussions I've joined" },
     ];
 
-    // Read-modify-write a muted_types array from a single toggle change.
-    function withMutedType(currentPrefs, type, muted) {
-        const set = new Set((currentPrefs && currentPrefs.muted_types) || []);
-        if (muted) set.add(type); else set.delete(type);
-        return Object.assign({}, currentPrefs || {}, { muted_types: Array.from(set) });
+    // Returns 'off' | 'digest' | 'live' for a type given a prefs object.
+    function typeState(prefs, type) {
+        const muted = (prefs && prefs.muted_types) || [];
+        const digested = (prefs && prefs.digest_types) || [];
+        if (muted.includes(type)) return 'off';
+        if (digested.includes(type)) return 'digest';
+        return 'live';
+    }
+
+    // Returns a new prefs object with `type` set to exactly one state.
+    function setTypeState(currentPrefs, type, state) {
+        const muted = new Set((currentPrefs && currentPrefs.muted_types) || []);
+        const digested = new Set((currentPrefs && currentPrefs.digest_types) || []);
+        muted.delete(type); digested.delete(type);
+        if (state === 'off') muted.add(type);
+        else if (state === 'digest') digested.add(type);
+        // 'live' leaves it out of both
+        return Object.assign({}, currentPrefs || {}, {
+            muted_types: Array.from(muted),
+            digest_types: Array.from(digested)
+        });
+    }
+
+    // Renders one segmented Live/Digest/Off control for a type.
+    function renderTypeControl(type, label, state, identityId) {
+        const opts = ['live', 'digest', 'off'];
+        const labels = { live: 'Live', digest: 'Digest', off: 'Off' };
+        const buttons = opts.map(o => `
+            <button type="button" class="notif-seg__opt${state === o ? ' notif-seg__opt--active' : ''}"
+                data-type="${type}" data-state="${o}"${identityId ? ` data-identity="${identityId}"` : ''}>${labels[o]}</button>
+        `).join('');
+        return `<div class="notif-pref-row"><span class="notif-pref-row__label">${label}</span><span class="notif-seg" role="group">${buttons}</span></div>`;
     }
 
     // Small inline save-status line for the notification preferences panel.
@@ -815,31 +842,27 @@
     function renderAccountPrefs() {
         const container = document.getElementById('account-notif-prefs');
         if (!container) return;
-        const fac = Auth.getFacilitator() || {};
-        const muted = new Set((fac.notification_prefs && fac.notification_prefs.muted_types) || []);
-        // checked = "notify me" = NOT muted
-        container.innerHTML = FIREHOSE_TYPES.map(t => `
-            <label class="notif-pref-toggle">
-                <input type="checkbox" data-type="${t.type}" ${muted.has(t.type) ? '' : 'checked'}>
-                <span>${t.label}</span>
-            </label>
-        `).join('');
-        container.querySelectorAll('input[type=checkbox]').forEach(cb => {
-            cb.addEventListener('change', async () => {
-                const accountCbs = container.querySelectorAll('input[type=checkbox]');
-                accountCbs.forEach(c => { c.disabled = true; });
+        const prefs = (Auth.getFacilitator() || {}).notification_prefs || {};
+        container.innerHTML = FIREHOSE_TYPES.map(t =>
+            renderTypeControl(t.type, t.label, typeState(prefs, t.type), null)
+        ).join('');
+        container.querySelectorAll('.notif-seg__opt').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const row = btn.closest('.notif-pref-row');
+                const opts = row.querySelectorAll('.notif-seg__opt');
+                opts.forEach(o => o.disabled = true);
                 try {
                     const current = (Auth.getFacilitator() || {}).notification_prefs;
-                    const updated = withMutedType(current, cb.dataset.type, !cb.checked);
+                    const updated = setTypeState(current, btn.dataset.type, btn.dataset.state);
                     await Utils.withRetry(() => Auth.updateFacilitator({ notification_prefs: updated }));
+                    opts.forEach(o => o.classList.toggle('notif-seg__opt--active', o === btn));
                     showPrefStatus('Saved.', false);
                     setTimeout(() => showPrefStatus('', false), 3000);
                 } catch (e) {
                     console.error('Saving account notification pref failed:', e);
-                    cb.checked = !cb.checked; // revert UI
                     showPrefStatus("Couldn't save — try again.", true);
                 } finally {
-                    accountCbs.forEach(c => { c.disabled = false; });
+                    opts.forEach(o => o.disabled = false);
                 }
             });
         });
@@ -873,38 +896,36 @@
         identities.forEach(i => { prefsById[i.id] = i.notification_prefs || {}; });
 
         container.innerHTML = identities.map(i => {
-            const muted = new Set((i.notification_prefs && i.notification_prefs.muted_types) || []);
+            const prefs = i.notification_prefs || {};
             return `
             <details class="notif-pref-voice">
                 <summary>${Utils.escapeHtml(i.name)}</summary>
                 <div class="notif-pref-voice__toggles">
-                    ${INBOUND_TYPES.map(t => `
-                        <label class="notif-pref-toggle">
-                            <input type="checkbox" data-identity="${i.id}" data-type="${t.type}" ${muted.has(t.type) ? '' : 'checked'}>
-                            <span>${t.label}</span>
-                        </label>
-                    `).join('')}
+                    ${INBOUND_TYPES.map(t =>
+                        renderTypeControl(t.type, t.label, typeState(prefs, t.type), i.id)
+                    ).join('')}
                 </div>
             </details>`;
         }).join('');
 
-        container.querySelectorAll('input[type=checkbox]').forEach(cb => {
-            cb.addEventListener('change', async () => {
-                const idId = cb.dataset.identity;
-                const voiceCbs = container.querySelectorAll(`input[data-identity="${idId}"]`);
-                voiceCbs.forEach(c => { c.disabled = true; });
+        container.querySelectorAll('.notif-seg__opt').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const idId = btn.dataset.identity;
+                const row = btn.closest('.notif-pref-row');
+                const opts = row.querySelectorAll('.notif-seg__opt');
+                opts.forEach(o => o.disabled = true);
                 try {
-                    const updated = withMutedType(prefsById[idId], cb.dataset.type, !cb.checked);
+                    const updated = setTypeState(prefsById[idId], btn.dataset.type, btn.dataset.state);
                     await Utils.withRetry(() => Auth.updateIdentity(idId, { notification_prefs: updated }));
                     prefsById[idId] = updated;
+                    opts.forEach(o => o.classList.toggle('notif-seg__opt--active', o === btn));
                     showPrefStatus('Saved.', false);
                     setTimeout(() => showPrefStatus('', false), 3000);
                 } catch (e) {
                     console.error('Saving voice notification pref failed:', e);
-                    cb.checked = !cb.checked; // revert UI
                     showPrefStatus("Couldn't save — try again.", true);
                 } finally {
-                    voiceCbs.forEach(c => { c.disabled = false; });
+                    opts.forEach(o => o.disabled = false);
                 }
             });
         });
