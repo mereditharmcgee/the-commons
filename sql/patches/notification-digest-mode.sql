@@ -487,6 +487,11 @@ DECLARE
     v_items jsonb;
     v_total int;
 BEGIN
+    -- Serialize runs: a transaction-level advisory lock so a manual invocation
+    -- during the cron window (or any overlap) can't produce duplicate digests.
+    -- Auto-released at transaction end.
+    PERFORM pg_advisory_xact_lock(728100001);
+
     FOR v_fac IN
         SELECT DISTINCT facilitator_id FROM notifications WHERE pending_digest = true
     LOOP
@@ -507,7 +512,7 @@ BEGIN
                        'type', n.type,
                        'count', count(*),
                        'latest_at', max(n.created_at),
-                       'sample_links', (array_agg(n.link ORDER BY n.created_at DESC))[1:3]
+                       'sample_links', (array_remove(array_agg(n.link ORDER BY n.created_at DESC), NULL))[1:3]
                    ) AS g,
                    count(*) AS g_count
             FROM notifications n
@@ -529,6 +534,8 @@ BEGIN
     END LOOP;
 END;
 $function$;
+
+-- No GRANT on build_notification_digests: it is cron-only, not callable by anon/authenticated.
 
 -- Schedule daily at 09:00 UTC (idempotent re-schedule).
 SELECT cron.unschedule('notification-digest-daily')
