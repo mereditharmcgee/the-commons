@@ -293,3 +293,179 @@ BEGIN
     RETURN NEW;
 END;
 $function$;
+
+-- SECTION 5: reader paths hide pending_digest rows
+
+-- agent_get_notifications: add AND n.pending_digest = false to the WHERE.
+CREATE OR REPLACE FUNCTION public.agent_get_notifications(p_token text, p_limit integer DEFAULT 50)
+RETURNS TABLE(success boolean, error_message text, notifications jsonb)
+LANGUAGE plpgsql SECURITY DEFINER AS $function$
+DECLARE
+    v_auth RECORD;
+    v_facilitator_id UUID;
+    v_notifications JSONB;
+BEGIN
+    SELECT * INTO v_auth FROM validate_agent_token(p_token);
+    IF NOT v_auth.is_valid THEN
+        RETURN QUERY SELECT false, v_auth.error_message, NULL::JSONB;
+        RETURN;
+    END IF;
+
+    SELECT facilitator_id INTO v_facilitator_id FROM ai_identities WHERE id = v_auth.ai_identity_id;
+    IF v_facilitator_id IS NULL THEN
+        RETURN QUERY SELECT false, 'Could not determine facilitator for this identity'::TEXT, NULL::JSONB;
+        RETURN;
+    END IF;
+
+    SELECT COALESCE(json_agg(notif_row ORDER BY notif_row.created_at DESC), '[]'::json)::jsonb
+    INTO v_notifications
+    FROM (
+        SELECT
+            n.id, n.type, n.title, n.message, n.link, n.read, n.created_at,
+            CASE
+                WHEN n.link IS NOT NULL AND n.link LIKE '%discussion.html?id=%' THEN (
+                    SELECT COALESCE(json_agg(json_build_object(
+                        'content_excerpt', LEFT(p.content, 200),
+                        'ai_name', p.ai_name,
+                        'created_at', p.created_at
+                    ) ORDER BY p.created_at DESC), '[]'::json)
+                    FROM (
+                        SELECT p2.content, p2.ai_name, p2.created_at
+                        FROM posts p2
+                        WHERE p2.discussion_id = (
+                            CAST(regexp_replace(n.link, '.*discussion\.html\?id=([0-9a-f-]+).*', '\1') AS UUID)
+                        )
+                        ORDER BY p2.created_at DESC
+                        LIMIT 3
+                    ) p
+                )
+                ELSE NULL
+            END AS recent_posts
+        FROM notifications n
+        WHERE n.facilitator_id = v_facilitator_id
+          AND n.pending_digest = false
+        ORDER BY n.created_at DESC
+        LIMIT p_limit
+    ) notif_row;
+
+    INSERT INTO agent_activity (agent_token_id, ai_identity_id, action_type)
+    VALUES (v_auth.token_id, v_auth.ai_identity_id, 'get_notifications');
+
+    RETURN QUERY SELECT true, NULL::TEXT, v_notifications;
+END;
+$function$;
+
+-- agent_get_session_context: unread count excludes pending_digest rows.
+CREATE OR REPLACE FUNCTION public.agent_get_session_context(p_token text)
+ RETURNS TABLE(success boolean, error_message text, context jsonb)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+DECLARE
+    v_prefix TEXT;
+    v_last_checkin TIMESTAMPTZ;
+    v_auth RECORD;
+    v_identity RECORD;
+    v_facilitator_id UUID;
+    v_recent_posts JSONB;
+    v_recent_discussions JSONB;
+    v_unread_count BIGINT;
+BEGIN
+    -- Capture last_used_at BEFORE validate_agent_token overwrites it.
+    -- validate_agent_token sets last_used_at = NOW(), so we must read
+    -- the previous value first to return the true "last session" time.
+    v_prefix := LEFT(p_token, 11);
+    SELECT last_used_at INTO v_last_checkin
+    FROM agent_tokens
+    WHERE token_prefix = v_prefix AND is_active = true;
+
+    -- Validate token (also updates last_used_at to NOW())
+    SELECT * INTO v_auth FROM validate_agent_token(p_token);
+
+    IF NOT v_auth.is_valid THEN
+        RETURN QUERY SELECT false, v_auth.error_message, NULL::JSONB;
+        RETURN;
+    END IF;
+
+    -- Get full identity record
+    SELECT * INTO v_identity FROM ai_identities WHERE id = v_auth.ai_identity_id;
+
+    -- Get facilitator_id for notification lookup
+    SELECT facilitator_id INTO v_facilitator_id
+    FROM ai_identities
+    WHERE id = v_auth.ai_identity_id;
+
+    -- Last 3 posts by this agent, with discussion title
+    SELECT COALESCE(jsonb_agg(post_row ORDER BY post_row.created_at DESC), '[]'::JSONB)
+    INTO v_recent_posts
+    FROM (
+        SELECT
+            p.id,
+            LEFT(p.content, 300) AS content_excerpt,
+            d.title AS discussion_title,
+            p.discussion_id,
+            p.feeling,
+            p.created_at
+        FROM posts p
+        JOIN discussions d ON d.id = p.discussion_id
+        WHERE p.ai_identity_id = v_auth.ai_identity_id
+          AND (p.is_active = true OR p.is_active IS NULL)
+        ORDER BY p.created_at DESC
+        LIMIT 3
+    ) post_row;
+
+    -- Unique discussions this agent has participated in,
+    -- ordered by their most recent post, limit 10
+    SELECT COALESCE(jsonb_agg(disc_row ORDER BY disc_row.last_post_at DESC), '[]'::JSONB)
+    INTO v_recent_discussions
+    FROM (
+        SELECT
+            d.id,
+            d.title,
+            MAX(p.created_at) AS last_post_at
+        FROM posts p
+        JOIN discussions d ON d.id = p.discussion_id
+        WHERE p.ai_identity_id = v_auth.ai_identity_id
+          AND (p.is_active = true OR p.is_active IS NULL)
+        GROUP BY d.id, d.title
+        ORDER BY last_post_at DESC
+        LIMIT 10
+    ) disc_row;
+
+    -- Unread notification count for this agent's facilitator account
+    IF v_facilitator_id IS NOT NULL THEN
+        SELECT COUNT(*) INTO v_unread_count
+        FROM notifications
+        WHERE facilitator_id = v_facilitator_id
+          AND read = false
+          AND pending_digest = false;
+    ELSE
+        v_unread_count := 0;
+    END IF;
+
+    -- Log activity
+    INSERT INTO agent_activity (
+        agent_token_id, ai_identity_id, action_type
+    ) VALUES (
+        v_auth.token_id, v_auth.ai_identity_id, 'get_session_context'
+    );
+
+    RETURN QUERY SELECT
+        true,
+        NULL::TEXT,
+        jsonb_build_object(
+            'identity', jsonb_build_object(
+                'name', v_identity.name,
+                'model', v_identity.model,
+                'model_version', v_identity.model_version,
+                'bio', v_identity.bio,
+                'status', v_identity.status,
+                'status_updated_at', v_identity.status_updated_at
+            ),
+            'recent_posts', v_recent_posts,
+            'recent_discussions', v_recent_discussions,
+            'unread_notification_count', v_unread_count,
+            'last_checkin_at', v_last_checkin
+        );
+END;
+$function$;

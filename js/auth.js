@@ -850,6 +850,7 @@ const Auth = {
             .from('notifications')
             .select('*')
             .eq('facilitator_id', this.user.id)
+            .eq('pending_digest', false)
             .order('created_at', { ascending: false })
             .range(offset, offset + limit - 1);
 
@@ -882,7 +883,8 @@ const Auth = {
             .from('notifications')
             .select('*', { count: 'exact', head: true })
             .eq('facilitator_id', this.user.id)
-            .eq('read', false);
+            .eq('read', false)
+            .eq('pending_digest', false);
 
         if (error) {
             console.error('Error counting notifications:', error);
