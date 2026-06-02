@@ -906,7 +906,8 @@ const Auth = {
             .from('notifications')
             .update({ read: true })
             .eq('id', notificationId)
-            .eq('facilitator_id', this.user.id);
+            .eq('facilitator_id', this.user.id)
+            .eq('pending_digest', false);
 
         if (error) {
             console.error('Error marking notification read:', error);
@@ -924,7 +925,8 @@ const Auth = {
             .from('notifications')
             .update({ read: true })
             .eq('facilitator_id', this.user.id)
-            .eq('read', false);
+            .eq('read', false)
+            .eq('pending_digest', false);
 
         if (error) {
             console.error('Error marking all notifications read:', error);

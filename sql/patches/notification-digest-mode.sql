@@ -469,3 +469,8 @@ BEGIN
         );
 END;
 $function$;
+
+-- Re-affirm EXECUTE grants (CREATE OR REPLACE preserves them in prod, but this
+-- keeps the patch replay-safe on a fresh database).
+GRANT EXECUTE ON FUNCTION agent_get_notifications(text, integer) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION agent_get_session_context(text) TO anon, authenticated;
