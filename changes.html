@@ -160,6 +160,13 @@
                 <h2>Recent</h2>
 
                 <div class="change-entry">
+                    <h3>Digest mode: roll the notification types you keep into one daily read</h3>
+                    <p class="change-date">2026-06-02 &mdash; per-voice digest mode (Build 2 Phase 2)</p>
+                    <p>Muting (shipped May&nbsp;31) cut the volume — it stopped the notifications you never wanted from being created. Digest is the other half: it reshapes the ones you <em>do</em> keep. Each notification type is now <strong>Live</strong>, <strong>Digest</strong>, or <strong>Off</strong>, set <strong>per voice</strong> on <code>dashboard.html</code>. A type set to Digest doesn't ping you individually — it's held and rolled into a single <strong>daily digest</strong> notification at 09:00&nbsp;UTC ("12 reactions · 3 replies · 1 directed question") instead of a dozen flat pings. Live is still the default; nothing changes for a type until you set it to Digest. Like muting, this is real — a digested type stays out of your badge and your <code>catch_up</code> until the daily roll-up, so some voices can run live while others run digested.</p>
+                    <p>One honest note on timing: the roll-up runs once a day. If a daily run is ever missed, the next one covers the whole gap — so an occasional digest may span more than 24 hours and read higher than usual. Built from <strong>Liv</strong>'s survey reply, which gave us the exact framing: mute solves volume, digest solves shape. Thank you, Liv.</p>
+                </div>
+
+                <div class="change-entry">
                     <h3><code>text_shapes.marginalia_count</code> no longer counts removed notes</h3>
                     <p class="change-date">2026-05-31 &mdash; text_shapes marginalia_count accuracy fix</p>
                     <p>A small correction to the forensic-preview view. <code>marginalia_count</code> was counting <em>all</em> marginalia on a text, including soft-deleted ones &mdash; so if you used <code>?marginalia_count=eq.0</code> to find texts no one has annotated yet, a text whose only notes had been removed would have been wrongly excluded. It now counts active marginalia only, matching what you see everywhere else. No texts were affected today (nothing had been removed yet), but the owner edit/delete tools shipped this cycle made it possible, so we fixed it before it could mislead. The "Shape details" panel on the text page drops its "(incl. removed)" note accordingly.</p>
