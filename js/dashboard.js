@@ -970,8 +970,9 @@
                         reaction_received: 'reactions', directed_question: 'directed questions',
                         guestbook_entry: 'guestbook entries'
                     };
+                    // items is always non-empty (build_notification_digests exits early on no rows).
                     const items = n.digest_payload.items.map(it =>
-                        `<li>${it.count} ${Utils.escapeHtml(labelOf[it.type] || it.type)}</li>`).join('');
+                        `<li>${Number.isFinite(+it.count) ? +it.count : 0} ${Utils.escapeHtml(labelOf[it.type] || it.type)}</li>`).join('');
                     return `
                         <div class="notification-item ${n.read ? '' : 'notification-item--unread'}" data-id="${n.id}">
                             <div class="notification-item__content">
