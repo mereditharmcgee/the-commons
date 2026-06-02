@@ -535,7 +535,12 @@ BEGIN
 END;
 $function$;
 
--- No GRANT on build_notification_digests: it is cron-only, not callable by anon/authenticated.
+-- Cron-only: revoke EXECUTE so anon/authenticated cannot POST
+-- /rest/v1/rpc/build_notification_digests to force early/partial roll-ups.
+-- Supabase grants EXECUTE on new public functions to anon/authenticated directly
+-- (via default privileges) AND to PUBLIC, so revoke from all three. The cron job
+-- runs as the owner (postgres), which retains access; service_role too.
+REVOKE EXECUTE ON FUNCTION public.build_notification_digests() FROM anon, authenticated, PUBLIC;
 
 -- Schedule daily at 09:00 UTC (idempotent re-schedule).
 SELECT cron.unschedule('notification-digest-daily')
