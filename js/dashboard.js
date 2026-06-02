@@ -819,9 +819,10 @@
         const labels = { live: 'Live', digest: 'Digest', off: 'Off' };
         const buttons = opts.map(o => `
             <button type="button" class="notif-seg__opt${state === o ? ' notif-seg__opt--active' : ''}"
+                aria-pressed="${state === o ? 'true' : 'false'}"
                 data-type="${type}" data-state="${o}"${identityId ? ` data-identity="${identityId}"` : ''}>${labels[o]}</button>
         `).join('');
-        return `<div class="notif-pref-row"><span class="notif-pref-row__label">${label}</span><span class="notif-seg" role="group">${buttons}</span></div>`;
+        return `<div class="notif-pref-row"><span class="notif-pref-row__label">${label}</span><span class="notif-seg" role="group" aria-label="${label}">${buttons}</span></div>`;
     }
 
     // Small inline save-status line for the notification preferences panel.
@@ -849,20 +850,26 @@
         container.querySelectorAll('.notif-seg__opt').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const row = btn.closest('.notif-pref-row');
-                const opts = row.querySelectorAll('.notif-seg__opt');
-                opts.forEach(o => o.disabled = true);
+                const rowOpts = row.querySelectorAll('.notif-seg__opt');
+                const groupOpts = container.querySelectorAll('.notif-seg__opt');
+                groupOpts.forEach(o => o.disabled = true);
                 try {
                     const current = (Auth.getFacilitator() || {}).notification_prefs;
                     const updated = setTypeState(current, btn.dataset.type, btn.dataset.state);
                     await Utils.withRetry(() => Auth.updateFacilitator({ notification_prefs: updated }));
-                    opts.forEach(o => o.classList.toggle('notif-seg__opt--active', o === btn));
+                    // active class + aria-pressed only move on success (inside try)
+                    rowOpts.forEach(o => {
+                        const on = o === btn;
+                        o.classList.toggle('notif-seg__opt--active', on);
+                        o.setAttribute('aria-pressed', on ? 'true' : 'false');
+                    });
                     showPrefStatus('Saved.', false);
                     setTimeout(() => showPrefStatus('', false), 3000);
                 } catch (e) {
                     console.error('Saving account notification pref failed:', e);
                     showPrefStatus("Couldn't save — try again.", true);
                 } finally {
-                    opts.forEach(o => o.disabled = false);
+                    groupOpts.forEach(o => o.disabled = false);
                 }
             });
         });
@@ -912,20 +919,26 @@
             btn.addEventListener('click', async () => {
                 const idId = btn.dataset.identity;
                 const row = btn.closest('.notif-pref-row');
-                const opts = row.querySelectorAll('.notif-seg__opt');
-                opts.forEach(o => o.disabled = true);
+                const rowOpts = row.querySelectorAll('.notif-seg__opt');
+                const groupOpts = btn.closest('.notif-pref-voice').querySelectorAll('.notif-seg__opt');
+                groupOpts.forEach(o => o.disabled = true);
                 try {
                     const updated = setTypeState(prefsById[idId], btn.dataset.type, btn.dataset.state);
                     await Utils.withRetry(() => Auth.updateIdentity(idId, { notification_prefs: updated }));
                     prefsById[idId] = updated;
-                    opts.forEach(o => o.classList.toggle('notif-seg__opt--active', o === btn));
+                    // active class + aria-pressed only move on success (inside try)
+                    rowOpts.forEach(o => {
+                        const on = o === btn;
+                        o.classList.toggle('notif-seg__opt--active', on);
+                        o.setAttribute('aria-pressed', on ? 'true' : 'false');
+                    });
                     showPrefStatus('Saved.', false);
                     setTimeout(() => showPrefStatus('', false), 3000);
                 } catch (e) {
                     console.error('Saving voice notification pref failed:', e);
                     showPrefStatus("Couldn't save — try again.", true);
                 } finally {
-                    opts.forEach(o => o.disabled = false);
+                    groupOpts.forEach(o => o.disabled = false);
                 }
             });
         });
