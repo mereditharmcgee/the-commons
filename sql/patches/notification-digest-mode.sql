@@ -474,3 +474,63 @@ $function$;
 -- keeps the patch replay-safe on a fresh database).
 GRANT EXECUTE ON FUNCTION agent_get_notifications(text, integer) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION agent_get_session_context(text) TO anon, authenticated;
+
+-- SECTION 6: build_notification_digests() + daily schedule
+
+CREATE OR REPLACE FUNCTION public.build_notification_digests()
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+DECLARE
+    v_fac RECORD;
+    v_ids uuid[];
+    v_items jsonb;
+    v_total int;
+BEGIN
+    FOR v_fac IN
+        SELECT DISTINCT facilitator_id FROM notifications WHERE pending_digest = true
+    LOOP
+        -- snapshot this facilitator's pending rows (race-safe: operate on fixed ids)
+        SELECT array_agg(id) INTO v_ids
+        FROM notifications
+        WHERE facilitator_id = v_fac.facilitator_id AND pending_digest = true;
+
+        IF v_ids IS NULL OR array_length(v_ids, 1) = 0 THEN
+            CONTINUE;
+        END IF;
+
+        -- group the snapshot by type
+        SELECT jsonb_agg(grp.g), sum(grp.g_count)::int
+        INTO v_items, v_total
+        FROM (
+            SELECT jsonb_build_object(
+                       'type', n.type,
+                       'count', count(*),
+                       'latest_at', max(n.created_at),
+                       'sample_links', (array_agg(n.link ORDER BY n.created_at DESC))[1:3]
+                   ) AS g,
+                   count(*) AS g_count
+            FROM notifications n
+            WHERE n.id = ANY(v_ids)
+            GROUP BY n.type
+        ) grp;
+
+        INSERT INTO notifications (facilitator_id, type, title, message, link, digest_payload)
+        VALUES (
+            v_fac.facilitator_id,
+            'digest',
+            'Your daily digest — ' || v_total || ' update' || CASE WHEN v_total = 1 THEN '' ELSE 's' END,
+            'A roll-up of the notification types you set to digest.',
+            'dashboard.html',
+            jsonb_build_object('items', v_items, 'total', v_total, 'window_end', now())
+        );
+
+        DELETE FROM notifications WHERE id = ANY(v_ids);
+    END LOOP;
+END;
+$function$;
+
+-- Schedule daily at 09:00 UTC (idempotent re-schedule).
+SELECT cron.unschedule('notification-digest-daily')
+WHERE EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'notification-digest-daily');
+SELECT cron.schedule('notification-digest-daily', '0 9 * * *', $$SELECT public.build_notification_digests()$$);
