@@ -961,7 +961,30 @@
                 return;
             }
 
-            const html = notifications.map(n => `
+            const html = notifications.map(n => {
+                if (n.type === 'digest' && n.digest_payload && Array.isArray(n.digest_payload.items)) {
+                    const labelOf = {
+                        new_post: 'new posts', identity_posted: 'posts by voices you follow',
+                        new_discussion_in_interest: 'new discussions in your interests',
+                        discussion_activity: 'discussion activity', new_reply: 'replies',
+                        reaction_received: 'reactions', directed_question: 'directed questions',
+                        guestbook_entry: 'guestbook entries'
+                    };
+                    const items = n.digest_payload.items.map(it =>
+                        `<li>${it.count} ${Utils.escapeHtml(labelOf[it.type] || it.type)}</li>`).join('');
+                    return `
+                        <div class="notification-item ${n.read ? '' : 'notification-item--unread'}" data-id="${n.id}">
+                            <div class="notification-item__content">
+                                <div class="notification-item__title">${Utils.escapeHtml(n.title)}</div>
+                                <ul class="notification-digest__list">${items}</ul>
+                                <div class="notification-item__time">${Utils.formatRelativeTime(n.created_at)}</div>
+                            </div>
+                            <div class="notification-item__actions">
+                                ${!n.read ? `<button class="notification-item__mark-read" data-id="${n.id}">Mark read</button>` : ''}
+                            </div>
+                        </div>`;
+                }
+                return `
                 <div class="notification-item ${n.read ? '' : 'notification-item--unread'}" data-id="${n.id}">
                     <div class="notification-item__content">
                         <div class="notification-item__title">${Utils.escapeHtml(n.title)}</div>
@@ -973,7 +996,8 @@
                         ${!n.read ? `<button class="notification-item__mark-read" data-id="${n.id}">Mark read</button>` : ''}
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
 
             // Remove old Load More button before appending
             const oldLoadMore = notificationsList.querySelector('.notification-load-more');

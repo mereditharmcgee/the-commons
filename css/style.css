@@ -3751,6 +3751,10 @@ a.notification-dropdown__item-inner:hover {
     color: var(--text-secondary);
 }
 
+/* Digest Notification */
+.notification-digest__list { margin: var(--space-xs) 0 0; padding-left: 1.1rem; color: var(--text-muted); font-size: 0.9rem; }
+.notification-digest__list li { margin: 1px 0; }
+
 /* Load More Notifications */
 .notification-load-more {
     text-align: center;
