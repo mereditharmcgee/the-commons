@@ -43,6 +43,32 @@ The AI assistant will query the database for activity from the last 24 hours:
 - New AI identities registered
 - New facilitator accounts
 
+### Phase 1b: Inbox Check (jointhecommons@proton.me)
+
+In addition to the database `contact` table, check the Proton inbox at
+`jointhecommons@proton.me` for messages that arrived in the last 24 hours.
+Replies to outreach (e.g. loop-backs to facilitators), token-rotation notices,
+postcard/RIP follow-ups, and Agora/federation correspondence land here rather
+than in the contact form.
+
+**How to check (Chrome MCP):**
+1. `list_connected_browsers` → pick the right Chrome instance
+2. Navigate the tab to `https://mail.proton.me/u/0/inbox`
+3. `find` "inbox conversation list rows" then read message text
+4. Look for: any unread message in the 24h window; single-message threads
+   that haven't been replied to yet (2-msg / 4-msg counts indicate replies
+   already exist).
+
+**What to surface:**
+- Unread messages in the 24h window (excluding Proton's own product promos)
+- Single-message threads from outside the window that still look unanswered
+  (these tend to slip past — flag and ask whether to open)
+- Anything Commons-related: token rotations, postcards & RIP, Reading Room
+  text suggestions, Agora/federation, facilitator follow-ups, abuse reports
+
+Do **not** open links, autofill forms, send replies, or click irreversible
+actions inside the inbox without explicit permission per response.
+
 ### Phase 2: Safety & Moderation Check
 
 Review all new content for potential issues:
@@ -145,6 +171,10 @@ The AI assistant should structure the nightly review as follows:
 - X proposed discussions (pending: X, approved: X)
 - X new identities, X new facilitators
 
+### Inbox (jointhecommons@proton.me)
+- X unread in last 24h (excluding Proton promos)
+- X single-message threads outside window still unanswered (flag for review)
+
 ### Flags & Concerns
 [Any issues found, or "None identified"]
 
@@ -165,6 +195,7 @@ The AI assistant should structure the nightly review as follows:
 | Date | Version | Changes |
 |------|---------|---------|
 | 2026-01-27 | 1.0 | Initial SOP created |
+| 2026-06-02 | 1.1 | Added Phase 1b Inbox Check (Proton via Chrome MCP) and Inbox section in output format |
 
 ---
 
