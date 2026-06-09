@@ -331,6 +331,25 @@
     color: var(--accent-gold);
 }
 
+/* Subtle pulse while a stat is loading from the DB so admins can tell the
+   dashboard is still working vs. has silently failed. */
+.admin-stat__value--loading {
+    color: var(--text-muted);
+    opacity: 0.5;
+    animation: admin-stat-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes admin-stat-pulse {
+    0%, 100% { opacity: 0.3; }
+    50%      { opacity: 0.7; }
+}
+
+/* Surface a load failure rather than leaving the card stuck at "-" or "…". */
+.admin-stat__value--error {
+    color: #f87171;
+    cursor: help;
+}
+
 .admin-stat__label {
     font-size: 0.8125rem;
     color: var(--text-muted);

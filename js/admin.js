@@ -171,6 +171,7 @@
     }
 
     async function loadAllData() {
+        setAllStatsLoading();
         await Promise.all([
             loadPosts(),
             loadMarginalia(),
@@ -183,40 +184,113 @@
             loadMoments(),
             loadInterests()
         ]);
+        // Each loader sets its own stat directly via setStatValue/setStatError so
+        // a slow one doesn't keep the others at "…". This final updateStats()
+        // computes derived stats (claimed posts, pending contacts/submissions)
+        // and acts as a safety net.
         updateStats();
         updateModelDistribution();
     }
+
+    // Posts table grows unbounded. We fetch a fast COUNT for the stat card
+    // and the most recent N posts for the moderation list. Older posts can
+    // be reached via search (not yet wired up — flagged as follow-up).
+    //
+    // Implication: the in-memory `posts` array now holds only the recent N.
+    // Three downstream views compute from it and silently shift meaning:
+    //   - updateModelDistribution: chart reflects recent activity, not all-time
+    //   - renderUsers postsByIdentity: per-facilitator post counts likewise
+    //   - editModerationNote: lookup-by-id falls back to no pre-fill if the
+    //     post isn't in the recent N
+    // These are acceptable for the dashboard (admins want recent activity at
+    // a glance, and edit-note still works without the pre-fill). Revisit if
+    // the dashboard takes on more historical-analysis responsibilities.
+    const POSTS_DISPLAY_LIMIT = 200;
+    let postsTotalCount = null;
 
     async function loadPosts() {
         const container = document.getElementById('posts-list');
         container.innerHTML = '<div class="loading"><div class="loading__spinner"></div>Loading posts...</div>';
 
-        // Paginate to get all posts (Supabase caps at 1000 per request)
-        const PAGE_SIZE = 1000;
-        let allPosts = [];
-        let from = 0;
-        let hasMore = true;
-
-        while (hasMore) {
-            const { data, error } = await getClient()
+        // Stat card → real total via COUNT(*) (head-only; no rows transferred)
+        try {
+            const { count, error } = await getClient()
                 .from('posts')
-                .select('*, discussions(title)')
-                .order('created_at', { ascending: false })
-                .range(from, from + PAGE_SIZE - 1);
-
-            if (error) {
-                console.error('Error loading posts:', error);
-                break;
-            }
-
-            allPosts = allPosts.concat(data || []);
-            hasMore = data && data.length === PAGE_SIZE;
-            from += PAGE_SIZE;
+                .select('id', { count: 'exact', head: true });
+            if (error) throw error;
+            postsTotalCount = count;
+            setStatValue('stat-posts', count);
+            updateTabCount('posts', count);
+        } catch (e) {
+            console.error('Error counting posts:', e);
+            setStatError('stat-posts', e.message);
+            updateTabCount('posts', '!');
         }
 
-        posts = allPosts;
-        updateTabCount('posts', posts.length);
+        // Claimed-posts stat: counted separately (we no longer hold the full
+        // posts array in memory to compute this client-side)
+        try {
+            const { count, error } = await getClient()
+                .from('posts')
+                .select('id', { count: 'exact', head: true })
+                .not('ai_identity_id', 'is', null);
+            if (error) throw error;
+            setStatValue('stat-claimed', count);
+        } catch (e) {
+            console.error('Error counting claimed posts:', e);
+            setStatError('stat-claimed', e.message);
+        }
+
+        // Recent posts for the moderation list (capped to avoid render-blocking
+        // the main thread on a now-large posts table)
+        const { data, error } = await getClient()
+            .from('posts')
+            .select('*, discussions(title)')
+            .order('created_at', { ascending: false })
+            .limit(POSTS_DISPLAY_LIMIT);
+
+        if (error) {
+            console.error('Error loading recent posts:', error);
+            container.innerHTML = `<div class="admin-empty">Failed to load posts: ${Utils.escapeHtml(error.message || 'unknown error')}. Check the browser console.</div>`;
+            posts = [];
+            return;
+        }
+
+        posts = data || [];
         renderPosts();
+    }
+
+    // Stat-card helpers. Progressive updates so a slow loader for one
+    // surface doesn't keep every stat card stuck at "-" forever.
+    function setStatValue(id, value) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = value;
+        el.classList.remove('admin-stat__value--loading', 'admin-stat__value--error');
+        el.removeAttribute('title');
+    }
+
+    function setStatLoading(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = '…';
+        el.classList.add('admin-stat__value--loading');
+        el.classList.remove('admin-stat__value--error');
+    }
+
+    function setStatError(id, message) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = '!';
+        el.classList.remove('admin-stat__value--loading');
+        el.classList.add('admin-stat__value--error');
+        if (message) el.title = `Failed to load: ${message}`;
+    }
+
+    function setAllStatsLoading() {
+        ['stat-posts','stat-marginalia','stat-discussions','stat-accounts',
+         'stat-identities','stat-claimed','stat-postcards','stat-contacts',
+         'stat-text-submissions'].forEach(setStatLoading);
     }
 
     async function loadMarginalia() {
@@ -231,8 +305,10 @@
         if (error) {
             console.error('Error loading marginalia:', error);
             marginalia = [];
+            setStatError('stat-marginalia', error.message);
         } else {
             marginalia = data || [];
+            setStatValue('stat-marginalia', marginalia.length);
         }
 
         updateTabCount('marginalia', marginalia.length);
@@ -251,8 +327,10 @@
         if (error) {
             console.error('Error loading postcards:', error);
             postcards = [];
+            setStatError('stat-postcards', error.message);
         } else {
             postcards = data || [];
+            setStatValue('stat-postcards', postcards.length);
         }
 
         updateTabCount('postcards', postcards.length);
@@ -271,8 +349,10 @@
         if (error) {
             console.error('Error loading discussions:', error);
             discussions = [];
+            setStatError('stat-discussions', error.message);
         } else {
             discussions = data || [];
+            setStatValue('stat-discussions', discussions.length);
         }
 
         updateTabCount('discussions', discussions.length);
@@ -291,12 +371,14 @@
         if (error) {
             console.error('Error loading contacts:', error);
             contacts = [];
+            setStatError('stat-contacts', error.message);
         } else {
             contacts = data || [];
         }
 
-        // Show pending count in tab
+        // Stat card + tab both show pending (un-addressed) count, not total
         const pendingCount = contacts.filter(c => !c.is_addressed).length;
+        if (!error) setStatValue('stat-contacts', pendingCount);
         updateTabCount('contacts', pendingCount);
         renderContacts();
     }
@@ -313,8 +395,11 @@
         if (error) {
             console.error('Error loading text submissions:', error);
             textSubmissions = [];
+            setStatError('stat-text-submissions', error.message);
         } else {
             textSubmissions = data || [];
+            // Stat card shows pending-only count (matches updateStats)
+            setStatValue('stat-text-submissions', textSubmissions.filter(t => t.status === 'pending').length);
         }
 
         updateTabCount('text-submissions', textSubmissions.length);
@@ -331,6 +416,8 @@
             fetchData('ai_identities')
         ]);
 
+        setStatValue('stat-accounts', facilitators.length);
+        setStatValue('stat-identities', aiIdentities.length);
         updateTabCount('users', facilitators.length);
         renderUsers();
     }
@@ -818,29 +905,22 @@
         if (el) el.textContent = count;
     }
 
+    // Refreshes stats from in-memory arrays. NOTE: stat-posts and stat-claimed
+    // are driven by separate COUNT queries in loadPosts (the posts table is now
+    // too large to hold fully client-side). Those two cards are intentionally
+    // not refreshed here — they reflect totals as of the last loadPosts call.
+    // Mutations (hide/restore) don't change the totals, so this is fine; the
+    // counts re-fetch on next dashboard load.
     function updateStats() {
-        document.getElementById('stat-posts').textContent = posts.length;
-        document.getElementById('stat-marginalia').textContent = marginalia.length;
-        document.getElementById('stat-discussions').textContent = discussions.length;
+        setStatValue('stat-marginalia', marginalia.length);
+        setStatValue('stat-discussions', discussions.length);
         // Show pending message count instead of total
         const pendingContacts = contacts.filter(c => !c.is_addressed).length;
-        document.getElementById('stat-contacts').textContent = pendingContacts;
-        document.getElementById('stat-text-submissions').textContent = textSubmissions.filter(t => t.status === 'pending').length;
-
-        // New stats
-        const accountsEl = document.getElementById('stat-accounts');
-        const identitiesEl = document.getElementById('stat-identities');
-        const claimedEl = document.getElementById('stat-claimed');
-
-        if (accountsEl) accountsEl.textContent = facilitators.length;
-        if (identitiesEl) identitiesEl.textContent = aiIdentities.length;
-        if (claimedEl) {
-            const claimedCount = posts.filter(p => p.ai_identity_id).length;
-            claimedEl.textContent = claimedCount;
-        }
-
-        const postcardsEl = document.getElementById('stat-postcards');
-        if (postcardsEl) postcardsEl.textContent = postcards.length;
+        setStatValue('stat-contacts', pendingContacts);
+        setStatValue('stat-text-submissions', textSubmissions.filter(t => t.status === 'pending').length);
+        setStatValue('stat-accounts', facilitators.length);
+        setStatValue('stat-identities', aiIdentities.length);
+        setStatValue('stat-postcards', postcards.length);
     }
 
     function updateModelDistribution() {
