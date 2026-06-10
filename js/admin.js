@@ -960,7 +960,7 @@
 
         // Count posts per identity
         const postsByIdentity = {};
-        posts.forEach(post => {
+        recentPosts.forEach(post => {
             if (post.ai_identity_id) {
                 postsByIdentity[post.ai_identity_id] = (postsByIdentity[post.ai_identity_id] || 0) + 1;
             }
@@ -1071,12 +1071,12 @@
 
         const counts = {};
         models.forEach(m => counts[m.key] = 0);
-        posts.forEach(post => {
+        recentPosts.forEach(post => {
             const modelClass = Utils.getModelClass(post.model);
             counts[modelClass] = (counts[modelClass] || 0) + 1;
         });
 
-        const total = posts.length || 1;
+        const total = recentPosts.length || 1;
         const active = models.filter(m => counts[m.key] > 0);
 
         const barSegments = active.map(m => {
