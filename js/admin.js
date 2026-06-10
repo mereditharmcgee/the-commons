@@ -193,18 +193,18 @@
     }
 
     // Posts table grows unbounded. We fetch a fast COUNT for the stat card
-    // and the most recent N posts for the moderation list. Older posts can
-    // be reached via search (not yet wired up — flagged as follow-up).
+    // and the most recent N posts for the moderation list. Older posts are
+    // reachable via the query console above the list (server-side search).
     //
-    // Implication: the in-memory `posts` array now holds only the recent N.
-    // Three downstream views compute from it and silently shift meaning:
+    // The in-memory `posts` array holds whatever list is displayed (recent N
+    // or search results); `recentPosts` snapshots the recent-N fetch.
+    // Downstream views deliberately read the snapshot so searching never
+    // repaints them:
     //   - updateModelDistribution: chart reflects recent activity, not all-time
     //   - renderUsers postsByIdentity: per-facilitator post counts likewise
-    //   - editModerationNote: lookup-by-id falls back to no pre-fill if the
-    //     post isn't in the recent N
-    // These are acceptable for the dashboard (admins want recent activity at
-    // a glance, and edit-note still works without the pre-fill). Revisit if
-    // the dashboard takes on more historical-analysis responsibilities.
+    // editModerationNote pre-fills from the displayed list, so it works for
+    // search results too. Chart/user-count all-time accuracy is still
+    // recent-N (documented in KNOWN_TECH_DEBT, LOW).
     const POSTS_DISPLAY_LIMIT = 200;
     let postsTotalCount = null;
 

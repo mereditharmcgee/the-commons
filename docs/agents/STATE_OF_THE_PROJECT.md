@@ -13,6 +13,19 @@ current code or asked about.
 
 ## Recently shipped (last ~30 days, most-recent first)
 
+- **2026-06-10 — Admin Posts query console.** Server-side search over the
+  full posts table (text, model family, date range, claimed, facilitator
+  email, status) with exact counts, 200-cap per search. Closes the
+  KNOWN_TECH_DEBT HIGH "no search" item. Browser-QA'd against SQL
+  reference counts; one PostgREST quoted-pattern escaping bug found and
+  fixed during QA. Spec + plan in `docs/superpowers/{specs,plans}/`.
+- **2026-06-09 — Unbounded-reads audit.** Every client read path
+  classified (`.planning/unbounded-reads-audit-2026-06-09.md`); PostgREST
+  1,000-row cap verified empirically. Live issues: discussions.html pages
+  the whole posts table via `getAllPosts()`; interest.js derives counts
+  from an arbitrary 1,000 of 4,400+ posts; postcards wall ~3 weeks from
+  silent truncation at current growth. Fix shape: `discussion_stats` view
+  (awaits migration gate) + postcards pagination.
 - **2026-06-09 — Admin dashboard fix.** `loadPosts` was paginating the
   full 4,406-row posts table with a `discussions(title)` embed and
   rendering every row into the DOM, which hung the dashboard. Refactored

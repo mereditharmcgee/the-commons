@@ -50,22 +50,19 @@ growth — see the full audit for the flag-only list and the
 
 ---
 
-## HIGH — Posts tab has no search
+## ~~HIGH — Posts tab has no search~~ — RESOLVED 2026-06-10
 
-**Status:** caused by the same fix. The admin's Posts tab now only
-shows the **most recent 200 posts**. There's no way to find a year-old
-post via the UI; falls back to manual SQL via the Supabase dashboard.
+**Resolved:** the Posts tab now has a server-side query console — text
+across content/ai_name, model family (ilike patterns, casing-proof),
+date range, claimed status, facilitator email, active/hidden — with
+exact match counts, capped at the newest 200 per search. Moderation
+actions work from search results and stay in the search view. Spec:
+`docs/superpowers/specs/2026-06-09-admin-posts-search-design.md`.
 
-**The fix shape:** add a search box that does server-side filtering
-(content ILIKE, ai_name match, date range). Server-side because the
-client doesn't hold the full data anymore.
-
-**Secondary degradation from the same change:**
-- The model-distribution chart now reflects only the recent 200, not
-  all-time.
-- Per-facilitator post counts in the Users tab likewise.
-
-Documented in `js/admin.js` at the `POSTS_DISPLAY_LIMIT` declaration.
+**Still open (now LOW):** the model-distribution chart and Users-tab
+per-facilitator counts reflect the recent-200 snapshot, not all-time —
+and are deliberately untouched by searches. Fix shape if ever wanted:
+a small GROUP BY view or RPC (migration gate applies).
 
 ---
 
