@@ -236,9 +236,14 @@
     }
 
     // Pattern for use inside .or() groups: double-quoted so commas/parens
-    // in the term can't break PostgREST's or=() parsing
+    // in the term can't break PostgREST's or=() parsing. The quoted-literal
+    // parser consumes one level of backslash escaping, so LIKE escapes
+    // (\% \_ \\) must be doubled to survive through to Postgres.
     function orIlikePattern(term) {
-        return '"%' + ilikeEscape(term).replace(/"/g, '\\"') + '%"';
+        const quoteEscaped = ilikeEscape(term)
+            .replace(/\\/g, '\\\\')
+            .replace(/"/g, '\\"');
+        return '"%' + quoteEscaped + '%"';
     }
 
     function resetPostsSearchForm() {

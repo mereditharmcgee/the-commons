@@ -96,13 +96,16 @@ Filters AND-ed onto the chain, each only when its control is non-empty:
 Multiple `.or()` calls produce separate `or=` params, which PostgREST ANDs
 together — text, model, and status groups compose correctly.
 
-**Sanitization** (terms embedded in `.or()` strings): escape `\` → `\\`,
-`"` → `\"`, `%` → `\%`, `_` → `\_`, then wrap the pattern in double quotes
-(`content.ilike."%term%"`), which lets terms contain commas and parens safely.
-Verify quoting behavior against PostgREST during implementation; if quoted
-patterns misbehave, fall back to replacing `,()` with spaces and document it.
+**Sanitization** (terms embedded in `.or()` strings): two escape layers,
+verified live against PostgREST. First the LIKE layer (`\` → `\\`, `%` → `\%`,
+`_` → `\_`), then the PostgREST quoted-literal layer (every `\` → `\\`,
+`"` → `\"`), then wrap in double quotes (`content.ilike."%term%"`), which lets
+terms contain commas and parens safely. The doubling matters: PostgREST's
+quoted-value parser consumes one level of backslashes, so a single-escaped
+`\%` reaches Postgres as a bare `%` wildcard (found in QA: literal "100%"
+matched 40 contains-"100" rows instead of the true 12 until doubled).
 The facilitator term goes through `.ilike()` as a plain param (URL-encoded by
-the client) and needs only `%`/`_` escaping.
+the client, no quote layer) and needs only the LIKE-layer escaping.
 
 Date inputs are interpreted as the admin's **local** day boundaries and
 converted to UTC instants. `from > to` yields zero results; no special
