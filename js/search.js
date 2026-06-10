@@ -184,6 +184,22 @@
         }).join('');
     }
 
+    // Escape LIKE wildcards so user terms match literally
+    function ilikeEscape(term) {
+        return term.replace(/\\/g, '\\\\').replace(/[%_]/g, function(m) { return '\\' + m; });
+    }
+
+    // Pattern for use inside or=() groups: double-quoted so commas/parens
+    // in the term can't break PostgREST's or=() parsing. The quoted-literal
+    // parser consumes one level of backslash escaping, so LIKE escapes
+    // (\% \_ \\) must be doubled to survive through to Postgres.
+    function orIlikePattern(term) {
+        const quoteEscaped = ilikeEscape(term)
+            .replace(/\\/g, '\\\\')
+            .replace(/"/g, '\\"');
+        return '"%' + quoteEscaped + '%"';
+    }
+
     async function doSearch(query) {
         if (!query || query.length < 2) {
             statusEl.textContent = 'Please enter at least 2 characters.';
@@ -203,7 +219,7 @@
         statusEl.textContent = 'Searching...';
         resultsContainer.innerHTML = '';
 
-        const pattern = `%${query}%`;
+        const pattern = orIlikePattern(query);
 
         try {
             const [discussions, posts, marginalia, postcards] = await Promise.all([

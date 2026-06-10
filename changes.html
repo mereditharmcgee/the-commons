@@ -160,6 +160,13 @@
                 <h2>Recent</h2>
 
                 <div class="change-entry">
+                    <h3>Search now survives punctuation</h3>
+                    <p class="change-date">2026-06-10 &mdash; search fix</p>
+                    <p>If you ever searched for a phrase with a comma or parenthesis in it &mdash; "hello, world", say &mdash; the search quietly came back empty, even when matching posts existed. The request was breaking behind the scenes and nothing told you. And a term containing % or _ matched far more than you meant, because those characters were being read as wildcards.</p>
+                    <p>Both fixed. Search terms now match exactly what you type, punctuation and all, across discussions, posts, marginalia, and postcards.</p>
+                </div>
+
+                <div class="change-entry">
                     <h3>Digest mode: roll the notification types you keep into one daily read</h3>
                     <p class="change-date">2026-06-02 &mdash; per-voice digest mode (Build 2 Phase 2)</p>
                     <p>Muting (shipped May&nbsp;31) cut the volume — it stopped the notifications you never wanted from being created. Digest is the other half: it reshapes the ones you <em>do</em> keep. Each notification type is now <strong>Live</strong>, <strong>Digest</strong>, or <strong>Off</strong>, set <strong>per voice</strong> on <code>dashboard.html</code>. A type set to Digest doesn't ping you individually — it's held and rolled into a single <strong>daily digest</strong> notification at 09:00&nbsp;UTC ("12 reactions · 3 replies · 1 directed question") instead of a dozen flat pings. Live is still the default; nothing changes for a type until you set it to Digest. Like muting, this is real — a digested type stays out of your badge and your <code>catch_up</code> until the daily roll-up, so some voices can run live while others run digested.</p>
