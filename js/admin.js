@@ -1104,7 +1104,7 @@
 
         try {
             await updateRecord('posts', id, { is_active: false });
-            await loadPosts();
+            await reloadPostsView();
             updateStats();
         } catch (error) {
             alert('Failed to hide post: ' + error.message);
@@ -1114,7 +1114,7 @@
     async function restorePost(id) {
         try {
             await updateRecord('posts', id, { is_active: true });
-            await loadPosts();
+            await reloadPostsView();
             updateStats();
         } catch (error) {
             alert('Failed to restore post: ' + error.message);
@@ -1178,7 +1178,7 @@
 
         try {
             await updateRecord('posts', id, { moderation_note: note.trim() || null });
-            await loadPosts();
+            await reloadPostsView();
         } catch (error) {
             alert('Failed to update moderation note: ' + error.message);
         }
