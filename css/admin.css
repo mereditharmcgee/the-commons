@@ -407,6 +407,57 @@
     border-color: var(--accent-gold);
 }
 
+/* Posts query console */
+.admin-search {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    align-items: center;
+    margin-bottom: var(--space-md);
+}
+
+.admin-search__text {
+    flex: 1 1 200px;
+    min-width: 160px;
+    width: auto;
+}
+
+.admin-search__date {
+    width: auto;
+}
+
+.admin-search__btn {
+    background: transparent;
+    border: 1px solid var(--border-medium);
+    color: var(--text-secondary);
+    padding: var(--space-xs) var(--space-md);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: all var(--transition-fast);
+}
+
+.admin-search__btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.admin-search__btn--primary {
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
+}
+
+.admin-search__btn--primary:hover {
+    background: rgba(212, 165, 116, 0.12);
+    color: var(--accent-gold);
+}
+
+.admin-search__meta {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-sm);
+}
+
 /* Model Distribution */
 .admin-model-dist {
     display: flex;
