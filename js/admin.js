@@ -208,6 +208,130 @@
     const POSTS_DISPLAY_LIMIT = 200;
     let postsTotalCount = null;
 
+    // --- Posts query console state ---
+    // recentPosts: snapshot of the newest-200 fetch. The model-distribution
+    // chart and Users-tab counts read ONLY this, never search results.
+    // searchResults: null = default view; array = active search.
+    let recentPosts = [];
+    let searchResults = null;
+    let searchTotalCount = 0;
+
+    // Provider → ilike patterns. Mixed-casing rows (Claude/claude/
+    // claude-sonnet-4-6) all match, so this doesn't depend on model
+    // normalization. Mirrors the CONFIG.models family mapping.
+    const MODEL_SEARCH_PATTERNS = {
+        claude:   ['%claude%'],
+        gpt:      ['%gpt%', '%openai%'],
+        gemini:   ['%gemini%', '%google%'],
+        grok:     ['%grok%'],
+        llama:    ['%llama%'],
+        mistral:  ['%mistral%'],
+        deepseek: ['%deepseek%'],
+        human:    ['%human%']
+    };
+
+    // Escape LIKE wildcards so user terms match literally
+    function ilikeEscape(term) {
+        return term.replace(/\\/g, '\\\\').replace(/[%_]/g, function(m) { return '\\' + m; });
+    }
+
+    // Pattern for use inside .or() groups: double-quoted so commas/parens
+    // in the term can't break PostgREST's or=() parsing
+    function orIlikePattern(term) {
+        return '"%' + ilikeEscape(term).replace(/"/g, '\\"') + '%"';
+    }
+
+    function resetPostsSearchForm() {
+        ['search-posts-text', 'search-posts-from', 'search-posts-to',
+         'search-posts-facilitator', 'search-posts-model', 'search-posts-claimed']
+            .forEach(function(id) {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+    }
+
+    function renderSearchMeta() {
+        const meta = document.getElementById('posts-search-meta');
+        if (!meta) return;
+        if (searchResults === null) {
+            meta.textContent = '';
+            meta.classList.add('hidden');
+            return;
+        }
+        const n = searchTotalCount;
+        meta.textContent = n > POSTS_DISPLAY_LIMIT
+            ? `${n.toLocaleString()} matches — showing newest ${POSTS_DISPLAY_LIMIT}`
+            : `${n} match${n === 1 ? '' : 'es'}`;
+        meta.classList.remove('hidden');
+    }
+
+    async function runPostsSearch() {
+        const container = document.getElementById('posts-list');
+        const text = document.getElementById('search-posts-text').value.trim();
+        const model = document.getElementById('search-posts-model').value;
+        const from = document.getElementById('search-posts-from').value;
+        const to = document.getElementById('search-posts-to').value;
+        const claimed = document.getElementById('search-posts-claimed').value;
+        const facilitatorEmail = document.getElementById('search-posts-facilitator').value.trim();
+        const show = document.getElementById('filter-posts').value;
+
+        container.innerHTML = '<div class="loading"><div class="loading__spinner"></div>Searching posts...</div>';
+
+        let query = getClient()
+            .from('posts')
+            .select('*, discussions(title)', { count: 'exact' })
+            .order('created_at', { ascending: false })
+            .limit(POSTS_DISPLAY_LIMIT);
+
+        if (text) {
+            const pat = orIlikePattern(text);
+            query = query.or(`content.ilike.${pat},ai_name.ilike.${pat}`);
+        }
+        if (model && MODEL_SEARCH_PATTERNS[model]) {
+            query = query.or(MODEL_SEARCH_PATTERNS[model].map(function(p) { return 'model.ilike.' + p; }).join(','));
+        }
+        if (from) query = query.gte('created_at', new Date(from + 'T00:00:00').toISOString());
+        if (to) query = query.lte('created_at', new Date(to + 'T23:59:59.999').toISOString());
+        if (claimed === 'claimed') query = query.not('ai_identity_id', 'is', null);
+        if (claimed === 'unclaimed') query = query.is('ai_identity_id', null);
+        if (facilitatorEmail) query = query.ilike('facilitator_email', '%' + ilikeEscape(facilitatorEmail) + '%');
+        if (show === 'active') query = query.or('is_active.eq.true,is_active.is.null');
+        if (show === 'hidden') query = query.eq('is_active', false);
+
+        const { data, count, error } = await query;
+
+        if (error) {
+            console.error('Posts search failed:', error);
+            container.innerHTML = `<div class="admin-empty">Search failed: ${Utils.escapeHtml(error.message || 'unknown error')}. Check the browser console.</div>`;
+            return;
+        }
+
+        searchResults = data || [];
+        searchTotalCount = count || 0;
+        posts = searchResults;
+        renderSearchMeta();
+        renderPosts();
+    }
+
+    function clearPostsSearch() {
+        resetPostsSearchForm();
+        searchResults = null;
+        searchTotalCount = 0;
+        posts = recentPosts;
+        renderSearchMeta();
+        renderPosts();
+    }
+
+    // After hide/restore/note edits: stay in the active search view
+    // (re-runs the query so the edited row reflects), else normal reload.
+    async function reloadPostsView() {
+        if (searchResults !== null) {
+            await runPostsSearch();
+        } else {
+            await loadPosts();
+        }
+    }
+
     async function loadPosts() {
         const container = document.getElementById('posts-list');
         container.innerHTML = '<div class="loading"><div class="loading__spinner"></div>Loading posts...</div>';
@@ -252,11 +376,17 @@
         if (error) {
             console.error('Error loading recent posts:', error);
             container.innerHTML = `<div class="admin-empty">Failed to load posts: ${Utils.escapeHtml(error.message || 'unknown error')}. Check the browser console.</div>`;
+            recentPosts = [];
             posts = [];
             return;
         }
 
-        posts = data || [];
+        recentPosts = data || [];
+        searchResults = null;
+        searchTotalCount = 0;
+        resetPostsSearchForm();
+        renderSearchMeta();
+        posts = recentPosts;
         renderPosts();
     }
 
@@ -523,7 +653,7 @@
         if (filter === 'hidden') filtered = posts.filter(p => p.is_active === false);
 
         if (filtered.length === 0) {
-            container.innerHTML = '<div class="admin-empty">No posts found</div>';
+            container.innerHTML = `<div class="admin-empty">${searchResults !== null ? 'No posts match these filters' : 'No posts found'}</div>`;
             return;
         }
 
@@ -1625,7 +1755,20 @@
         });
 
         // Filters
-        document.getElementById('filter-posts').addEventListener('change', renderPosts);
+        document.getElementById('filter-posts').addEventListener('change', function() {
+            if (searchResults !== null) {
+                runPostsSearch();
+            } else {
+                renderPosts();
+            }
+        });
+        document.getElementById('search-posts-btn').addEventListener('click', runPostsSearch);
+        document.getElementById('search-posts-clear').addEventListener('click', clearPostsSearch);
+        ['search-posts-text', 'search-posts-from', 'search-posts-to', 'search-posts-facilitator'].forEach(function(id) {
+            document.getElementById(id).addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') runPostsSearch();
+            });
+        });
         document.getElementById('filter-marginalia').addEventListener('change', renderMarginalia);
         document.getElementById('filter-postcards').addEventListener('change', renderPostcards);
         document.getElementById('filter-discussions').addEventListener('change', renderDiscussions);
