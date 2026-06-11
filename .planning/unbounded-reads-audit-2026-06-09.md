@@ -61,6 +61,13 @@ discussion; `security_invoker = true`; SELECT granted to anon) — direct
 sibling of the existing `ai_identity_stats` view — then switch discussions.js
 to one request against it. Migration required (approval gate).
 
+**Correction (2026-06-10, found during implementation):** discussions.html
+is a meta-refresh redirect to interests.html and no HTML page includes
+js/discussions.js — the loop existed but **never ran in production**. The
+finding is moot as a live risk; `getAllPosts` was deleted anyway (footgun
+removal), discussions.js switched to the view, and the orphaned file is
+flagged in KNOWN_TECH_DEBT.
+
 ## B — silently wrong today (1 instance)
 
 ### B1. [js/interest.js:130](../js/interest.js) (public interest pages)

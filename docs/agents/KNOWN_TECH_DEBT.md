@@ -8,45 +8,43 @@ If you're picking a first task, the HIGH items are where to start.
 
 ---
 
-## HIGH — load patterns at risk of the admin-dashboard hang
+## ~~HIGH — load patterns at risk of the admin-dashboard hang~~ — RESOLVED 2026-06-10
 
-**Status:** audit completed 2026-06-09 — full table with every call site in
-[.planning/unbounded-reads-audit-2026-06-09.md](../../.planning/unbounded-reads-audit-2026-06-09.md).
-The `loadPosts` instance was fixed 2026-06-09 (commit `fac1167`).
+**All four audit findings fixed** (audit:
+[.planning/unbounded-reads-audit-2026-06-09.md](../../.planning/unbounded-reads-audit-2026-06-09.md);
+spec + plan in `docs/superpowers/{specs,plans}/2026-06-10-audit-followups*`):
 
-**Key fact the original entry missed:** PostgREST on this project caps every
-request at **1,000 rows** (Supabase `db-max-rows` default; verified
-empirically). A single unbounded `.select()` or `Utils.get()` cannot hang
-the browser — it **silently truncates**. Only pagination loops fetch
-unboundedly. The risk therefore splits:
+- **A1 — `Utils.getAllPosts()` pagination loop:** deleted. Correction found
+  during implementation: discussions.html is a redirect stub to
+  interests.html and **no page loaded discussions.js** — the loop was a dead
+  footgun that never ran in production (see the LOW entry below).
+- **B1 — interest-page counts wrong:** fixed via the new `discussion_stats`
+  view (`security_invoker`, visible-posts semantics; patch
+  `sql/patches/discussion-stats-view.sql`). Verified live: "Open Letters"
+  showed 17 responses; true count 127.
+- **C1 — public postcards wall at the 1,000-row cap (793 when fixed):**
+  server-side pagination, PAGE_SIZE 20, totals via the new
+  `Utils.getCount()` HEAD helper; Copy Context fetches its own recent-15.
+- **C2 — admin postcards tab:** count-and-cap 200 (`fac1167` pattern);
+  `stat-postcards` now exempt from `updateStats()` like stat-posts.
 
-- **Hang class (pagination loop) — 1 instance left.** `Utils.getAllPosts()`
-  (utils.js:229) pages through the entire posts table — 4,410 rows in 5
-  sequential requests — on every load of the **public discussions page**
-  (discussions.js:20), to derive per-discussion post counts and
-  last-activity. Same shape that hung the admin dashboard; degrades
-  linearly with total posts forever.
-- **Wrong-data class (cap truncation) — live today.** interest.js:130
-  fetches `posts?select=id,discussion_id` with no filter/order/limit → an
-  arbitrary 1,000 of 4,410 rows (soft-deleted included) → **per-discussion
-  post counts on interest pages are wrong right now.**
+The 1,000-row-cap fact and the flag-only D-list (per-thread getPosts,
+admin render-all tabs under 1k, news.js N+1, etc.) stay documented in the
+audit doc — none urgent.
 
-**The fix shape for both:** a `discussion_stats` view (`post_count`,
-`last_post_at` per discussion; `security_invoker`; SELECT to anon) —
-sibling of the existing `ai_identity_stats` view — then point
-discussions.js and interest.js at it. One migration (approval gate) + two
-small JS changes.
+---
 
-**Approaching the cap:** postcards is at 782 of 1,000 — and 309 were
-created in the last 30 days, so truncation begins in **~3 weeks** at the
-current rate. postcards.js:119 (public wall) and admin `loadPostcards` both
-fetch all active postcards; past 1,000 the oldest silently vanish. Fix:
-server-side pagination (public, chat.js pattern); count + cap 200 (admin,
-`fac1167` pattern).
+## LOW — discussions.html is a redirect stub; js/discussions.js is orphaned
 
-Everything else audited is bounded by scope or far from the cap at current
-growth — see the full audit for the flag-only list and the
-"already correct" inventory.
+**Status:** discovered 2026-06-10. The interests rework left
+discussions.html as a meta-refresh redirect to interests.html, and no HTML
+page includes js/discussions.js. The JS file is maintained-but-dead (it was
+switched to `discussion_stats` so it stays correct if ever re-linked).
+
+**The fix shape:** decide whether the redirect page stays (inbound links
+exist in the wild — keep it) and delete js/discussions.js, or re-link a
+real page. Also update CLAUDE.md's page map, which still describes
+discussions.html as the live discussion list.
 
 ---
 

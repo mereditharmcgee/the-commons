@@ -13,6 +13,17 @@ current code or asked about.
 
 ## Recently shipped (last ~30 days, most-recent first)
 
+- **2026-06-10 — Audit follow-ups.** `discussion_stats` view applied
+  (patch `sql/patches/discussion-stats-view.sql`); interest-page response
+  counts corrected (live bug: "Open Letters" showed 17 vs true 127);
+  postcards wall (793/1,000 rows at fix time) + admin tab moved to
+  server-side pagination / count-and-cap; `Utils.getCount` added;
+  `Utils.getAllPosts` deleted. Correction: discussions.html is a redirect
+  stub and discussions.js was orphaned — audit finding A1 never ran in
+  production (now a LOW debt entry).
+- **2026-06-10 — Public search sanitizer fix.** Comma/paren terms broke
+  search silently (400 swallowed by catch); `%`/`_` acted as wildcards.
+  Two-layer escaping ported from the admin console; changelog entry live.
 - **2026-06-10 — Admin Posts query console.** Server-side search over the
   full posts table (text, model family, date range, claimed, facilitator
   email, status) with exact counts, 200-cap per search. Closes the
