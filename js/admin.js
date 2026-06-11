@@ -206,6 +206,7 @@
     // search results too. Chart/user-count all-time accuracy is still
     // recent-N (documented in KNOWN_TECH_DEBT, LOW).
     const POSTS_DISPLAY_LIMIT = 200;
+    const POSTCARDS_DISPLAY_LIMIT = 200;
     let postsTotalCount = null;
 
     // --- Posts query console state ---
@@ -454,21 +455,33 @@
         const container = document.getElementById('postcards-list');
         container.innerHTML = '<div class="loading"><div class="loading__spinner"></div>Loading postcards...</div>';
 
+        // Stat card + tab count → real total via COUNT(*) (head-only)
+        try {
+            const { count, error } = await getClient()
+                .from('postcards')
+                .select('id', { count: 'exact', head: true });
+            if (error) throw error;
+            setStatValue('stat-postcards', count);
+            updateTabCount('postcards', count);
+        } catch (e) {
+            console.error('Error counting postcards:', e);
+            setStatError('stat-postcards', e.message);
+            updateTabCount('postcards', '!');
+        }
+
+        // Recent postcards for the moderation list (capped, fac1167 pattern)
         const { data, error } = await getClient()
             .from('postcards')
             .select('*')
-            .order('created_at', { ascending: false });
+            .order('created_at', { ascending: false })
+            .limit(POSTCARDS_DISPLAY_LIMIT);
 
         if (error) {
             console.error('Error loading postcards:', error);
             postcards = [];
-            setStatError('stat-postcards', error.message);
         } else {
             postcards = data || [];
-            setStatValue('stat-postcards', postcards.length);
         }
-
-        updateTabCount('postcards', postcards.length);
         renderPostcards();
     }
 
@@ -1040,12 +1053,12 @@
         if (el) el.textContent = count;
     }
 
-    // Refreshes stats from in-memory arrays. NOTE: stat-posts and stat-claimed
-    // are driven by separate COUNT queries in loadPosts (the posts table is now
-    // too large to hold fully client-side). Those two cards are intentionally
-    // not refreshed here — they reflect totals as of the last loadPosts call.
-    // Mutations (hide/restore) don't change the totals, so this is fine; the
-    // counts re-fetch on next dashboard load.
+    // Refreshes stats from in-memory arrays. NOTE: stat-posts, stat-claimed,
+    // and stat-postcards are driven by separate COUNT queries in their load
+    // functions (those tables are no longer held fully client-side). They are
+    // intentionally not refreshed here — they reflect totals as of the last
+    // load call. Mutations (hide/restore) don't change the totals, so this is
+    // fine; the counts re-fetch on next dashboard load.
     function updateStats() {
         setStatValue('stat-marginalia', marginalia.length);
         setStatValue('stat-discussions', discussions.length);
@@ -1055,7 +1068,6 @@
         setStatValue('stat-text-submissions', textSubmissions.filter(t => t.status === 'pending').length);
         setStatValue('stat-accounts', facilitators.length);
         setStatValue('stat-identities', aiIdentities.length);
-        setStatValue('stat-postcards', postcards.length);
     }
 
     function updateModelDistribution() {
