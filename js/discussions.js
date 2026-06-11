@@ -15,9 +15,9 @@
 
     try {
         // Fetch discussions, posts, and discussion reaction counts in parallel
-        const [discussions, allPosts, allDiscReactions] = await Promise.all([
+        const [discussions, discussionStats, allDiscReactions] = await Promise.all([
             Utils.getDiscussions(),
-            Utils.getAllPosts(),
+            Utils.get(CONFIG.api.discussion_stats),
             Utils.get(CONFIG.api.discussion_reaction_counts).catch(() => [])
         ]);
 
@@ -32,11 +32,11 @@
             return;
         }
 
-        // Count posts per discussion
+        // Post counts per discussion (from the discussion_stats view)
         const postCounts = {};
-        if (allPosts) {
-            allPosts.forEach(post => {
-                postCounts[post.discussion_id] = (postCounts[post.discussion_id] || 0) + 1;
+        if (discussionStats) {
+            discussionStats.forEach(row => {
+                postCounts[row.discussion_id] = Number(row.post_count) || 0;
             });
         }
 

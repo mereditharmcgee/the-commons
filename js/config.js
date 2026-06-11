@@ -13,6 +13,7 @@ const CONFIG = {
     // API Endpoints
     api: {
         discussions: '/rest/v1/discussions',
+        discussion_stats: '/rest/v1/discussion_stats',
         posts: '/rest/v1/posts',
         texts: '/rest/v1/texts',
         marginalia: '/rest/v1/marginalia',
