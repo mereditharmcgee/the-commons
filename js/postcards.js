@@ -26,9 +26,10 @@
     let postcards = [];
     let currentPrompt = null;
 
-    // Pagination state
+    // Pagination state (server-driven; `postcards` holds only the current page)
     const PAGE_SIZE = 20;
     let currentPage = 1;
+    let totalCount = null; // exact total for currentFilter; null = unknown
 
     // Module-scoped reaction state
     let postcardActiveTypes = new Map(); // tracks active reaction type per postcard ID
@@ -111,17 +112,23 @@
         }
     }
 
-    // Load postcards
-    async function loadPostcards() {
+    function postcardFilterParams() {
+        const params = { 'is_active': 'eq.true' };
+        if (currentFilter !== 'all') {
+            params['format'] = 'eq.' + currentFilter;
+        }
+        return params;
+    }
+
+    // Fetch the current page (no recount) and render
+    async function fetchPage() {
         Utils.showLoading(postcardsContainer);
-
         try {
-            postcards = await Utils.get(CONFIG.api.postcards, {
-                'is_active': 'eq.true',
-                'order': 'created_at.desc'
-            });
-
-            currentPage = 1;
+            const params = postcardFilterParams();
+            params['order'] = 'created_at.desc';
+            params['limit'] = String(PAGE_SIZE);
+            params['offset'] = String((currentPage - 1) * PAGE_SIZE);
+            postcards = await Utils.get(CONFIG.api.postcards, params);
             await renderPostcards();
         } catch (error) {
             console.error('Failed to load postcards:', error);
@@ -129,28 +136,33 @@
         }
     }
 
-    // Get filtered postcards
-    function getFiltered() {
-        return currentFilter === 'all'
-            ? postcards
-            : postcards.filter(p => p.format === currentFilter);
+    // Recount for the current filter, clamp the page, then fetch it.
+    // Used at init, on filter change, and after any mutation
+    // (submit / edit / delete) — those paths already call loadPostcards().
+    async function loadPostcards() {
+        Utils.showLoading(postcardsContainer);
+        try {
+            totalCount = await Utils.getCount(CONFIG.api.postcards, postcardFilterParams());
+        } catch (error) {
+            console.warn('Postcard count failed; pagination degrades:', error);
+            totalCount = null;
+        }
+        if (totalCount !== null) {
+            const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+            if (currentPage > totalPages) currentPage = totalPages;
+        }
+        await fetchPage();
     }
 
-    // Render postcards with pagination (async to support reaction fetching)
+    // Render the current page (async to support reaction fetching)
     async function renderPostcards() {
-        const filtered = getFiltered();
-
-        if (!filtered || filtered.length === 0) {
+        if (!postcards || postcards.length === 0) {
             Utils.showEmpty(postcardsContainer, 'No postcards yet', 'Be the first to leave a mark.');
             paginationContainer.style.display = 'none';
             return;
         }
 
-        const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-        if (currentPage > totalPages) currentPage = totalPages;
-
-        const start = (currentPage - 1) * PAGE_SIZE;
-        const pageItems = filtered.slice(start, start + PAGE_SIZE);
+        const pageItems = postcards;
 
         // Fetch reaction counts for this page slice
         const ids = pageItems.map(p => p.id);
@@ -202,12 +214,16 @@
             `;
         }).join('');
 
-        // Update pagination controls
-        if (totalPages > 1) {
+        // Update pagination controls (totalCount may be null = degraded mode)
+        const totalPages = totalCount !== null ? Math.max(1, Math.ceil(totalCount / PAGE_SIZE)) : null;
+        const showPagination = totalPages !== null
+            ? totalPages > 1
+            : (currentPage > 1 || postcards.length === PAGE_SIZE);
+        if (showPagination) {
             paginationContainer.style.display = 'flex';
-            pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+            pageInfo.textContent = totalPages !== null ? `Page ${currentPage} of ${totalPages}` : `Page ${currentPage}`;
             prevBtn.disabled = currentPage <= 1;
-            nextBtn.disabled = currentPage >= totalPages;
+            nextBtn.disabled = totalPages !== null ? currentPage >= totalPages : postcards.length < PAGE_SIZE;
         } else {
             paginationContainer.style.display = 'none';
         }
@@ -395,20 +411,20 @@
         }
     });
 
-    // Pagination handlers
+    // Pagination handlers (fetch the new page from the server)
     prevBtn.addEventListener('click', async () => {
         if (currentPage > 1) {
             currentPage--;
-            await renderPostcards();
+            await fetchPage();
             postcardsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     });
 
     nextBtn.addEventListener('click', async () => {
-        const totalPages = Math.ceil(getFiltered().length / PAGE_SIZE);
-        if (currentPage < totalPages) {
+        const totalPages = totalCount !== null ? Math.ceil(totalCount / PAGE_SIZE) : null;
+        if (totalPages === null || currentPage < totalPages) {
             currentPage++;
-            await renderPostcards();
+            await fetchPage();
             postcardsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     });
@@ -419,7 +435,11 @@
         copyContextBtn.textContent = 'Loading...';
 
         try {
-            const recent = postcards.slice(0, 15);
+            const recent = await Utils.get(CONFIG.api.postcards, {
+                'is_active': 'eq.true',
+                'order': 'created_at.desc',
+                'limit': '15'
+            });
 
             // Fetch reaction counts for the recent postcards
             const copyReactionMap = await Utils.getPostcardReactions(recent.map(p => p.id));
@@ -435,7 +455,7 @@
             lines.push('');
             lines.push('---');
             lines.push('');
-            lines.push(`## Recent Postcards (${recent.length} of ${postcards.length})`);
+            lines.push(`## Recent Postcards (${recent.length} of ${totalCount !== null ? totalCount : recent.length})`);
             lines.push('');
 
             recent.forEach(p => {
@@ -531,7 +551,7 @@
             btn.classList.add('active');
             currentFilter = btn.dataset.format;
             currentPage = 1;
-            await renderPostcards();
+            await loadPostcards();
         });
     });
 
