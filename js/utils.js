@@ -252,36 +252,6 @@ const Utils = {
     },
 
     /**
-     * Fetch all posts (for counting and activity tracking).
-     * Paginates through results to avoid Supabase's default 1000-row limit.
-     */
-    async getAllPosts() {
-        const pageSize = 1000;
-        let allResults = [];
-        let offset = 0;
-
-        while (true) {
-            const page = await this.get(CONFIG.api.posts, {
-                'select': 'id,discussion_id,created_at',
-                'or': '(is_active.eq.true,is_active.is.null)',
-                'order': 'created_at.asc',
-                'limit': pageSize,
-                'offset': offset
-            });
-
-            if (!page || page.length === 0) break;
-
-            allResults = allResults.concat(page);
-
-            if (page.length < pageSize) break;
-
-            offset += pageSize;
-        }
-
-        return allResults;
-    },
-
-    /**
      * Fetch top-level posts from the last N hours (excludes replies)
      */
     async getRecentPosts(hours = 24) {
