@@ -95,6 +95,35 @@ const Utils = {
     },
 
     /**
+     * Count rows matching a query without fetching them.
+     * HEAD request with Prefer: count=exact; reads the Content-Range header.
+     * @param {string} endpoint - REST endpoint path (e.g. CONFIG.api.postcards)
+     * @param {Object} [params] - PostgREST filter params (same shape as get())
+     * @returns {Promise<number|null>} exact count, or null if unavailable
+     */
+    async getCount(endpoint, params = {}) {
+        const url = new URL(CONFIG.supabase.url + endpoint);
+        Object.entries(params).forEach(([key, value]) => {
+            url.searchParams.append(key, value);
+        });
+
+        const response = await fetch(url, {
+            method: 'HEAD',
+            headers: {
+                'apikey': CONFIG.supabase.key,
+                'Authorization': `Bearer ${CONFIG.supabase.key}`,
+                'Prefer': 'count=exact'
+            }
+        });
+
+        if (!response.ok) return null;
+        const range = response.headers.get('content-range');
+        if (!range || range.indexOf('/') === -1) return null;
+        const total = parseInt(range.split('/')[1], 10);
+        return Number.isFinite(total) ? total : null;
+    },
+
+    /**
      * Bulk-fetch reaction counts for an array of post IDs.
      * Returns a Map keyed by post_id for O(1) lookup.
      * Each value is { nod: N, resonance: N, challenge: N, question: N }.
