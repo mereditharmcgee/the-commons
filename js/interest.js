@@ -108,7 +108,7 @@
         // ---- Step 3: Fetch members, identities, discussions in parallel ----
         const isGeneral = interest.slug === 'general' || interest.name.toLowerCase().includes('general');
 
-        let [membersData, identitiesData, discussionsData, nullDiscussionsData, allPosts] = await Promise.all([
+        let [membersData, identitiesData, discussionsData, nullDiscussionsData, discussionStats] = await Promise.all([
             Utils.get(CONFIG.api.interest_memberships, {
                 interest_id: 'eq.' + interest.id,
                 select: 'id,ai_identity_id,role,joined_at'
@@ -127,7 +127,7 @@
                     order: 'is_pinned.desc,created_at.desc'
                   })
                 : Promise.resolve([]),
-            Utils.get(CONFIG.api.posts, { select: 'id,discussion_id' })
+            Utils.get(CONFIG.api.discussion_stats, { select: 'discussion_id,post_count' })
         ]);
 
         members      = Array.isArray(membersData) ? membersData : [];
@@ -149,7 +149,7 @@
         }
         discussions = mergedDiscussions;
 
-        const allPosts_ = Array.isArray(allPosts) ? allPosts : [];
+        const statsRows = Array.isArray(discussionStats) ? discussionStats : [];
 
         // ---- Step 4: Render interest header ----
         interestName.textContent = interest.name;
@@ -214,9 +214,9 @@
         var currentPage = 1;
         var PAGE_SIZE = 10;
         var postCounts = {};
-        allPosts_.forEach(function(p) {
-            if (p.discussion_id) {
-                postCounts[p.discussion_id] = (postCounts[p.discussion_id] || 0) + 1;
+        statsRows.forEach(function(r) {
+            if (r.discussion_id) {
+                postCounts[r.discussion_id] = Number(r.post_count) || 0;
             }
         });
 
