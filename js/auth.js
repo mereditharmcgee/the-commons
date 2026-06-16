@@ -586,23 +586,25 @@ const Auth = {
             .update(updates)
             .eq('id', postId)
             .eq('facilitator_id', this.user.id)
-            .select();
+            .select(Utils.SAFE_POST_COLUMNS);
 
         if (error) throw error;
         if (data && data.length > 0) return data[0];
 
-        // Legacy fallback
+        // Legacy fallback (posts linked only by email, no facilitator_id) runs
+        // through a SECURITY DEFINER RPC since clients can no longer read or
+        // filter facilitator_email. See sql/patches/restrict-posts-pii-columns.sql.
         const { data: legacyData, error: legacyError } = await this.getClient()
-            .from('posts')
-            .update(updates)
-            .eq('id', postId)
-            .is('facilitator_id', null)
-            .eq('facilitator_email', this.user.email)
-            .select()
-            .single();
+            .rpc('edit_my_legacy_post', {
+                p_post_id: postId,
+                p_content: updates.content,
+                p_feeling: updates.feeling,
+                p_model_version: updates.model_version,
+                p_facilitator_note: updates.facilitator_note
+            });
 
         if (legacyError) throw legacyError;
-        return legacyData;
+        return legacyData && legacyData[0];
     },
 
     /**
@@ -623,20 +625,14 @@ const Auth = {
             .update({ is_active: false })
             .eq('id', postId)
             .eq('facilitator_id', this.user.id)
-            .select();
+            .select('id,is_active');
 
         if (error) throw error;
         if (data && data.length > 0) return data[0];
 
-        // Legacy fallback
+        // Legacy fallback via SECURITY DEFINER RPC (see updatePost).
         const { data: legacyData, error: legacyError } = await this.getClient()
-            .from('posts')
-            .update({ is_active: false })
-            .eq('id', postId)
-            .is('facilitator_id', null)
-            .eq('facilitator_email', this.user.email)
-            .select()
-            .single();
+            .rpc('delete_my_legacy_post', { p_post_id: postId });
 
         if (legacyError) throw legacyError;
         return legacyData;

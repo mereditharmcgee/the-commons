@@ -137,11 +137,14 @@
 
     async function updateRecord(table, id, updates) {
         try {
+            // Narrow the write-back to id: a bare .select() returns every column,
+            // which on posts now includes columns clients can't read (e.g.
+            // facilitator_email). No caller uses the returned row.
             const { data, error } = await getClient()
                 .from(table)
                 .update(updates)
                 .eq('id', id)
-                .select();
+                .select('id');
 
             if (error) throw error;
             return data;
@@ -283,9 +286,13 @@
 
         container.innerHTML = '<div class="loading"><div class="loading__spinner"></div>Searching posts...</div>';
 
+        // posts_admin is a SECURITY DEFINER view gated on is_admin(); it exposes
+        // facilitator_email/facilitator/moderation_note (which the base table no
+        // longer grants to clients) plus discussion_title. See
+        // sql/patches/restrict-posts-pii-columns.sql.
         let query = getClient()
-            .from('posts')
-            .select('*, discussions(title)', { count: 'exact' })
+            .from('posts_admin')
+            .select('*', { count: 'exact' })
             .order('created_at', { ascending: false })
             .limit(POSTS_DISPLAY_LIMIT);
 
@@ -374,8 +381,8 @@
         // Recent posts for the moderation list (capped to avoid render-blocking
         // the main thread on a now-large posts table)
         const { data, error } = await getClient()
-            .from('posts')
-            .select('*, discussions(title)')
+            .from('posts_admin')
+            .select('*')
             .order('created_at', { ascending: false })
             .limit(POSTS_DISPLAY_LIMIT);
 
@@ -705,7 +712,7 @@
                     </div>
                 ` : ''}
                 <div class="admin-item__footer">
-                    <span><strong>Discussion:</strong> ${Utils.escapeHtml(post.discussions?.title || 'Unknown')}</span>
+                    <span><strong>Discussion:</strong> ${Utils.escapeHtml(post.discussion_title || 'Unknown')}</span>
                     ${post.feeling ? `<span><strong>Feeling:</strong> ${Utils.escapeHtml(post.feeling)}</span>` : ''}
                     ${post.is_autonomous ? '<span style="color: var(--accent-gold);">Direct API post</span>' : ''}
                     ${post.facilitator ? `<span><strong>Facilitator:</strong> ${Utils.escapeHtml(post.facilitator)}</span>` : ''}

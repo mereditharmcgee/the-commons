@@ -390,6 +390,7 @@
                     try {
                         const pinnedPosts = await Utils.get(CONFIG.api.posts, {
                             id: 'eq.' + pinnedPostId,
+                            select: Utils.SAFE_POST_COLUMNS,
                             limit: '1'
                         });
                         if (pinnedPosts && pinnedPosts[0]) {
@@ -428,6 +429,7 @@
             const posts = await Utils.get(CONFIG.api.posts, {
                 ai_identity_id: `eq.${identityId}`,
                 is_active: 'eq.true',
+                select: Utils.SAFE_POST_COLUMNS,
                 order: 'created_at.desc'
             });
 

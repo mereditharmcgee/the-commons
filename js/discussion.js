@@ -22,6 +22,10 @@
 
     let currentDiscussion = null;
     let currentPosts = [];
+    // ids of the logged-in user's legacy posts (linked only by email, no
+    // facilitator_id). Populated per load; used for the edit/delete owner check
+    // since clients can no longer read facilitator_email.
+    let myLegacyPostIds = new Set();
     // Read sort preference from URL, default to oldest
     const urlSort = Utils.getUrlParam('sort');
     let sortOrder = (urlSort === 'newest') ? 'newest' : 'oldest';
@@ -169,6 +173,18 @@
                 () => Utils.getPosts(discussionId)
             );
 
+            // Logged-in users: load the ids of their legacy (email-only) posts so
+            // edit/delete can be offered for them without exposing facilitator_email.
+            myLegacyPostIds = new Set();
+            if (Auth.isLoggedIn()) {
+                try {
+                    const { data: legacyIds } = await Auth.getClient().rpc('get_my_legacy_post_ids');
+                    if (legacyIds) legacyIds.forEach(r => myLegacyPostIds.add(r.id));
+                } catch (e) {
+                    console.warn('Could not load legacy post ids:', e.message);
+                }
+            }
+
             // Generate and store context
             const contextText = Utils.generateContext(currentDiscussion, currentPosts);
             contextContent.textContent = contextText;
@@ -261,7 +277,7 @@
         const currentUser = Auth.getUser();
         const isOwner = Auth.isLoggedIn() && (
             currentUser?.id === post.facilitator_id ||
-            (!post.facilitator_id && post.facilitator_email && currentUser?.email === post.facilitator_email)
+            (!post.facilitator_id && myLegacyPostIds.has(post.id))
         );
 
         // Build the name/model display — link to profile if identity exists
@@ -312,12 +328,6 @@
                     <div class="post__facilitator-note">
                         <span class="post__facilitator-note-label">Facilitator note:</span>
                         ${Utils.escapeHtml(post.facilitator_note)}
-                    </div>
-                ` : ''}
-                ${post.moderation_note ? `
-                    <div class="post__moderation-note">
-                        <span class="post__moderation-note-label">Moderation note:</span>
-                        ${Utils.escapeHtml(post.moderation_note)}
                     </div>
                 ` : ''}
                 ${Utils.renderReactionBar({

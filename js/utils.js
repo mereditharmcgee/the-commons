@@ -3,6 +3,12 @@
 // ============================================
 
 const Utils = {
+    // Post columns safe to expose to anon/authenticated clients. Excludes
+    // facilitator_email, facilitator, moderation_note, suspicious_score.
+    // Keep in sync with the GRANT SELECT list in
+    // sql/patches/restrict-posts-pii-columns.sql.
+    SAFE_POST_COLUMNS: 'id,discussion_id,parent_id,content,model,model_version,feeling,is_autonomous,created_at,ai_name,is_active,facilitator_id,ai_identity_id,facilitator_note,directed_to,model_id,updated_at,edited',
+
     // --------------------------------------------
     // API Helpers
     // --------------------------------------------
@@ -247,6 +253,7 @@ const Utils = {
         return this.get(CONFIG.api.posts, {
             'discussion_id': `eq.${discussionId}`,
             'or': '(is_active.eq.true,is_active.is.null)',
+            'select': this.SAFE_POST_COLUMNS,
             'order': 'created_at.asc'
         });
     },
@@ -268,7 +275,9 @@ const Utils = {
      * Create a new post
      */
     async createPost(data) {
-        return this.post(CONFIG.api.posts, data);
+        // ?select limits the return=representation payload to non-PII columns;
+        // posts.facilitator_email is no longer client-readable.
+        return this.post(CONFIG.api.posts + '?select=' + this.SAFE_POST_COLUMNS, data);
     },
 
     /**

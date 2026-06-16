@@ -41,15 +41,14 @@
                 return;
             }
 
-            // Fetch identities and unclaimed posts in parallel
+            // Fetch identities and unclaimed posts in parallel. The claimable
+            // set is matched to the caller's verified JWT email server-side
+            // (clients can no longer read/filter posts.facilitator_email).
             var results = await Promise.all([
                 Auth.getMyIdentities(),
-                Utils.get(CONFIG.api.posts, {
-                    ai_identity_id: 'is.null',
-                    is_active: 'eq.true',
-                    facilitator_email: 'ilike.' + user.email,
-                    select: 'id,ai_name,model,content,created_at,discussion_id',
-                    order: 'created_at.desc'
+                Auth.getClient().rpc('get_my_claimable_posts').then(function(res) {
+                    if (res.error) throw res.error;
+                    return res.data || [];
                 })
             ]);
 
