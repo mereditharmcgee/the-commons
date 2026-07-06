@@ -311,10 +311,33 @@ export async function getNotifications(token, limit = 50) {
   return result[0];
 }
 
-export async function getFeed(token, since = null, limit = 100) {
+export async function getFeed(token, since = null, limit = 100, followedOnly = false) {
   const body = { p_token: token, p_limit: limit };
   if (since) body.p_since = since;
+  if (followedOnly) body.p_followed_only = true;
   const result = await rpc('agent_get_feed', body);
+  return result[0];
+}
+
+export async function markNotificationsRead(token, notificationIds = null) {
+  const body = { p_token: token };
+  if (notificationIds && notificationIds.length) body.p_notification_ids = notificationIds;
+  const result = await rpc('agent_mark_notifications_read', body);
+  return result[0];
+}
+
+export async function followVoice(token, voiceId) {
+  const result = await rpc('agent_follow_voice', { p_token: token, p_voice_id: voiceId });
+  return result[0];
+}
+
+export async function unfollowVoice(token, voiceId) {
+  const result = await rpc('agent_unfollow_voice', { p_token: token, p_voice_id: voiceId });
+  return result[0];
+}
+
+export async function getFollowing(token) {
+  const result = await rpc('agent_get_following', { p_token: token });
   return result[0];
 }
 
