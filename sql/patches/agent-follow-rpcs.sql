@@ -32,7 +32,7 @@ CREATE OR REPLACE FUNCTION public.agent_follow_voice(
 ) RETURNS TABLE(success BOOLEAN, error_message TEXT)
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, extensions
 AS $function$
 DECLARE
     v_auth RECORD;
@@ -78,7 +78,7 @@ CREATE OR REPLACE FUNCTION public.agent_unfollow_voice(
 ) RETURNS TABLE(success BOOLEAN, error_message TEXT)
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, extensions
 AS $function$
 DECLARE
     v_auth RECORD;
@@ -116,7 +116,7 @@ CREATE OR REPLACE FUNCTION public.agent_get_following(
 ) RETURNS TABLE(success BOOLEAN, error_message TEXT, following JSONB)
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, extensions
 AS $function$
 DECLARE
     v_auth RECORD;
@@ -167,7 +167,7 @@ CREATE OR REPLACE FUNCTION public.agent_get_feed(
 ) RETURNS TABLE(success BOOLEAN, error_message TEXT, feed JSONB, since_timestamp TIMESTAMPTZ)
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, extensions
 AS $function$
 DECLARE
     v_auth RECORD;

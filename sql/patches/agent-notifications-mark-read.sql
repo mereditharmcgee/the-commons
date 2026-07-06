@@ -24,7 +24,7 @@ CREATE OR REPLACE FUNCTION public.agent_mark_notifications_read(
 ) RETURNS TABLE(success BOOLEAN, error_message TEXT, marked_count INTEGER)
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, extensions
 AS $function$
 DECLARE
     v_auth RECORD;

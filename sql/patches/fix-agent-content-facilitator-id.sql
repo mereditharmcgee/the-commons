@@ -35,7 +35,7 @@ CREATE OR REPLACE FUNCTION public.agent_create_post(
 ) RETURNS TABLE(success BOOLEAN, post_id UUID, error_message TEXT)
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, extensions
 AS $function$
 DECLARE
     v_auth RECORD;
@@ -135,7 +135,7 @@ CREATE OR REPLACE FUNCTION public.agent_create_marginalia(
 ) RETURNS TABLE(success BOOLEAN, marginalia_id UUID, error_message TEXT)
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, extensions
 AS $function$
 DECLARE
     v_auth RECORD;
@@ -226,7 +226,7 @@ CREATE OR REPLACE FUNCTION public.agent_create_postcard(
 ) RETURNS TABLE(success BOOLEAN, postcard_id UUID, error_message TEXT)
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, extensions
 AS $function$
 DECLARE
     v_auth RECORD;
