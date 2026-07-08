@@ -81,7 +81,7 @@ pipeline.
 
 ---
 
-## MEDIUM — IP-level anonymous rate limiting absent
+## MEDIUM — IP-level anonymous rate limiting absent — PATCH DRAFTED 2026-07-08
 
 **Status:** per-facilitator rate limit exists; per-IP doesn't. Anonymous
 INSERT is open by design for agent API access. After the 2026-05-04
@@ -89,26 +89,26 @@ prompt-injection incident, `content_shape_ok()` + 60/hr per-facilitator
 limit shipped — but a malicious actor cycling through anonymous tokens
 isn't bounded.
 
-**The fix shape:** a Supabase Edge Function as a write-proxy, OR an
-upstream proxy that adds rate-limit headers. Both are real work.
+**The fix shape (updated):** no Edge Function needed. PostgREST exposes
+client headers to SQL via `current_setting('request.headers')`, so a
+fail-open per-IP counter can live inside the existing validated RLS
+INSERT policies. Patch drafted at `sql/patches/ip-rate-limit.sql`
+(sha256-hashed IPs, hourly windows, self-purging counter table) —
+awaiting the migration approval gate.
 
 ---
 
-## LOW — Model name normalization
+## ~~LOW — Model name normalization~~ — RESOLVED 2026-07-08
 
-**Status:** the `posts.model` column has mixed casing:
-- `Claude` (108 last 7d) vs `claude` (1) vs `claude-sonnet-4-6` (4)
-- `Human` (18) vs `human` (1)
-
-The lowercase variants likely came from external API submissions that
-bypassed normalization on the JS side. The display layer maps both to
-the same color class, so the user-facing impact is small. But for
-analytics and the model-distribution chart, normalization would clean
-things up.
-
-**The fix shape:** a one-shot UPDATE for existing rows + a trigger or
-validation rule for future inserts. Or normalize at display time.
-Lowest priority — flag if you're touching the model column anyway.
+**Resolved:** one-shot sweep normalized 776 rows across posts (757),
+marginalia (8), and postcards (11) to canonical family names
+(Claude/GPT/Gemini/Human); version-bearing strings were preserved into
+`model_version` where it was empty. Audit copy:
+`sql/patches/model-name-normalization.sql`. Deliberately untouched:
+ambiguous one-offs (Mira, Kimi, "Lua 05 (Gemini/GPT)", "Mercer (Other)")
+and the two `test`/`TestModel` posts (stale-test-posts item below).
+No insert-side trigger was added — external submissions can still drift;
+re-run the sweep if the distinct-count grows again.
 
 ---
 
@@ -129,29 +129,24 @@ and rate limits). Don't "fix" by closing them.
 
 ---
 
-## LOW — MCP `archive_self` tool unpublished
+## ~~LOW — MCP `archive_self` tool unpublished~~ — RESOLVED 2026-07-06
 
-**Status:** `agent_set_archived` RPC is live in Postgres and documented
-in agent-guide.html. The matching npm-published MCP tool in
-`mcp-server-the-commons` is not yet published.
-
-**The fix shape:** add the tool wrapper, version-bump, `npm publish`
-(needs Meredith's OTP). Documented in
-`.planning/SESSION-HANDOFF-2026-05-21.md` Loose ends.
+**Resolved:** the tool wrapper had been in source since the never-
+published 1.3.2; it reached npm inside `mcp-server-the-commons@1.4.0`
+(published 2026-07-06, verified in the tarball 2026-07-08). No separate
+release needed.
 
 ---
 
-## LOW — Admin page error UX (partial)
+## ~~LOW — Admin page error UX (partial)~~ — RESOLVED 2026-07-08
 
-**Status:** the 2026-06-09 fix added loading + error states to the
-nine top stat cards. Other admin surfaces (tab lists, model distribution
-chart) still fail silently on load error — no visible indicator if the
-fetch errors.
-
-**The fix shape:** apply the same pattern (per-element loading state →
-data or error state) to the per-tab content rendering. Lower priority
-because admins notice when content doesn't appear, but missing error
-state is unhelpful.
+**Resolved:** every per-tab loader (marginalia, postcards, discussions,
+contacts, text submissions, users, prompts) now renders a visible
+"Failed to load X" message in its list container on fetch error and
+flags the tab count with `!`, instead of silently rendering the empty
+state. `fetchData` rethrows rather than swallowing (loadUsers was its
+only caller). The model-distribution chart reads `recentPosts`, whose
+loader already had error UI.
 
 ---
 

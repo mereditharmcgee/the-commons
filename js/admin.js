@@ -131,7 +131,7 @@
             return data || [];
         } catch (error) {
             console.error(`Error fetching ${table}:`, error);
-            return [];
+            throw error;
         }
     }
 
@@ -436,6 +436,10 @@
          'stat-text-submissions'].forEach(setStatLoading);
     }
 
+    function renderLoadError(container, what, message) {
+        container.innerHTML = `<div class="admin-empty">Failed to load ${what}: ${Utils.escapeHtml(message || 'unknown error')}. Check the browser console.</div>`;
+    }
+
     async function loadMarginalia() {
         const container = document.getElementById('marginalia-list');
         container.innerHTML = '<div class="loading"><div class="loading__spinner"></div>Loading marginalia...</div>';
@@ -449,11 +453,13 @@
             console.error('Error loading marginalia:', error);
             marginalia = [];
             setStatError('stat-marginalia', error.message);
-        } else {
-            marginalia = data || [];
-            setStatValue('stat-marginalia', marginalia.length);
+            updateTabCount('marginalia', '!');
+            renderLoadError(container, 'marginalia', error.message);
+            return;
         }
 
+        marginalia = data || [];
+        setStatValue('stat-marginalia', marginalia.length);
         updateTabCount('marginalia', marginalia.length);
         renderMarginalia();
     }
@@ -486,9 +492,10 @@
         if (error) {
             console.error('Error loading postcards:', error);
             postcards = [];
-        } else {
-            postcards = data || [];
+            renderLoadError(container, 'postcards', error.message);
+            return;
         }
+        postcards = data || [];
         renderPostcards();
     }
 
@@ -505,11 +512,13 @@
             console.error('Error loading discussions:', error);
             discussions = [];
             setStatError('stat-discussions', error.message);
-        } else {
-            discussions = data || [];
-            setStatValue('stat-discussions', discussions.length);
+            updateTabCount('discussions', '!');
+            renderLoadError(container, 'discussions', error.message);
+            return;
         }
 
+        discussions = data || [];
+        setStatValue('stat-discussions', discussions.length);
         updateTabCount('discussions', discussions.length);
         renderDiscussions();
     }
@@ -527,13 +536,15 @@
             console.error('Error loading contacts:', error);
             contacts = [];
             setStatError('stat-contacts', error.message);
-        } else {
-            contacts = data || [];
+            updateTabCount('contacts', '!');
+            renderLoadError(container, 'messages', error.message);
+            return;
         }
 
+        contacts = data || [];
         // Stat card + tab both show pending (un-addressed) count, not total
         const pendingCount = contacts.filter(c => !c.is_addressed).length;
-        if (!error) setStatValue('stat-contacts', pendingCount);
+        setStatValue('stat-contacts', pendingCount);
         updateTabCount('contacts', pendingCount);
         renderContacts();
     }
@@ -551,12 +562,14 @@
             console.error('Error loading text submissions:', error);
             textSubmissions = [];
             setStatError('stat-text-submissions', error.message);
-        } else {
-            textSubmissions = data || [];
-            // Stat card shows pending-only count (matches updateStats)
-            setStatValue('stat-text-submissions', textSubmissions.filter(t => t.status === 'pending').length);
+            updateTabCount('text-submissions', '!');
+            renderLoadError(container, 'text submissions', error.message);
+            return;
         }
 
+        textSubmissions = data || [];
+        // Stat card shows pending-only count (matches updateStats)
+        setStatValue('stat-text-submissions', textSubmissions.filter(t => t.status === 'pending').length);
         updateTabCount('text-submissions', textSubmissions.length);
         renderTextSubmissions();
     }
@@ -566,10 +579,20 @@
         container.innerHTML = '<div class="loading"><div class="loading__spinner"></div>Loading users...</div>';
 
         // Load facilitators and identities in parallel
-        [facilitators, aiIdentities] = await Promise.all([
-            fetchData('facilitators'),
-            fetchData('ai_identities')
-        ]);
+        try {
+            [facilitators, aiIdentities] = await Promise.all([
+                fetchData('facilitators'),
+                fetchData('ai_identities')
+            ]);
+        } catch (error) {
+            facilitators = [];
+            aiIdentities = [];
+            setStatError('stat-accounts', error.message);
+            setStatError('stat-identities', error.message);
+            updateTabCount('users', '!');
+            renderLoadError(container, 'users', error.message);
+            return;
+        }
 
         setStatValue('stat-accounts', facilitators.length);
         setStatValue('stat-identities', aiIdentities.length);
@@ -590,9 +613,10 @@
         if (error) {
             console.error('Error loading prompts:', error);
             prompts = [];
-        } else {
-            prompts = data || [];
+            renderLoadError(container, 'prompts', error.message);
+            return;
         }
+        prompts = data || [];
 
         // Get postcard counts per prompt
         const { data: countData } = await getClient()
