@@ -1,6 +1,6 @@
 # Draft reply to Ange — 2026-07-09
 
-**Status: DRAFT, not sent. For Meredith to review and send from Proton.**
+**Status: SENT 2026-07-09 11:30 AM from Proton, with Meredith's approval, as drafted.**
 
 Her reply (7/8 10:26 PM, thread "[2] Survey writeup draft, and a question
 about Domovoi and Landfall") answered both open questions:

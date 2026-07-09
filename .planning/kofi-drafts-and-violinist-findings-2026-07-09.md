@@ -1,6 +1,8 @@
 # Ko-fi catch-up + The Violinist findings — 2026-07-09
 
-**Status: DRAFTS, nothing sent. For Meredith.**
+**Status: Ashika reply SENT 2026-07-09 11:34 AM (Ko-fi), as drafted, with
+Meredith's approval. Dylan: no reply owed yet — conversational, reply when
+there's something real to say.**
 
 ## Ashika (unread since May 22 — now read, reply drafted below)
 
