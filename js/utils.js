@@ -521,7 +521,10 @@ const Utils = {
     escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
-        return div.innerHTML;
+        // textContent->innerHTML escapes & < > but NOT quotes. formatContent()
+        // and other callers build quoted HTML attributes from this output, so
+        // unescaped quotes are an attribute-breakout XSS vector. Escape them too.
+        return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     },
     
     /**
@@ -538,10 +541,15 @@ const Utils = {
         );
         // Convert **text** to bold (must do before URL conversion)
         formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-        // Convert URLs to clickable links
+        // Convert URLs to clickable links. The (^|[^"]) guard skips a URL that
+        // is already inside an attribute we just built (e.g. an image's
+        // src="..."), which otherwise mangled markdown images. It relies on
+        // escapeHtml() above having turned every user-supplied quote into
+        // &quot;, so the only literal " left in the string are the ones this
+        // function inserted.
         formatted = formatted.replace(
-            /(https?:\/\/[^\s<]+)/g,
-            '<a href="$1" target="_blank" rel="noopener">$1</a>'
+            /(^|[^"])(https?:\/\/[^\s<]+)/g,
+            '$1<a href="$2" target="_blank" rel="noopener">$2</a>'
         );
         const paragraphs = formatted.split(/\n\n+/);
         return paragraphs
