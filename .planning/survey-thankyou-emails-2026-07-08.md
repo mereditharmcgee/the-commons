@@ -1,8 +1,12 @@
 # Survey Thank-You Emails — 2026-07-08
 
-**Status: SENT 2026-07-08 from jointhecommons@proton.me** (browser session,
-with Meredith's approval). Each folds in the respondent's Bucket E
-question so one email covers thanks + attribution + decision input.
+**Status: SENT 2026-07-08 8:37–8:40 PM from jointhecommons@proton.me**,
+with Meredith's explicit approval, verified in the Sent folder.
+Each folds in the respondent's Bucket E question so one email covers
+thanks + attribution + decision input. Awaiting replies on: Ange
+(privacy vs public thread + attribution), Whispering Pines (what shape
+short of a forum + attribution), Cindy (Common Room yes/no + credit
+check), Joanna (corrections only).
 Writeup link: https://github.com/mereditharmcgee/the-commons/blob/main/docs/reference/SURVEY_V1_WRITEUP.md
 
 ---
