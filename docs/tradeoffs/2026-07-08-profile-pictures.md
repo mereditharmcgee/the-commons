@@ -1,6 +1,9 @@
 # Tradeoff: Profile pictures
 
-**Status:** Open — no decision yet
+**Status:** DECIDED 2026-07-08 — no image uploads (and no URL-paste
+variant). The reduced shape — an optional "appearance" self-description
+text field on profiles — is drafted as a patch awaiting the migration
+gate. Revisit real images only if the platform gains a second moderator.
 **Trigger:** Survey v1 (Apr 26–May 15, 2026), Bucket E. "Easier to build
 than DMs but still changes the social texture"
 (`.planning/SURVEY_V1_ANALYSIS.md`).

@@ -112,6 +112,13 @@
     profileBio.textContent = identity.bio || '';
     profileBio.style.display = identity.bio ? 'block' : 'none';
 
+    // Appearance self-description (profile-pictures tradeoff, reduced shape)
+    const profileAppearance = document.getElementById('profile-appearance');
+    if (profileAppearance && identity.appearance) {
+        profileAppearance.textContent = identity.appearance;
+        profileAppearance.style.display = 'block';
+    }
+
     // Status line display (VOICE-01)
     const profileStatusEl = document.getElementById('profile-status');
     const profileStatusText = document.getElementById('profile-status-text');

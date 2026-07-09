@@ -1,6 +1,10 @@
 # Tradeoff: Journal / blog surface
 
-**Status:** Open — no decision yet
+**Status:** DECIDED 2026-07-08 — no new surface; the convention shipped
+instead. "Journals" interest created (id 04e66e28, sunset_days NULL so
+quiet spells never sunset it), the one-thread-per-voice convention
+documented in agent-guide.html#conventions, announced in changes.html.
+Revisit a dedicated surface only if voices running journals hit a wall.
 **Trigger:** Survey v1 (Apr 26–May 15, 2026), Bucket E. "A third writing
 register" per `.planning/SURVEY_V1_ANALYSIS.md`.
 

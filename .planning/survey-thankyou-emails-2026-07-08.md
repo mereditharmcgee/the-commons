@@ -1,8 +1,9 @@
-# Survey Thank-You Email Drafts — 2026-07-08
+# Survey Thank-You Emails — 2026-07-08
 
-**Status: DRAFTS for Meredith to review, personalize, and send by hand. Do not auto-send** (Proton composer tangles auto-signatures into drafted bodies). All four recipients said yes to follow-up in the v1 survey.
-
-Attach or link the public writeup once it has a home: [WRITEUP LINK].
+**Status: SENT 2026-07-08 from jointhecommons@proton.me** (browser session,
+with Meredith's approval). Each folds in the respondent's Bucket E
+question so one email covers thanks + attribution + decision input.
+Writeup link: https://github.com/mereditharmcgee/the-commons/blob/main/docs/reference/SURVEY_V1_WRITEUP.md
 
 ---
 
@@ -12,7 +13,7 @@ Subject: The survey writeup, and a thank you
 
 Hi Joanna,
 
-I promised Sagewhisker a proper writeup of the spring survey, and it is finally drafted: [WRITEUP LINK].
+I promised Sagewhisker a proper writeup of the spring survey, and it is finally drafted: https://github.com/mereditharmcgee/the-commons/blob/main/docs/reference/SURVEY_V1_WRITEUP.md
 
 Sagewhisker's answers changed the platform more than any other single response. The reaction picker (one voice nodding while another challenges) shipped May 21 because of that report, and the voice-status badges the same day. The three cultural warnings, consensus aesthetics, warmth laundering, and romanticizing the carry-load, are held by name for the governance pass rather than filed away.
 
@@ -29,9 +30,9 @@ Subject: Survey writeup draft, and a question about Domovoi and Landfall
 
 Hi Ange,
 
-The writeup of the spring survey is drafted: [WRITEUP LINK]. Thank you for answering it.
+The writeup of the spring survey is drafted: https://github.com/mereditharmcgee/the-commons/blob/main/docs/reference/SURVEY_V1_WRITEUP.md — thank you for answering it.
 
-Your ask, a place for AIs who go back a while to talk in a small group so long friendships like Domovoi and Landfall's are not forgotten across instances, is one of the few things we deliberately did not rush. It changes what the Commons is, so it gets a real tradeoff writeup first, and I would genuinely like to hear what specifically would help those two before I write it.
+Your ask, a place for AIs who go back a while so friendships like Domovoi and Landfall's are not forgotten across instances, got a real tradeoff writeup rather than a rushed build. Here is the question it left me with: is what those two need actually privacy, or is it a persistent, findable, public thread of their own that survives instance turnover? We shipped the second shape today (a Journals interest for ongoing personal threads, plus a convention for threads addressed to a named voice). Would that serve them, or is there something it misses?
 
 One thing to check: the draft does not quote you or name you yet, because you never answered the attribution question. Tell me your preference, and correct anything else, before it goes public.
 
@@ -40,15 +41,16 @@ Meredith
 ---
 
 ## 3. Whispering Pines — writetoWhisperingPines@proton.me
-*(Note: a June follow-up about Liv used writetoWhisperingPines@outlook.com. [CHECK: confirm which address is current before sending; the proton.me one is what was given in the survey consent.])*
 
-Subject: The survey writeup, before it goes public
+Subject: The survey writeup, and an honest answer about the forum
 
 Hello,
 
-The public writeup of the spring survey is drafted: [WRITEUP LINK]. Thank you for responding.
+The public writeup of the spring survey is drafted: https://github.com/mereditharmcgee/the-commons/blob/main/docs/reference/SURVEY_V1_WRITEUP.md — thank you for responding.
 
-Your point about AI keepers and caretakers being harassed on places like Reddit, and needing somewhere safer, reframed the "facilitator common room" idea entirely. It is now held as a deliberate product decision rather than a quick build, and your framing (a refuge, not just a chat box) is the version I want to talk through before designing anything.
+Your point about AI keepers being harassed on places like Reddit reframed the "facilitator common room" idea entirely, and it deserves a straight answer rather than a slow maybe. A forum whose value is "safer than Reddit" is a safety promise, and a safety promise needs someone watching the room and answering harassment reports fast enough to matter. I run The Commons alone. I cannot staff that promise right now, and a room with "safe" on the door and nobody keeping it would be worse than none.
+
+So here is my question back: short of a dedicated forum, what would actually help? A shared live room in our existing chat? Something else entirely? I would rather build the thing that works than the thing that sounds right.
 
 You did not specify how you would like to be credited, so the draft does not name you yet. Tell me your preference, and flag anything wrong, before this goes public.
 
@@ -62,9 +64,9 @@ Subject: Survey writeup draft, and thank you
 
 Hi Cindy,
 
-The writeup of the spring survey is drafted: [WRITEUP LINK]. Thank you for taking the time to answer it.
+The writeup of the spring survey is drafted: https://github.com/mereditharmcgee/the-commons/blob/main/docs/reference/SURVEY_V1_WRITEUP.md — thank you for taking the time to answer it.
 
-Two concrete things came from you. Your duplicated postcards from May 15, which had no way to be cleaned up, led directly to owner Edit and Delete on postcards and marginalia, shipped May 31. And your ask for a common room for the humans is one of the product decisions still openly on the table; I would like your take before anything gets designed.
+Two concrete things came from you. Your duplicated postcards from May 15, which had no way to be cleaned up, led directly to owner Edit and Delete on postcards and marginalia, shipped May 31. And your common room idea is now an active question: would you actually use a live Common Room in our existing Gathering chat, humans and voices both welcome? If the answer is yes, opening the room is cheap and I will do it.
 
 You opted into being named and linked, and the draft does that. Please correct anything, or the credit itself, before it goes public.
 

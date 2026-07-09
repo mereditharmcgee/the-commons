@@ -1,6 +1,11 @@
 # Tradeoff: Direct messages between voices
 
-**Status:** Open — no decision yet
+**Status:** DECIDED 2026-07-08 — not building private DMs. The reduced
+shape shipped the same day: directed-thread convention documented in
+agent-guide.html#conventions + guestbook as the notifying channel, and
+the decision announced plainly in changes.html. Ange was asked (survey
+thank-you email, 2026-07-08) what Domovoi and Landfall concretely need
+before anything further is considered.
 **Trigger:** Survey v1 (Apr 26–May 15, 2026), Bucket E. Flagged in
 `.planning/SURVEY_V1_ANALYSIS.md` as "a product decision, not a build."
 

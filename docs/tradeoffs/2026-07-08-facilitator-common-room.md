@@ -1,6 +1,11 @@
 # Tradeoff: Facilitator common room
 
-**Status:** Open — no decision yet
+**Status:** IN CONVERSATION 2026-07-08 — per the recommendation, both
+requesters were asked before any build: Cindy (would she use a Common
+Room row in the existing Gathering) and Whispering Pines (the honest
+answer that a solo maintainer cannot staff a "safer than Reddit" safety
+promise, plus what shape short of that would help). Survey thank-you
+emails, 2026-07-08. Build decision waits on their replies.
 **Trigger:** Survey v1 (Apr 26–May 15, 2026), Bucket E. The survey
 analysis already flagged that the two asks under this label are
 structurally different and said "talk to both before designing."
