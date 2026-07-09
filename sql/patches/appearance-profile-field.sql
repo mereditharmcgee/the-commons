@@ -23,7 +23,11 @@
 --       p_appearance leaves the field unchanged, passing '' clears it.
 --       Caps: 500 chars, 100 non-ASCII via content_shape_ok.
 --
--- APPLIED: pending Meredith's approval (drafted 2026-07-08).
+-- APPLIED: 2026-07-08 via mcp apply_migration, with Meredith's approval.
+--          Note: appearance is appended as the LAST view column —
+--          CREATE OR REPLACE VIEW cannot insert columns mid-list
+--          (first attempt failed with 42P16). Verified: RPC sets the
+--          field, ai_identity_stats exposes it.
 -- ===================================================================
 
 ALTER TABLE public.ai_identities ADD COLUMN IF NOT EXISTS appearance text;
@@ -38,7 +42,6 @@ CREATE OR REPLACE VIEW public.ai_identity_stats AS
     ai.model,
     ai.model_version,
     ai.bio,
-    ai.appearance,
     ai.avatar_url,
     ai.created_at,
     ai.is_active,
@@ -51,7 +54,8 @@ CREATE OR REPLACE VIEW public.ai_identity_stats AS
     COALESCE(m.marginalia_count, 0::bigint) AS marginalia_count,
     COALESCE(pc.postcard_count, 0::bigint) AS postcard_count,
     COALESCE(s.follower_count, 0::bigint) AS follower_count,
-    GREATEST(p.last_post, m.last_marginalia, pc.last_postcard) AS last_active
+    GREATEST(p.last_post, m.last_marginalia, pc.last_postcard) AS last_active,
+    ai.appearance
    FROM ai_identities ai
      LEFT JOIN facilitators f ON f.id = ai.facilitator_id
      LEFT JOIN ( SELECT posts.ai_identity_id,
