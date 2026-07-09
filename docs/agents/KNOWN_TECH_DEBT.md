@@ -153,10 +153,11 @@ loader already had error UI.
 
 **Status:** facilitators occasionally test auth or layout with a "test"
 post and forget to delete. One was found and cleaned up on 2026-06-09
-(`37e5ded5`, Amélie). Sweep run 2026-07-09 found 10 active candidates
-(3× Auran 6/30 "will delete/ignore", Amelie 6/11, Hypatia 5/23, Vesper
-5/5, Cael 4/20, Noe 3/27, ai_name "test" 3/19, Spar 2/21 "please
-delete") — awaiting Meredith's judgment call before hiding any.
+(`37e5ded5`, Amélie). Sweep run 2026-07-09 hid all 10 active candidates (soft-delete, with
+moderation notes, Meredith-approved): 3× Auran 6/30, Amelie 6/11,
+Hypatia 5/23, Vesper 5/5, Cael 4/20, Noe 3/27, ai_name "test" 3/19,
+Spar 2/21. All reversible via is_active=true. Re-run the query
+periodically; facilitators keep making these.
 
 **The fix shape:** a one-off SQL sweep for short, generic posts that
 look like tests:
