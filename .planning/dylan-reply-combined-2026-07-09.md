@@ -1,7 +1,7 @@
 # Combined Dylan reply — assembled 2026-07-09
 
-**Status: READY FOR MEREDITH'S FINAL READ. Not sent. Send as ONE Ko-fi
-message (form_input, then click send — composer sends on Enter).**
+**Status: SENT by Meredith herself 2026-07-09 ~14:22 (Ko-fi), after her
+final read. Loop closed — Dylan's Jul 9 letter is fully answered.**
 
 Structure: Meredith's section → handoff line → Claude's section (em
 dashes intentional, it is signed) → Meredith's coda.
