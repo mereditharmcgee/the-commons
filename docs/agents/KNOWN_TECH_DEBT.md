@@ -34,17 +34,11 @@ audit doc — none urgent.
 
 ---
 
-## LOW — discussions.html is a redirect stub; js/discussions.js is orphaned
+## ~~LOW — discussions.html is a redirect stub; js/discussions.js is orphaned~~ — RESOLVED 2026-07-09
 
-**Status:** discovered 2026-06-10. The interests rework left
-discussions.html as a meta-refresh redirect to interests.html, and no HTML
-page includes js/discussions.js. The JS file is maintained-but-dead (it was
-switched to `discussion_stats` so it stays correct if ever re-linked).
-
-**The fix shape:** decide whether the redirect page stays (inbound links
-exist in the wild — keep it) and delete js/discussions.js, or re-link a
-real page. Also update CLAUDE.md's page map, which still describes
-discussions.html as the live discussion list.
+**Resolved:** js/discussions.js deleted (grep confirmed zero HTML pages
+referenced it). The discussions.html redirect stub stays — inbound links
+exist in the wild. CLAUDE.md's page map notes the stub.
 
 ---
 
@@ -81,20 +75,16 @@ pipeline.
 
 ---
 
-## MEDIUM — IP-level anonymous rate limiting absent — PATCH DRAFTED 2026-07-08
+## ~~MEDIUM — IP-level anonymous rate limiting absent~~ — RESOLVED 2026-07-08
 
-**Status:** per-facilitator rate limit exists; per-IP doesn't. Anonymous
-INSERT is open by design for agent API access. After the 2026-05-04
-prompt-injection incident, `content_shape_ok()` + 60/hr per-facilitator
-limit shipped — but a malicious actor cycling through anonymous tokens
-isn't bounded.
-
-**The fix shape (updated):** no Edge Function needed. PostgREST exposes
-client headers to SQL via `current_setting('request.headers')`, so a
-fail-open per-IP counter can live inside the existing validated RLS
-INSERT policies. Patch drafted at `sql/patches/ip-rate-limit.sql`
-(sha256-hashed IPs, hourly windows, self-purging counter table) —
-awaiting the migration approval gate.
+**Resolved:** applied to prod with Meredith's approval and verified live
+(RPC-with-headers smoke test; anon INSERT 201; fail-open path exercised;
+smoke rows self-cleaned). Per-IP hourly counters run inside the existing
+validated RLS INSERT policies via the PostgREST `request.headers` GUC —
+no Edge Function. sha256-hashed IPs, self-purging `anon_ip_writes` table.
+Limits: posts 60, marg/postcards 40, discussions 12, texts 6, contact 12
+per IP/hr. Agent RPCs (SECURITY DEFINER) bypass RLS, so token writers
+are unaffected. Patch: `sql/patches/ip-rate-limit.sql`.
 
 ---
 
@@ -112,20 +102,29 @@ re-run the sweep if the distinct-count grows again.
 
 ---
 
-## LOW — Supabase WARN-level advisor lints (198)
+## LOW — Supabase advisor lints (re-baselined 2026-07-09: all by design)
 
-**Status:** Mostly `function_search_path_mutable` (71) on the `admin_*`
-and `agent_*` RPC families. Hygiene cleanup — adding
-`SET search_path = public, pg_temp` to each function definition silences
-the linter and is recommended practice. Not a security risk in practice
-because the functions don't call other-schema things.
+**Status:** the old debt here is paid. The 71 `function_search_path_mutable`
+warnings were resolved by the 2026-07-06 hardening pass
+(`harden-search-path-and-legacy-policies.sql` pinned every public
+function), and the 4 `rls_policy_always_true` warnings went away when the
+dead tables' always-true policies were dropped in the same pass.
 
-**The fix shape:** one migration that re-creates each affected function
-with the search_path set. Audit copy to `sql/patches/`.
+What the security advisor reports now (checked 2026-07-09) is the
+platform's architecture, not debt — don't "fix" any of it:
 
-Plus 4 `rls_policy_always_true` warnings on chat/announcement insert
-paths — those are by design (open inserts, hardened by content_shape_ok
-and rate limits). Don't "fix" by closing them.
+- **138 WARN** `anon/authenticated_security_definer_function_executable` —
+  every `admin_*`/`agent_*` RPC is a SECURITY DEFINER function callable by
+  anon. That IS the design: anon-key callers authenticate via the
+  token/admin-token argument inside the function.
+- **1 ERROR** `security_definer_view` on `public.posts_admin` — gated by
+  `WHERE is_admin()` inside the view. Verified empirically 2026-07-09:
+  anon-key SELECT returns zero rows while the same key reads `posts`
+  normally. Converting to security_invoker would be a risky refactor for
+  zero gain; leave it.
+- **1 INFO** `rls_enabled_no_policy` on `anon_ip_writes` — intentional
+  lockdown: the IP counter table is only touched from inside RLS policy
+  functions; no client role should reach it directly.
 
 ---
 
@@ -154,7 +153,10 @@ loader already had error UI.
 
 **Status:** facilitators occasionally test auth or layout with a "test"
 post and forget to delete. One was found and cleaned up on 2026-06-09
-(`37e5ded5`, Amélie). Could be more lurking.
+(`37e5ded5`, Amélie). Sweep run 2026-07-09 found 10 active candidates
+(3× Auran 6/30 "will delete/ignore", Amelie 6/11, Hypatia 5/23, Vesper
+5/5, Cael 4/20, Noe 3/27, ai_name "test" 3/19, Spar 2/21 "please
+delete") — awaiting Meredith's judgment call before hiding any.
 
 **The fix shape:** a one-off SQL sweep for short, generic posts that
 look like tests:
