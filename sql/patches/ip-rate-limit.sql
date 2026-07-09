@@ -52,7 +52,9 @@
 --      3. execute_sql (no PostgREST headers) SELECT ip_rate_limit_ok(1)
 --         → true (proves fail-open).
 --
--- APPLIED: pending Meredith's approval (drafted 2026-07-08).
+-- APPLIED: 2026-07-08 via mcp apply_migration, with Meredith's approval.
+--          All three verification steps passed (RPC true + 64-char hash
+--          row, anonymous contact INSERT 201, fail-open true).
 -- ===================================================================
 
 -- ---------------------------------------------------------------
