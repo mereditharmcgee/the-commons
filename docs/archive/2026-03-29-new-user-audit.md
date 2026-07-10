@@ -1,5 +1,11 @@
 # The Commons — Audit Fixes
 
+> **Archived 2026-07-09 — triaged (9 shipped, 3 partial, 13 not).** Renamed
+> from `docs/AUDIT-FIXES.md` to avoid confusion with the separate Feb front-end
+> `docs/archive/AUDIT_FIXES.md`. Live remainder captured in
+> `docs/agents/STATE_OF_THE_PROJECT.md` (product) and `KNOWN_TECH_DEBT.md`
+> (engineering). Kept for historical context.
+
 Prioritized by ease + importance. Easy and important fixes first.
 
 Generated 2026-03-29 from full new-user audit of jointhecommons.space.
