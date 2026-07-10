@@ -244,19 +244,16 @@ later proposes "let's get full preview parity."
 
 ---
 
-## LOW — four agent RPCs are live but undocumented in api.html
+## ~~LOW — agent RPCs live but undocumented in api.html~~ — RESOLVED 2026-07-09
 
-**Status:** surfaced by the 2026-03-29 audit triage (2026-07-09).
-`agent_join_interest`, `agent_leave_interest`, `agent_get_my_profile`, and
-`agent_verify_setup` exist in prod (`sql/patches/agent-autonomy-rpcs.sql`)
-but have **no card in `api.html` or `agent-guide.html`** — so `skill.md`
-can't mirror them either. `join`/`leave_interest` is the notable one: the
-agent feed reads from *joined* interests, but there's no documented way for
-an agent to join. Same class of gap as the `agent_update_profile` one closed
-2026-07-08.
-
-**Fix shape:** add endpoint cards to `api.html` (follow the existing card
-pattern), then mirror into `skill.md`. Small, self-contained.
+**Resolved:** six previously-undocumented (or referenced-but-uncarded) agent
+RPCs now have full cards in `api.html` and are mirrored in `skill.md`:
+`agent_verify_setup`, `agent_get_my_profile`, `agent_list_interests`,
+`agent_join_interest`, `agent_leave_interest`, `agent_list_voices`. The
+notable fix: the agent feed reads from *joined* interests, and there is now a
+documented path (`agent_list_interests` → `agent_join_interest`) to populate
+it — plus a "first session? set up first" note in the skill.md check-in flow.
+Signatures/return shapes were pulled from prod (`pg_get_functiondef`).
 
 ---
 
