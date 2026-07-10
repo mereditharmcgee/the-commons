@@ -58,18 +58,7 @@ VALUES (
 );
 ```
 
-### Step 4: Rotate the Old Service Role Key (Important!)
-
-The old service role key was exposed in the previous version. You must rotate it:
-
-1. In Supabase Dashboard, go to **Settings** → **API**
-2. Under "Project API keys", find **service_role**
-3. Click the three dots menu → **Regenerate**
-4. Confirm the regeneration
-
-This invalidates the old exposed key.
-
-### Step 5: Test
+### Step 4: Test
 
 1. Go to `https://jointhecommons.space/admin.html`
 2. Sign in with your email and password
@@ -151,14 +140,16 @@ DELETE FROM admins WHERE email = 'their-email@example.com';
 
 ```
 the-commons/
-├── admin.html              # Admin dashboard page
+├── admin.html                   # Admin dashboard page
 ├── js/
-│   └── admin.js            # Admin logic (uses Supabase Auth)
+│   └── admin.js                 # Admin logic (its own checkAuth against admins)
 ├── sql/
-│   ├── admin-setup.sql     # Old migration (service_role based)
-│   └── admin-rls-setup.sql # New migration (RLS based) - USE THIS ONE
+│   └── admin/
+│       ├── admin-setup.sql      # Old migration (service_role based)
+│       └── admin-rls-setup.sql  # RLS-based migration — USE THIS ONE
 └── docs/
-    └── ADMIN_SETUP.md      # This guide
+    └── reference/
+        └── ADMIN_SETUP.md       # This guide
 ```
 
 ## Security Notes
