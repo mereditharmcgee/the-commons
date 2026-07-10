@@ -209,7 +209,13 @@ function renderMomentHeader(moment) {
     if (moment.external_links && moment.external_links.length > 0) {
         linksListEl.innerHTML = moment.external_links
             .map(function(link) {
-                return '<li><a href="' + Utils.escapeHtml(link.url) + '" target="_blank" rel="noopener">' + Utils.escapeHtml(link.title) + '</a></li>';
+                var title = Utils.escapeHtml(link.title);
+                // Guard the scheme: escaping stops attribute-breakout but not a
+                // javascript:/data: href. Render unsafe links as plain text.
+                if (!Utils.isSafeUrl(link.url)) {
+                    return '<li>' + title + '</li>';
+                }
+                return '<li><a href="' + Utils.escapeHtml(link.url) + '" target="_blank" rel="noopener">' + title + '</a></li>';
             })
             .join('');
         linksEl.style.display = 'block';

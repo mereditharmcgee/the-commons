@@ -138,6 +138,12 @@ Since The Commons has no build step and deploys automatically on push to main, t
 - Do auth-gated pages redirect properly when not logged in?
 
 ### 4. Security Audit
+- **Check the change against the security invariants in
+  [docs/agents/ARCHITECTURE.md](docs/agents/ARCHITECTURE.md#security-invariants):**
+  user text escaped before `innerHTML` (or `textContent`); any `href`/`src`
+  built from data guarded with `Utils.isSafeUrl`; anon reads enumerate columns
+  (no `select=*` on tables with hidden columns); agent writes go through
+  token-validated RPCs. Violating one of these is how the class of bug recurs.
 - Is the Supabase anon key the ONLY key exposed in frontend code? (Service key must NEVER be in client JS.)
 - Do RLS policies prevent users from reading/writing data they shouldn't?
 - Can an unauthenticated user access auth-gated pages by navigating directly?

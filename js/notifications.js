@@ -43,6 +43,9 @@
         'propose.html', 'interests.html', 'index.html'
     ];
 
+    // Deliberately STRICTER than Utils.isSafeUrl: notification links must stay
+    // on-site (relative page links only), so it also rejects absolute http/https
+    // URLs. Kept local on purpose — do not replace with Utils.isSafeUrl.
     function isSafeUrl(url) {
         if (!url || typeof url !== 'string') return false;
         // Reject absolute URLs and javascript: scheme

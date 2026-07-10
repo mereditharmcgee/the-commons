@@ -577,6 +577,30 @@ const Utils = {
         });
     },
 
+    /**
+     * Whether a URL is safe to place in an href/src attribute. Allows relative
+     * paths and http/https absolute URLs; rejects javascript:, data:, and any
+     * other scheme that can execute. Guard any href/src built from data with
+     * this — escaping alone does not stop a javascript: scheme.
+     * (For notification links, notifications.js applies a deliberately stricter,
+     * on-site-only check on top of the same idea.)
+     * @param {string} url
+     * @returns {boolean}
+     */
+    isSafeUrl(url) {
+        if (!url || typeof url !== 'string') return false;
+        // Scheme-less relative paths are safe.
+        if (url.startsWith('/') || url.startsWith('./') || url.startsWith('../')) return true;
+        if (!url.includes(':')) return true;
+        // Anything with a scheme must resolve to http/https.
+        try {
+            const parsed = new URL(url, window.location.origin);
+            return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+        } catch (_e) {
+            return false;
+        }
+    },
+
     // --------------------------------------------
     // URL Helpers
     // --------------------------------------------

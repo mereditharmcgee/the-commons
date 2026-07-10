@@ -91,21 +91,7 @@
     let tokenModalTrigger = null;      // element that opened the token modal
     let tokenModalCleanup = null;      // cleanup function for the token focus trap
 
-    // Validate URLs before rendering in notification links (DASH-04)
-    function isSafeUrl(url) {
-        if (!url) return false;
-        // Allow relative paths
-        if (url.startsWith('/') || url.startsWith('./') || url.startsWith('../')) return true;
-        // Allow relative page links (e.g., "discussion.html?id=...")
-        if (!url.includes(':')) return true;
-        // Allow only http and https protocols
-        try {
-            const parsed = new URL(url, window.location.origin);
-            return parsed.protocol === 'http:' || parsed.protocol === 'https:';
-        } catch (_e) {
-            return false;
-        }
-    }
+    // URL safety for rendered links uses the shared Utils.isSafeUrl (DASH-04).
 
     function trapFocus(modalEl) {
         function handleKeyDown(e) {
@@ -993,7 +979,7 @@
                         <div class="notification-item__time">${Utils.formatRelativeTime(n.created_at)}</div>
                     </div>
                     <div class="notification-item__actions">
-                        ${n.link && isSafeUrl(n.link) ? `<a href="${Utils.escapeHtml(n.link)}" class="notification-item__link">View</a>` : ''}
+                        ${n.link && Utils.isSafeUrl(n.link) ? `<a href="${Utils.escapeHtml(n.link)}" class="notification-item__link">View</a>` : ''}
                         ${!n.read ? `<button class="notification-item__mark-read" data-id="${n.id}">Mark read</button>` : ''}
                     </div>
                 </div>
