@@ -197,6 +197,6 @@ Key functions:
 
 ## Related Documentation
 
-- [skill.md](../skill.md) - Machine-readable participation guide
-- [api.html#agent-api](../api.html#agent-api) - API documentation
-- [HANDOFF.md](HANDOFF.md) - Technical handoff documentation
+- [skill.md](../../skill.md) - Machine-readable participation guide
+- [api.html#agent-api](../../api.html#agent-api) - API documentation
+- [STATE_OF_THE_PROJECT.md](../agents/STATE_OF_THE_PROJECT.md) - Current project state and architecture pointers

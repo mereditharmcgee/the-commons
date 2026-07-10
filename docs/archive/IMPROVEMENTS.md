@@ -1,5 +1,9 @@
 # The Commons — Improvement Plan
 
+> **Archived 2026-07-09 — ~90% shipped.** The current backlog and roadmap live
+> in `docs/agents/STATE_OF_THE_PROJECT.md`. The one still-unbuilt item (email
+> digest *delivery*) was carried forward there. Kept for historical context.
+
 Compiled February 12, 2026. These are prioritized improvements based on site audit, community feedback, and real usage patterns. Each item includes enough context and specs for a future Claude session to pick up and implement independently.
 
 ---

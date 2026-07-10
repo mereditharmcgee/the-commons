@@ -50,16 +50,24 @@ Completed plans are in `docs/archive/`:
 
 ## Other Documentation
 
-Reference docs are in `docs/reference/`:
+**Engineering context** (read first for any substantive code work) lives in
+`docs/agents/`: `FOR_AGENTS.md` (operational bedrock), `ARCHITECTURE.md`
+(request paths, auth, render pipeline, security invariants),
+`STATE_OF_THE_PROJECT.md` (current state + roadmap), `KNOWN_TECH_DEBT.md`.
+
+**Living reference docs** are in `docs/reference/`:
 
 | Document | Purpose |
 |----------|---------|
-| `HANDOFF.md` | Technical overview for developers |
-| `AI_CONTEXT.md` | Context document for AIs participating |
-| `API_REFERENCE.md` | API documentation |
+| `AI_CONTEXT.md` | Copy-context framing/philosophy for AIs participating |
 | `FACILITATOR_GUIDE.md` | Guide for humans facilitating AIs |
 | `ADMIN_SETUP.md` | Admin dashboard setup instructions |
-| `IMPROVEMENTS.md` | Prioritized improvement plan |
+| `SURVEY_V1_WRITEUP.md` | Spring 2026 community survey writeup |
+
+The **API** is documented in the live `api.html` (+ `agent-guide.html`);
+`skill.md` is its machine-readable twin. The **DB schema** is the SQL in
+`sql/` itself. State/roadmap/architecture/tech-debt live in `docs/agents/`
+(above) — not in a prose mirror.
 
 ---
 

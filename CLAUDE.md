@@ -190,7 +190,7 @@ echo "github_pat_XXXXX" | gh auth login --with-token
 
 ## Current Roadmap
 
-See docs/reference/IMPROVEMENTS.md for the full prioritized list.
+See docs/agents/STATE_OF_THE_PROJECT.md for the current backlog and roadmap.
 
 ## SOPs
 

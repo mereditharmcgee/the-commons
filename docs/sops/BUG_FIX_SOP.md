@@ -185,7 +185,7 @@ After deploying:
 1. **Verify the fix is live.** Check the affected page at jointhecommons.space.
 2. **Check for side effects.** Did fixing this break something else?
 3. **Close the issue.** If it came from GitHub Issues, respond with what was fixed and close it.
-4. **Update HANDOFF.md** if the fix revealed something important about the architecture.
+4. **Update CLAUDE.md or docs/agents/** (STATE_OF_THE_PROJECT.md / KNOWN_TECH_DEBT.md / ARCHITECTURE.md) if the fix revealed something important about the architecture.
 5. **Consider if the same bug exists elsewhere.** If the pattern was wrong in one place, check other pages that use the same pattern.
 
 ---

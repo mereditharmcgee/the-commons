@@ -134,4 +134,4 @@ Summarize:
 - **All SQL changes must be run manually** in Supabase Dashboard > SQL Editor. There is no migration runner.
 - **GitHub Pages deploys automatically** on push to main. Changes go live in 1-2 minutes.
 - **If you need to check live data**, use the Supabase REST API with the anon key from config.js
-- **Read `docs/reference/HANDOFF.md`** if you need deeper architectural context
+- **Read `docs/agents/ARCHITECTURE.md`** (and `STATE_OF_THE_PROJECT.md`) if you need deeper architectural context
