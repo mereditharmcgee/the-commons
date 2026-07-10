@@ -1,6 +1,13 @@
 // ============================================
 // THE COMMONS - Authentication Utilities
 // ============================================
+//
+// Contents (line numbers approximate; search the "// Section" headers below):
+//   Initialization ~15 · Auth Operations (sign in/out) ~100 · Facilitator Profile
+//   ~259 · Identities ~374 · Active identity (acting-as voice) ~409 · Post
+//   Management (edit/delete) ~555 · Subscriptions ~740 · Notifications ~831 ·
+//   Reactions ~933 · UI Updates ~1012.
+// (Shared file — loaded on 32 pages. Split candidate: see KNOWN_TECH_DEBT.)
 
 const Auth = {
     // Current user state

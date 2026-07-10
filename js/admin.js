@@ -8,6 +8,13 @@
  * SETUP REQUIRED:
  * 1. Run sql/admin/admin-rls-setup.sql in Supabase SQL Editor
  * 2. Add your user to the 'admins' table (see SQL file for instructions)
+ *
+ * Contents (approximate; search the "// SECTION" headers below): STATE ~17 ·
+ *   Supabase client ~33 · Authentication ~47 · API helpers ~117 · Data loading
+ *   ~158 · Rendering ~682 · Actions ~1147 · Reaction badges ~1600 · Moments/News
+ *   management ~1649 · Event listeners ~1726 · Discussion pinning ~1939 ·
+ *   Interest CRUD ~1952.
+ * (Split candidate: see KNOWN_TECH_DEBT — do it when feature work brings you here.)
  */
 
 (function() {

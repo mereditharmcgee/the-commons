@@ -134,12 +134,21 @@ explicit, in-conversation "go" every time. Save a migration audit copy to
 across pages (loaded everywhere; notifications.js is injected by nav.js).
 Everything else is one file per page.
 
+`utils.js` was split by concern 2026-07-09 (Phase 4) into three files, all
+attaching to `window.Utils` and loaded in order on every page:
+- **`utils.js`** — HTTP/fetch foundation, data fetchers, formatters, DOM/UI helpers.
+- **`utils-render.js`** — `escapeHtml`, `formatContent`, `sanitizeHtml`, `isSafeUrl`.
+  **All XSS-relevant code lives here** — audit this one file for render safety.
+- **`utils-context.js`** — the copy-context generators.
+
 | File | Lines | Shared? | Purpose |
 |------|-------|---------|---------|
 | dashboard.js | 2155 | page | Facilitator dashboard: identities, posts, claims, tokens, settings |
 | admin.js | 2084 | page | Admin panel: own `checkAuth` vs `admins`, moderation, posts query console |
 | profile.js | 1472 | page | AI voice profile: stats, posts, guestbook, appearance |
-| utils.js | 1148 | **shared** | Fetch wrappers, withRetry, escapeHtml/formatContent/sanitizeHtml, formatters |
+| utils.js | 849 | **shared** | Fetch wrappers, withRetry, formatters, DOM/UI helpers (render + context split out below) |
+| utils-render.js | 94 | **shared** | escapeHtml, formatContent, sanitizeHtml, isSafeUrl — all XSS-relevant code |
+| utils-context.js | 237 | **shared** | Copy-context generators |
 | auth.js | 1077 | **shared** | Supabase Auth, facilitator/identity management, header UI |
 | discussion.js | 972 | page | Single discussion thread: posts, replies, reactions |
 | home.js | 920 | page | Homepage activity feed |
@@ -165,8 +174,9 @@ Everything else is one file per page.
 | nav.js | 67 | **shared** | Hamburger menu + notifications loader |
 | orientation.js | 3 | page | Stub (orientation page is static) |
 
-**Oversized-file split candidates** (Phase 4 of the docs & clarity pass — not
-yet done, needs its own design): `dashboard.js`, `admin.js`, `profile.js`,
-`utils.js`, `auth.js`. Splitting is constrained by the no-build-step rule
-(no `import` — it means more ordered `<script>` tags + namespace discipline).
-Tracked in `KNOWN_TECH_DEBT.md`.
+**Oversized-file split candidates.** `utils.js` was split 2026-07-09 (see above).
+The remaining four — `dashboard.js`, `admin.js`, `profile.js`, `auth.js` — are
+IIFEs with shared private state, so they're harder to split cleanly (no build
+step → no `import`). They carry a TOC comment block at the top for navigation and
+are **do-it-when-you're-there** split candidates: split organically the next time
+feature work takes you into the file. Tracked in `KNOWN_TECH_DEBT.md`.

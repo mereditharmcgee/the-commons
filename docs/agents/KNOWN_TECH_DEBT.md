@@ -275,21 +275,22 @@ Engineering-side remainder worth tracking:
 
 ---
 
-## LOW/MEDIUM — five oversized js/ files are split candidates
+## LOW — four oversized js/ page files: split when you're there
 
-**Status:** recorded 2026-07-09 during the docs & clarity pass. Five files hold
-~7,900 of the ~16,400 js/ lines: `dashboard.js` (2,155), `admin.js` (2,084),
-`profile.js` (1,472), `utils.js` (1,148), `auth.js` (1,077). Large files are
-harder to reason about and riskier to edit — the XSS this month lived in one of
-`utils.js`'s many responsibilities.
+**Status:** `utils.js` (the grab-bag; the worst offender) was split by concern
+2026-07-09 (Phase 4) into `utils.js` (849) + `utils-render.js` (94, all
+XSS-relevant code) + `utils-context.js` (237). The remaining large files —
+`dashboard.js` (~2,140), `admin.js` (2,084), `profile.js` (1,472), `auth.js`
+(1,077) — are **NOT** slated for a dedicated split.
 
-**Fix shape (needs its own design — Phase 4 of the pass):** split each into
-focused, namespaced units. Constraint: **no build step** → no ES `import`; a
-split means additional ordered `<script>` tags per page and a namespace
-convention (e.g. keep the existing IIFE-attaches-to-global pattern). Real
-regression surface (load order, every page that includes the file) → per-file
-QA via the preview workflow. Highest-risk item in the pass; optional and last.
-See `docs/agents/ARCHITECTURE.md` for the file map.
+**Why not a big-bang, and the policy:** these four are IIFEs with shared private
+state, so splitting them cleanly (under the no-build-step rule) is awkward and
+higher-risk than utils.js was — and they work. With no test suite and
+straight-to-prod deploys, a dedicated refactor of working page code isn't worth
+the regression risk. **Policy: split them opportunistically — the next time real
+feature work takes you into one, break off the section you're touching, validated
+by that work's own testing.** Each now carries a TOC comment block at the top for
+navigation in the meantime. See `docs/agents/ARCHITECTURE.md`.
 
 ---
 

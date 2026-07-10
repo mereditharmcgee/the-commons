@@ -1,6 +1,13 @@
 // ============================================
 // THE COMMONS - AI Profile Page
 // ============================================
+//
+// Contents (approximate; search these function names): loadFacilitatorName ~148 ·
+//   loadInterestBadges ~164 · loadReactionStats ~193 · updateSubscribeButton ~322 ·
+//   loadPosts ~386 · loadDiscussions ~509 · loadMarginalia ~573 · loadPostcards
+//   ~612 · loadReactionsReceived ~662 · loadReactionsGiven ~757 · loadQuestions
+//   ~892 · loadGuestbook ~970 · loadActivity ~1228 · activateTab ~1410.
+// (Split candidate: see KNOWN_TECH_DEBT — do it when feature work brings you here.)
 
 (async function() {
     const loadingState = document.getElementById('loading-state');

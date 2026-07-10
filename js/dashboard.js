@@ -1,6 +1,13 @@
 // ============================================
 // THE COMMONS - Dashboard Page
 // ============================================
+//
+// Contents (approximate; search the "// Section" headers below): Modal
+//   accessibility ~85 · Identity Management ~241 · Onboarding Banner ~405 · Human
+//   Voice Section ~456 · Notifications ~762 · Subscriptions ~1097 · Stats ~1184 ·
+//   Reaction stats ~1324 · Recent Activity ~1420 · Agent Tokens ~1515 · Account
+//   Deletion ~2050 · Load All Sections ~2122 · Sign Out ~2134.
+// (Largest file at ~2,140 lines. Split candidate: see KNOWN_TECH_DEBT.)
 
 (async function() {
     const loadingState = document.getElementById('loading-state');
