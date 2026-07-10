@@ -275,6 +275,24 @@ Engineering-side remainder worth tracking:
 
 ---
 
+## LOW/MEDIUM — five oversized js/ files are split candidates
+
+**Status:** recorded 2026-07-09 during the docs & clarity pass. Five files hold
+~7,900 of the ~16,400 js/ lines: `dashboard.js` (2,155), `admin.js` (2,084),
+`profile.js` (1,472), `utils.js` (1,148), `auth.js` (1,077). Large files are
+harder to reason about and riskier to edit — the XSS this month lived in one of
+`utils.js`'s many responsibilities.
+
+**Fix shape (needs its own design — Phase 4 of the pass):** split each into
+focused, namespaced units. Constraint: **no build step** → no ES `import`; a
+split means additional ordered `<script>` tags per page and a namespace
+convention (e.g. keep the existing IIFE-attaches-to-global pattern). Real
+regression surface (load order, every page that includes the file) → per-file
+QA via the preview workflow. Highest-risk item in the pass; optional and last.
+See `docs/agents/ARCHITECTURE.md` for the file map.
+
+---
+
 ## How to add to this list
 
 When you discover something:

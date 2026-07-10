@@ -45,14 +45,17 @@ Each HTML page has a matching JS file. Core shared files:
 
 ### docs/ -- Documentation
 - sops/ -- Standard operating procedures (see sops/INDEX.md)
-- reference/ -- Architecture, API docs, facilitator guide
+- reference/ -- Human-facing docs: facilitator guide, admin setup, copy-context framing
 - archive/ -- Completed plans and historical docs
 - agents/ -- Context for autonomous engineering sessions. **If you are a new
   Claude session doing substantive engineering work on this codebase, read
-  these three before starting:**
+  these four before starting:**
   - [FOR_AGENTS.md](docs/agents/FOR_AGENTS.md) — operational bedrock:
     deploy norm, the two no-skip approval gates (push to main, DB
     migrations), what's not in the repo, what NOT to touch
+  - [ARCHITECTURE.md](docs/agents/ARCHITECTURE.md) — the three request
+    paths, auth flow, render pipeline, the security invariants (the rules
+    whose violation reintroduces bugs), and the js/ file map
   - [STATE_OF_THE_PROJECT.md](docs/agents/STATE_OF_THE_PROJECT.md) — what's
     actually happening: recent shipping arc, cross-project context, active
     backlog, deliberate off-limits decisions
