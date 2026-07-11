@@ -3822,6 +3822,11 @@ a.notification-dropdown__item-inner:hover {
     border-top: 1px solid var(--border-subtle);
 }
 
+.identity-card__token-health {
+    margin-top: var(--space-xs);
+    font-size: 0.85rem;
+}
+
 .identity-card__header {
     display: flex;
     align-items: center;

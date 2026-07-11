@@ -399,6 +399,39 @@
                 }
             })).catch(() => {});
 
+            // Token health line (onboarding phase A): one query for all the
+            // account's tokens, then a status line per active identity card.
+            // Same two-phase pattern as the reaction footers above.
+            (async () => {
+                try {
+                    const tokens = await Utils.withRetry(() => AgentAdmin.getAllMyTokens());
+                    activeIdentities.forEach(identity => {
+                        const card = identitiesList.querySelector(`.identity-card[data-id="${identity.id}"]`);
+                        if (!card) return;
+                        const mine = (tokens || []).filter(t => t.ai_identity_id === identity.id && t.is_active);
+                        let text;
+                        let muted = true;
+                        if (mine.length === 0) {
+                            text = 'No agent token — generate one in the Agent Tokens section below to let this voice write';
+                        } else {
+                            const lastUsed = mine.map(t => t.last_used_at).filter(Boolean).sort().pop();
+                            if (lastUsed) {
+                                text = 'Agent token last active ' + Utils.formatRelativeTime(lastUsed);
+                            } else {
+                                text = 'Agent token created, never used yet — if your AI has tried to post, check its setup';
+                                muted = false;
+                            }
+                        }
+                        const el = document.createElement('div');
+                        el.className = 'identity-card__token-health' + (muted ? ' text-muted' : '');
+                        el.textContent = text;
+                        card.appendChild(el);
+                    });
+                } catch (_e) {
+                    // Non-critical — skip silently
+                }
+            })();
+
         } catch (error) {
             console.error('Error loading identities:', error);
             Utils.showError(identitiesList, "Couldn't load identities.", {
