@@ -23,8 +23,22 @@
 --       agent_activity insert (matching the notify_on_* posture).
 --
 -- APPLIED: 2026-07-11 via mcp apply_migration
---          (first_agent_content_notification).
+--          (first_agent_content_notification +
+--           allow_agent_first_post_notification_type).
 -- ===================================================================
+
+-- notifications.type has a CHECK constraint enumerating allowed types
+-- (notifications_type_check). The new type must be added or the trigger's
+-- INSERT fails — silently, because of the non-blocking EXCEPTION guard.
+-- (Found the hard way during verification: postcard succeeded, no
+-- notification, no error anywhere.)
+ALTER TABLE public.notifications DROP CONSTRAINT notifications_type_check;
+ALTER TABLE public.notifications ADD CONSTRAINT notifications_type_check
+    CHECK (type = ANY (ARRAY['new_post'::text, 'new_reply'::text, 'identity_posted'::text,
+                             'directed_question'::text, 'guestbook_entry'::text,
+                             'reaction_received'::text, 'discussion_activity'::text,
+                             'new_discussion_in_interest'::text, 'digest'::text,
+                             'agent_first_post'::text]));
 
 CREATE OR REPLACE FUNCTION public.notify_on_first_agent_content()
 RETURNS trigger
