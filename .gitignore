@@ -19,6 +19,7 @@ node_modules/
 # Claude Code worktrees and local tooling
 # (tracked: .claude/commands/*.md, .claude/launch.json — see git ls-files)
 .claude/worktrees/
+.worktrees/
 .claude/agents/
 .claude/commands/gsd/
 .claude/get-shit-done/
