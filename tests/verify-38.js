@@ -60,6 +60,12 @@ async function verify() {
         'setup-copy generation does not accept the real token');
     C.checkFileContains('ONBD-12', 'js/dashboard.js', /findTokenCandidate/,
         'token generation reconciles uncertain requests before retry');
+    C.checkFileContains('ONBD-13', 'js/dashboard.js',
+        /getAllMyTokens\(\[identity\], \{ throwOnError: true \}\)/,
+        'token reconciliation uses an owner-scoped read that surfaces failures');
+    C.checkFileContains('ONBD-14', 'js/dashboard.js',
+        /showTokenReconciliationUnavailable[\s\S]*Check token status/,
+        'failed reconciliation blocks generation behind a safe status recheck');
     const dashboardSource = C.readFile('js/dashboard.js');
     const identityCacheIndex = dashboardSource.indexOf('let dashboardIdentityData =');
     const tokenDeepLinkIndex = dashboardSource.indexOf("if (window.location.hash === '#tokens'");

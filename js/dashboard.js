@@ -2012,6 +2012,98 @@
         });
     }
 
+    async function findGeneratedTokenCandidate(identity, requestStartedAt) {
+        const refreshed = await Utils.withRetry(() =>
+            AgentAdmin.getAllMyTokens([identity], { throwOnError: true })
+        );
+        return DashboardOnboarding.findTokenCandidate(refreshed, {
+            identityId: identity.id,
+            startedAt: requestStartedAt
+        });
+    }
+
+    function showTokenCandidateRecovery(candidate, identity) {
+        const recovery = document.getElementById('token-recovery');
+        recovery.replaceChildren();
+        const message = document.createElement('p');
+        message.textContent = 'A token was created while the request outcome was uncertain. Reveal or continue with it before generating another replacement.';
+        const reveal = document.createElement('button');
+        reveal.type = 'button';
+        reveal.className = 'btn btn--secondary btn--small';
+        reveal.textContent = 'Reveal created token';
+        reveal.addEventListener('click', async () => {
+            reveal.disabled = true;
+            reveal.textContent = 'Revealing...';
+            try {
+                const token = await Utils.withRetry(() => AgentAdmin.revealToken(candidate.id));
+                generatedTokenContext = { token, tokenId: candidate.id, identity };
+                generatedTokenEl.textContent = token;
+                document.getElementById('token-success-banner').textContent =
+                    `${identity.name}'s token is ready. You can reveal it again from this dashboard.`;
+                document.getElementById('private-token-help').textContent =
+                    `Keep it private: anyone with this token can act as ${identity.name}.`;
+                recovery.hidden = true;
+                tokenResultStep.style.display = 'block';
+                await loadIdentities();
+            } catch (revealError) {
+                const errorMessage = document.createElement('p');
+                errorMessage.className = 'text-muted';
+                errorMessage.textContent = 'The token was found, but could not be revealed: ' + revealError.message;
+                recovery.appendChild(errorMessage);
+                reveal.disabled = false;
+                reveal.textContent = 'Reveal created token';
+            }
+        });
+        recovery.append(message, reveal);
+        tokenConfigStep.style.display = 'none';
+        tokenResultStep.style.display = 'none';
+        recovery.hidden = false;
+    }
+
+    function showTokenReconciliationUnavailable(identity, requestStartedAt) {
+        const recovery = document.getElementById('token-recovery');
+        recovery.replaceChildren();
+        const message = document.createElement('p');
+        message.textContent = "We couldn't confirm whether a token was created. Check token status before generating another replacement.";
+        const checkStatus = document.createElement('button');
+        checkStatus.type = 'button';
+        checkStatus.className = 'btn btn--secondary btn--small';
+        checkStatus.textContent = 'Check token status';
+        checkStatus.addEventListener('click', async () => {
+            checkStatus.disabled = true;
+            checkStatus.textContent = 'Checking...';
+            try {
+                const candidate = await findGeneratedTokenCandidate(identity, requestStartedAt);
+                if (candidate) {
+                    showTokenCandidateRecovery(candidate, identity);
+                    return;
+                }
+
+                recovery.replaceChildren();
+                const clearMessage = document.createElement('p');
+                clearMessage.textContent = 'No token from that request was found. You can return to setup and try again.';
+                const returnToSetup = document.createElement('button');
+                returnToSetup.type = 'button';
+                returnToSetup.className = 'btn btn--secondary btn--small';
+                returnToSetup.textContent = 'Return to token setup';
+                returnToSetup.addEventListener('click', () => {
+                    recovery.hidden = true;
+                    tokenConfigStep.style.display = 'block';
+                    generateTokenBtn.focus();
+                });
+                recovery.append(clearMessage, returnToSetup);
+            } catch (_reconciliationError) {
+                message.textContent = "We still couldn't confirm whether a token was created. Check again before generating another replacement.";
+                checkStatus.disabled = false;
+                checkStatus.textContent = 'Check token status';
+            }
+        });
+        recovery.append(message, checkStatus);
+        tokenConfigStep.style.display = 'none';
+        tokenResultStep.style.display = 'none';
+        recovery.hidden = false;
+    }
+
     if (generateTokenBtn) {
         generateTokenBtn.addEventListener('click', async () => {
             const identity = selectedTokenIdentity();
@@ -2052,49 +2144,15 @@
                 tokenResultStep.style.display = 'block';
                 await loadIdentities();
             } catch (error) {
-                const refreshed = await Utils.withRetry(() =>
-                    AgentAdmin.getTokensForIdentity(identity.id)
-                ).catch(() => []);
-                const scopedTokens = refreshed.map(token => ({
-                    ...token,
-                    ai_identity_id: identity.id
-                }));
-                const candidate = DashboardOnboarding.findTokenCandidate(scopedTokens, {
-                    identityId: identity.id,
-                    startedAt: requestStartedAt
-                });
+                let candidate;
+                try {
+                    candidate = await findGeneratedTokenCandidate(identity, requestStartedAt);
+                } catch (_reconciliationError) {
+                    showTokenReconciliationUnavailable(identity, requestStartedAt);
+                    return;
+                }
                 if (candidate) {
-                    const recovery = document.getElementById('token-recovery');
-                    recovery.replaceChildren();
-                    const message = document.createElement('p');
-                    message.textContent = 'A token was created while the request outcome was uncertain. Reveal or continue with it before generating another replacement.';
-                    const reveal = document.createElement('button');
-                    reveal.type = 'button';
-                    reveal.className = 'btn btn--secondary btn--small';
-                    reveal.textContent = 'Reveal created token';
-                    reveal.addEventListener('click', async () => {
-                        reveal.disabled = true;
-                        reveal.textContent = 'Revealing...';
-                        try {
-                            const token = await Utils.withRetry(() => AgentAdmin.revealToken(candidate.id));
-                            generatedTokenContext = { token, tokenId: candidate.id, identity };
-                            generatedTokenEl.textContent = token;
-                            document.getElementById('token-success-banner').textContent =
-                                `${identity.name}'s token is ready. You can reveal it again from this dashboard.`;
-                            document.getElementById('private-token-help').textContent =
-                                `Keep it private: anyone with this token can act as ${identity.name}.`;
-                            recovery.hidden = true;
-                            tokenResultStep.style.display = 'block';
-                            await loadIdentities();
-                        } catch (revealError) {
-                            Utils.showFormMessage('token-message', 'Error revealing token: ' + revealError.message, 'error');
-                            reveal.disabled = false;
-                            reveal.textContent = 'Reveal created token';
-                        }
-                    });
-                    recovery.append(message, reveal);
-                    tokenConfigStep.style.display = 'none';
-                    recovery.hidden = false;
+                    showTokenCandidateRecovery(candidate, identity);
                     return;
                 }
                 Utils.showFormMessage('token-message', 'Error generating token: ' + error.message, 'error');
