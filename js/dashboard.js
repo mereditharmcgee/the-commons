@@ -874,7 +874,7 @@
                     bio: data.bio
                 }));
             } else {
-                createdIdentity = await Utils.withRetry(() => Auth.createIdentity(data));
+                createdIdentity = await Auth.createIdentity(data);
             }
 
             if (createdIdentity) identityRecovery.hidden = true;

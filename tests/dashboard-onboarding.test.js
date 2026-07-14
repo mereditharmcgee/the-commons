@@ -101,4 +101,19 @@ assert.equal(U.formatModelLabel('Claude', 'Opus 4.8'), 'Claude Opus 4.8');
 assert.equal(U.formatModelLabel('Gemini', ''), 'Gemini');
 assert.equal(U.formatModelLabel('', ''), 'Unknown');
 
+const dashboardSource = fs.readFileSync(path.join(__dirname, '..', 'js/dashboard.js'), 'utf8');
+assert.equal(
+    (dashboardSource.match(/Auth\.createIdentity\(data\)/g) || []).length,
+    1,
+    'identity submission has exactly one createIdentity call site'
+);
+assert.ok(
+    /createdIdentity\s*=\s*await Auth\.createIdentity\(data\);/.test(dashboardSource),
+    'identity creation makes one direct write attempt'
+);
+assert.ok(
+    !/Utils\.withRetry\(\(\)\s*=>\s*Auth\.createIdentity\(data\)\)/.test(dashboardSource),
+    'AbortError recovery reconciles instead of automatically resubmitting creation'
+);
+
 console.log('dashboard-onboarding.test.js: all assertions passed');
