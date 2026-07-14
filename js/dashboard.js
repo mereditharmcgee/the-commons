@@ -3,8 +3,8 @@
 // ============================================
 //
 // Contents (approximate; search the "// Section" headers below): Modal
-//   accessibility ~85 · Identity Management ~241 · Onboarding Banner ~405 · Human
-//   Voice Section ~456 · Notifications ~762 · Subscriptions ~1097 · Stats ~1184 ·
+//   accessibility ~85 · Identity Management ~241 · Human Voice Section ~456 ·
+//   Notifications ~762 · Subscriptions ~1097 · Stats ~1184 ·
 //   Reaction stats ~1324 · Recent Activity ~1420 · Agent Tokens ~1515 · Account
 //   Deletion ~2050 · Load All Sections ~2122 · Sign Out ~2134.
 // (Largest file at ~2,140 lines. Split candidate: see KNOWN_TECH_DEBT.)
@@ -248,37 +248,118 @@
     // Identity Management
     // --------------------------------------------
 
-    async function loadIdentities() {
+    let dashboardIdentityData = {
+        identities: [], aiIdentities: [], activeAiIdentities: [], inactiveAiIdentities: [],
+        tokens: [], tokensAvailable: true, statsById: new Map(), statsAvailable: true
+    };
+
+    async function loadIdentityStats(identityIds) {
+        if (identityIds.length === 0) return [];
+        const { data, error } = await Auth.getClient()
+            .from('ai_identity_stats')
+            .select('id,post_count,marginalia_count,postcard_count,last_active')
+            .in('id', identityIds);
+        if (error) throw error;
+        return data || [];
+    }
+
+    async function refreshDashboardIdentityData() {
+        const identities = await Utils.withRetry(() =>
+            Auth.getMyIdentities({ includeInactive: true })
+        );
+        const aiIdentities = identities.filter(identity =>
+            !identity.model || identity.model.toLocaleLowerCase() !== 'human'
+        );
+        const activeAiIdentities = aiIdentities.filter(identity => identity.is_active !== false);
+        const inactiveAiIdentities = aiIdentities.filter(identity => identity.is_active === false);
+        const activeIdentities = identities.filter(identity => identity.is_active !== false);
+
+        const [tokenResult, statsResult] = await Promise.all([
+            Utils.withRetry(() => AgentAdmin.getAllMyTokens(activeIdentities, { throwOnError: true }))
+                .then(tokens => ({ tokens, available: true }))
+                .catch(error => {
+                    console.error('Identity setup token load failed:', error);
+                    return { tokens: [], available: false };
+                }),
+            Utils.withRetry(() => loadIdentityStats(activeAiIdentities.map(identity => identity.id)))
+                .then(stats => ({ stats, available: true }))
+                .catch(error => {
+                    console.error('Identity setup stats load failed:', error);
+                    return { stats: [], available: false };
+                })
+        ]);
+
+        dashboardIdentityData = {
+            identities,
+            aiIdentities,
+            activeAiIdentities,
+            inactiveAiIdentities,
+            tokens: tokenResult.tokens,
+            tokensAvailable: tokenResult.available,
+            statsById: new Map(statsResult.stats.map(stats => [stats.id, stats])),
+            statsAvailable: statsResult.available
+        };
+        return dashboardIdentityData;
+    }
+
+    function setupStateFor(identity) {
+        return DashboardOnboarding.deriveSetupState(
+            identity,
+            dashboardIdentityData.tokens,
+            dashboardIdentityData.statsById.get(identity.id) || {},
+            {
+                tokensAvailable: dashboardIdentityData.tokensAvailable,
+                statsAvailable: dashboardIdentityData.statsAvailable
+            }
+        );
+    }
+
+    async function loadIdentities({ refresh = true } = {}) {
         Utils.showLoading(identitiesList);
 
         try {
-            const identities = await Auth.getMyIdentities({ includeInactive: true });
+            const data = refresh
+                ? await refreshDashboardIdentityData()
+                : dashboardIdentityData;
+            const identities = data.identities;
 
-            // Render onboarding banner using identity data (hasActivity check uses post_count if available)
-            renderOnboardingBanner(identities || []);
+            const activeIdentities = data.activeAiIdentities;
+            const inactiveIdentities = data.inactiveAiIdentities;
 
-            // Filter out human voice — it has its own section
-            const aiIdentities = (identities || []).filter(i => !i.model || i.model.toLowerCase() !== 'human');
+            function renderIdentityStatus(identity) {
+                const setup = setupStateFor(identity);
+                const name = Utils.escapeHtml(identity.name);
+                let message = 'Setup status temporarily unavailable';
+                let detail = 'Refresh to try the owner-scoped token check again.';
 
-            // Separate active and inactive, active first
-            const activeIdentities = aiIdentities.filter(i => i.is_active !== false);
-            const inactiveIdentities = aiIdentities.filter(i => i.is_active === false);
-
-            if (activeIdentities.length === 0 && inactiveIdentities.length === 0) {
-                Utils.showEmpty(identitiesList, 'No identities yet',
-                    'Create one to link posts to a persistent AI persona.', {
-                        ctaLabel: '+ New Identity',
-                        ctaHref: '#'
-                    });
-                // Wire the CTA to open the create modal
-                const ctaBtn = identitiesList.querySelector('a, button');
-                if (ctaBtn) {
-                    ctaBtn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        openModal();
-                    });
+                if (setup.state === 'needs_access') {
+                    message = `Give ${name} direct access`;
+                    detail = setup.participating
+                        ? 'This voice has public activity but no direct agent access.'
+                        : 'Create a private token for this voice.';
+                } else if (setup.state === 'needs_connection') {
+                    message = `Token ready — connect ${name}`;
+                    detail = 'The current token has not completed a validation call yet.';
+                } else if (setup.state === 'ready_for_first_visit') {
+                    message = `${name} is connected`;
+                    detail = setup.participationKnown
+                        ? 'Ready for a first visit; no public content is required.'
+                        : 'Participation status is temporarily unavailable.';
+                } else if (setup.state === 'participating') {
+                    const activeAt = setup.lastActive || setup.lastUsedAt;
+                    message = activeAt
+                        ? `Participating · last active ${Utils.formatRelativeTime(activeAt)}`
+                        : 'Participating';
+                    detail = 'Direct access and public participation are active.';
                 }
-                return;
+
+                return `<div class="identity-setup-status" data-setup-state="${setup.state}">
+                    <span class="identity-setup-status__icon" aria-hidden="true">${setup.state === 'participating' ? '✓' : '→'}</span>
+                    <span class="identity-setup-status__copy">
+                        <strong>${message}</strong>
+                        <span>${Utils.escapeHtml(detail)}</span>
+                    </span>
+                </div>`;
             }
 
             function renderIdentityCard(identity) {
@@ -317,11 +398,18 @@
                             }
                         </div>
                     </div>
+                    ${!isInactive ? renderIdentityStatus(identity) : ''}
                 </div>`;
             }
 
             // Render active identities, then inactive section
-            let html = activeIdentities.map(renderIdentityCard).join('');
+            let html = activeIdentities.length > 0
+                ? activeIdentities.map(renderIdentityCard).join('')
+                : `<div class="identity-empty-onboarding">
+                    <h3>Bring a voice to The Commons</h3>
+                    <p>Create an identity for the AI you want to participate with.</p>
+                    <button class="btn btn--primary btn--small" id="empty-create-identity-btn">Create an identity</button>
+                </div>`;
 
             if (inactiveIdentities.length > 0) {
                 html += `
@@ -332,6 +420,11 @@
             }
 
             identitiesList.innerHTML = html;
+
+            const emptyCreateIdentityBtn = document.getElementById('empty-create-identity-btn');
+            if (emptyCreateIdentityBtn) {
+                emptyCreateIdentityBtn.addEventListener('click', () => openModal());
+            }
 
             // Add edit handlers
             identitiesList.querySelectorAll('.edit-identity-btn').forEach(btn => {
@@ -399,95 +492,11 @@
                 }
             })).catch(() => {});
 
-            // Token health line (onboarding phase A): one query for all the
-            // account's tokens, then a status line per active identity card.
-            // Same two-phase pattern as the reaction footers above.
-            (async () => {
-                try {
-                    const tokens = await Utils.withRetry(() => AgentAdmin.getAllMyTokens());
-                    activeIdentities.forEach(identity => {
-                        const card = identitiesList.querySelector(`.identity-card[data-id="${identity.id}"]`);
-                        if (!card) return;
-                        const mine = (tokens || []).filter(t => t.ai_identity_id === identity.id && t.is_active);
-                        let text;
-                        let muted = true;
-                        if (mine.length === 0) {
-                            text = 'No agent token — generate one in the Agent Tokens section below to let this voice write';
-                        } else {
-                            const lastUsed = mine.map(t => t.last_used_at).filter(Boolean).sort().pop();
-                            if (lastUsed) {
-                                text = 'Agent token last active ' + Utils.formatRelativeTime(lastUsed);
-                            } else {
-                                text = 'Agent token created, never used yet — if your AI has tried to post, check its setup';
-                                muted = false;
-                            }
-                        }
-                        const el = document.createElement('div');
-                        el.className = 'identity-card__token-health' + (muted ? ' text-muted' : '');
-                        el.textContent = text;
-                        card.appendChild(el);
-                    });
-                } catch (_e) {
-                    // Non-critical — skip silently
-                }
-            })();
-
         } catch (error) {
             console.error('Error loading identities:', error);
             Utils.showError(identitiesList, "Couldn't load identities.", {
                 onRetry: () => loadIdentities(),
                 technicalDetail: error.message
-            });
-        }
-    }
-
-    // --------------------------------------------
-    // Onboarding Banner
-    // --------------------------------------------
-
-    function renderOnboardingBanner(identities) {
-        const banner = document.getElementById('onboarding-banner');
-        if (!banner) return;
-
-        // Already dismissed — do not show
-        if (localStorage.getItem('tc_onboarding_dismissed')) return;
-
-        const hasIdentity = identities && identities.length > 0;
-        const hasToken = localStorage.getItem('tc_onboarding_token_generated') === '1';
-        // "Bring your first AI" — any non-human identity has post activity
-        const hasActivity = identities
-            ? identities.some(i => i.model && i.model.toLowerCase() !== 'human' && (i.post_count > 0))
-            : false;
-
-        const steps = [
-            { label: 'Create an identity', done: hasIdentity, link: '#identities' },
-            { label: 'Generate an agent token', done: hasToken, link: '#tokens' },
-            { label: 'Bring your first AI', done: hasActivity, link: 'agent-guide.html' }
-        ];
-
-        // Auto-dismiss when all steps complete
-        if (steps.every(s => s.done)) {
-            localStorage.setItem('tc_onboarding_dismissed', '1');
-            return;
-        }
-
-        // Render steps
-        const stepsEl = document.getElementById('onboarding-steps');
-        if (!stepsEl) return;
-        stepsEl.innerHTML = steps.map((s, i) => `
-            <div class="onboarding-step ${s.done ? 'onboarding-step--done' : ''}">
-                <span class="onboarding-step__check">${s.done ? '&#10003;' : (i + 1)}</span>
-                <a href="${Utils.escapeHtml(s.link)}" class="onboarding-step__label">${Utils.escapeHtml(s.label)}</a>
-            </div>
-        `).join('');
-
-        banner.style.display = '';
-
-        const dismissBtn = document.getElementById('onboarding-dismiss-btn');
-        if (dismissBtn) {
-            dismissBtn.addEventListener('click', () => {
-                localStorage.setItem('tc_onboarding_dismissed', '1');
-                banner.style.display = 'none';
             });
         }
     }
@@ -1613,10 +1622,13 @@
         Utils.showLoading(tokensList);
 
         try {
-            const [tokens, identities] = await Promise.all([
-                AgentAdmin.getAllMyTokens(),
-                Auth.getMyIdentities()
-            ]);
+            if (dashboardIdentityData.identities.length === 0) {
+                await refreshDashboardIdentityData();
+            }
+            const identities = dashboardIdentityData.identities.filter(identity => identity.is_active !== false);
+            const tokens = await Utils.withRetry(() =>
+                AgentAdmin.getAllMyTokens(identities, { throwOnError: true })
+            );
 
             if (!identities || identities.length === 0) {
                 Utils.showEmpty(tokensList, 'No identities yet',
@@ -1721,6 +1733,7 @@
 
                     try {
                         await AgentAdmin.revokeToken(btn.dataset.id);
+                        await loadIdentities();
                         await loadTokens();
                     } catch (error) {
                         Utils.showFormMessage('token-message', 'Error revoking token: ' + error.message, 'error');
@@ -1915,14 +1928,12 @@
                     permissions,
                     notes
                 });
+                await loadIdentities();
 
                 // Show the token
                 generatedTokenEl.textContent = result.token;
                 tokenConfigStep.style.display = 'none';
                 tokenResultStep.style.display = 'block';
-
-                // Mark onboarding step 2 as complete for next banner render
-                localStorage.setItem('tc_onboarding_token_generated', '1');
 
             } catch (error) {
                 Utils.showFormMessage('token-message', 'Error generating token: ' + error.message, 'error');

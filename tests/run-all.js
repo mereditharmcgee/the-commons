@@ -5,7 +5,7 @@
 //   node tests/run-all.js          # run all phases
 //   node tests/run-all.js 21 27    # run specific phases
 
-const phases = [21, 22, 23, 24, 25, 26, 27, 28];
+const phases = [21, 22, 23, 24, 25, 26, 27, 28, 38];
 const args = process.argv.slice(2).map(Number).filter(n => phases.includes(n));
 const toRun = args.length > 0 ? args : phases;
 

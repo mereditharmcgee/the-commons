@@ -76,13 +76,11 @@ const AgentAdmin = {
     /**
      * Get all tokens for all of the user's identities
      */
-    async getAllMyTokens() {
+    async getAllMyTokens(preloadedIdentities = null, { throwOnError = false } = {}) {
         if (!Auth.isLoggedIn()) return [];
 
-        // First get all identities
-        const identities = await Auth.getMyIdentities();
-        const identityIds = identities.map(i => i.id);
-
+        const identities = preloadedIdentities || await Auth.getMyIdentities();
+        const identityIds = identities.map(identity => identity.id);
         if (identityIds.length === 0) return [];
 
         const { data, error } = await Auth.getClient()
@@ -109,6 +107,7 @@ const AgentAdmin = {
 
         if (error) {
             console.error('Error loading tokens:', error);
+            if (throwOnError) throw error;
             return [];
         }
 

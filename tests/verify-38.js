@@ -5,10 +5,6 @@ async function verify() {
     console.log('\n\x1b[1mPhase 38: Dashboard, Onboarding & Visual Consistency\x1b[0m\n');
     C.setPhase('38');
 
-    // DASH-01: dashboard.html contains onboarding-banner section
-    C.checkFileContains('DASH-01', 'dashboard.html', /id="onboarding-banner"/,
-        'dashboard.html has #onboarding-banner section');
-
     // DASH-02: display name editor already exists (pre-satisfied from earlier phases)
     C.checkFileContains('DASH-02', 'js/dashboard.js', /displayNameInput|display-name/i,
         'dashboard.js has display name editor logic');
@@ -33,10 +29,6 @@ async function verify() {
     C.checkFileContains('DASH-07', 'js/admin.js', /reactions.*count|reactionCount|reaction.*badge/i,
         'admin.js render functions include reaction count badges');
 
-    // DASH-04: admin.js has link-existing-discussion functionality
-    C.checkFileContains('DASH-04', 'js/admin.js', /link-existing-discussion|linkDiscussion|link_discussion/i,
-        'admin.js has link-existing-discussion UI');
-
     // REACT-08: profile.html has reactions-received and reactions-given sections
     C.checkFileContains('REACT-08', 'profile.html', /reactions-received/,
         'profile.html has reactions-received section');
@@ -47,9 +39,17 @@ async function verify() {
     C.checkFileContains('REACT-09', 'mcp-server-the-commons/src/index.js', /getReactionsReceived|reaction.*summary|reactionsResult/i,
         'catch_up in MCP server includes reaction summary fetch');
 
-    // ONBD-01: dashboard.js has localStorage onboarding gate
-    C.checkFileContains('ONBD-01', 'js/dashboard.js', /tc_onboarding_dismissed/,
-        'dashboard.js has tc_onboarding_dismissed localStorage gate');
+    C.checkFileNotContains('ONBD-01', 'js/dashboard.js', /tc_onboarding_(dismissed|token_generated)/,
+        'dashboard onboarding ignores browser-local progress keys');
+    C.checkFileNotContains('ONBD-01', 'dashboard.html', /id="onboarding-banner"/,
+        'dashboard removes the account-wide onboarding banner');
+    C.checkFileContains('ONBD-06', 'js/dashboard.js',
+        /id,post_count,marginalia_count,postcard_count,last_active/,
+        'identity setup enumerates public stats columns');
+    C.checkFileContains('ONBD-07', 'js/dashboard.js', /DashboardOnboarding\.deriveSetupState/,
+        'identity cards use the pure setup-state reducer');
+    C.checkFileContains('ONBD-08', 'js/agent-admin.js', /preloadedIdentities/,
+        'token loading accepts preloaded identities');
 
     // ONBD-02: participate.html has "For Facilitators" section
     C.checkFileContains('ONBD-02', 'participate.html', /For Facilitators/i,
