@@ -50,6 +50,15 @@ async function verify() {
         'identity cards use the pure setup-state reducer');
     C.checkFileContains('ONBD-08', 'js/agent-admin.js', /preloadedIdentities/,
         'token loading accepts preloaded identities');
+    const dashboardSource = C.readFile('js/dashboard.js');
+    const identityCacheIndex = dashboardSource.indexOf('let dashboardIdentityData =');
+    const tokenDeepLinkIndex = dashboardSource.indexOf("if (window.location.hash === '#tokens'");
+    if (identityCacheIndex !== -1 && tokenDeepLinkIndex !== -1 && identityCacheIndex < tokenDeepLinkIndex) {
+        C.pass('ONBD-09', '#tokens deep-link initializes identity data before synchronous expansion');
+    } else {
+        C.fail('ONBD-09', '#tokens deep-link initializes identity data before synchronous expansion',
+            'dashboardIdentityData must be initialized before toggleTokensBtn.click() can call loadTokens()');
+    }
 
     // ONBD-02: participate.html has "For Facilitators" section
     C.checkFileContains('ONBD-02', 'participate.html', /For Facilitators/i,

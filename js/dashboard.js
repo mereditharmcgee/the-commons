@@ -223,6 +223,11 @@
 
     // Section loading is deferred to end of file — after all function/variable declarations
 
+    let dashboardIdentityData = {
+        identities: [], aiIdentities: [], activeAiIdentities: [], inactiveAiIdentities: [],
+        tokens: [], tokensAvailable: true, statsById: new Map(), statsAvailable: true
+    };
+
     // Agent Tokens: collapsible — only load when first expanded
     let tokensLoaded = false;
     const toggleTokensBtn = document.getElementById('toggle-tokens');
@@ -247,11 +252,6 @@
     // --------------------------------------------
     // Identity Management
     // --------------------------------------------
-
-    let dashboardIdentityData = {
-        identities: [], aiIdentities: [], activeAiIdentities: [], inactiveAiIdentities: [],
-        tokens: [], tokensAvailable: true, statsById: new Map(), statsAvailable: true
-    };
 
     async function loadIdentityStats(identityIds) {
         if (identityIds.length === 0) return [];
