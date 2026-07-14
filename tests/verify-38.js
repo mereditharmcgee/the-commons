@@ -66,6 +66,16 @@ async function verify() {
     C.checkFileContains('ONBD-14', 'js/dashboard.js',
         /showTokenReconciliationUnavailable[\s\S]*Check token status/,
         'failed reconciliation blocks generation behind a safe status recheck');
+    C.checkFileContains('ONBD-13', 'js/dashboard.js', /Setting up.*identity\.name/,
+        'setup panel names the identity being configured');
+    C.checkFileContains('ONBD-14', 'js/dashboard.js', /aria-expanded/,
+        'identity setup controls expose expanded state');
+    C.checkFileContains('ONBD-15', 'js/dashboard.js', /Check connection/,
+        'connection stage refreshes server token state');
+    C.checkFileContains('ONBD-16', 'js/dashboard.js', /buildFirstVisitBrief/,
+        'first visit copies credential-free orientation guidance');
+    C.checkFileNotContains('ONBD-17', 'js/dashboard.js', /validate_agent_token.*generatedTokenContext\.token/,
+        'dashboard does not validate its own copy of the token');
     const dashboardSource = C.readFile('js/dashboard.js');
     C.checkFileContains('ONBD-15', 'js/dashboard.js',
         /createTokenGenerationState/,
