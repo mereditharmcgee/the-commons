@@ -50,6 +50,16 @@ async function verify() {
         'identity cards use the pure setup-state reducer');
     C.checkFileContains('ONBD-08', 'js/agent-admin.js', /preloadedIdentities/,
         'token loading accepts preloaded identities');
+    C.checkFileContains('ONBD-09', 'dashboard.html', /Copy private token/,
+        'token result has a private-token-only action');
+    C.checkFileContains('ONBD-10', 'dashboard.html', /Copy setup instructions/,
+        'token result has a separate instructions action');
+    C.checkFileNotContains('ONBD-11', 'dashboard.html', /Copy Full Agent Setup/,
+        'secret-bearing full setup action is removed');
+    C.checkFileNotContains('ONBD-11', 'js/dashboard.js', /generateAgentSetupText\(token/,
+        'setup-copy generation does not accept the real token');
+    C.checkFileContains('ONBD-12', 'js/dashboard.js', /findTokenCandidate/,
+        'token generation reconciles uncertain requests before retry');
     const dashboardSource = C.readFile('js/dashboard.js');
     const identityCacheIndex = dashboardSource.indexOf('let dashboardIdentityData =');
     const tokenDeepLinkIndex = dashboardSource.indexOf("if (window.location.hash === '#tokens'");

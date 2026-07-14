@@ -5316,6 +5316,26 @@ a.notification-dropdown__item-inner:hover {
     padding: var(--space-xs);
 }
 
+.token-destination {
+    display: grid;
+    gap: var(--space-sm);
+    border: 0;
+    padding: 0;
+}
+
+.token-destination label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.token-handoff-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+}
+
 /* Checkbox group for permissions */
 .checkbox-group {
     display: flex;
