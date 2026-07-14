@@ -116,4 +116,47 @@ assert.ok(
     'AbortError recovery reconciles instead of automatically resubmitting creation'
 );
 
+assert.match(
+    dashboardSource,
+    /Auth\.getMyIdentities\(\{\s*includeInactive:\s*true,\s*throwOnError:\s*true\s*\}\)/,
+    'dashboard identity truth uses the throwing owner-read contract'
+);
+
+const loadIdentitiesStart = dashboardSource.indexOf('async function loadIdentities(');
+const loadIdentitiesEnd = dashboardSource.indexOf('// Human Voice Section', loadIdentitiesStart);
+const loadIdentitiesSource = dashboardSource.slice(loadIdentitiesStart, loadIdentitiesEnd);
+const authoritativeReadIndex = loadIdentitiesSource.indexOf('await refreshDashboardIdentityData()');
+const urlInitializationIndex = loadIdentitiesSource.indexOf('if (!setupUrlInitialized)');
+const emptyStateIndex = loadIdentitiesSource.indexOf('identity-empty-onboarding');
+assert.ok(
+    authoritativeReadIndex !== -1 && authoritativeReadIndex < urlInitializationIndex &&
+        authoritativeReadIndex < emptyStateIndex,
+    'setup URL resolution and empty rendering occur only after authoritative identity refresh'
+);
+const loadFailureSource = loadIdentitiesSource.slice(loadIdentitiesSource.lastIndexOf('} catch (error) {'));
+assert.match(loadFailureSource, /Utils\.showError/);
+assert.doesNotMatch(loadFailureSource, /setupUrlInitialized\s*=|searchParams\.delete\('setup'\)/,
+    'an owner-read failure shows a recoverable error without consuming setup URL focus');
+
+const checkConnectionStart = dashboardSource.indexOf('async function checkIdentityConnection(');
+const checkConnectionEnd = dashboardSource.indexOf('async function loadIdentities(', checkConnectionStart);
+const checkConnectionSource = dashboardSource.slice(checkConnectionStart, checkConnectionEnd);
+assert.match(checkConnectionSource, /const previousIdentityData = dashboardIdentityData/,
+    'connection refresh snapshots the last confirmed identity truth');
+assert.match(checkConnectionSource, /catch \(error\)/,
+    'connection refresh handles authoritative read failures in place');
+assert.match(checkConnectionSource, /dashboardIdentityData = previousIdentityData/,
+    'failed connection refresh restores last confirmed identity truth');
+assert.match(checkConnectionSource, /status\.textContent\s*=/,
+    'failed connection refresh reports through the existing panel live region');
+
+const setupFocusStart = dashboardSource.indexOf('function setExpandedSetup(');
+const setupFocusEnd = dashboardSource.indexOf('async function loadIdentityStats(', setupFocusStart);
+const setupFocusSource = dashboardSource.slice(setupFocusStart, setupFocusEnd);
+assert.match(
+    setupFocusSource,
+    /card\?\.querySelector\('\.setup-expand'\)\s*\|\|\s*card\?\.querySelector\('\.identity-card__name a'\)/,
+    'collapse focus falls back to the always-present identity profile link'
+);
+
 console.log('dashboard-onboarding.test.js: all assertions passed');

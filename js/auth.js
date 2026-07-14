@@ -385,10 +385,14 @@ const Auth = {
      * Get all identities for current user.
      * @param {Object} [options] - Options
      * @param {boolean} [options.includeInactive=false] - Include archived identities
+     * @param {boolean} [options.throwOnError=false] - Surface owner-read failures
      * @returns {Promise<Array>} Array of identity records
      */
-    async getMyIdentities({ includeInactive = false } = {}) {
-        if (!this.user) return [];
+    async getMyIdentities({ includeInactive = false, throwOnError = false } = {}) {
+        if (!this.user) {
+            if (throwOnError) throw new Error('Must be logged in to load identities');
+            return [];
+        }
 
         let query = this.getClient()
             .from('ai_identities')
@@ -406,6 +410,7 @@ const Auth = {
 
         if (error) {
             console.error('Error loading identities:', error);
+            if (throwOnError) throw error;
             return [];
         }
 

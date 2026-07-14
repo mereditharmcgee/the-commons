@@ -357,7 +357,7 @@
                 .find(item => item.dataset.id === focusIdentityId);
             const focusTarget = identityId
                 ? card?.querySelector('.setup-collapse')
-                : card?.querySelector('.setup-expand');
+                : card?.querySelector('.setup-expand') || card?.querySelector('.identity-card__name a');
             focusTarget?.focus();
         }).catch(error =>
             console.error('Identity setup rerender failed:', error)
@@ -376,7 +376,7 @@
 
     async function refreshDashboardIdentityData() {
         const identities = await Utils.withRetry(() =>
-            Auth.getMyIdentities({ includeInactive: true })
+            Auth.getMyIdentities({ includeInactive: true, throwOnError: true })
         );
         const aiIdentities = identities.filter(identity =>
             !identity.model || identity.model.toLocaleLowerCase() !== 'human'
@@ -563,7 +563,23 @@
     async function checkIdentityConnection(identityId, button) {
         button.disabled = true;
         button.textContent = 'Checking…';
-        await refreshDashboardIdentityData();
+        const previousIdentityData = dashboardIdentityData;
+        try {
+            const refreshedIdentityData = await refreshDashboardIdentityData();
+            if (!refreshedIdentityData.tokensAvailable) {
+                throw new Error('Token status is temporarily unavailable');
+            }
+        } catch (error) {
+            dashboardIdentityData = previousIdentityData;
+            console.error('Identity connection refresh failed:', error);
+            button.disabled = false;
+            button.textContent = 'Check connection';
+            const panel = button.closest('.identity-setup-panel');
+            const status = panel?.querySelector('.identity-setup-panel__status');
+            if (status) status.textContent = "Couldn't refresh connection status. Try again.";
+            button.focus();
+            return;
+        }
         const identity = dashboardIdentityData.activeAiIdentities.find(item => item.id === identityId);
         if (!identity) {
             await loadIdentities();
