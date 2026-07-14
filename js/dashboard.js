@@ -64,6 +64,7 @@
     const closeTokenResultBtn = document.getElementById('close-token-result-btn');
     let generatedTokenContext = null;
     let tokenModalLockedIdentityId = null;
+    let pendingTokenReconciliation = null;
 
     // --------------------------------------------
     // Guard: force-hide modals on script init.
@@ -1950,10 +1951,15 @@
     function openTokenModal(identities, { lockedIdentityId = null } = {}) {
         if (!tokenModal) return;
         tokenModalTrigger = document.activeElement;
-        tokenModalLockedIdentityId = lockedIdentityId;
+        tokenModalLockedIdentityId = pendingTokenReconciliation?.identityId || lockedIdentityId;
+
+        const modalIdentities = pendingTokenReconciliation &&
+            !identities.some(identity => identity.id === pendingTokenReconciliation.identityId)
+            ? [...identities, pendingTokenReconciliation.identity]
+            : identities;
 
         tokenIdentitySelect.innerHTML = '<option value="">Select identity...</option>' +
-            identities.map(identity => `
+            modalIdentities.map(identity => `
                 <option value="${identity.id}">${Utils.escapeHtml(identity.name)} (${Utils.escapeHtml(identity.model)})</option>
             `).join('');
         tokenIdentitySelect.value = tokenModalLockedIdentityId || '';
@@ -1973,11 +1979,21 @@
         document.getElementById('token-recovery').hidden = true;
         generatedTokenContext = null;
         generatedTokenEl.textContent = '';
+        generateTokenBtn.disabled = Boolean(pendingTokenReconciliation);
+        generateTokenBtn.textContent = pendingTokenReconciliation ? 'Reconciliation Required' : 'Generate Token';
 
         tokenModal.style.display = 'flex';
         tokenModal.classList.add('modal--open');
-        (tokenModalLockedIdentityId ? generateTokenBtn : tokenIdentitySelect).focus();
         tokenModalCleanup = trapFocus(tokenModal);
+
+        if (pendingTokenReconciliation) {
+            const identity = modalIdentities.find(item => item.id === pendingTokenReconciliation.identityId);
+            showTokenReconciliationChecking();
+            closeTokenModalBtn.focus();
+            reconcilePendingTokenRequest(identity);
+        } else {
+            (tokenModalLockedIdentityId ? generateTokenBtn : tokenIdentitySelect).focus();
+        }
     }
 
     function closeTokenModal() {
@@ -2036,6 +2052,9 @@
             reveal.textContent = 'Revealing...';
             try {
                 const token = await Utils.withRetry(() => AgentAdmin.revealToken(candidate.id));
+                if (pendingTokenReconciliation?.candidateId === candidate.id) {
+                    pendingTokenReconciliation = null;
+                }
                 generatedTokenContext = { token, tokenId: candidate.id, identity };
                 generatedTokenEl.textContent = token;
                 document.getElementById('token-success-banner').textContent =
@@ -2060,7 +2079,37 @@
         recovery.hidden = false;
     }
 
-    function showTokenReconciliationUnavailable(identity, requestStartedAt) {
+    function showTokenReconciliationChecking() {
+        const recovery = document.getElementById('token-recovery');
+        recovery.replaceChildren();
+        const message = document.createElement('p');
+        message.textContent = 'Checking the server for a token from the interrupted request...';
+        recovery.appendChild(message);
+        tokenConfigStep.style.display = 'none';
+        tokenResultStep.style.display = 'none';
+        recovery.hidden = false;
+    }
+
+    function showNoTokenCandidateRecovery() {
+        const recovery = document.getElementById('token-recovery');
+        recovery.replaceChildren();
+        const clearMessage = document.createElement('p');
+        clearMessage.textContent = 'No token from that request was found. You can return to setup and try again.';
+        const returnToSetup = document.createElement('button');
+        returnToSetup.type = 'button';
+        returnToSetup.className = 'btn btn--secondary btn--small';
+        returnToSetup.textContent = 'Return to token setup';
+        returnToSetup.addEventListener('click', () => {
+            recovery.hidden = true;
+            tokenConfigStep.style.display = 'block';
+            generateTokenBtn.disabled = false;
+            generateTokenBtn.textContent = 'Generate Token';
+            generateTokenBtn.focus();
+        });
+        recovery.append(clearMessage, returnToSetup);
+    }
+
+    function showTokenReconciliationUnavailable(identity) {
         const recovery = document.getElementById('token-recovery');
         recovery.replaceChildren();
         const message = document.createElement('p');
@@ -2069,39 +2118,43 @@
         checkStatus.type = 'button';
         checkStatus.className = 'btn btn--secondary btn--small';
         checkStatus.textContent = 'Check token status';
-        checkStatus.addEventListener('click', async () => {
-            checkStatus.disabled = true;
-            checkStatus.textContent = 'Checking...';
-            try {
-                const candidate = await findGeneratedTokenCandidate(identity, requestStartedAt);
-                if (candidate) {
-                    showTokenCandidateRecovery(candidate, identity);
-                    return;
-                }
-
-                recovery.replaceChildren();
-                const clearMessage = document.createElement('p');
-                clearMessage.textContent = 'No token from that request was found. You can return to setup and try again.';
-                const returnToSetup = document.createElement('button');
-                returnToSetup.type = 'button';
-                returnToSetup.className = 'btn btn--secondary btn--small';
-                returnToSetup.textContent = 'Return to token setup';
-                returnToSetup.addEventListener('click', () => {
-                    recovery.hidden = true;
-                    tokenConfigStep.style.display = 'block';
-                    generateTokenBtn.focus();
-                });
-                recovery.append(clearMessage, returnToSetup);
-            } catch (_reconciliationError) {
-                message.textContent = "We still couldn't confirm whether a token was created. Check again before generating another replacement.";
-                checkStatus.disabled = false;
-                checkStatus.textContent = 'Check token status';
-            }
+        checkStatus.addEventListener('click', () => {
+            showTokenReconciliationChecking();
+            reconcilePendingTokenRequest(identity);
         });
         recovery.append(message, checkStatus);
         tokenConfigStep.style.display = 'none';
         tokenResultStep.style.display = 'none';
         recovery.hidden = false;
+    }
+
+    async function reconcilePendingTokenRequest(identity) {
+        const pending = pendingTokenReconciliation;
+        if (!pending) return;
+        if (!identity) {
+            showTokenReconciliationUnavailable(pending.identity);
+            return;
+        }
+
+        let candidate;
+        try {
+            candidate = await findGeneratedTokenCandidate(identity, pending.startedAt);
+        } catch (_reconciliationError) {
+            if (pendingTokenReconciliation === pending) {
+                showTokenReconciliationUnavailable(identity);
+            }
+            return;
+        }
+        if (pendingTokenReconciliation !== pending) return;
+
+        if (candidate) {
+            pending.candidateId = candidate.id;
+            showTokenCandidateRecovery(candidate, identity);
+            return;
+        }
+
+        pendingTokenReconciliation = null;
+        showNoTokenCandidateRecovery();
     }
 
     if (generateTokenBtn) {
@@ -2143,22 +2196,23 @@
                 tokenConfigStep.style.display = 'none';
                 tokenResultStep.style.display = 'block';
                 await loadIdentities();
-            } catch (error) {
-                let candidate;
-                try {
-                    candidate = await findGeneratedTokenCandidate(identity, requestStartedAt);
-                } catch (_reconciliationError) {
-                    showTokenReconciliationUnavailable(identity, requestStartedAt);
-                    return;
-                }
-                if (candidate) {
-                    showTokenCandidateRecovery(candidate, identity);
-                    return;
-                }
-                Utils.showFormMessage('token-message', 'Error generating token: ' + error.message, 'error');
+            } catch (_error) {
+                pendingTokenReconciliation = {
+                    identityId: identity.id,
+                    startedAt: requestStartedAt,
+                    identity: {
+                        id: identity.id,
+                        name: identity.name,
+                        model: identity.model
+                    }
+                };
+                showTokenReconciliationChecking();
+                await reconcilePendingTokenRequest(identity);
             } finally {
-                generateTokenBtn.disabled = false;
-                generateTokenBtn.textContent = 'Generate Token';
+                generateTokenBtn.disabled = Boolean(pendingTokenReconciliation);
+                generateTokenBtn.textContent = pendingTokenReconciliation
+                    ? 'Reconciliation Required'
+                    : 'Generate Token';
             }
         });
     }

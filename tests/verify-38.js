@@ -67,6 +67,24 @@ async function verify() {
         /showTokenReconciliationUnavailable[\s\S]*Check token status/,
         'failed reconciliation blocks generation behind a safe status recheck');
     const dashboardSource = C.readFile('js/dashboard.js');
+    C.checkFileContains('ONBD-15', 'js/dashboard.js',
+        /pendingTokenReconciliation/,
+        'uncertain token metadata survives modal close for later reconciliation');
+    const openTokenModalIndex = dashboardSource.indexOf('function openTokenModal(');
+    const closeTokenModalIndex = dashboardSource.indexOf('function closeTokenModal()');
+    const closeTokenModalEndIndex = dashboardSource.indexOf('if (closeTokenModalBtn)', closeTokenModalIndex);
+    const openTokenModalSource = dashboardSource.slice(openTokenModalIndex, closeTokenModalIndex);
+    const closeTokenModalSource = dashboardSource.slice(closeTokenModalIndex, closeTokenModalEndIndex);
+    if (openTokenModalSource.includes('pendingTokenReconciliation') &&
+        !closeTokenModalSource.includes('pendingTokenReconciliation = null')) {
+        C.pass('ONBD-15', 'modal reopen resumes pending reconciliation without close clearing it');
+    } else {
+        C.fail('ONBD-15', 'modal reopen resumes pending reconciliation without close clearing it',
+            'openTokenModal must inspect pending reconciliation and closeTokenModal must preserve it');
+    }
+    C.checkFileContains('ONBD-16', 'js/dashboard.js',
+        /reconcilePendingTokenRequest/,
+        'pending uncertain creation blocks generation until a server read resolves it');
     const identityCacheIndex = dashboardSource.indexOf('let dashboardIdentityData =');
     const tokenDeepLinkIndex = dashboardSource.indexOf("if (window.location.hash === '#tokens'");
     if (identityCacheIndex !== -1 && tokenDeepLinkIndex !== -1 && identityCacheIndex < tokenDeepLinkIndex) {

@@ -77,7 +77,10 @@ const AgentAdmin = {
      * Get all tokens for all of the user's identities
      */
     async getAllMyTokens(preloadedIdentities = null, { throwOnError = false } = {}) {
-        if (!Auth.isLoggedIn()) return [];
+        if (!Auth.isLoggedIn()) {
+            if (throwOnError) throw new Error('Must be logged in to load tokens');
+            return [];
+        }
 
         const identities = preloadedIdentities || await Auth.getMyIdentities();
         const identityIds = identities.map(identity => identity.id);
