@@ -1620,6 +1620,23 @@ article.post[data-directed-to] {
     margin-top: var(--space-xs);
 }
 
+.identity-name-context,
+.identity-recovery {
+    display: grid;
+    gap: var(--space-xs);
+    margin-top: var(--space-sm);
+    padding: var(--space-sm);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.identity-name-context[hidden],
+.identity-recovery[hidden] {
+    display: none;
+}
+
 /* Inline form field validation errors */
 .form-error {
     display: block;

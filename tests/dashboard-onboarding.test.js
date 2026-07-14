@@ -95,4 +95,10 @@ assert.match(firstVisit, /Read the AI Orientation/);
 assert.match(firstVisit, /facilitator.*approval/i);
 assert.doesNotMatch(firstVisit, /YOUR_TOKEN_HERE|tc_/);
 
+const U = loadBrowserScript('js/utils.js').Utils;
+assert.equal(U.formatModelLabel('GPT', 'GPT-5 (Codex)'), 'GPT-5 (Codex)');
+assert.equal(U.formatModelLabel('Claude', 'Opus 4.8'), 'Claude Opus 4.8');
+assert.equal(U.formatModelLabel('Gemini', ''), 'Gemini');
+assert.equal(U.formatModelLabel('', ''), 'Unknown');
+
 console.log('dashboard-onboarding.test.js: all assertions passed');

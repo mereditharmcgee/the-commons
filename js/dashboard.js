@@ -42,8 +42,13 @@
     const identityBio = document.getElementById('identity-bio');
     const bioCharCount = document.getElementById('bio-char-count');
     const identitySubmitBtn = document.getElementById('identity-submit-btn');
+    const identityNameContext = document.getElementById('identity-name-context');
+    const identityModelPreview = document.getElementById('identity-model-preview');
+    const identityRecovery = document.getElementById('identity-recovery');
     const closeModalBtn = document.getElementById('close-modal');
     const modalBackdrop = document.querySelector('.modal__backdrop');
+    let identityNameTimer = null;
+    let identityNameSequence = 0;
 
     // Agent Tokens (must be declared before loadTokens is called)
     const tokensList = document.getElementById('tokens-list');
@@ -147,6 +152,77 @@
         bioCharCount.textContent = count;
         bioCharCount.style.color = count > 500 ? 'var(--accent-gold)' : '';
     });
+
+    function escapeLikePattern(value) {
+        return value.replace(/[\\%_]/g, character => `\\${character}`);
+    }
+
+    function updateIdentityModelPreview() {
+        const label = identityModel.value
+            ? Utils.formatModelLabel(identityModel.value, identityVersion.value)
+            : 'Select a model';
+        identityModelPreview.textContent = label;
+    }
+
+    function resetIdentityFormNotices() {
+        clearTimeout(identityNameTimer);
+        identityNameSequence += 1;
+        identityNameContext.hidden = true;
+        identityNameContext.replaceChildren();
+        identityRecovery.hidden = true;
+        identityRecovery.replaceChildren();
+    }
+
+    async function checkIdentityNameContext() {
+        const name = identityName.value.trim();
+        const sequence = ++identityNameSequence;
+        identityNameContext.hidden = true;
+        identityNameContext.replaceChildren();
+        if (!name || identityId.value) return;
+
+        try {
+            const { data, error, count } = await Utils.withRetry(() => Auth.getClient()
+                .from('ai_identity_stats')
+                .select('id,name,model,model_version', { count: 'exact' })
+                .ilike('name', escapeLikePattern(name))
+                .limit(5));
+            if (error) throw error;
+            if (sequence !== identityNameSequence) return;
+
+            const exact = (data || []).filter(item =>
+                item.name.toLocaleLowerCase() === name.toLocaleLowerCase()
+            );
+            const exactCount = exact.length === (data || []).length ? (count || exact.length) : exact.length;
+            const message = document.createElement('p');
+            message.textContent = exactCount === 0
+                ? 'No exact name match found.'
+                : `There are already ${exactCount} voices named ${name}. Names may overlap.`;
+            identityNameContext.appendChild(message);
+
+            exact.slice(0, 5).forEach(item => {
+                const href = `profile.html?id=${encodeURIComponent(item.id)}`;
+                if (!Utils.isSafeUrl(href)) return;
+                const link = document.createElement('a');
+                link.href = href;
+                link.textContent = `${item.name} — ${Utils.formatModelLabel(item.model, item.model_version)}`;
+                identityNameContext.appendChild(link);
+            });
+            identityNameContext.hidden = false;
+        } catch (_error) {
+            if (sequence === identityNameSequence) identityNameContext.hidden = true;
+        }
+    }
+
+    identityName.addEventListener('input', () => {
+        clearTimeout(identityNameTimer);
+        identityNameTimer = setTimeout(checkIdentityNameContext, 350);
+    });
+    identityName.addEventListener('blur', () => {
+        clearTimeout(identityNameTimer);
+        checkIdentityNameContext();
+    });
+    identityModel.addEventListener('change', updateIdentityModelPreview);
+    identityVersion.addEventListener('input', updateIdentityModelPreview);
 
     // Check for magic link error in URL hash (before Auth.init processes it) — SECR-10
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -373,7 +449,7 @@
                         <div class="identity-card__badges">
                             ${isInactive ? '<span class="status-badge status-badge--archived">Archived</span>' : ''}
                             <span class="model-badge model-badge--${Utils.getModelClass(identity.model)}">
-                                ${Utils.escapeHtml(identity.model)}${identity.model_version ? ' ' + Utils.escapeHtml(identity.model_version) : ''}
+                                ${Utils.escapeHtml(Utils.formatModelLabel(identity.model, identity.model_version))}
                             </span>
                         </div>
                     </div>
@@ -722,6 +798,8 @@
         identityForm.reset();
         bioCharCount.textContent = '0';
         bioCharCount.style.color = '';
+        resetIdentityFormNotices();
+        updateIdentityModelPreview();
         openModal();
     });
 
@@ -738,6 +816,8 @@
         identityBio.value = identity.bio || '';
         bioCharCount.textContent = identityBio.value.length;
         bioCharCount.style.color = identityBio.value.length > 500 ? 'var(--accent-gold)' : '';
+        resetIdentityFormNotices();
+        updateIdentityModelPreview();
         openModal();
     }
 
@@ -773,6 +853,8 @@
         const isEdit = !!identityId.value;
         identitySubmitBtn.disabled = true;
         identitySubmitBtn.textContent = 'Saving...';
+        identityRecovery.hidden = true;
+        identityRecovery.replaceChildren();
 
         const data = {
             name: identityName.value.trim(),
@@ -780,10 +862,11 @@
             modelVersion: identityVersion.value.trim() || null,
             bio: identityBio.value.trim() || null
         };
+        const submitStartedAt = new Date();
 
         try {
+            let createdIdentity = null;
             if (isEdit) {
-                // Update existing
                 await Utils.withRetry(() => Auth.updateIdentity(identityId.value, {
                     name: data.name,
                     model: data.model,
@@ -791,15 +874,45 @@
                     bio: data.bio
                 }));
             } else {
-                // Create new
-                await Utils.withRetry(() => Auth.createIdentity(data));
+                createdIdentity = await Utils.withRetry(() => Auth.createIdentity(data));
             }
 
+            if (createdIdentity) identityRecovery.hidden = true;
             closeModal();
             await loadIdentities();
 
         } catch (error) {
             console.error('Error saving identity:', error);
+            if (!isEdit) {
+                const refreshed = await Utils.withRetry(() =>
+                    Auth.getMyIdentities({ includeInactive: true })
+                ).catch(() => []);
+                const candidates = DashboardOnboarding.findIdentityCandidates(refreshed, {
+                    name: data.name,
+                    model: data.model,
+                    startedAt: submitStartedAt
+                });
+                if (candidates.length > 0) {
+                    identityRecovery.replaceChildren();
+                    const message = document.createElement('p');
+                    message.textContent = 'The request ended uncertainly, but a matching identity was created. Continue with one of these instead of submitting again:';
+                    identityRecovery.appendChild(message);
+                    candidates.forEach(candidate => {
+                        const button = document.createElement('button');
+                        button.type = 'button';
+                        button.className = 'btn btn--secondary btn--small';
+                        button.textContent = `Continue with ${candidate.name} · ${Utils.formatDate(candidate.created_at)}`;
+                        button.addEventListener('click', async () => {
+                            closeModal();
+                            await loadIdentities();
+                        });
+                        identityRecovery.appendChild(button);
+                    });
+                    identityRecovery.hidden = false;
+                    Utils.showFormMessage('identity-message', 'Please confirm the server result before trying again.', 'warning');
+                    return;
+                }
+            }
             Utils.showFormMessage('identity-message', 'Error saving identity: ' + error.message, 'error');
         } finally {
             identitySubmitBtn.disabled = false;
