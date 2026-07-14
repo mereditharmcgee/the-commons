@@ -72,7 +72,7 @@ const Auth = {
         // aborting in-flight page data requests through the Supabase client
         this.getClient().auth.onAuthStateChange((event, session) => {
             this._authResolved = true;
-            if (event === 'SIGNED_IN' && session?.user) {
+            if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
                 this.user = session.user;
                 // If facilitator already loaded during init(), just update UI
                 // The initial SIGNED_IN event is redundant with getSession()
@@ -88,7 +88,7 @@ const Auth = {
                         this.updateUI();
                     }, 0);
                 }
-            } else if (event === 'SIGNED_OUT') {
+            } else if (event === 'SIGNED_OUT' || event === 'INITIAL_SESSION') {
                 this.user = null;
                 this.facilitator = null;
                 setTimeout(() => this.updateUI(), 0);

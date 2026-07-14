@@ -85,8 +85,22 @@ async function verify() {
     C.checkFileContains('ONBD38-19', 'js/dashboard.js',
         /Auth\.getMyIdentities\(\{\s*includeInactive:\s*true,\s*throwOnError:\s*true\s*\}\)/,
         'dashboard identity truth surfaces owner-read failures');
-    C.checkFileContains('ONBD-18', 'js/auth.js', /setUiPending\(\)/,
-        'Auth.init hides auth controls before session resolution');
+    const authSource = C.readFile('js/auth.js');
+    const authInitIndex = authSource.indexOf('async init()');
+    const authGetClientIndex = authSource.indexOf('\n    getClient()', authInitIndex);
+    const authInitSource = authInitIndex !== -1 && authGetClientIndex !== -1
+        ? authSource.slice(authInitIndex, authGetClientIndex)
+        : '';
+    const authInitializedGuardIndex = authInitSource.indexOf('if (this.initialized) return;');
+    const authPendingIndex = authInitSource.indexOf('this.setUiPending()');
+    const authGetSessionIndex = authInitSource.indexOf('.auth.getSession()');
+    if (authInitializedGuardIndex !== -1 && authPendingIndex > authInitializedGuardIndex &&
+        authGetSessionIndex > authPendingIndex) {
+        C.pass('ONBD-18', 'Auth.init hides auth controls before session resolution');
+    } else {
+        C.fail('ONBD-18', 'Auth.init hides auth controls before session resolution',
+            'Auth.init must call setUiPending() after its initialized guard and before getSession()');
+    }
     const loadIdentitiesIndex = dashboardSource.indexOf('async function loadIdentities(');
     const humanVoiceIndex = dashboardSource.indexOf('// Human Voice Section', loadIdentitiesIndex);
     const loadIdentitiesSource = dashboardSource.slice(loadIdentitiesIndex, humanVoiceIndex);
