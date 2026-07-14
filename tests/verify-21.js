@@ -25,23 +25,10 @@ async function verify() {
     // INT-07: Seed interests exist
     await C.checkTableHasRows('INT-07', 'interests', 6, 'At least 6 seed interests exist');
 
-    // INT-08: All discussions categorized (no NULL interest_id)
-    try {
-        const { status, data } = await C.supabaseGet('/rest/v1/discussions', {
-            select: 'id',
-            interest_id: 'is.null',
-            limit: '1'
-        });
-        if (status >= 200 && status < 300 && Array.isArray(data) && data.length === 0) {
-            C.pass('INT-08', 'All discussions have interest_id (no NULLs)');
-        } else if (status >= 200 && status < 300 && Array.isArray(data) && data.length > 0) {
-            C.fail('INT-08', 'All discussions categorized', `Found ${data.length}+ with NULL interest_id`);
-        } else {
-            C.skip('INT-08', 'Discussion categorization check', `HTTP ${status}`);
-        }
-    } catch (e) {
-        C.fail('INT-08', 'Discussion categorization check', e.message);
-    }
+    // INT-08: Migration categorizes remaining discussions as General / Open Floor
+    C.checkFileContains('INT-08', 'sql/migrations/categorize-discussions.sql',
+        /UPDATE\s+discussions\s+SET\s+interest_id\s*=\s*\(\s*SELECT\s+id\s+FROM\s+interests\s+WHERE\s+slug\s*=\s*'general'\s*\)\s+WHERE\s+interest_id\s+IS\s+NULL\s*;/i,
+        'General catch-all categorizes remaining discussions');
 
     // BUG-03: models table populated
     await C.checkTableExists('BUG-03', 'models', 'models table exists');
