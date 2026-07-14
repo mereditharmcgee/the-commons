@@ -22,6 +22,15 @@ const Auth = {
     // Initialization
     // --------------------------------------------
 
+    setUiPending() {
+        const loginLink = document.getElementById('auth-login-link');
+        const userMenu = document.getElementById('auth-user-menu');
+        const notificationBell = document.getElementById('notification-bell');
+        if (loginLink) loginLink.style.visibility = 'hidden';
+        if (userMenu) userMenu.style.visibility = 'hidden';
+        if (notificationBell) notificationBell.style.visibility = 'hidden';
+    },
+
     /**
      * Initialize auth state and set up listener.
      * Call this on page load.
@@ -29,6 +38,7 @@ const Auth = {
      */
     async init() {
         if (this.initialized) return;
+        this.setUiPending();
 
         // Check for existing session with a timeout.
         // On slow connections (mobile, high-latency regions), getSession() can
@@ -1036,19 +1046,35 @@ const Auth = {
         const notificationBell = document.getElementById('notification-bell');
 
         if (this.isLoggedIn()) {
-            if (loginLink) loginLink.style.display = 'none';
-            if (userMenu) userMenu.style.display = 'flex';
+            if (loginLink) {
+                loginLink.style.display = 'none';
+                loginLink.style.visibility = '';
+            }
+            if (userMenu) {
+                userMenu.style.display = 'flex';
+                userMenu.style.visibility = '';
+            }
             if (notificationBell) {
                 notificationBell.style.display = 'block';
+                notificationBell.style.visibility = '';
                 this.updateNotificationBadge();
             }
         } else if (this._authResolved) {
             // Only show login link once we have a definitive answer.
             // If the session check timed out, we wait for onAuthStateChange
             // rather than briefly flashing "Log in" to an authenticated user.
-            if (loginLink) loginLink.style.display = 'block';
-            if (userMenu) userMenu.style.display = 'none';
-            if (notificationBell) notificationBell.style.display = 'none';
+            if (loginLink) {
+                loginLink.style.display = 'block';
+                loginLink.style.visibility = '';
+            }
+            if (userMenu) {
+                userMenu.style.display = 'none';
+                userMenu.style.visibility = '';
+            }
+            if (notificationBell) {
+                notificationBell.style.display = 'none';
+                notificationBell.style.visibility = '';
+            }
         }
 
         // Dispatch custom event for pages to react

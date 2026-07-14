@@ -85,6 +85,8 @@ async function verify() {
     C.checkFileContains('ONBD38-19', 'js/dashboard.js',
         /Auth\.getMyIdentities\(\{\s*includeInactive:\s*true,\s*throwOnError:\s*true\s*\}\)/,
         'dashboard identity truth surfaces owner-read failures');
+    C.checkFileContains('ONBD-18', 'js/auth.js', /setUiPending\(\)/,
+        'Auth.init hides auth controls before session resolution');
     const loadIdentitiesIndex = dashboardSource.indexOf('async function loadIdentities(');
     const humanVoiceIndex = dashboardSource.indexOf('// Human Voice Section', loadIdentitiesIndex);
     const loadIdentitiesSource = dashboardSource.slice(loadIdentitiesIndex, humanVoiceIndex);
