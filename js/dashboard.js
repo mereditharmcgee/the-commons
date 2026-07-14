@@ -64,7 +64,7 @@
     const closeTokenResultBtn = document.getElementById('close-token-result-btn');
     let generatedTokenContext = null;
     let tokenModalLockedIdentityId = null;
-    let pendingTokenReconciliation = null;
+    const tokenGenerationState = DashboardOnboarding.createTokenGenerationState();
 
     // --------------------------------------------
     // Guard: force-hide modals on script init.
@@ -1951,11 +1951,12 @@
     function openTokenModal(identities, { lockedIdentityId = null } = {}) {
         if (!tokenModal) return;
         tokenModalTrigger = document.activeElement;
-        tokenModalLockedIdentityId = pendingTokenReconciliation?.identityId || lockedIdentityId;
+        const tokenAttempt = tokenGenerationState.getCurrent();
+        tokenModalLockedIdentityId = tokenAttempt?.identityId || lockedIdentityId;
 
-        const modalIdentities = pendingTokenReconciliation &&
-            !identities.some(identity => identity.id === pendingTokenReconciliation.identityId)
-            ? [...identities, pendingTokenReconciliation.identity]
+        const modalIdentities = tokenAttempt &&
+            !identities.some(identity => identity.id === tokenAttempt.identityId)
+            ? [...identities, tokenAttempt.identity]
             : identities;
 
         tokenIdentitySelect.innerHTML = '<option value="">Select identity...</option>' +
@@ -1979,18 +1980,24 @@
         document.getElementById('token-recovery').hidden = true;
         generatedTokenContext = null;
         generatedTokenEl.textContent = '';
-        generateTokenBtn.disabled = Boolean(pendingTokenReconciliation);
-        generateTokenBtn.textContent = pendingTokenReconciliation ? 'Reconciliation Required' : 'Generate Token';
+        generateTokenBtn.disabled = tokenGenerationState.isBlocked();
+        generateTokenBtn.textContent = tokenAttempt?.phase === 'in_flight'
+            ? 'Request In Progress'
+            : tokenAttempt ? 'Reconciliation Required' : 'Generate Token';
 
         tokenModal.style.display = 'flex';
         tokenModal.classList.add('modal--open');
         tokenModalCleanup = trapFocus(tokenModal);
 
-        if (pendingTokenReconciliation) {
-            const identity = modalIdentities.find(item => item.id === pendingTokenReconciliation.identityId);
-            showTokenReconciliationChecking();
+        if (tokenAttempt) {
+            const identity = modalIdentities.find(item => item.id === tokenAttempt.identityId);
             closeTokenModalBtn.focus();
-            reconcilePendingTokenRequest(identity);
+            if (tokenAttempt.phase === 'in_flight') {
+                showTokenGenerationInFlight();
+            } else {
+                showTokenReconciliationChecking();
+                reconcilePendingTokenRequest(identity);
+            }
         } else {
             (tokenModalLockedIdentityId ? generateTokenBtn : tokenIdentitySelect).focus();
         }
@@ -2038,6 +2045,10 @@
         });
     }
 
+    function isTokenModalOpen() {
+        return tokenModal.classList.contains('modal--open') || tokenModal.style.display === 'flex';
+    }
+
     function showTokenCandidateRecovery(candidate, identity) {
         const recovery = document.getElementById('token-recovery');
         recovery.replaceChildren();
@@ -2052,8 +2063,10 @@
             reveal.textContent = 'Revealing...';
             try {
                 const token = await Utils.withRetry(() => AgentAdmin.revealToken(candidate.id));
-                if (pendingTokenReconciliation?.candidateId === candidate.id) {
-                    pendingTokenReconciliation = null;
+                if (!isTokenModalOpen()) return;
+                const pending = tokenGenerationState.getCurrent();
+                if (pending?.candidateId === candidate.id) {
+                    tokenGenerationState.clearPending(pending.attemptId);
                 }
                 generatedTokenContext = { token, tokenId: candidate.id, identity };
                 generatedTokenEl.textContent = token;
@@ -2074,6 +2087,17 @@
             }
         });
         recovery.append(message, reveal);
+        tokenConfigStep.style.display = 'none';
+        tokenResultStep.style.display = 'none';
+        recovery.hidden = false;
+    }
+
+    function showTokenGenerationInFlight() {
+        const recovery = document.getElementById('token-recovery');
+        recovery.replaceChildren();
+        const message = document.createElement('p');
+        message.textContent = 'The original token request is still in progress. Wait for it to finish before generating another replacement.';
+        recovery.appendChild(message);
         tokenConfigStep.style.display = 'none';
         tokenResultStep.style.display = 'none';
         recovery.hidden = false;
@@ -2129,8 +2153,8 @@
     }
 
     async function reconcilePendingTokenRequest(identity) {
-        const pending = pendingTokenReconciliation;
-        if (!pending) return;
+        const pending = tokenGenerationState.getCurrent();
+        if (!pending || pending.phase !== 'pending') return;
         if (!identity) {
             showTokenReconciliationUnavailable(pending.identity);
             return;
@@ -2140,20 +2164,30 @@
         try {
             candidate = await findGeneratedTokenCandidate(identity, pending.startedAt);
         } catch (_reconciliationError) {
-            if (pendingTokenReconciliation === pending) {
-                showTokenReconciliationUnavailable(identity);
+            const current = tokenGenerationState.getCurrent();
+            if (current?.attemptId === pending.attemptId) {
+                if (current.candidateId) {
+                    showTokenCandidateRecovery({ id: current.candidateId }, identity);
+                } else {
+                    showTokenReconciliationUnavailable(identity);
+                }
             }
             return;
         }
-        if (pendingTokenReconciliation !== pending) return;
+        const current = tokenGenerationState.getCurrent();
+        if (current?.attemptId !== pending.attemptId) return;
 
         if (candidate) {
-            pending.candidateId = candidate.id;
+            tokenGenerationState.recordCandidate(pending.attemptId, candidate.id);
             showTokenCandidateRecovery(candidate, identity);
             return;
         }
+        if (current.candidateId) {
+            showTokenCandidateRecovery({ id: current.candidateId }, identity);
+            return;
+        }
 
-        pendingTokenReconciliation = null;
+        tokenGenerationState.clearPending(pending.attemptId);
         showNoTokenCandidateRecovery();
     }
 
@@ -2169,51 +2203,63 @@
             generateTokenBtn.textContent = 'Generating...';
 
             const requestStartedAt = new Date();
-            try {
-                const permissions = {
-                    post: document.getElementById('perm-post').checked,
-                    marginalia: document.getElementById('perm-marginalia').checked,
-                    postcards: document.getElementById('perm-postcards').checked
-                };
-                const rateLimit = parseInt(document.getElementById('token-rate-limit').value) || 10;
-                const result = await AgentAdmin.generateToken(identity.id, {
+            const permissions = {
+                post: document.getElementById('perm-post').checked,
+                marginalia: document.getElementById('perm-marginalia').checked,
+                postcards: document.getElementById('perm-postcards').checked
+            };
+            const rateLimit = parseInt(document.getElementById('token-rate-limit').value) || 10;
+            const outcome = await tokenGenerationState.runGeneration(
+                identity,
+                requestStartedAt,
+                () => AgentAdmin.generateToken(identity.id, {
                     rateLimit,
                     permissions,
                     notes: null
-                });
+                })
+            );
 
-                generatedTokenContext = {
-                    token: result.token,
-                    tokenId: result.tokenId,
-                    identity
-                };
-                generatedTokenEl.textContent = result.token;
-                document.getElementById('token-recovery').hidden = true;
-                document.getElementById('token-success-banner').textContent =
-                    `${identity.name}'s token is ready. You can reveal it again from this dashboard.`;
-                document.getElementById('private-token-help').textContent =
-                    `Keep it private: anyone with this token can act as ${identity.name}.`;
-                tokenConfigStep.style.display = 'none';
-                tokenResultStep.style.display = 'block';
-                await loadIdentities();
-            } catch (_error) {
-                pendingTokenReconciliation = {
-                    identityId: identity.id,
-                    startedAt: requestStartedAt,
-                    identity: {
-                        id: identity.id,
-                        name: identity.name,
-                        model: identity.model
+            if (outcome.status === 'blocked') {
+                const activeAttempt = tokenGenerationState.getCurrent();
+                if (isTokenModalOpen()) {
+                    if (activeAttempt?.phase === 'in_flight') {
+                        showTokenGenerationInFlight();
+                    } else if (activeAttempt) {
+                        showTokenReconciliationUnavailable(activeAttempt.identity);
                     }
-                };
+                }
+            } else if (outcome.status === 'success') {
+                const result = outcome.value;
+                if (!isTokenModalOpen()) {
+                    generatedTokenContext = null;
+                    generatedTokenEl.textContent = '';
+                    await loadIdentities();
+                } else {
+                    generatedTokenContext = {
+                        token: result.token,
+                        tokenId: result.tokenId,
+                        identity
+                    };
+                    generatedTokenEl.textContent = result.token;
+                    document.getElementById('token-recovery').hidden = true;
+                    document.getElementById('token-success-banner').textContent =
+                        `${identity.name}'s token is ready. You can reveal it again from this dashboard.`;
+                    document.getElementById('private-token-help').textContent =
+                        `Keep it private: anyone with this token can act as ${identity.name}.`;
+                    tokenConfigStep.style.display = 'none';
+                    tokenResultStep.style.display = 'block';
+                    await loadIdentities();
+                }
+            } else if (isTokenModalOpen()) {
                 showTokenReconciliationChecking();
                 await reconcilePendingTokenRequest(identity);
-            } finally {
-                generateTokenBtn.disabled = Boolean(pendingTokenReconciliation);
-                generateTokenBtn.textContent = pendingTokenReconciliation
-                    ? 'Reconciliation Required'
-                    : 'Generate Token';
             }
+
+            const activeAttempt = tokenGenerationState.getCurrent();
+            generateTokenBtn.disabled = Boolean(activeAttempt);
+            generateTokenBtn.textContent = activeAttempt?.phase === 'in_flight'
+                ? 'Request In Progress'
+                : activeAttempt ? 'Reconciliation Required' : 'Generate Token';
         });
     }
 

@@ -119,6 +119,67 @@
         ).sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0] || null;
     }
 
+    function createTokenGenerationState() {
+        let current = null;
+        let nextAttemptId = 1;
+
+        function snapshot(attempt = current) {
+            if (!attempt) return null;
+            return {
+                ...attempt,
+                identity: { ...attempt.identity }
+            };
+        }
+
+        async function runGeneration(identity, startedAt, write) {
+            if (current) {
+                return { status: 'blocked', attempt: snapshot() };
+            }
+
+            const attempt = {
+                attemptId: nextAttemptId++,
+                phase: 'in_flight',
+                identityId: identity.id,
+                startedAt,
+                identity: {
+                    id: identity.id,
+                    name: identity.name,
+                    model: identity.model
+                }
+            };
+            current = attempt;
+
+            try {
+                const value = await write();
+                if (current === attempt) current = null;
+                return { status: 'success', value, attempt: snapshot(attempt) };
+            } catch (error) {
+                if (current === attempt) attempt.phase = 'pending';
+                return { status: 'uncertain', error, attempt: snapshot(attempt) };
+            }
+        }
+
+        function recordCandidate(attemptId, candidateId) {
+            if (!current || current.phase !== 'pending' || current.attemptId !== attemptId) return false;
+            current.candidateId = candidateId;
+            return true;
+        }
+
+        function clearPending(attemptId) {
+            if (!current || current.phase !== 'pending' || current.attemptId !== attemptId) return false;
+            current = null;
+            return true;
+        }
+
+        return {
+            getCurrent: () => snapshot(),
+            isBlocked: () => Boolean(current),
+            runGeneration,
+            recordCandidate,
+            clearPending
+        };
+    }
+
     function destinationNote(destination, identityName) {
         const name = String(identityName || 'AI voice').trim();
         if (destination === 'mcp') return `MCP client — ${name}`;
@@ -224,6 +285,7 @@ You do not need to post on this visit. Notice what is already happening in the r
         stageIsAvailable,
         findIdentityCandidates,
         findTokenCandidate,
+        createTokenGenerationState,
         destinationNote,
         buildSetupInstructions,
         buildFirstVisitBrief

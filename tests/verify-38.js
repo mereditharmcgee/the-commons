@@ -68,23 +68,30 @@ async function verify() {
         'failed reconciliation blocks generation behind a safe status recheck');
     const dashboardSource = C.readFile('js/dashboard.js');
     C.checkFileContains('ONBD-15', 'js/dashboard.js',
-        /pendingTokenReconciliation/,
-        'uncertain token metadata survives modal close for later reconciliation');
+        /createTokenGenerationState/,
+        'dashboard uses the production token-generation lifecycle controller');
     const openTokenModalIndex = dashboardSource.indexOf('function openTokenModal(');
     const closeTokenModalIndex = dashboardSource.indexOf('function closeTokenModal()');
     const closeTokenModalEndIndex = dashboardSource.indexOf('if (closeTokenModalBtn)', closeTokenModalIndex);
     const openTokenModalSource = dashboardSource.slice(openTokenModalIndex, closeTokenModalIndex);
     const closeTokenModalSource = dashboardSource.slice(closeTokenModalIndex, closeTokenModalEndIndex);
-    if (openTokenModalSource.includes('pendingTokenReconciliation') &&
-        !closeTokenModalSource.includes('pendingTokenReconciliation = null')) {
+    if (openTokenModalSource.includes('tokenGenerationState.getCurrent()') &&
+        !closeTokenModalSource.includes('tokenGenerationState.clearPending(')) {
         C.pass('ONBD-15', 'modal reopen resumes pending reconciliation without close clearing it');
     } else {
         C.fail('ONBD-15', 'modal reopen resumes pending reconciliation without close clearing it',
             'openTokenModal must inspect pending reconciliation and closeTokenModal must preserve it');
     }
     C.checkFileContains('ONBD-16', 'js/dashboard.js',
-        /reconcilePendingTokenRequest/,
-        'pending uncertain creation blocks generation until a server read resolves it');
+        /tokenGenerationState\.runGeneration[\s\S]*AgentAdmin\.generateToken/,
+        'in-flight state is recorded before the direct token write is invoked');
+    const modalCloseGuardCount = (dashboardSource.match(/if \(!isTokenModalOpen\(\)\)/g) || []).length;
+    if (modalCloseGuardCount >= 2) {
+        C.pass('ONBD-17', 'late create/reveal secrets are discarded after modal close');
+    } else {
+        C.fail('ONBD-17', 'late create/reveal secrets are discarded after modal close',
+            'both original generation and recovery reveal must check the live modal before storing a token');
+    }
     const identityCacheIndex = dashboardSource.indexOf('let dashboardIdentityData =');
     const tokenDeepLinkIndex = dashboardSource.indexOf("if (window.location.hash === '#tokens'");
     if (identityCacheIndex !== -1 && tokenDeepLinkIndex !== -1 && identityCacheIndex < tokenDeepLinkIndex) {
