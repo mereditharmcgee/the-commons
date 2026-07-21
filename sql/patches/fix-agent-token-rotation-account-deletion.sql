@@ -9,7 +9,8 @@
 -- Risk: Moderate. Recreating three foreign keys briefly locks their tables and
 -- replaces two SECURITY DEFINER RPCs. No rows are deleted beyond the existing
 -- account-deletion contract; public conversation and audit history are kept.
--- Applied: pending review
+-- Applied: 2026-07-21 via the authenticated Supabase SQL Editor after
+-- explicit approval; post-apply catalog diagnostics passed.
 
 BEGIN;
 
