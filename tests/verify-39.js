@@ -27,6 +27,14 @@ function checkOrder(req, source, patterns, desc, detail) {
     return true;
 }
 
+function extractBoundedBlock(source, startPattern, endPattern) {
+    const start = source.search(startPattern);
+    if (start === -1) return '';
+    const remainder = source.slice(start);
+    const end = remainder.search(endPattern);
+    return end === -1 ? '' : remainder.slice(0, end);
+}
+
 async function verify() {
     console.log('\n\x1b[1mPhase 39: Agent Token Rotation & Account Deletion\x1b[0m\n');
     C.setPhase('39');
@@ -249,36 +257,48 @@ async function verify() {
         'changelog discloses deleted-profile field scrubbing',
         'Expected the 2026-07-21 entry to explain that retained identity profile fields are scrubbed');
 
-    const privateCleanupCount = (dashboard.match(
-        /Commons facilitator record, private profile data, memberships, subscriptions, notifications, and token secrets (?:are|will be) removed/gi
-    ) || []).length;
-    if (privateCleanupCount >= 2) {
-        C.pass('AUTH39-32', 'both dashboard deletion disclosures precisely scope private cleanup');
-    } else {
-        C.fail('AUTH39-32', 'both dashboard deletion disclosures precisely scope private cleanup',
-            'Expected the danger summary and modal to name Commons facilitator/profile data, memberships, subscriptions, notifications, and token secrets');
+    const deletionSurfaces = [
+        {
+            suffix: '',
+            label: 'danger-zone summary',
+            source: extractBoundedBlock(
+                dashboard,
+                /<section[^>]*class="[^"]*dashboard-section--danger[^"]*"[^>]*>/i,
+                /<!--\s*Create Identity Modal\s*-->/i
+            )
+        },
+        {
+            suffix: 'A',
+            label: 'delete-account modal',
+            source: extractBoundedBlock(
+                dashboard,
+                /<div[^>]*id="delete-account-modal"[^>]*>/i,
+                /<\/main>/i
+            )
+        }
+    ];
+    for (const surface of deletionSurfaces) {
+        checkPattern(`AUTH39-32${surface.suffix}`, surface.source,
+            /Commons facilitator record, private profile data, memberships, subscriptions, notifications, and token secrets (?:are|will be) removed/i,
+            `${surface.label} precisely scopes private cleanup`,
+            `Expected ${surface.label} to name Commons facilitator/profile data, memberships, subscriptions, notifications, and token secrets`);
+        checkPattern(`AUTH39-33${surface.suffix}`, surface.source,
+            /public (?:posts and )?contributions[\s\S]{0,200}anonymized/i,
+            `${surface.label} says public contributions are anonymized`,
+            `Expected ${surface.label} to disclose public-contribution anonymization`);
+        checkPattern(`AUTH39-34${surface.suffix}`, surface.source,
+            /non-personal identity and token audit rows[\s\S]{0,120}retained/i,
+            `${surface.label} discloses retained non-personal identity and token audit rows`,
+            `Expected ${surface.label} to disclose retained identity and token audit rows`);
+        checkPattern(`AUTH39-41${surface.suffix}`, surface.source,
+            /Supabase Auth sign-in record remains[^.<]{0,160}(?:signed out|sign you out)/i,
+            `${surface.label} retains the Auth record and promises sign-out`,
+            `Expected ${surface.label} to say the Supabase Auth sign-in record remains and the user is signed out`);
     }
-    checkPattern('AUTH39-33', dashboard,
-        /public (?:posts and )?contributions[\s\S]{0,200}anonymized/i,
-        'dashboard says public contributions are anonymized',
-        'Expected truthful deletion copy about public-contribution anonymization');
-    checkPattern('AUTH39-34', dashboard,
-        /non-personal identity and token audit rows[\s\S]{0,120}retained/i,
-        'dashboard discloses retained non-personal identity and token audit rows',
-        'Expected truthful retention language for identity and token audit rows');
     checkPattern('AUTH39-35', dashboard,
         /^(?![\s\S]*(?:identities|tokens)[^.<]{0,140}permanently removed)(?![\s\S]*permanently removed[^.<]{0,140}(?:identities|tokens))[\s\S]*$/i,
         'dashboard does not claim identity or token rows are permanently removed',
         'Identity and token audit rows are retained, so deletion copy must not claim they are removed');
-    const authRetentionCount = (dashboard.match(
-        /Supabase Auth sign-in record remains[^.<]{0,160}(?:signed out|sign you out)/gi
-    ) || []).length;
-    if (authRetentionCount >= 2) {
-        C.pass('AUTH39-41', 'both dashboard deletion disclosures retain the Auth record and promise sign-out');
-    } else {
-        C.fail('AUTH39-41', 'both dashboard deletion disclosures retain the Auth record and promise sign-out',
-            'Expected both deletion surfaces to say the Supabase Auth sign-in record remains and the user is signed out');
-    }
     checkPattern('AUTH39-42', dashboard,
         /^(?![\s\S]*(?:private\s+)?account data[^.<]{0,120}permanently (?:removed|deleted))[\s\S]*$/i,
         'dashboard avoids broad permanent-removal claims about account data',
