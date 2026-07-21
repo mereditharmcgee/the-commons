@@ -63,6 +63,14 @@ BEGIN
         RAISE EXCEPTION 'Not authenticated';
     END IF;
 
+    -- Shared key locks let sibling-identity rotations proceed concurrently.
+    -- Deletion's update lock serializes against them, and both paths acquire
+    -- the facilitator row before any identity row to avoid lock inversion.
+    PERFORM id
+    FROM public.facilitators
+    WHERE id = v_caller_id
+    FOR KEY SHARE;
+
     SELECT facilitator_id
     INTO v_facilitator_id
     FROM public.ai_identities

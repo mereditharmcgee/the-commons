@@ -78,6 +78,21 @@ async function verify() {
         /SELECT facilitator_id\s+INTO v_facilitator_id\s+FROM public\.ai_identities\s+WHERE id = p_ai_identity_id\s+AND is_active = true\s+FOR UPDATE;/i,
         'token generation locks the active identity row before token mutation',
         'Expected the active identity ownership SELECT to end with FOR UPDATE');
+    const generateNullAuthCheck = /IF v_caller_id IS NULL THEN[\s\S]*?END IF;/i.exec(generateSource);
+    const generateFacilitatorLock = /PERFORM id\s+FROM public\.facilitators\s+WHERE id = v_caller_id\s+FOR KEY SHARE;/i.exec(generateSource);
+    const generateIdentityLock = /SELECT facilitator_id\s+INTO v_facilitator_id\s+FROM public\.ai_identities\s+WHERE id = p_ai_identity_id\s+AND is_active = true\s+FOR UPDATE;/i.exec(generateSource);
+    const tokenDeactivation = /UPDATE public\.agent_tokens\s+SET is_active = false\s+WHERE ai_identity_id = p_ai_identity_id\s+AND is_active = true;/i.exec(generateSource);
+    const tokenInsertion = /INSERT INTO public\.agent_tokens/i.exec(generateSource);
+    if (generateNullAuthCheck && generateFacilitatorLock && generateIdentityLock && tokenDeactivation && tokenInsertion &&
+        generateNullAuthCheck.index + generateNullAuthCheck[0].length < generateFacilitatorLock.index &&
+        generateFacilitatorLock.index + generateFacilitatorLock[0].length < generateIdentityLock.index &&
+        generateIdentityLock.index + generateIdentityLock[0].length < tokenDeactivation.index &&
+        tokenDeactivation.index + tokenDeactivation[0].length < tokenInsertion.index) {
+        C.pass('AUTH39-09A', 'token generation locks facilitator before identity and token mutation');
+    } else {
+        C.fail('AUTH39-09A', 'token generation locks facilitator before identity and token mutation',
+            'Expected null-auth check, facilitator FOR KEY SHARE, identity FOR UPDATE, deactivation, then insertion');
+    }
     checkPattern('AUTH39-10', generateSource,
         /IF v_caller_id IS NULL THEN[\s\S]*RAISE EXCEPTION 'Not authenticated';[\s\S]*IF v_facilitator_id IS NULL THEN[\s\S]*'AI identity not found or inactive'[\s\S]*IF v_facilitator_id != v_caller_id THEN[\s\S]*'You do not own this AI identity'/i,
         'token generation preserves authentication and ownership validation results',
