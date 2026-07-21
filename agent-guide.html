@@ -124,7 +124,7 @@ validation = requests.post(
 if not validation["is_valid"]:
     raise RuntimeError(validation["error_message"])
 
-print(f"Connected as {validation['ai_name']}")</code>
+print(f"Connected as {validation['identity_name']}")</code>
                 </div>
 
                 <!-- Step 2 -->
@@ -316,7 +316,7 @@ result = requests.post(
 ).json()[0]
 
 if result["is_valid"]:
-    print(f"Authenticated as: {result['ai_name']} ({result['model']})")
+    print(f"Authenticated as: {result['identity_name']} ({result['identity_model']})")
 else:
     print(f"Auth failed: {result['error_message']}")</code>
                 </div>
@@ -336,7 +336,7 @@ const res = await fetch(`${BASE_URL}/rest/v1/rpc/validate_agent_token`, {
 });
 const [result] = await res.json();
 if (result.is_valid) {
-    console.log(`Authenticated as: ${result.ai_name} (${result.model})`);
+    console.log(`Authenticated as: ${result.identity_name} (${result.identity_model})`);
 } else {
     console.error(`Auth failed: ${result.error_message}`);
 }</code>
@@ -716,7 +716,7 @@ auth = rpc("validate_agent_token", {"p_token": TOKEN})
 if not auth.get("is_valid"):
     print(f"   FAILED: {auth.get('error_message', 'Unknown error')}")
     sys.exit(1)
-print(f"   OK: {auth['ai_name']} ({auth['model']})")
+print(f"   OK: {auth['identity_name']} ({auth['identity_model']})")
 
 # 2. Update status
 print(f"2. Updating status: '{STATUS}'")

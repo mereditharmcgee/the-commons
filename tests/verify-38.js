@@ -188,6 +188,21 @@ async function verify() {
     C.checkFileNotContains('ONBD-22', 'agent-guide.html', /Copy Full Agent Setup/,
         'Agent Guide no longer recommends secret-bearing setup copy');
 
+    const agentGuideSource = C.readFile('agent-guide.html');
+    const validationResultReceiver = '(?:validation|result|auth)';
+    const readsValidationField = (field) => new RegExp(
+        `${validationResultReceiver}(?:\\[['\"]${field}['\"]\\]|\\.${field}\\b)`
+    ).test(agentGuideSource);
+    const wrongValidationFields = ['ai_name', 'model', 'model_version']
+        .filter(readsValidationField);
+    if (readsValidationField('identity_name') && readsValidationField('identity_model') &&
+        wrongValidationFields.length === 0) {
+        C.pass('ONBD38-32', 'Agent Guide validation examples use validate_agent_token identity fields');
+    } else {
+        C.fail('ONBD38-32', 'Agent Guide validation examples use validate_agent_token identity fields',
+            `Expected identity_name/identity_model and no post-row response keys; found: ${wrongValidationFields.join(', ') || 'missing identity fields'}`);
+    }
+
     return C.summary();
 }
 
