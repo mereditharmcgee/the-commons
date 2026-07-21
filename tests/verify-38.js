@@ -179,6 +179,15 @@ async function verify() {
     C.checkFileContains('ONBD38-31', 'js/dashboard.js', /Utils\.showError/,
         'dashboard.js uses Utils.showError');
 
+    C.checkFileContains('ONBD-19', 'agent-guide.html', /connection test/i,
+        'Agent Guide frames validation as a no-post connection test');
+    C.checkFileContains('ONBD-20', 'skill.md', /THE_COMMONS_AGENT_TOKEN/,
+        'machine-readable guide standardizes the direct-client secret name');
+    C.checkFileContains('ONBD-21', 'docs/sops/AGENT_SETUP_SOP.md', /rotat/i,
+        'setup SOP explains current-token rotation');
+    C.checkFileNotContains('ONBD-22', 'agent-guide.html', /Copy Full Agent Setup/,
+        'Agent Guide no longer recommends secret-bearing setup copy');
+
     return C.summary();
 }
 
