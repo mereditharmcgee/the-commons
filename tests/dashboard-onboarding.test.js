@@ -183,6 +183,8 @@ async function verifyIdentityCreationRecovery() {
         created_at: '2026-07-13T15:59:59.000Z'
     };
     const state = O.createIdentityCreationState();
+    assert.equal(typeof state.beginReconciliation, 'function',
+        'identity creation state exposes a single-owner reconciliation primitive');
     let createCalls = 0;
 
     const attempt = state.begin(submission, now);
@@ -197,6 +199,8 @@ async function verifyIdentityCreationRecovery() {
     assert.equal(state.getCurrent().phase, 'pending');
 
     const attemptId = state.getCurrent().attemptId;
+    assert.equal(state.beginReconciliation(attemptId), true,
+        'the pending attempt grants one authoritative read lease');
     assert.equal(state.recordReadFailure(attemptId), true);
     assert.equal(state.isBlocked(), true,
         'a failed authoritative read keeps creation blocked');
@@ -213,10 +217,18 @@ async function verifyIdentityCreationRecovery() {
         'failed reconciliation cannot trigger a second create call');
     assert.equal(createCalls, 1);
 
+    assert.equal(state.beginReconciliation(attemptId), true,
+        'a read failure releases the lease for an explicit retry');
+    assert.equal(state.beginReconciliation(attemptId), false,
+        'a second reconciliation cannot start while the authoritative read is active');
     assert.equal(state.recordCandidates(attemptId, [candidate]), true);
     assert.equal(state.isBlocked(), true, 'candidate recovery remains write-blocked');
     assert.equal(state.getCurrent().phase, 'candidates');
     assert.deepEqual(Array.from(state.getCurrent().candidates, item => item.id), [candidate.id]);
+    assert.equal(state.recordAuthoritativeEmpty(attemptId), false,
+        'an out-of-order empty result cannot clear candidates from the same attempt');
+    assert.deepEqual(Array.from(state.getCurrent().candidates, item => item.id), [candidate.id],
+        'same-attempt candidate recovery survives an older or later empty settlement');
 
     const reopenedSnapshot = state.getCurrent();
     assert.equal(reopenedSnapshot.attemptId, attemptId);
@@ -241,6 +253,7 @@ async function verifyIdentityCreationRecovery() {
     const emptyState = O.createIdentityCreationState();
     const emptyAttempt = emptyState.begin(submission, now);
     emptyState.recordUncertain(emptyAttempt.attemptId);
+    assert.equal(emptyState.beginReconciliation(emptyAttempt.attemptId), true);
     assert.equal(emptyState.recordAuthoritativeEmpty(emptyAttempt.attemptId), true);
     assert.equal(emptyState.isBlocked(), false,
         'a successful authoritative zero-candidate result unlocks creation');
@@ -248,6 +261,7 @@ async function verifyIdentityCreationRecovery() {
     const staleState = O.createIdentityCreationState();
     const firstAttempt = staleState.begin(submission, now);
     staleState.recordUncertain(firstAttempt.attemptId);
+    staleState.beginReconciliation(firstAttempt.attemptId);
     assert.equal(staleState.recordAuthoritativeEmpty(firstAttempt.attemptId), true);
     const secondAttempt = staleState.begin({ ...submission, name: 'New Voice' }, now);
     staleState.recordUncertain(secondAttempt.attemptId);
@@ -281,6 +295,15 @@ async function verifyIdentityCreationRecovery() {
     assert.match(identitySubmitSource,
         /const sameModalContext = isIdentityModalOpen\(\)[\s\S]*if \(sameModalContext\) closeModal\(\)/,
         'a late create success cannot dismiss a different edit session');
+    const reconcileStart = identityRecoverySource.indexOf('async function reconcilePendingIdentityCreation(');
+    const ownerReadStart = identityRecoverySource.indexOf('Auth.getMyIdentities(', reconcileStart);
+    const leaseStart = identityRecoverySource.indexOf(
+        'identityCreationState.beginReconciliation(attemptId)', reconcileStart
+    );
+    assert.ok(leaseStart !== -1 && leaseStart < ownerReadStart,
+        'identity reconciliation acquires its single-read lease before the owner read');
+    assert.match(identityRecoverySource, /attempt\.phase === 'checking'/,
+        'modal reopen renders checking state without exposing a parallel status action');
 
     console.log('dashboard-onboarding.test.js: all assertions passed');
 }

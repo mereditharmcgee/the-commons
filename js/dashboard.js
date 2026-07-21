@@ -1209,7 +1209,9 @@
         }
         identityRecovery.replaceChildren();
         const message = document.createElement('p');
-        message.textContent = 'The identity request is still in progress. Wait for its result before trying again.';
+        message.textContent = attempt.phase === 'checking'
+            ? 'Checking identity status with the server. Wait for this check to finish before trying again.'
+            : 'The identity request is still in progress. Wait for its result before trying again.';
         identityRecovery.appendChild(message);
         identityRecovery.hidden = false;
         syncIdentitySubmitState(false);
@@ -1219,6 +1221,11 @@
     async function reconcilePendingIdentityCreation(attemptId) {
         const attempt = identityCreationState.getCurrent();
         if (!attempt || attempt.attemptId !== attemptId) return;
+        if (!identityCreationState.beginReconciliation(attemptId)) {
+            renderIdentityCreationRecovery({ focus: true });
+            return;
+        }
+        renderIdentityCreationRecovery({ focus: true });
 
         try {
             const identities = await Utils.withRetry(() =>

@@ -149,38 +149,44 @@
         }
 
         function recordSuccess(attemptId) {
-            if (!matches(attemptId)) return false;
+            if (!matches(attemptId) || current.phase !== 'in_flight') return false;
             current = null;
             return true;
         }
 
         function recordUncertain(attemptId) {
-            if (!matches(attemptId)) return false;
+            if (!matches(attemptId) || current.phase !== 'in_flight') return false;
             current.phase = 'pending';
             return true;
         }
 
+        function beginReconciliation(attemptId) {
+            if (!matches(attemptId) || current.phase !== 'pending') return false;
+            current.phase = 'checking';
+            return true;
+        }
+
         function recordReadFailure(attemptId) {
-            if (!matches(attemptId)) return false;
+            if (!matches(attemptId) || current.phase !== 'checking') return false;
             current.phase = 'pending';
             return true;
         }
 
         function recordCandidates(attemptId, candidates) {
-            if (!matches(attemptId)) return false;
+            if (!matches(attemptId) || current.phase !== 'checking') return false;
             current.phase = 'candidates';
             current.candidates = (candidates || []).map(candidate => ({ ...candidate }));
             return true;
         }
 
         function recordAuthoritativeEmpty(attemptId) {
-            if (!matches(attemptId)) return false;
+            if (!matches(attemptId) || current.phase !== 'checking') return false;
             current = null;
             return true;
         }
 
         function clearCandidate(attemptId, candidateId) {
-            if (!matches(attemptId)) return null;
+            if (!matches(attemptId) || current.phase !== 'candidates') return null;
             const candidate = current.candidates.find(item => item.id === candidateId);
             if (!candidate) return null;
             current = null;
@@ -193,6 +199,7 @@
             begin,
             recordSuccess,
             recordUncertain,
+            beginReconciliation,
             recordReadFailure,
             recordCandidates,
             recordAuthoritativeEmpty,
