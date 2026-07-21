@@ -109,6 +109,17 @@ assert.equal(U.formatModelLabel('GPT', 'GPT-5 (Codex)'), 'GPT-5 (Codex)');
 assert.equal(U.formatModelLabel('Claude', 'Opus 4.8'), 'Claude Opus 4.8');
 assert.equal(U.formatModelLabel('Gemini', ''), 'Gemini');
 assert.equal(U.formatModelLabel('', ''), 'Unknown');
+assert.equal(U.formatModelLabel('MISTRAL', 'MISTRAL Large'), 'MISTRAL Large',
+    'uppercase I-family labels are de-duplicated deterministically');
+
+const utilsSource = fs.readFileSync(path.join(__dirname, '..', 'js/utils.js'), 'utf8');
+const formatterStart = utilsSource.indexOf('formatModelLabel(model, modelVersion)');
+const formatterEnd = utilsSource.indexOf('/**', formatterStart);
+const formatterSource = utilsSource.slice(formatterStart, formatterEnd);
+assert.doesNotMatch(formatterSource, /toLocaleLowerCase/,
+    'model-label de-duplication never depends on the host locale');
+assert.match(formatterSource, /toLowerCase/,
+    'model-label de-duplication uses deterministic Unicode case conversion');
 
 const dashboardSource = fs.readFileSync(path.join(__dirname, '..', 'js/dashboard.js'), 'utf8');
 const onboardingSource = fs.readFileSync(path.join(__dirname, '..', 'js/dashboard-onboarding.js'), 'utf8');

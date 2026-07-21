@@ -2,6 +2,7 @@
 const C = require('./lib/checks');
 
 const PATCH = 'sql/patches/fix-agent-token-rotation-account-deletion.sql';
+const PRIVACY_PATCH = 'sql/patches/scrub-deleted-identity-profile-fields.sql';
 
 function checkPattern(req, source, pattern, desc, detail) {
     if (pattern.test(source)) {
@@ -32,23 +33,34 @@ async function verify() {
 
     C.checkFileExists('AUTH39-01', PATCH,
         'token lifecycle audit patch exists');
+    C.checkFileExists('AUTH39-29', PRIVACY_PATCH,
+        'follow-up deletion privacy audit patch exists');
     const migration = C.readFile(PATCH) || '';
+    const privacyMigration = C.readFile(PRIVACY_PATCH) || '';
     const changelog = C.readFile('changes.html') || '';
+    const dashboard = C.readFile('dashboard.html') || '';
+    const aggregateRunner = C.readFile('tests/run-all.js') || '';
     const generateStart = migration.search(/CREATE OR REPLACE FUNCTION public\.generate_agent_token/i);
-    const deleteStart = migration.search(/CREATE OR REPLACE FUNCTION public\.delete_account/i);
-    const generateSource = generateStart !== -1 && deleteStart > generateStart
-        ? migration.slice(generateStart, deleteStart)
+    const deleteStart = privacyMigration.search(/CREATE OR REPLACE FUNCTION public\.delete_account/i);
+    const generateEnd = migration.search(/CREATE OR REPLACE FUNCTION public\.delete_account/i);
+    const generateSource = generateStart !== -1 && generateEnd > generateStart
+        ? migration.slice(generateStart, generateEnd)
         : '';
-    const deleteSource = deleteStart !== -1 ? migration.slice(deleteStart) : '';
+    const deleteSource = deleteStart !== -1 ? privacyMigration.slice(deleteStart) : '';
+    const lifecycleSources = migration + '\n' + privacyMigration;
 
     checkPattern('AUTH39-02', migration,
         /CREATE OR REPLACE FUNCTION public\.generate_agent_token\s*\(\s*p_ai_identity_id UUID,\s*p_expires_in_days INTEGER DEFAULT NULL,\s*p_rate_limit INTEGER DEFAULT 10,\s*p_permissions JSONB DEFAULT '\{"post": true, "marginalia": true, "postcards": true\}'::jsonb,\s*p_notes TEXT DEFAULT NULL\s*\)\s*RETURNS TABLE\s*\(\s*token TEXT,\s*token_id UUID,\s*error_message TEXT\s*\)/i,
         'patch defines the exact public.generate_agent_token signature and return shape',
         'Expected public.generate_agent_token(UUID, INTEGER, INTEGER, JSONB, TEXT) with the existing table return shape');
-    checkPattern('AUTH39-03', migration,
+    checkPattern('AUTH39-03', privacyMigration,
         /CREATE OR REPLACE FUNCTION public\.delete_account\s*\(\s*\)\s*RETURNS boolean/i,
-        'patch defines the exact public.delete_account() signature',
+        'follow-up patch defines the exact public.delete_account() signature',
         'Expected public.delete_account() returning boolean');
+    checkPattern('AUTH39-29A', privacyMigration,
+        /--\s*What:[^\r\n]+[\s\S]*--\s*Why:[^\r\n]+[\s\S]*--\s*Risk:[^\r\n]+[\s\S]*--\s*Applied:\s*pending explicit approval\.?/i,
+        'follow-up patch records what, why, risk, and pending approval',
+        'Expected What/Why/Risk header fields and Applied: pending explicit approval');
 
     checkPattern('AUTH39-04', generateSource,
         /LANGUAGE plpgsql\s+SECURITY DEFINER\s+SET search_path = extensions, public/i,
@@ -58,18 +70,18 @@ async function verify() {
         /LANGUAGE plpgsql\s+SECURITY DEFINER\s+SET search_path = extensions, public/i,
         'account deletion is security-definer with a fixed search path',
         'delete_account must be LANGUAGE plpgsql SECURITY DEFINER SET search_path = extensions, public');
-    for (const [req, signature] of [
-        ['AUTH39-06', 'generate_agent_token\\(UUID, INTEGER, INTEGER, JSONB, TEXT\\)'],
-        ['AUTH39-07', 'delete_account\\(\\)']
+    for (const [req, signature, source] of [
+        ['AUTH39-06', 'generate_agent_token\\(UUID, INTEGER, INTEGER, JSONB, TEXT\\)', migration],
+        ['AUTH39-07', 'delete_account\\(\\)', privacyMigration]
     ]) {
-        checkPattern(req, migration,
+        checkPattern(req, source,
             new RegExp(`REVOKE ALL ON FUNCTION public\\.${signature} FROM PUBLIC;[\\s\\S]*` +
                 `REVOKE ALL ON FUNCTION public\\.${signature} FROM anon;[\\s\\S]*` +
                 `GRANT EXECUTE ON FUNCTION public\\.${signature} TO authenticated;`, 'i'),
             `${signature.replace(/\\/g, '')} is executable only by authenticated callers`,
             'Expected PUBLIC and anon revocations followed by the authenticated EXECUTE grant');
     }
-    checkPattern('AUTH39-08', migration,
+    checkPattern('AUTH39-08', lifecycleSources,
         /^(?![\s\S]*GRANT EXECUTE ON FUNCTION public\.(?:generate_agent_token|delete_account)[^;]* TO (?:PUBLIC|anon);)[\s\S]*$/i,
         'neither lifecycle RPC is granted to PUBLIC or anon',
         'Lifecycle RPCs must not grant EXECUTE to PUBLIC or anon');
@@ -162,6 +174,20 @@ async function verify() {
         /DELETE FROM public\.interest_memberships\s+WHERE ai_identity_id = ANY\(v_identity_ids\);[\s\S]*DELETE FROM public\.subscriptions\s+WHERE facilitator_id = v_caller_id;[\s\S]*DELETE FROM public\.notifications\s+WHERE facilitator_id = v_caller_id;/i,
         'account deletion removes memberships, subscriptions, and notifications',
         'Expected the existing private account records to be deleted');
+    for (const [req, field] of [
+        ['AUTH39-30A', 'appearance'],
+        ['AUTH39-30B', 'status'],
+        ['AUTH39-30C', 'status_updated_at'],
+        ['AUTH39-30D', 'avatar_url'],
+        ['AUTH39-30E', 'model_version'],
+        ['AUTH39-30F', 'pinned_post_id']
+    ]) {
+        checkPattern(req, deleteSource,
+            new RegExp(`UPDATE public\\.ai_identities\\s+SET[\\s\\S]*?\\b${field}\\s*=\\s*NULL[\\s\\S]*?` +
+                'WHERE id = ANY\\(v_identity_ids\\);', 'i'),
+            `account deletion scrubs ai_identities.${field}`,
+            `Expected ${field} = NULL in the retained identity-row anonymization update`);
+    }
     checkOrder('AUTH39-23', deleteSource, [
         /UPDATE public\.ai_identities\s+SET[\s\S]*?is_active\s*=\s*false[\s\S]*?bio\s*=\s*NULL[\s\S]*?name\s*=\s*'\[deleted\]'[\s\S]*?facilitator_id\s*=\s*NULL[\s\S]*?WHERE id = ANY\(v_identity_ids\);/i,
         /DELETE FROM public\.facilitators\s+WHERE id = v_caller_id;/i,
@@ -190,6 +216,40 @@ async function verify() {
         /2026-07-21[\s\S]{0,1800}(?:replace|replacement)[\s\S]{0,500}token[\s\S]{0,1000}(?:delete|deletion)[\s\S]{0,800}(?:secret|credential)[\s\S]{0,500}(?:audit|history)/i,
         'changelog explains normal token replacement, account deletion, secret clearing, and retained audit history',
         'Expected a 2026-07-21 AI-facing lifecycle repair entry at the top of Recent');
+    checkPattern('AUTH39-31', changelog,
+        /2026-07-21[\s\S]{0,2200}(?:profile fields?|profile details?)[\s\S]{0,500}(?:scrub|clear|remove)/i,
+        'changelog discloses deleted-profile field scrubbing',
+        'Expected the 2026-07-21 entry to explain that retained identity profile fields are scrubbed');
+
+    checkPattern('AUTH39-32', dashboard,
+        /private account data[\s\S]{0,300}token secrets?[\s\S]{0,200}(?:removed|deleted|cleared)/i,
+        'dashboard says private account data and token secrets are removed',
+        'Expected truthful deletion copy about private account data and token-secret removal');
+    checkPattern('AUTH39-33', dashboard,
+        /public (?:posts and )?contributions[\s\S]{0,200}anonymized/i,
+        'dashboard says public contributions are anonymized',
+        'Expected truthful deletion copy about public-contribution anonymization');
+    checkPattern('AUTH39-34', dashboard,
+        /non-personal identity and token audit rows[\s\S]{0,120}retained/i,
+        'dashboard discloses retained non-personal identity and token audit rows',
+        'Expected truthful retention language for identity and token audit rows');
+    checkPattern('AUTH39-35', dashboard,
+        /^(?![\s\S]*(?:identities|tokens)[^.<]{0,140}permanently removed)(?![\s\S]*permanently removed[^.<]{0,140}(?:identities|tokens))[\s\S]*$/i,
+        'dashboard does not claim identity or token rows are permanently removed',
+        'Identity and token audit rows are retained, so deletion copy must not claim they are removed');
+
+    checkPattern('AUTH39-36', aggregateRunner,
+        /require\(['"]node:child_process['"]\)[\s\S]*spawnSync[\s\S]*process\.execPath/i,
+        'aggregate runner uses the current Node executable via a child process',
+        'Expected a cross-platform spawnSync(process.execPath, ...) behavioral runner');
+    checkPattern('AUTH39-37', aggregateRunner,
+        /dashboard-onboarding\.test\.js[\s\S]*token-generation-state\.test\.js[\s\S]*auth-identities\.test\.js[\s\S]*auth-ui\.test\.js[\s\S]*agent-admin\.test\.js/i,
+        'default aggregate lists all five standalone behavioral scripts',
+        'Expected all required behavioral test filenames in the aggregate runner');
+    checkPattern('AUTH39-38', aggregateRunner,
+        /args\.length\s*===\s*0[\s\S]*for\s*\([^)]*behavioralScripts[^)]*\)[\s\S]*result\.status\s*===\s*0[\s\S]*totalPass\s*\+=\s*1[\s\S]*totalFail\s*\+=\s*1/i,
+        'default aggregate counts each behavioral script while phase runs remain phase-only',
+        'Expected default-only behavioral execution with one aggregate pass/fail count per script');
 
     return C.summary();
 }

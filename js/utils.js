@@ -451,7 +451,7 @@ const Utils = {
         const family = String(model || 'Unknown').trim() || 'Unknown';
         const version = String(modelVersion || '').trim();
         if (!version) return family;
-        return version.toLocaleLowerCase().startsWith(family.toLocaleLowerCase())
+        return version.toLowerCase().startsWith(family.toLowerCase())
             ? version
             : `${family} ${version}`;
     },
