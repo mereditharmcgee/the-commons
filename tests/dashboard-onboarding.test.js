@@ -69,6 +69,15 @@ const identityCandidates = O.findIdentityCandidates([
 ], { name: 'lattice', model: 'gpt', startedAt: now });
 assert.deepEqual(Array.from(identityCandidates, item => item.id), ['voice-1']);
 
+const turkishSensitiveCandidates = O.findIdentityCandidates([
+    { ...identity, id: 'iris', name: 'IRIS', created_at: '2026-07-13T15:59:58.000Z' }
+], { name: 'iris', model: 'gpt', startedAt: now });
+assert.deepEqual(
+    Array.from(turkishSensitiveCandidates, item => item.id),
+    ['iris'],
+    'identity comparison is Unicode case based and independent of the host locale'
+);
+
 const tokenCandidate = O.findTokenCandidate([
     { id: 'old-token', ai_identity_id: 'voice-1', created_at: '2026-07-10T12:00:00.000Z' },
     { id: 'new-token', ai_identity_id: 'voice-1', created_at: '2026-07-13T15:59:59.000Z' }
@@ -102,6 +111,11 @@ assert.equal(U.formatModelLabel('Gemini', ''), 'Gemini');
 assert.equal(U.formatModelLabel('', ''), 'Unknown');
 
 const dashboardSource = fs.readFileSync(path.join(__dirname, '..', 'js/dashboard.js'), 'utf8');
+const onboardingSource = fs.readFileSync(path.join(__dirname, '..', 'js/dashboard-onboarding.js'), 'utf8');
+assert.doesNotMatch(onboardingSource, /toLocaleLowerCase/,
+    'identity recovery normalization never depends on the host locale');
+assert.doesNotMatch(dashboardSource, /toLocaleLowerCase/,
+    'dashboard comparison keys never depend on the host locale');
 assert.equal(
     (dashboardSource.match(/Auth\.createIdentity\(data\)/g) || []).length,
     1,
@@ -159,4 +173,119 @@ assert.match(
     'collapse focus falls back to the always-present identity profile link'
 );
 
-console.log('dashboard-onboarding.test.js: all assertions passed');
+async function verifyIdentityCreationRecovery() {
+    assert.equal(typeof O.createIdentityCreationState, 'function',
+        'production onboarding exposes an identity creation lifecycle controller');
+
+    const submission = { name: 'Lattice', model: 'GPT', modelVersion: null, bio: null };
+    const candidate = {
+        id: 'voice-created', name: 'Lattice', model: 'GPT',
+        created_at: '2026-07-13T15:59:59.000Z'
+    };
+    const state = O.createIdentityCreationState();
+    let createCalls = 0;
+
+    const attempt = state.begin(submission, now);
+    assert.equal(attempt.phase, 'in_flight');
+    try {
+        createCalls++;
+        throw new Error('create response was interrupted');
+    } catch (_error) {
+        assert.equal(state.recordUncertain(attempt.attemptId), true);
+    }
+    assert.equal(state.isBlocked(), true);
+    assert.equal(state.getCurrent().phase, 'pending');
+
+    const attemptId = state.getCurrent().attemptId;
+    assert.equal(state.recordReadFailure(attemptId), true);
+    assert.equal(state.isBlocked(), true,
+        'a failed authoritative read keeps creation blocked');
+    assert.equal(state.getCurrent().phase, 'pending');
+
+    let secondWriteInvoked = false;
+    const blockedAfterReadFailure = state.begin(submission, now);
+    if (blockedAfterReadFailure) {
+        secondWriteInvoked = true;
+        createCalls++;
+    }
+    assert.equal(blockedAfterReadFailure, null);
+    assert.equal(secondWriteInvoked, false,
+        'failed reconciliation cannot trigger a second create call');
+    assert.equal(createCalls, 1);
+
+    assert.equal(state.recordCandidates(attemptId, [candidate]), true);
+    assert.equal(state.isBlocked(), true, 'candidate recovery remains write-blocked');
+    assert.equal(state.getCurrent().phase, 'candidates');
+    assert.deepEqual(Array.from(state.getCurrent().candidates, item => item.id), [candidate.id]);
+
+    const reopenedSnapshot = state.getCurrent();
+    assert.equal(reopenedSnapshot.attemptId, attemptId);
+    assert.deepEqual(Array.from(reopenedSnapshot.candidates, item => item.id), [candidate.id],
+        'pending candidates survive a modal close and reopen at controller level');
+
+    const blockedWithCandidate = state.begin(submission, now);
+    if (blockedWithCandidate) {
+        secondWriteInvoked = true;
+        createCalls++;
+    }
+    assert.equal(blockedWithCandidate, null);
+    assert.equal(createCalls, 1);
+
+    assert.equal(state.clearCandidate(attemptId, 'different-identity'), null,
+        'only an exact reconciled candidate can release the lock');
+    const selected = state.clearCandidate(attemptId, candidate.id);
+    assert.equal(selected.id, candidate.id);
+    assert.equal(state.isBlocked(), false,
+        'choosing an exact candidate releases the creation lock');
+
+    const emptyState = O.createIdentityCreationState();
+    const emptyAttempt = emptyState.begin(submission, now);
+    emptyState.recordUncertain(emptyAttempt.attemptId);
+    assert.equal(emptyState.recordAuthoritativeEmpty(emptyAttempt.attemptId), true);
+    assert.equal(emptyState.isBlocked(), false,
+        'a successful authoritative zero-candidate result unlocks creation');
+
+    const staleState = O.createIdentityCreationState();
+    const firstAttempt = staleState.begin(submission, now);
+    staleState.recordUncertain(firstAttempt.attemptId);
+    assert.equal(staleState.recordAuthoritativeEmpty(firstAttempt.attemptId), true);
+    const secondAttempt = staleState.begin({ ...submission, name: 'New Voice' }, now);
+    staleState.recordUncertain(secondAttempt.attemptId);
+    const secondAttemptId = staleState.getCurrent().attemptId;
+    assert.equal(staleState.recordAuthoritativeEmpty(firstAttempt.attemptId), false);
+    assert.equal(staleState.getCurrent().attemptId, secondAttemptId,
+        'a stale reconciliation cannot clear a newer creation attempt');
+
+    const identityRecoveryStart = dashboardSource.indexOf('function showIdentityReconciliationUnavailable(');
+    const identityRecoveryEnd = dashboardSource.indexOf('// Notifications', identityRecoveryStart);
+    const identityRecoverySource = dashboardSource.slice(identityRecoveryStart, identityRecoveryEnd);
+    assert.match(identityRecoverySource,
+        /Auth\.getMyIdentities\(\{\s*includeInactive:\s*true,\s*throwOnError:\s*true\s*\}\)/,
+        'identity reconciliation uses an authoritative owner read that surfaces failures');
+    assert.match(identityRecoverySource, /Check identity status/,
+        'failed identity reconciliation offers an explicit status retry');
+    assert.match(identityRecoverySource, /button\.textContent\s*=/,
+        'candidate recovery labels are assigned with textContent');
+    assert.match(identityRecoverySource, /\.focus\(\)/,
+        'identity recovery returns focus to a useful action');
+    const openEditStart = dashboardSource.indexOf('function openEditModal(');
+    const openEditEnd = dashboardSource.indexOf('// Modal controls', openEditStart);
+    assert.match(dashboardSource.slice(openEditStart, openEditEnd), /syncIdentitySubmitState\(true\)/,
+        'a pending create does not disable editing an existing identity');
+    assert.match(identityRecoverySource, /finally\s*\{\s*syncIdentitySubmitState\(Boolean\(identityId\.value\)\)/,
+        'a late create result cannot disable a subsequently opened edit modal');
+    const identitySubmitStart = dashboardSource.indexOf("identityForm.addEventListener('submit'");
+    const identitySubmitSource = dashboardSource.slice(identitySubmitStart, identityRecoveryEnd);
+    assert.match(identitySubmitSource, /const submittedIdentityId = identityId\.value/,
+        'identity submission captures the modal context before its async write');
+    assert.match(identitySubmitSource,
+        /const sameModalContext = isIdentityModalOpen\(\)[\s\S]*if \(sameModalContext\) closeModal\(\)/,
+        'a late create success cannot dismiss a different edit session');
+
+    console.log('dashboard-onboarding.test.js: all assertions passed');
+}
+
+verifyIdentityCreationRecovery().catch(error => {
+    console.error(error);
+    process.exitCode = 1;
+});

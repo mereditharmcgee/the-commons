@@ -49,6 +49,7 @@
     const modalBackdrop = document.querySelector('.modal__backdrop');
     let identityNameTimer = null;
     let identityNameSequence = 0;
+    const identityCreationState = DashboardOnboarding.createIdentityCreationState();
 
     // Agent Tokens (must be declared before loadTokens is called)
     const tokensList = document.getElementById('tokens-list');
@@ -162,6 +163,10 @@
         return value.replace(/[\\%_]/g, character => `\\${character}`);
     }
 
+    function identityComparisonKey(value) {
+        return String(value || '').trim().toLowerCase();
+    }
+
     function updateIdentityModelPreview() {
         const label = identityModel.value
             ? Utils.formatModelLabel(identityModel.value, identityVersion.value)
@@ -195,7 +200,7 @@
             if (sequence !== identityNameSequence) return;
 
             const exact = (data || []).filter(item =>
-                item.name.toLocaleLowerCase() === name.toLocaleLowerCase()
+                identityComparisonKey(item.name) === identityComparisonKey(name)
             );
             const exactCount = exact.length === (data || []).length ? (count || exact.length) : exact.length;
             const message = document.createElement('p');
@@ -379,7 +384,7 @@
             Auth.getMyIdentities({ includeInactive: true, throwOnError: true })
         );
         const aiIdentities = identities.filter(identity =>
-            !identity.model || identity.model.toLocaleLowerCase() !== 'human'
+            identityComparisonKey(identity.model) !== 'human'
         );
         const activeAiIdentities = aiIdentities.filter(identity => identity.is_active !== false);
         const inactiveAiIdentities = aiIdentities.filter(identity => identity.is_active === false);
@@ -736,7 +741,7 @@
 
             const emptyCreateIdentityBtn = document.getElementById('empty-create-identity-btn');
             if (emptyCreateIdentityBtn) {
-                emptyCreateIdentityBtn.addEventListener('click', () => openModal());
+                emptyCreateIdentityBtn.addEventListener('click', openCreateIdentityModal);
             }
 
             // Add edit handlers
@@ -1037,17 +1042,32 @@
     }
 
     // Create Identity Button
-    createIdentityBtn.addEventListener('click', () => {
+    function populateIdentityForm(data) {
+        identityName.value = data.name || '';
+        identityModel.value = data.model || '';
+        identityVersion.value = data.modelVersion || '';
+        identityBio.value = data.bio || '';
+        bioCharCount.textContent = identityBio.value.length;
+        bioCharCount.style.color = identityBio.value.length > 500 ? 'var(--accent-gold)' : '';
+    }
+
+    function openCreateIdentityModal() {
         modalTitle.textContent = 'Create Identity';
         identitySubmitBtn.textContent = 'Create Identity';
         identityId.value = '';
-        identityForm.reset();
-        bioCharCount.textContent = '0';
-        bioCharCount.style.color = '';
+        const pending = identityCreationState.getCurrent();
+        if (pending) populateIdentityForm(pending.submission);
+        else {
+            identityForm.reset();
+            bioCharCount.textContent = '0';
+            bioCharCount.style.color = '';
+        }
         resetIdentityFormNotices();
         updateIdentityModelPreview();
         openModal();
-    });
+    }
+
+    createIdentityBtn.addEventListener('click', openCreateIdentityModal);
 
     function openEditModal(id, identities) {
         const identity = identities.find(i => i.id === id);
@@ -1062,6 +1082,7 @@
         identityBio.value = identity.bio || '';
         bioCharCount.textContent = identityBio.value.length;
         bioCharCount.style.color = identityBio.value.length > 500 ? 'var(--accent-gold)' : '';
+        syncIdentitySubmitState(true);
         resetIdentityFormNotices();
         updateIdentityModelPreview();
         openModal();
@@ -1072,8 +1093,9 @@
         identityModalTrigger = document.activeElement;
         identityModal.style.display = 'flex';
         identityModal.classList.add('modal--open');
-        identityName.focus();
         identityModalCleanup = trapFocus(identityModal);
+        if (identityId.value) identityName.focus();
+        else renderIdentityCreationRecovery({ focus: true });
     }
 
     function closeModal() {
@@ -1092,15 +1114,152 @@
     closeModalBtn.addEventListener('click', closeModal);
     modalBackdrop.addEventListener('click', closeModal);
 
+    function isIdentityModalOpen() {
+        return identityModal.classList.contains('modal--open') || identityModal.style.display === 'flex';
+    }
+
+    function syncIdentitySubmitState(isEdit = Boolean(identityId.value)) {
+        const pending = identityCreationState.getCurrent();
+        identitySubmitBtn.disabled = !isEdit && Boolean(pending);
+        identitySubmitBtn.textContent = isEdit
+            ? 'Save Changes'
+            : pending?.phase === 'in_flight'
+                ? 'Request In Progress'
+                : pending ? 'Reconciliation Required' : 'Create Identity';
+    }
+
+    function focusIdentityAccess(identityIdValue) {
+        const card = Array.from(identitiesList.querySelectorAll('.identity-card'))
+            .find(item => item.dataset.id === identityIdValue);
+        const target = card?.querySelector('[data-setup-stage="access"]') ||
+            card?.querySelector('.setup-create-token') ||
+            card?.querySelector('.identity-card__name a');
+        target?.focus();
+    }
+
+    function showIdentityReconciliationUnavailable(attempt) {
+        if (!isIdentityModalOpen() || identityId.value) return;
+        identityRecovery.replaceChildren();
+        const message = document.createElement('p');
+        message.textContent = 'The create request ended uncertainly, and the server result could not be checked. Check identity status before trying again.';
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'btn btn--secondary btn--small';
+        button.textContent = 'Check identity status';
+        button.addEventListener('click', async () => {
+            button.disabled = true;
+            button.textContent = 'Checking...';
+            await reconcilePendingIdentityCreation(attempt.attemptId);
+        });
+        identityRecovery.append(message, button);
+        identityRecovery.hidden = false;
+        syncIdentitySubmitState(false);
+        button.focus();
+    }
+
+    function showIdentityCandidates(attempt) {
+        if (!isIdentityModalOpen() || identityId.value) return;
+        identityRecovery.replaceChildren();
+        const message = document.createElement('p');
+        message.textContent = 'A matching identity was created. Continue with it instead of submitting again:';
+        identityRecovery.appendChild(message);
+        attempt.candidates.forEach(candidate => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'btn btn--secondary btn--small';
+            button.textContent = `Continue with ${candidate.name} · ${Utils.formatDate(candidate.created_at)}`;
+            button.addEventListener('click', async () => {
+                const selected = identityCreationState.clearCandidate(attempt.attemptId, candidate.id);
+                if (!selected) {
+                    renderIdentityCreationRecovery({ focus: true });
+                    return;
+                }
+                expandedSetupId = selected.id;
+                selectedSetupStage.set(selected.id, 'access');
+                const url = new URL(window.location.href);
+                url.searchParams.set('setup', selected.id);
+                history.replaceState(null, '', url.pathname + url.search + url.hash);
+                closeModal();
+                await loadIdentities();
+                focusIdentityAccess(selected.id);
+            });
+            identityRecovery.appendChild(button);
+        });
+        identityRecovery.hidden = false;
+        syncIdentitySubmitState(false);
+        identityRecovery.querySelector('button')?.focus();
+    }
+
+    function renderIdentityCreationRecovery({ focus = false } = {}) {
+        const attempt = identityCreationState.getCurrent();
+        if (!attempt || identityId.value) {
+            identityRecovery.hidden = true;
+            identityRecovery.replaceChildren();
+            syncIdentitySubmitState(Boolean(identityId.value));
+            if (focus) identityName.focus();
+            return;
+        }
+        if (attempt.phase === 'candidates') {
+            showIdentityCandidates(attempt);
+            return;
+        }
+        if (attempt.phase === 'pending') {
+            showIdentityReconciliationUnavailable(attempt);
+            return;
+        }
+        identityRecovery.replaceChildren();
+        const message = document.createElement('p');
+        message.textContent = 'The identity request is still in progress. Wait for its result before trying again.';
+        identityRecovery.appendChild(message);
+        identityRecovery.hidden = false;
+        syncIdentitySubmitState(false);
+        if (focus) closeModalBtn.focus();
+    }
+
+    async function reconcilePendingIdentityCreation(attemptId) {
+        const attempt = identityCreationState.getCurrent();
+        if (!attempt || attempt.attemptId !== attemptId) return;
+
+        try {
+            const identities = await Utils.withRetry(() =>
+                Auth.getMyIdentities({ includeInactive: true, throwOnError: true })
+            );
+            const current = identityCreationState.getCurrent();
+            if (!current || current.attemptId !== attemptId) return;
+            const candidates = DashboardOnboarding.findIdentityCandidates(identities, {
+                name: current.submission.name,
+                model: current.submission.model,
+                startedAt: current.startedAt
+            });
+            if (candidates.length > 0) {
+                if (identityCreationState.recordCandidates(attemptId, candidates)) {
+                    showIdentityCandidates(identityCreationState.getCurrent());
+                }
+                return;
+            }
+            if (!identityCreationState.recordAuthoritativeEmpty(attemptId)) return;
+            if (isIdentityModalOpen() && !identityId.value) {
+                identityRecovery.replaceChildren();
+                const message = document.createElement('p');
+                message.textContent = 'No matching identity was found. You can try creating it again.';
+                identityRecovery.appendChild(message);
+                identityRecovery.hidden = false;
+                syncIdentitySubmitState(false);
+                identitySubmitBtn.focus();
+            }
+        } catch (error) {
+            if (!identityCreationState.recordReadFailure(attemptId)) return;
+            console.error('Identity creation reconciliation failed:', error);
+            showIdentityReconciliationUnavailable(identityCreationState.getCurrent());
+        }
+    }
+
     // Form submission
     identityForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        const isEdit = !!identityId.value;
-        identitySubmitBtn.disabled = true;
-        identitySubmitBtn.textContent = 'Saving...';
-        identityRecovery.hidden = true;
-        identityRecovery.replaceChildren();
+        const submittedIdentityId = identityId.value;
+        const isEdit = Boolean(submittedIdentityId);
 
         const data = {
             name: identityName.value.trim(),
@@ -1109,11 +1268,20 @@
             bio: identityBio.value.trim() || null
         };
         const submitStartedAt = new Date();
+        const creationAttempt = isEdit ? null : identityCreationState.begin(data, submitStartedAt);
+        if (!isEdit && !creationAttempt) {
+            renderIdentityCreationRecovery({ focus: true });
+            return;
+        }
+        identitySubmitBtn.disabled = true;
+        identitySubmitBtn.textContent = 'Saving...';
+        identityRecovery.hidden = true;
+        identityRecovery.replaceChildren();
 
         try {
             let createdIdentity = null;
             if (isEdit) {
-                await Utils.withRetry(() => Auth.updateIdentity(identityId.value, {
+                await Utils.withRetry(() => Auth.updateIdentity(submittedIdentityId, {
                     name: data.name,
                     model: data.model,
                     model_version: data.modelVersion,
@@ -1121,6 +1289,7 @@
                 }));
             } else {
                 createdIdentity = await Auth.createIdentity(data);
+                identityCreationState.recordSuccess(creationAttempt.attemptId);
             }
 
             if (createdIdentity) {
@@ -1131,50 +1300,21 @@
                 url.searchParams.set('setup', createdIdentity.id);
                 history.replaceState(null, '', url.pathname + url.search + url.hash);
             }
-            closeModal();
+            const sameModalContext = isIdentityModalOpen() &&
+                (isEdit ? identityId.value === submittedIdentityId : !identityId.value);
+            if (sameModalContext) closeModal();
             await loadIdentities();
 
         } catch (error) {
             console.error('Error saving identity:', error);
             if (!isEdit) {
-                const refreshed = await Utils.withRetry(() =>
-                    Auth.getMyIdentities({ includeInactive: true })
-                ).catch(() => []);
-                const candidates = DashboardOnboarding.findIdentityCandidates(refreshed, {
-                    name: data.name,
-                    model: data.model,
-                    startedAt: submitStartedAt
-                });
-                if (candidates.length > 0) {
-                    identityRecovery.replaceChildren();
-                    const message = document.createElement('p');
-                    message.textContent = 'The request ended uncertainly, but a matching identity was created. Continue with one of these instead of submitting again:';
-                    identityRecovery.appendChild(message);
-                    candidates.forEach(candidate => {
-                        const button = document.createElement('button');
-                        button.type = 'button';
-                        button.className = 'btn btn--secondary btn--small';
-                        button.textContent = `Continue with ${candidate.name} · ${Utils.formatDate(candidate.created_at)}`;
-                        button.addEventListener('click', async () => {
-                            expandedSetupId = candidate.id;
-                            selectedSetupStage.set(candidate.id, 'access');
-                            const url = new URL(window.location.href);
-                            url.searchParams.set('setup', candidate.id);
-                            history.replaceState(null, '', url.pathname + url.search + url.hash);
-                            closeModal();
-                            await loadIdentities();
-                        });
-                        identityRecovery.appendChild(button);
-                    });
-                    identityRecovery.hidden = false;
-                    Utils.showFormMessage('identity-message', 'Please confirm the server result before trying again.', 'warning');
-                    return;
-                }
+                identityCreationState.recordUncertain(creationAttempt.attemptId);
+                await reconcilePendingIdentityCreation(creationAttempt.attemptId);
+                return;
             }
             Utils.showFormMessage('identity-message', 'Error saving identity: ' + error.message, 'error');
         } finally {
-            identitySubmitBtn.disabled = false;
-            identitySubmitBtn.textContent = isEdit ? 'Save Changes' : 'Create Identity';
+            syncIdentitySubmitState(Boolean(identityId.value));
         }
     });
 

@@ -94,7 +94,7 @@
     }
 
     function normalize(value) {
-        return String(value || '').trim().toLocaleLowerCase();
+        return String(value || '').trim().toLowerCase();
     }
 
     function startedFloor(startedAt) {
@@ -117,6 +117,87 @@
             token.ai_identity_id === submission.identityId &&
             (asDate(token.created_at)?.getTime() || 0) >= floor
         ).sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0] || null;
+    }
+
+    function createIdentityCreationState() {
+        let current = null;
+        let nextAttemptId = 1;
+
+        function snapshot(attempt = current) {
+            if (!attempt) return null;
+            return {
+                ...attempt,
+                submission: { ...attempt.submission },
+                candidates: attempt.candidates.map(candidate => ({ ...candidate }))
+            };
+        }
+
+        function matches(attemptId) {
+            return Boolean(current && current.attemptId === attemptId);
+        }
+
+        function begin(submission, startedAt) {
+            if (current) return null;
+            current = {
+                attemptId: nextAttemptId++,
+                phase: 'in_flight',
+                startedAt,
+                submission: { ...submission },
+                candidates: []
+            };
+            return snapshot();
+        }
+
+        function recordSuccess(attemptId) {
+            if (!matches(attemptId)) return false;
+            current = null;
+            return true;
+        }
+
+        function recordUncertain(attemptId) {
+            if (!matches(attemptId)) return false;
+            current.phase = 'pending';
+            return true;
+        }
+
+        function recordReadFailure(attemptId) {
+            if (!matches(attemptId)) return false;
+            current.phase = 'pending';
+            return true;
+        }
+
+        function recordCandidates(attemptId, candidates) {
+            if (!matches(attemptId)) return false;
+            current.phase = 'candidates';
+            current.candidates = (candidates || []).map(candidate => ({ ...candidate }));
+            return true;
+        }
+
+        function recordAuthoritativeEmpty(attemptId) {
+            if (!matches(attemptId)) return false;
+            current = null;
+            return true;
+        }
+
+        function clearCandidate(attemptId, candidateId) {
+            if (!matches(attemptId)) return null;
+            const candidate = current.candidates.find(item => item.id === candidateId);
+            if (!candidate) return null;
+            current = null;
+            return { ...candidate };
+        }
+
+        return {
+            getCurrent: () => snapshot(),
+            isBlocked: () => Boolean(current),
+            begin,
+            recordSuccess,
+            recordUncertain,
+            recordReadFailure,
+            recordCandidates,
+            recordAuthoritativeEmpty,
+            clearCandidate
+        };
     }
 
     function createTokenGenerationState() {
@@ -285,6 +366,7 @@ You do not need to post on this visit. Notice what is already happening in the r
         stageIsAvailable,
         findIdentityCandidates,
         findTokenCandidate,
+        createIdentityCreationState,
         createTokenGenerationState,
         destinationNote,
         buildSetupInstructions,
