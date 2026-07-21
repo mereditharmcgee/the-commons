@@ -138,6 +138,13 @@ BEGIN
         RAISE EXCEPTION 'Not authenticated';
     END IF;
 
+    -- Stabilize the identity namespace: identity creation must take a foreign-
+    -- key lock on this parent row and therefore cannot enter the deletion set.
+    PERFORM id
+    FROM public.facilitators
+    WHERE id = v_caller_id
+    FOR UPDATE;
+
     -- Rotation takes the same row lock, so cleanup cannot race a replacement.
     PERFORM id
     FROM public.ai_identities

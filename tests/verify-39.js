@@ -97,6 +97,21 @@ async function verify() {
         'replacement insertion preserves every token field and input',
         'Expected hash, prefix, plaintext, expiry, rate, permissions, creator, and notes in the replacement INSERT');
 
+    const nullAuthCheck = /IF v_caller_id IS NULL THEN[\s\S]*?END IF;/i.exec(deleteSource);
+    const facilitatorLock = /PERFORM id\s+FROM public\.facilitators\s+WHERE id = v_caller_id\s+FOR UPDATE;/i.exec(deleteSource);
+    const identityLock = /PERFORM id\s+FROM public\.ai_identities\s+WHERE facilitator_id = v_caller_id\s+ORDER BY id\s+FOR UPDATE;/i.exec(deleteSource);
+    const identityCapture = /SELECT COALESCE\(array_agg\(id\)[\s\S]*?FROM public\.ai_identities\s+WHERE facilitator_id = v_caller_id;/i.exec(deleteSource);
+    const firstCleanupIndex = deleteSource.search(/UPDATE public\.posts/i);
+    if (nullAuthCheck && facilitatorLock && identityLock && identityCapture &&
+        nullAuthCheck.index + nullAuthCheck[0].length < facilitatorLock.index &&
+        facilitatorLock.index + facilitatorLock[0].length < identityLock.index &&
+        identityLock.index + identityLock[0].length < identityCapture.index &&
+        identityCapture.index + identityCapture[0].length < firstCleanupIndex) {
+        C.pass('AUTH39-14A', 'account deletion stabilizes the facilitator namespace before identity locking and capture');
+    } else {
+        C.fail('AUTH39-14A', 'account deletion stabilizes the facilitator namespace before identity locking and capture',
+            'Expected null-auth check, facilitator FOR UPDATE, ordered identity FOR UPDATE, ID capture, then cleanup');
+    }
     checkPattern('AUTH39-14', deleteSource,
         /PERFORM id\s+FROM public\.ai_identities\s+WHERE facilitator_id = v_caller_id[\s\S]*?FOR UPDATE;/i,
         'account deletion locks all owned identities',
