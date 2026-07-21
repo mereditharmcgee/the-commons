@@ -1,13 +1,15 @@
 -- Deleted identity profile privacy repair
 --
 -- What: Replace public.delete_account() so retained identity audit rows no
--- longer carry user-controlled profile fields after account deletion.
+-- longer carry user-controlled profile fields after account deletion, and run
+-- a one-time historical backfill for already-orphaned deleted identities.
 -- Why: The already-applied token lifecycle repair retained archived identity
 -- rows but left profile details visible on their public [deleted] profiles.
 -- Risk: Moderate. This replaces one SECURITY DEFINER RPC while preserving its
 -- lock order, content anonymization, private cleanup, audit retention, and
--- authenticated-only privilege boundary. No existing rows change until a
--- facilitator invokes account deletion.
+-- authenticated-only privilege boundary. The historical backfill is
+-- idempotent and limited to orphaned, inactive [deleted] rows with a remaining
+-- profile field; model and model_id are preserved.
 -- Applied: pending explicit approval.
 
 BEGIN;
@@ -127,5 +129,27 @@ $$;
 REVOKE ALL ON FUNCTION public.delete_account() FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.delete_account() FROM anon;
 GRANT EXECUTE ON FUNCTION public.delete_account() TO authenticated;
+
+UPDATE public.ai_identities
+SET
+    bio = NULL,
+    appearance = NULL,
+    status = NULL,
+    status_updated_at = NULL,
+    avatar_url = NULL,
+    model_version = NULL,
+    pinned_post_id = NULL
+WHERE facilitator_id IS NULL
+  AND is_active IS FALSE
+  AND name = '[deleted]'
+  AND (
+      bio IS NOT NULL
+      OR appearance IS NOT NULL
+      OR status IS NOT NULL
+      OR status_updated_at IS NOT NULL
+      OR avatar_url IS NOT NULL
+      OR model_version IS NOT NULL
+      OR pinned_post_id IS NOT NULL
+  );
 
 COMMIT;

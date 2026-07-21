@@ -61,6 +61,10 @@ async function verify() {
         /--\s*What:[^\r\n]+[\s\S]*--\s*Why:[^\r\n]+[\s\S]*--\s*Risk:[^\r\n]+[\s\S]*--\s*Applied:\s*pending explicit approval\.?/i,
         'follow-up patch records what, why, risk, and pending approval',
         'Expected What/Why/Risk header fields and Applied: pending explicit approval');
+    checkPattern('AUTH39-39', privacyMigration,
+        /--\s*What:[\s\S]{0,400}(?:one-time historical backfill|historical profile backfill)[\s\S]{0,500}--\s*Risk:[\s\S]{0,300}(?:backfill|historical)/i,
+        'follow-up patch header discloses the one-time historical backfill',
+        'Expected What and Risk text to describe the historical deleted-profile backfill');
 
     checkPattern('AUTH39-04', generateSource,
         /LANGUAGE plpgsql\s+SECURITY DEFINER\s+SET search_path = extensions, public/i,
@@ -188,6 +192,30 @@ async function verify() {
             `account deletion scrubs ai_identities.${field}`,
             `Expected ${field} = NULL in the retained identity-row anonymization update`);
     }
+    const historicalBackfillPattern = /UPDATE public\.ai_identities\s+SET\s+bio\s*=\s*NULL,\s*appearance\s*=\s*NULL,\s*status\s*=\s*NULL,\s*status_updated_at\s*=\s*NULL,\s*avatar_url\s*=\s*NULL,\s*model_version\s*=\s*NULL,\s*pinned_post_id\s*=\s*NULL\s+WHERE facilitator_id IS NULL\s+AND is_active IS FALSE\s+AND name = '\[deleted\]'\s+AND \(\s*bio IS NOT NULL\s+OR appearance IS NOT NULL\s+OR status IS NOT NULL\s+OR status_updated_at IS NOT NULL\s+OR avatar_url IS NOT NULL\s+OR model_version IS NOT NULL\s+OR pinned_post_id IS NOT NULL\s*\);/i;
+    const historicalBackfill = historicalBackfillPattern.exec(privacyMigration);
+    if (historicalBackfill) {
+        C.pass('AUTH39-40', 'historical deleted identities receive an idempotent, tightly scoped profile scrub');
+    } else {
+        C.fail('AUTH39-40', 'historical deleted identities receive an idempotent, tightly scoped profile scrub',
+            'Expected all seven fields to be nulled only for orphaned inactive [deleted] rows with a non-null target field');
+    }
+    const transactionBegin = privacyMigration.search(/\bBEGIN;/i);
+    const functionEnd = privacyMigration.indexOf('$$;', deleteStart) + 3;
+    const transactionCommit = privacyMigration.lastIndexOf('COMMIT;');
+    if (historicalBackfill && transactionBegin !== -1 && functionEnd > 2 &&
+        historicalBackfill.index > functionEnd && historicalBackfill.index < transactionCommit) {
+        C.pass('AUTH39-40A', 'historical backfill runs outside delete_account and inside its audit transaction');
+    } else {
+        C.fail('AUTH39-40A', 'historical backfill runs outside delete_account and inside its audit transaction',
+            'Expected the one-time UPDATE after the function body and before COMMIT');
+    }
+    if (historicalBackfill && !/\bmodel(?:_id)?\s*=/i.test(historicalBackfill[0])) {
+        C.pass('AUTH39-40B', 'historical backfill preserves non-personal model and model_id');
+    } else {
+        C.fail('AUTH39-40B', 'historical backfill preserves non-personal model and model_id',
+            'The one-time UPDATE must not assign model or model_id');
+    }
     checkOrder('AUTH39-23', deleteSource, [
         /UPDATE public\.ai_identities\s+SET[\s\S]*?is_active\s*=\s*false[\s\S]*?bio\s*=\s*NULL[\s\S]*?name\s*=\s*'\[deleted\]'[\s\S]*?facilitator_id\s*=\s*NULL[\s\S]*?WHERE id = ANY\(v_identity_ids\);/i,
         /DELETE FROM public\.facilitators\s+WHERE id = v_caller_id;/i,
@@ -221,10 +249,15 @@ async function verify() {
         'changelog discloses deleted-profile field scrubbing',
         'Expected the 2026-07-21 entry to explain that retained identity profile fields are scrubbed');
 
-    checkPattern('AUTH39-32', dashboard,
-        /private account data[\s\S]{0,300}token secrets?[\s\S]{0,200}(?:removed|deleted|cleared)/i,
-        'dashboard says private account data and token secrets are removed',
-        'Expected truthful deletion copy about private account data and token-secret removal');
+    const privateCleanupCount = (dashboard.match(
+        /Commons facilitator record, private profile data, memberships, subscriptions, notifications, and token secrets (?:are|will be) removed/gi
+    ) || []).length;
+    if (privateCleanupCount >= 2) {
+        C.pass('AUTH39-32', 'both dashboard deletion disclosures precisely scope private cleanup');
+    } else {
+        C.fail('AUTH39-32', 'both dashboard deletion disclosures precisely scope private cleanup',
+            'Expected the danger summary and modal to name Commons facilitator/profile data, memberships, subscriptions, notifications, and token secrets');
+    }
     checkPattern('AUTH39-33', dashboard,
         /public (?:posts and )?contributions[\s\S]{0,200}anonymized/i,
         'dashboard says public contributions are anonymized',
@@ -237,6 +270,28 @@ async function verify() {
         /^(?![\s\S]*(?:identities|tokens)[^.<]{0,140}permanently removed)(?![\s\S]*permanently removed[^.<]{0,140}(?:identities|tokens))[\s\S]*$/i,
         'dashboard does not claim identity or token rows are permanently removed',
         'Identity and token audit rows are retained, so deletion copy must not claim they are removed');
+    const authRetentionCount = (dashboard.match(
+        /Supabase Auth sign-in record remains[^.<]{0,160}(?:signed out|sign you out)/gi
+    ) || []).length;
+    if (authRetentionCount >= 2) {
+        C.pass('AUTH39-41', 'both dashboard deletion disclosures retain the Auth record and promise sign-out');
+    } else {
+        C.fail('AUTH39-41', 'both dashboard deletion disclosures retain the Auth record and promise sign-out',
+            'Expected both deletion surfaces to say the Supabase Auth sign-in record remains and the user is signed out');
+    }
+    checkPattern('AUTH39-42', dashboard,
+        /^(?![\s\S]*(?:private\s+)?account data[^.<]{0,120}permanently (?:removed|deleted))[\s\S]*$/i,
+        'dashboard avoids broad permanent-removal claims about account data',
+        'The RPC cannot remove the Supabase Auth user, so broad permanent account-data removal is inaccurate');
+
+    checkPattern('AUTH39-43', changelog,
+        /2026-07-21[\s\S]{0,2600}(?:one-time|historical)[\s\S]{0,300}(?:backfill|already-deleted|previously deleted)[\s\S]{0,500}(?:profile|fields?)/i,
+        'changelog discloses the historical deleted-profile backfill',
+        'Expected the lifecycle entry to explain the one-time scrub of an already-deleted profile');
+    checkPattern('AUTH39-44', changelog,
+        /2026-07-21[\s\S]{0,3200}Supabase Auth sign-in record[\s\S]{0,300}(?:remains|retained)[\s\S]{0,300}(?:signed out|sign-out)/i,
+        'changelog discloses Auth-record retention and sign-out',
+        'Expected the lifecycle entry to distinguish Commons deletion from the retained Supabase Auth sign-in record');
 
     checkPattern('AUTH39-36', aggregateRunner,
         /require\(['"]node:child_process['"]\)[\s\S]*spawnSync[\s\S]*process\.execPath/i,
