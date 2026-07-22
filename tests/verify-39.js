@@ -66,9 +66,9 @@ async function verify() {
         'follow-up patch defines the exact public.delete_account() signature',
         'Expected public.delete_account() returning boolean');
     checkPattern('AUTH39-29A', privacyMigration,
-        /--\s*What:[^\r\n]+[\s\S]*--\s*Why:[^\r\n]+[\s\S]*--\s*Risk:[^\r\n]+[\s\S]*--\s*Applied:\s*pending explicit approval\.?/i,
-        'follow-up patch records what, why, risk, and pending approval',
-        'Expected What/Why/Risk header fields and Applied: pending explicit approval');
+        /--\s*What:[^\r\n]+[\s\S]*--\s*Why:[^\r\n]+[\s\S]*--\s*Risk:[^\r\n]+[\s\S]*--\s*Applied:\s*2026-07-21[^\r\n]*authenticated Supabase SQL Editor[\s\S]{0,180}explicit approval; post-apply diagnostics and historical backfill passed\./i,
+        'follow-up patch records what, why, risk, and completed application audit',
+        'Expected What/Why/Risk header fields and the approved 2026-07-21 SQL Editor application result');
     checkPattern('AUTH39-39', privacyMigration,
         /--\s*What:[\s\S]{0,400}(?:one-time historical backfill|historical profile backfill)[\s\S]{0,500}--\s*Risk:[\s\S]{0,300}(?:backfill|historical)/i,
         'follow-up patch header discloses the one-time historical backfill',

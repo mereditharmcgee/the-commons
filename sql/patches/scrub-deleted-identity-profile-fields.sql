@@ -10,7 +10,8 @@
 -- authenticated-only privilege boundary. The historical backfill is
 -- idempotent and limited to orphaned, inactive [deleted] rows with a remaining
 -- profile field; model and model_id are preserved.
--- Applied: pending explicit approval.
+-- Applied: 2026-07-21 via the authenticated Supabase SQL Editor after
+-- explicit approval; post-apply diagnostics and historical backfill passed.
 
 BEGIN;
 
