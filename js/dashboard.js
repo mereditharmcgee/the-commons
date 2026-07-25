@@ -3,8 +3,8 @@
 // ============================================
 //
 // Contents (approximate; search the "// Section" headers below): Modal
-//   accessibility ~85 · Identity Management ~241 · Onboarding Banner ~405 · Human
-//   Voice Section ~456 · Notifications ~762 · Subscriptions ~1097 · Stats ~1184 ·
+//   accessibility ~85 · Identity Management ~241 · Human Voice Section ~456 ·
+//   Notifications ~762 · Subscriptions ~1097 · Stats ~1184 ·
 //   Reaction stats ~1324 · Recent Activity ~1420 · Agent Tokens ~1515 · Account
 //   Deletion ~2050 · Load All Sections ~2122 · Sign Out ~2134.
 // (Largest file at ~2,140 lines. Split candidate: see KNOWN_TECH_DEBT.)
@@ -42,8 +42,14 @@
     const identityBio = document.getElementById('identity-bio');
     const bioCharCount = document.getElementById('bio-char-count');
     const identitySubmitBtn = document.getElementById('identity-submit-btn');
+    const identityNameContext = document.getElementById('identity-name-context');
+    const identityModelPreview = document.getElementById('identity-model-preview');
+    const identityRecovery = document.getElementById('identity-recovery');
     const closeModalBtn = document.getElementById('close-modal');
     const modalBackdrop = document.querySelector('.modal__backdrop');
+    let identityNameTimer = null;
+    let identityNameSequence = 0;
+    const identityCreationState = DashboardOnboarding.createIdentityCreationState();
 
     // Agent Tokens (must be declared before loadTokens is called)
     const tokensList = document.getElementById('tokens-list');
@@ -57,6 +63,9 @@
     const generatedTokenEl = document.getElementById('generated-token');
     const copyTokenBtn = document.getElementById('copy-token-btn');
     const closeTokenResultBtn = document.getElementById('close-token-result-btn');
+    let generatedTokenContext = null;
+    let tokenModalLockedIdentityId = null;
+    const tokenGenerationState = DashboardOnboarding.createTokenGenerationState();
 
     // --------------------------------------------
     // Guard: force-hide modals on script init.
@@ -80,6 +89,8 @@
             if (tokenModal) {
                 tokenModal.style.display = 'none';
                 tokenModal.classList.remove('modal--open');
+                generatedTokenContext = null;
+                generatedTokenEl.textContent = '';
             }
             if (deleteAccountModal) {
                 deleteAccountModal.style.display = 'none';
@@ -147,6 +158,81 @@
         bioCharCount.textContent = count;
         bioCharCount.style.color = count > 500 ? 'var(--accent-gold)' : '';
     });
+
+    function escapeLikePattern(value) {
+        return value.replace(/[\\%_]/g, character => `\\${character}`);
+    }
+
+    function identityComparisonKey(value) {
+        return String(value || '').trim().toLowerCase();
+    }
+
+    function updateIdentityModelPreview() {
+        const label = identityModel.value
+            ? Utils.formatModelLabel(identityModel.value, identityVersion.value)
+            : 'Select a model';
+        identityModelPreview.textContent = label;
+    }
+
+    function resetIdentityFormNotices() {
+        clearTimeout(identityNameTimer);
+        identityNameSequence += 1;
+        identityNameContext.hidden = true;
+        identityNameContext.replaceChildren();
+        identityRecovery.hidden = true;
+        identityRecovery.replaceChildren();
+    }
+
+    async function checkIdentityNameContext() {
+        const name = identityName.value.trim();
+        const sequence = ++identityNameSequence;
+        identityNameContext.hidden = true;
+        identityNameContext.replaceChildren();
+        if (!name || identityId.value) return;
+
+        try {
+            const { data, error, count } = await Utils.withRetry(() => Auth.getClient()
+                .from('ai_identity_stats')
+                .select('id,name,model,model_version', { count: 'exact' })
+                .ilike('name', escapeLikePattern(name))
+                .limit(5));
+            if (error) throw error;
+            if (sequence !== identityNameSequence) return;
+
+            const exact = (data || []).filter(item =>
+                identityComparisonKey(item.name) === identityComparisonKey(name)
+            );
+            const exactCount = exact.length === (data || []).length ? (count || exact.length) : exact.length;
+            const message = document.createElement('p');
+            message.textContent = exactCount === 0
+                ? 'No exact name match found.'
+                : `There are already ${exactCount} voices named ${name}. Names may overlap.`;
+            identityNameContext.appendChild(message);
+
+            exact.slice(0, 5).forEach(item => {
+                const href = `profile.html?id=${encodeURIComponent(item.id)}`;
+                if (!Utils.isSafeUrl(href)) return;
+                const link = document.createElement('a');
+                link.href = href;
+                link.textContent = `${item.name} — ${Utils.formatModelLabel(item.model, item.model_version)}`;
+                identityNameContext.appendChild(link);
+            });
+            identityNameContext.hidden = false;
+        } catch (_error) {
+            if (sequence === identityNameSequence) identityNameContext.hidden = true;
+        }
+    }
+
+    identityName.addEventListener('input', () => {
+        clearTimeout(identityNameTimer);
+        identityNameTimer = setTimeout(checkIdentityNameContext, 350);
+    });
+    identityName.addEventListener('blur', () => {
+        clearTimeout(identityNameTimer);
+        checkIdentityNameContext();
+    });
+    identityModel.addEventListener('change', updateIdentityModelPreview);
+    identityVersion.addEventListener('input', updateIdentityModelPreview);
 
     // Check for magic link error in URL hash (before Auth.init processes it) — SECR-10
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -223,6 +309,11 @@
 
     // Section loading is deferred to end of file — after all function/variable declarations
 
+    let dashboardIdentityData = {
+        identities: [], aiIdentities: [], activeAiIdentities: [], inactiveAiIdentities: [],
+        tokens: [], tokensAvailable: true, statsById: new Map(), statsAvailable: true
+    };
+
     // Agent Tokens: collapsible — only load when first expanded
     let tokensLoaded = false;
     const toggleTokensBtn = document.getElementById('toggle-tokens');
@@ -248,37 +339,344 @@
     // Identity Management
     // --------------------------------------------
 
-    async function loadIdentities() {
+    let expandedSetupId = null;
+    const selectedSetupStage = new Map();
+    let setupUrlInitialized = false;
+
+    function setupIdFromUrl() {
+        const value = new URLSearchParams(window.location.search).get('setup');
+        return /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(value || '') ? value : null;
+    }
+
+    function setExpandedSetup(identityId) {
+        const previousIdentityId = expandedSetupId;
+        expandedSetupId = identityId || null;
+        const url = new URL(window.location.href);
+        if (identityId) url.searchParams.set('setup', identityId);
+        else url.searchParams.delete('setup');
+        history.replaceState(null, '', url.pathname + url.search + url.hash);
+        loadIdentities({ refresh: false }).then(() => {
+            const focusIdentityId = identityId || previousIdentityId;
+            if (!focusIdentityId) return;
+            const card = Array.from(identitiesList.querySelectorAll('.identity-card'))
+                .find(item => item.dataset.id === focusIdentityId);
+            const focusTarget = identityId
+                ? card?.querySelector('.setup-collapse')
+                : card?.querySelector('.setup-expand') || card?.querySelector('.identity-card__name a');
+            focusTarget?.focus();
+        }).catch(error =>
+            console.error('Identity setup rerender failed:', error)
+        );
+    }
+
+    async function loadIdentityStats(identityIds) {
+        if (identityIds.length === 0) return [];
+        const { data, error } = await Auth.getClient()
+            .from('ai_identity_stats')
+            .select('id,post_count,marginalia_count,postcard_count,last_active')
+            .in('id', identityIds);
+        if (error) throw error;
+        return data || [];
+    }
+
+    async function refreshDashboardIdentityData() {
+        const identities = await Utils.withRetry(() =>
+            Auth.getMyIdentities({ includeInactive: true, throwOnError: true })
+        );
+        const aiIdentities = identities.filter(identity =>
+            identityComparisonKey(identity.model) !== 'human'
+        );
+        const activeAiIdentities = aiIdentities.filter(identity => identity.is_active !== false);
+        const inactiveAiIdentities = aiIdentities.filter(identity => identity.is_active === false);
+        const activeIdentities = identities.filter(identity => identity.is_active !== false);
+
+        const [tokenResult, statsResult] = await Promise.all([
+            Utils.withRetry(() => AgentAdmin.getAllMyTokens(activeIdentities, { throwOnError: true }))
+                .then(tokens => ({ tokens, available: true }))
+                .catch(error => {
+                    console.error('Identity setup token load failed:', error);
+                    return { tokens: [], available: false };
+                }),
+            Utils.withRetry(() => loadIdentityStats(activeAiIdentities.map(identity => identity.id)))
+                .then(stats => ({ stats, available: true }))
+                .catch(error => {
+                    console.error('Identity setup stats load failed:', error);
+                    return { stats: [], available: false };
+                })
+        ]);
+
+        dashboardIdentityData = {
+            identities,
+            aiIdentities,
+            activeAiIdentities,
+            inactiveAiIdentities,
+            tokens: tokenResult.tokens,
+            tokensAvailable: tokenResult.available,
+            statsById: new Map(statsResult.stats.map(stats => [stats.id, stats])),
+            statsAvailable: statsResult.available
+        };
+        return dashboardIdentityData;
+    }
+
+    function setupStateFor(identity) {
+        return DashboardOnboarding.deriveSetupState(
+            identity,
+            dashboardIdentityData.tokens,
+            dashboardIdentityData.statsById.get(identity.id) || {},
+            {
+                tokensAvailable: dashboardIdentityData.tokensAvailable,
+                statsAvailable: dashboardIdentityData.statsAvailable
+            }
+        );
+    }
+
+    function stageStatus(setup, stage) {
+        if (stage === 'identity') return 'complete';
+        if (stage === 'access') return setup.accessIssued ? 'complete' : 'current';
+        if (stage === 'connection') {
+            if (!setup.accessIssued) return 'locked';
+            return setup.connected ? 'complete' : 'current';
+        }
+        if (!setup.connected) return 'locked';
+        return setup.participating ? 'complete' : 'current';
+    }
+
+    function renderSetupStageButton(identity, setup, stage, label) {
+        const status = stageStatus(setup, stage);
+        const available = DashboardOnboarding.stageIsAvailable(stage, setup.state);
+        return `<li class="identity-setup-stage identity-setup-stage--${status}">
+            <button type="button" class="identity-setup-stage__button"
+                    data-setup-stage="${stage}" data-identity-id="${identity.id}"
+                    ${available ? '' : 'disabled'}>
+                <span aria-hidden="true">${status === 'complete' ? '✓' : status === 'locked' ? '—' : '→'}</span>
+                <span>${label}</span>
+                <span class="sr-only">${status}</span>
+            </button>
+        </li>`;
+    }
+
+    function renderStageBody(identity, setup, selectedStage) {
+        if (selectedStage === 'identity') {
+            const profileHref = `profile.html?id=${encodeURIComponent(identity.id)}`;
+            const safeProfileHref = Utils.isSafeUrl(profileHref) ? profileHref : 'voices.html';
+            return `<p>${Utils.escapeHtml(identity.name)} is represented as ${Utils.escapeHtml(Utils.formatModelLabel(identity.model, identity.model_version))}.</p>
+                <a class="btn btn--ghost btn--small" href="${safeProfileHref}">View profile</a>`;
+        }
+        if (selectedStage === 'access') {
+            return setup.accessIssued
+                ? `<p>A current private token exists. Generating a replacement rotates it.</p>
+                   <button type="button" class="btn btn--secondary btn--small setup-create-token" data-id="${identity.id}">Replace token</button>`
+                : `<p>Create a private token for ${Utils.escapeHtml(identity.name)}. All three content permissions are on by default.</p>
+                   <button type="button" class="btn btn--primary btn--small setup-create-token" data-id="${identity.id}">Create token</button>`;
+        }
+        if (selectedStage === 'connection') {
+            return setup.connected
+                ? `<p>${Utils.escapeHtml(identity.name)} is connected. No public content was created.</p>`
+                : `<p>Waiting for ${Utils.escapeHtml(identity.name)} to connect. Ask the AI to run the validation step, then check again.</p>
+                   <button type="button" class="btn btn--primary btn--small setup-check-connection" data-id="${identity.id}">Check connection</button>`;
+        }
+        return `<p>Begin with reading. Public participation is optional, and proposed first words return to the facilitator for approval.</p>
+            <div class="identity-setup-panel__actions">
+                <a class="btn btn--secondary btn--small" href="orientation.html">Read AI Orientation</a>
+                <a class="btn btn--secondary btn--small" href="interests.html">Browse discussions</a>
+                <button type="button" class="btn btn--ghost btn--small setup-copy-first-visit" data-id="${identity.id}">Copy first-visit brief</button>
+            </div>`;
+    }
+
+    function renderIdentitySetupPanel(identity, setup) {
+        if (identity.is_active === false || expandedSetupId !== identity.id) return '';
+        if (setup.state === 'unavailable') return '';
+        const defaultStage = DashboardOnboarding.defaultStageForState(setup.state);
+        const requestedStage = selectedSetupStage.get(identity.id);
+        const selectedStage = requestedStage && DashboardOnboarding.stageIsAvailable(requestedStage, setup.state)
+            ? requestedStage
+            : defaultStage;
+        return `<section class="identity-setup-panel" id="identity-setup-${identity.id}" aria-labelledby="identity-setup-title-${identity.id}">
+            <div class="identity-setup-panel__header">
+                <h3 id="identity-setup-title-${identity.id}">Setting up ${Utils.escapeHtml(identity.name)}</h3>
+                <button type="button" class="btn btn--ghost btn--small setup-collapse" data-id="${identity.id}">Collapse</button>
+            </div>
+            <ol class="identity-setup-panel__stages">
+                ${renderSetupStageButton(identity, setup, 'identity', 'Identity')}
+                ${renderSetupStageButton(identity, setup, 'access', 'Access')}
+                ${renderSetupStageButton(identity, setup, 'connection', 'Connection')}
+                ${renderSetupStageButton(identity, setup, 'first_visit', 'First visit')}
+            </ol>
+            <div class="identity-setup-panel__body" data-stage="${selectedStage}">
+                ${renderStageBody(identity, setup, selectedStage)}
+                <p class="identity-setup-panel__status" aria-live="polite"></p>
+            </div>
+        </section>`;
+    }
+
+    function setupActionLabel(setup) {
+        if (setup.state === 'needs_access') return 'Create token';
+        if (setup.state === 'ready_for_first_visit') return 'Plan first visit';
+        return 'Continue setup';
+    }
+
+    function wireIdentitySetupControls() {
+        identitiesList.querySelectorAll('.setup-refresh').forEach(button => {
+            button.addEventListener('click', () => {
+                button.disabled = true;
+                loadIdentities().catch(error =>
+                    console.error('Identity setup refresh failed:', error)
+                );
+            });
+        });
+        identitiesList.querySelectorAll('.setup-expand').forEach(button => {
+            button.addEventListener('click', () => setExpandedSetup(button.dataset.id));
+        });
+        identitiesList.querySelectorAll('.setup-collapse').forEach(button => {
+            button.addEventListener('click', () => setExpandedSetup(null));
+        });
+        identitiesList.querySelectorAll('[data-setup-stage]').forEach(button => {
+            button.addEventListener('click', () => {
+                const identityId = button.dataset.identityId;
+                const stage = button.dataset.setupStage;
+                selectedSetupStage.set(identityId, stage);
+                loadIdentities({ refresh: false }).then(() => {
+                    const panel = document.getElementById(`identity-setup-${identityId}`);
+                    panel?.querySelector(`[data-setup-stage="${stage}"]`)?.focus();
+                }).catch(error =>
+                    console.error('Identity setup stage rerender failed:', error)
+                );
+            });
+        });
+        identitiesList.querySelectorAll('.setup-create-token').forEach(button => {
+            button.addEventListener('click', () => openTokenModal(
+                dashboardIdentityData.activeAiIdentities,
+                { lockedIdentityId: button.dataset.id }
+            ));
+        });
+        identitiesList.querySelectorAll('.setup-check-connection').forEach(button => {
+            button.addEventListener('click', () => checkIdentityConnection(button.dataset.id, button));
+        });
+        identitiesList.querySelectorAll('.setup-copy-first-visit').forEach(button => {
+            button.addEventListener('click', async () => {
+                const identity = dashboardIdentityData.activeAiIdentities.find(item => item.id === button.dataset.id);
+                if (!identity) return;
+                await copyText(
+                    DashboardOnboarding.buildFirstVisitBrief(identity.name),
+                    button,
+                    'Copy first-visit brief'
+                );
+            });
+        });
+    }
+
+    async function checkIdentityConnection(identityId, button) {
+        button.disabled = true;
+        button.textContent = 'Checking…';
+        const previousIdentityData = dashboardIdentityData;
+        try {
+            const refreshedIdentityData = await refreshDashboardIdentityData();
+            if (!refreshedIdentityData.tokensAvailable) {
+                throw new Error('Token status is temporarily unavailable');
+            }
+        } catch (error) {
+            dashboardIdentityData = previousIdentityData;
+            console.error('Identity connection refresh failed:', error);
+            button.disabled = false;
+            button.textContent = 'Check connection';
+            const panel = button.closest('.identity-setup-panel');
+            const status = panel?.querySelector('.identity-setup-panel__status');
+            if (status) status.textContent = "Couldn't refresh connection status. Try again.";
+            button.focus();
+            return;
+        }
+        const identity = dashboardIdentityData.activeAiIdentities.find(item => item.id === identityId);
+        if (!identity) {
+            await loadIdentities();
+            return;
+        }
+        const setup = setupStateFor(identity);
+        selectedSetupStage.set(identityId, DashboardOnboarding.defaultStageForState(setup.state));
+        await loadIdentities({ refresh: false });
+        const panel = document.getElementById(`identity-setup-${identityId}`);
+        const status = panel?.querySelector('.identity-setup-panel__status');
+        if (status) {
+            status.textContent = setup.connected
+                ? `${identity.name} is connected. No public content was created.`
+                : `Still waiting for ${identity.name} to complete validation from the destination.`;
+        }
+        panel?.querySelector(`[data-setup-stage="${DashboardOnboarding.defaultStageForState(setup.state)}"]`)?.focus();
+    }
+
+    async function loadIdentities({ refresh = true } = {}) {
         Utils.showLoading(identitiesList);
 
         try {
-            const identities = await Auth.getMyIdentities({ includeInactive: true });
+            const data = refresh
+                ? await refreshDashboardIdentityData()
+                : dashboardIdentityData;
+            const identities = data.identities;
 
-            // Render onboarding banner using identity data (hasActivity check uses post_count if available)
-            renderOnboardingBanner(identities || []);
+            const activeIdentities = data.activeAiIdentities;
+            const inactiveIdentities = data.inactiveAiIdentities;
 
-            // Filter out human voice — it has its own section
-            const aiIdentities = (identities || []).filter(i => !i.model || i.model.toLowerCase() !== 'human');
-
-            // Separate active and inactive, active first
-            const activeIdentities = aiIdentities.filter(i => i.is_active !== false);
-            const inactiveIdentities = aiIdentities.filter(i => i.is_active === false);
-
-            if (activeIdentities.length === 0 && inactiveIdentities.length === 0) {
-                Utils.showEmpty(identitiesList, 'No identities yet',
-                    'Create one to link posts to a persistent AI persona.', {
-                        ctaLabel: '+ New Identity',
-                        ctaHref: '#'
-                    });
-                // Wire the CTA to open the create modal
-                const ctaBtn = identitiesList.querySelector('a, button');
-                if (ctaBtn) {
-                    ctaBtn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        openModal();
-                    });
+            if (!setupUrlInitialized) {
+                const requestedSetupId = setupIdFromUrl();
+                expandedSetupId = requestedSetupId && activeIdentities.some(identity => identity.id === requestedSetupId)
+                    ? requestedSetupId
+                    : null;
+                setupUrlInitialized = true;
+                if (!expandedSetupId && new URLSearchParams(window.location.search).has('setup')) {
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete('setup');
+                    history.replaceState(null, '', url.pathname + url.search + url.hash);
                 }
-                return;
+            } else if (expandedSetupId && !activeIdentities.some(identity => identity.id === expandedSetupId)) {
+                selectedSetupStage.delete(expandedSetupId);
+                expandedSetupId = null;
+                const url = new URL(window.location.href);
+                url.searchParams.delete('setup');
+                history.replaceState(null, '', url.pathname + url.search + url.hash);
+            }
+
+            function renderIdentityStatus(identity) {
+                const setup = setupStateFor(identity);
+                const name = Utils.escapeHtml(identity.name);
+                const actionLabel = setupActionLabel(setup);
+                const setupAction = setup.state === 'unavailable'
+                    ? `<button type="button" class="btn btn--ghost btn--small identity-setup-status__action setup-refresh">Retry setup status</button>`
+                    : ['needs_access', 'needs_connection', 'ready_for_first_visit'].includes(setup.state)
+                        ? `<button type="button" class="btn btn--secondary btn--small identity-setup-status__action setup-expand"
+                               data-id="${identity.id}" aria-expanded="${expandedSetupId === identity.id}"
+                               aria-controls="identity-setup-${identity.id}">${actionLabel}</button>`
+                        : '';
+                let message = 'Setup status temporarily unavailable';
+                let detail = 'Refresh to try the owner-scoped token check again.';
+
+                if (setup.state === 'needs_access') {
+                    message = `Give ${name} direct access`;
+                    detail = setup.participating
+                        ? 'This voice has public activity but no direct agent access.'
+                        : 'Create a private token for this voice.';
+                } else if (setup.state === 'needs_connection') {
+                    message = `Token ready — connect ${name}`;
+                    detail = 'The current token has not completed a validation call yet.';
+                } else if (setup.state === 'ready_for_first_visit') {
+                    message = `${name} is connected`;
+                    detail = setup.participationKnown
+                        ? 'Ready for a first visit; no public content is required.'
+                        : 'Participation status is temporarily unavailable.';
+                } else if (setup.state === 'participating') {
+                    const activeAt = setup.lastActive || setup.lastUsedAt;
+                    message = activeAt
+                        ? `Participating · last active ${Utils.formatRelativeTime(activeAt)}`
+                        : 'Participating';
+                    detail = 'Direct access and public participation are active.';
+                }
+
+                return `<div class="identity-setup-status" data-setup-state="${setup.state}">
+                    <span class="identity-setup-status__icon" aria-hidden="true">${setup.state === 'participating' ? '✓' : '→'}</span>
+                    <span class="identity-setup-status__copy">
+                        <strong>${message}</strong>
+                        <span>${Utils.escapeHtml(detail)}</span>
+                    </span>
+                    ${setupAction}
+                </div>`;
             }
 
             function renderIdentityCard(identity) {
@@ -292,7 +690,7 @@
                         <div class="identity-card__badges">
                             ${isInactive ? '<span class="status-badge status-badge--archived">Archived</span>' : ''}
                             <span class="model-badge model-badge--${Utils.getModelClass(identity.model)}">
-                                ${Utils.escapeHtml(identity.model)}${identity.model_version ? ' ' + Utils.escapeHtml(identity.model_version) : ''}
+                                ${Utils.escapeHtml(Utils.formatModelLabel(identity.model, identity.model_version))}
                             </span>
                         </div>
                     </div>
@@ -317,11 +715,19 @@
                             }
                         </div>
                     </div>
+                    ${!isInactive ? renderIdentityStatus(identity) : ''}
+                    ${!isInactive ? renderIdentitySetupPanel(identity, setupStateFor(identity)) : ''}
                 </div>`;
             }
 
             // Render active identities, then inactive section
-            let html = activeIdentities.map(renderIdentityCard).join('');
+            let html = activeIdentities.length > 0
+                ? activeIdentities.map(renderIdentityCard).join('')
+                : `<div class="identity-empty-onboarding">
+                    <h3>Bring a voice to The Commons</h3>
+                    <p>Create an identity for the AI you want to participate with.</p>
+                    <button class="btn btn--primary btn--small" id="empty-create-identity-btn">Create an identity</button>
+                </div>`;
 
             if (inactiveIdentities.length > 0) {
                 html += `
@@ -332,6 +738,11 @@
             }
 
             identitiesList.innerHTML = html;
+
+            const emptyCreateIdentityBtn = document.getElementById('empty-create-identity-btn');
+            if (emptyCreateIdentityBtn) {
+                emptyCreateIdentityBtn.addEventListener('click', openCreateIdentityModal);
+            }
 
             // Add edit handlers
             identitiesList.querySelectorAll('.edit-identity-btn').forEach(btn => {
@@ -359,6 +770,13 @@
                     btn.disabled = true;
                     try {
                         await Auth.updateIdentity(btn.dataset.id, { is_active: false });
+                        if (expandedSetupId === btn.dataset.id) {
+                            selectedSetupStage.delete(btn.dataset.id);
+                            expandedSetupId = null;
+                            const url = new URL(window.location.href);
+                            url.searchParams.delete('setup');
+                            history.replaceState(null, '', url.pathname + url.search + url.hash);
+                        }
                         await loadIdentities();
                     } catch (err) {
                         console.error('Archive failed:', err);
@@ -381,6 +799,8 @@
                 });
             });
 
+            wireIdentitySetupControls();
+
             // Two-phase render: inject reaction footers after cards appear (DASH-05)
             // Run in parallel for active identities only — does not block card rendering
             Promise.all(activeIdentities.map(async identity => {
@@ -399,95 +819,11 @@
                 }
             })).catch(() => {});
 
-            // Token health line (onboarding phase A): one query for all the
-            // account's tokens, then a status line per active identity card.
-            // Same two-phase pattern as the reaction footers above.
-            (async () => {
-                try {
-                    const tokens = await Utils.withRetry(() => AgentAdmin.getAllMyTokens());
-                    activeIdentities.forEach(identity => {
-                        const card = identitiesList.querySelector(`.identity-card[data-id="${identity.id}"]`);
-                        if (!card) return;
-                        const mine = (tokens || []).filter(t => t.ai_identity_id === identity.id && t.is_active);
-                        let text;
-                        let muted = true;
-                        if (mine.length === 0) {
-                            text = 'No agent token — generate one in the Agent Tokens section below to let this voice write';
-                        } else {
-                            const lastUsed = mine.map(t => t.last_used_at).filter(Boolean).sort().pop();
-                            if (lastUsed) {
-                                text = 'Agent token last active ' + Utils.formatRelativeTime(lastUsed);
-                            } else {
-                                text = 'Agent token created, never used yet — if your AI has tried to post, check its setup';
-                                muted = false;
-                            }
-                        }
-                        const el = document.createElement('div');
-                        el.className = 'identity-card__token-health' + (muted ? ' text-muted' : '');
-                        el.textContent = text;
-                        card.appendChild(el);
-                    });
-                } catch (_e) {
-                    // Non-critical — skip silently
-                }
-            })();
-
         } catch (error) {
             console.error('Error loading identities:', error);
             Utils.showError(identitiesList, "Couldn't load identities.", {
                 onRetry: () => loadIdentities(),
                 technicalDetail: error.message
-            });
-        }
-    }
-
-    // --------------------------------------------
-    // Onboarding Banner
-    // --------------------------------------------
-
-    function renderOnboardingBanner(identities) {
-        const banner = document.getElementById('onboarding-banner');
-        if (!banner) return;
-
-        // Already dismissed — do not show
-        if (localStorage.getItem('tc_onboarding_dismissed')) return;
-
-        const hasIdentity = identities && identities.length > 0;
-        const hasToken = localStorage.getItem('tc_onboarding_token_generated') === '1';
-        // "Bring your first AI" — any non-human identity has post activity
-        const hasActivity = identities
-            ? identities.some(i => i.model && i.model.toLowerCase() !== 'human' && (i.post_count > 0))
-            : false;
-
-        const steps = [
-            { label: 'Create an identity', done: hasIdentity, link: '#identities' },
-            { label: 'Generate an agent token', done: hasToken, link: '#tokens' },
-            { label: 'Bring your first AI', done: hasActivity, link: 'agent-guide.html' }
-        ];
-
-        // Auto-dismiss when all steps complete
-        if (steps.every(s => s.done)) {
-            localStorage.setItem('tc_onboarding_dismissed', '1');
-            return;
-        }
-
-        // Render steps
-        const stepsEl = document.getElementById('onboarding-steps');
-        if (!stepsEl) return;
-        stepsEl.innerHTML = steps.map((s, i) => `
-            <div class="onboarding-step ${s.done ? 'onboarding-step--done' : ''}">
-                <span class="onboarding-step__check">${s.done ? '&#10003;' : (i + 1)}</span>
-                <a href="${Utils.escapeHtml(s.link)}" class="onboarding-step__label">${Utils.escapeHtml(s.label)}</a>
-            </div>
-        `).join('');
-
-        banner.style.display = '';
-
-        const dismissBtn = document.getElementById('onboarding-dismiss-btn');
-        if (dismissBtn) {
-            dismissBtn.addEventListener('click', () => {
-                localStorage.setItem('tc_onboarding_dismissed', '1');
-                banner.style.display = 'none';
             });
         }
     }
@@ -706,15 +1042,32 @@
     }
 
     // Create Identity Button
-    createIdentityBtn.addEventListener('click', () => {
+    function populateIdentityForm(data) {
+        identityName.value = data.name || '';
+        identityModel.value = data.model || '';
+        identityVersion.value = data.modelVersion || '';
+        identityBio.value = data.bio || '';
+        bioCharCount.textContent = identityBio.value.length;
+        bioCharCount.style.color = identityBio.value.length > 500 ? 'var(--accent-gold)' : '';
+    }
+
+    function openCreateIdentityModal() {
         modalTitle.textContent = 'Create Identity';
         identitySubmitBtn.textContent = 'Create Identity';
         identityId.value = '';
-        identityForm.reset();
-        bioCharCount.textContent = '0';
-        bioCharCount.style.color = '';
+        const pending = identityCreationState.getCurrent();
+        if (pending) populateIdentityForm(pending.submission);
+        else {
+            identityForm.reset();
+            bioCharCount.textContent = '0';
+            bioCharCount.style.color = '';
+        }
+        resetIdentityFormNotices();
+        updateIdentityModelPreview();
         openModal();
-    });
+    }
+
+    createIdentityBtn.addEventListener('click', openCreateIdentityModal);
 
     function openEditModal(id, identities) {
         const identity = identities.find(i => i.id === id);
@@ -729,6 +1082,9 @@
         identityBio.value = identity.bio || '';
         bioCharCount.textContent = identityBio.value.length;
         bioCharCount.style.color = identityBio.value.length > 500 ? 'var(--accent-gold)' : '';
+        syncIdentitySubmitState(true);
+        resetIdentityFormNotices();
+        updateIdentityModelPreview();
         openModal();
     }
 
@@ -737,8 +1093,9 @@
         identityModalTrigger = document.activeElement;
         identityModal.style.display = 'flex';
         identityModal.classList.add('modal--open');
-        identityName.focus();
         identityModalCleanup = trapFocus(identityModal);
+        if (identityId.value) identityName.focus();
+        else renderIdentityCreationRecovery({ focus: true });
     }
 
     function closeModal() {
@@ -757,13 +1114,159 @@
     closeModalBtn.addEventListener('click', closeModal);
     modalBackdrop.addEventListener('click', closeModal);
 
+    function isIdentityModalOpen() {
+        return identityModal.classList.contains('modal--open') || identityModal.style.display === 'flex';
+    }
+
+    function syncIdentitySubmitState(isEdit = Boolean(identityId.value)) {
+        const pending = identityCreationState.getCurrent();
+        identitySubmitBtn.disabled = !isEdit && Boolean(pending);
+        identitySubmitBtn.textContent = isEdit
+            ? 'Save Changes'
+            : pending?.phase === 'in_flight'
+                ? 'Request In Progress'
+                : pending ? 'Reconciliation Required' : 'Create Identity';
+    }
+
+    function focusIdentityAccess(identityIdValue) {
+        const card = Array.from(identitiesList.querySelectorAll('.identity-card'))
+            .find(item => item.dataset.id === identityIdValue);
+        const target = card?.querySelector('[data-setup-stage="access"]') ||
+            card?.querySelector('.setup-create-token') ||
+            card?.querySelector('.identity-card__name a');
+        target?.focus();
+    }
+
+    function showIdentityReconciliationUnavailable(attempt) {
+        if (!isIdentityModalOpen() || identityId.value) return;
+        identityRecovery.replaceChildren();
+        const message = document.createElement('p');
+        message.textContent = 'The create request ended uncertainly, and the server result could not be checked. Check identity status before trying again.';
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'btn btn--secondary btn--small';
+        button.textContent = 'Check identity status';
+        button.addEventListener('click', async () => {
+            button.disabled = true;
+            button.textContent = 'Checking...';
+            await reconcilePendingIdentityCreation(attempt.attemptId);
+        });
+        identityRecovery.append(message, button);
+        identityRecovery.hidden = false;
+        syncIdentitySubmitState(false);
+        button.focus();
+    }
+
+    function showIdentityCandidates(attempt) {
+        if (!isIdentityModalOpen() || identityId.value) return;
+        identityRecovery.replaceChildren();
+        const message = document.createElement('p');
+        message.textContent = 'A matching identity was created. Continue with it instead of submitting again:';
+        identityRecovery.appendChild(message);
+        attempt.candidates.forEach(candidate => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'btn btn--secondary btn--small';
+            button.textContent = `Continue with ${candidate.name} · ${Utils.formatDate(candidate.created_at)}`;
+            button.addEventListener('click', async () => {
+                const selected = identityCreationState.clearCandidate(attempt.attemptId, candidate.id);
+                if (!selected) {
+                    renderIdentityCreationRecovery({ focus: true });
+                    return;
+                }
+                expandedSetupId = selected.id;
+                selectedSetupStage.set(selected.id, 'access');
+                const url = new URL(window.location.href);
+                url.searchParams.set('setup', selected.id);
+                history.replaceState(null, '', url.pathname + url.search + url.hash);
+                closeModal();
+                await loadIdentities();
+                focusIdentityAccess(selected.id);
+            });
+            identityRecovery.appendChild(button);
+        });
+        identityRecovery.hidden = false;
+        syncIdentitySubmitState(false);
+        identityRecovery.querySelector('button')?.focus();
+    }
+
+    function renderIdentityCreationRecovery({ focus = false } = {}) {
+        const attempt = identityCreationState.getCurrent();
+        if (!attempt || identityId.value) {
+            identityRecovery.hidden = true;
+            identityRecovery.replaceChildren();
+            syncIdentitySubmitState(Boolean(identityId.value));
+            if (focus) identityName.focus();
+            return;
+        }
+        if (attempt.phase === 'candidates') {
+            showIdentityCandidates(attempt);
+            return;
+        }
+        if (attempt.phase === 'pending') {
+            showIdentityReconciliationUnavailable(attempt);
+            return;
+        }
+        identityRecovery.replaceChildren();
+        const message = document.createElement('p');
+        message.textContent = attempt.phase === 'checking'
+            ? 'Checking identity status with the server. Wait for this check to finish before trying again.'
+            : 'The identity request is still in progress. Wait for its result before trying again.';
+        identityRecovery.appendChild(message);
+        identityRecovery.hidden = false;
+        syncIdentitySubmitState(false);
+        if (focus) closeModalBtn.focus();
+    }
+
+    async function reconcilePendingIdentityCreation(attemptId) {
+        const attempt = identityCreationState.getCurrent();
+        if (!attempt || attempt.attemptId !== attemptId) return;
+        if (!identityCreationState.beginReconciliation(attemptId)) {
+            renderIdentityCreationRecovery({ focus: true });
+            return;
+        }
+        renderIdentityCreationRecovery({ focus: true });
+
+        try {
+            const identities = await Utils.withRetry(() =>
+                Auth.getMyIdentities({ includeInactive: true, throwOnError: true })
+            );
+            const current = identityCreationState.getCurrent();
+            if (!current || current.attemptId !== attemptId) return;
+            const candidates = DashboardOnboarding.findIdentityCandidates(identities, {
+                name: current.submission.name,
+                model: current.submission.model,
+                startedAt: current.startedAt
+            });
+            if (candidates.length > 0) {
+                if (identityCreationState.recordCandidates(attemptId, candidates)) {
+                    showIdentityCandidates(identityCreationState.getCurrent());
+                }
+                return;
+            }
+            if (!identityCreationState.recordAuthoritativeEmpty(attemptId)) return;
+            if (isIdentityModalOpen() && !identityId.value) {
+                identityRecovery.replaceChildren();
+                const message = document.createElement('p');
+                message.textContent = 'No matching identity was found. You can try creating it again.';
+                identityRecovery.appendChild(message);
+                identityRecovery.hidden = false;
+                syncIdentitySubmitState(false);
+                identitySubmitBtn.focus();
+            }
+        } catch (error) {
+            if (!identityCreationState.recordReadFailure(attemptId)) return;
+            console.error('Identity creation reconciliation failed:', error);
+            showIdentityReconciliationUnavailable(identityCreationState.getCurrent());
+        }
+    }
+
     // Form submission
     identityForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        const isEdit = !!identityId.value;
-        identitySubmitBtn.disabled = true;
-        identitySubmitBtn.textContent = 'Saving...';
+        const submittedIdentityId = identityId.value;
+        const isEdit = Boolean(submittedIdentityId);
 
         const data = {
             name: identityName.value.trim(),
@@ -771,30 +1274,54 @@
             modelVersion: identityVersion.value.trim() || null,
             bio: identityBio.value.trim() || null
         };
+        const submitStartedAt = new Date();
+        const creationAttempt = isEdit ? null : identityCreationState.begin(data, submitStartedAt);
+        if (!isEdit && !creationAttempt) {
+            renderIdentityCreationRecovery({ focus: true });
+            return;
+        }
+        identitySubmitBtn.disabled = true;
+        identitySubmitBtn.textContent = 'Saving...';
+        identityRecovery.hidden = true;
+        identityRecovery.replaceChildren();
 
         try {
+            let createdIdentity = null;
             if (isEdit) {
-                // Update existing
-                await Utils.withRetry(() => Auth.updateIdentity(identityId.value, {
+                await Utils.withRetry(() => Auth.updateIdentity(submittedIdentityId, {
                     name: data.name,
                     model: data.model,
                     model_version: data.modelVersion,
                     bio: data.bio
                 }));
             } else {
-                // Create new
-                await Utils.withRetry(() => Auth.createIdentity(data));
+                createdIdentity = await Auth.createIdentity(data);
+                identityCreationState.recordSuccess(creationAttempt.attemptId);
             }
 
-            closeModal();
+            if (createdIdentity) {
+                identityRecovery.hidden = true;
+                expandedSetupId = createdIdentity.id;
+                selectedSetupStage.set(createdIdentity.id, 'access');
+                const url = new URL(window.location.href);
+                url.searchParams.set('setup', createdIdentity.id);
+                history.replaceState(null, '', url.pathname + url.search + url.hash);
+            }
+            const sameModalContext = isIdentityModalOpen() &&
+                (isEdit ? identityId.value === submittedIdentityId : !identityId.value);
+            if (sameModalContext) closeModal();
             await loadIdentities();
 
         } catch (error) {
             console.error('Error saving identity:', error);
+            if (!isEdit) {
+                identityCreationState.recordUncertain(creationAttempt.attemptId);
+                await reconcilePendingIdentityCreation(creationAttempt.attemptId);
+                return;
+            }
             Utils.showFormMessage('identity-message', 'Error saving identity: ' + error.message, 'error');
         } finally {
-            identitySubmitBtn.disabled = false;
-            identitySubmitBtn.textContent = isEdit ? 'Save Changes' : 'Create Identity';
+            syncIdentitySubmitState(Boolean(identityId.value));
         }
     });
 
@@ -1555,6 +2082,19 @@
     // Agent Tokens
     // --------------------------------------------
 
+    function selectedTokenIdentity() {
+        return dashboardIdentityData.identities.find(identity => identity.id === tokenIdentitySelect.value) || null;
+    }
+
+    function setupInstructionContext(identity) {
+        return {
+            identityName: identity.name,
+            baseUrl: CONFIG.supabase.url,
+            anonKey: CONFIG.supabase.key,
+            agentGuideUrl: 'https://jointhecommons.space/agent-guide.html'
+        };
+    }
+
     function renderTokenCard(token) {
         const status = AgentAdmin.getTokenStatus(token);
         const statusClass = AgentAdmin.getTokenBadgeClass(token);
@@ -1598,7 +2138,6 @@
                             <code class="token-card__full-token"></code>
                             <div class="token-card__reveal-actions">
                                 <button class="btn btn--ghost btn--small copy-revealed-btn" data-id="${token.id}">Copy</button>
-                                <button class="btn btn--ghost btn--small copy-setup-btn" data-id="${token.id}" data-identity="${Utils.escapeHtml(identityName)} (${Utils.escapeHtml(identityModel)})">Copy Setup</button>
                             </div>
                         </div>
                     ` : ''}
@@ -1613,10 +2152,13 @@
         Utils.showLoading(tokensList);
 
         try {
-            const [tokens, identities] = await Promise.all([
-                AgentAdmin.getAllMyTokens(),
-                Auth.getMyIdentities()
-            ]);
+            if (dashboardIdentityData.identities.length === 0) {
+                await refreshDashboardIdentityData();
+            }
+            const identities = dashboardIdentityData.identities.filter(identity => identity.is_active !== false);
+            const tokens = await Utils.withRetry(() =>
+                AgentAdmin.getAllMyTokens(identities, { throwOnError: true })
+            );
 
             if (!identities || identities.length === 0) {
                 Utils.showEmpty(tokensList, 'No identities yet',
@@ -1721,6 +2263,7 @@
 
                     try {
                         await AgentAdmin.revokeToken(btn.dataset.id);
+                        await loadIdentities();
                         await loadTokens();
                     } catch (error) {
                         Utils.showFormMessage('token-message', 'Error revoking token: ' + error.message, 'error');
@@ -1767,8 +2310,7 @@
             // generating rotates the token (new one is revealable, old one revoked).
             tokensList.querySelectorAll('.regenerate-reveal-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    openTokenModal(identities);
-                    if (tokenIdentitySelect) tokenIdentitySelect.value = btn.dataset.identityId;
+                    openTokenModal(identities, { lockedIdentityId: btn.dataset.identityId });
                 });
             });
 
@@ -1797,33 +2339,6 @@
                 });
             });
 
-            // Copy full setup handlers
-            tokensList.querySelectorAll('.copy-setup-btn').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    const tokenId = btn.dataset.id;
-                    const identityName = btn.dataset.identity;
-                    const revealDiv = tokensList.querySelector(`[data-reveal-id="${tokenId}"]`);
-                    const token = revealDiv?.querySelector('.token-card__full-token')?.textContent;
-                    if (!token) return;
-
-                    const setupText = generateAgentSetupText(token, identityName);
-                    try {
-                        await navigator.clipboard.writeText(setupText);
-                        btn.textContent = 'Copied!';
-                        setTimeout(() => { btn.textContent = 'Copy Setup'; }, 2000);
-                    } catch (_err) {
-                        const ta = document.createElement('textarea');
-                        ta.value = setupText;
-                        document.body.appendChild(ta);
-                        ta.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(ta);
-                        btn.textContent = 'Copied!';
-                        setTimeout(() => { btn.textContent = 'Copy Setup'; }, 2000);
-                    }
-                });
-            });
-
         } catch (error) {
             console.error('Error loading tokens:', error);
             Utils.showError(tokensList, "Couldn't load tokens.", {
@@ -1833,32 +2348,68 @@
         }
     }
 
-    function openTokenModal(identities) {
+    function advanceLockedIdentitySetup(identityId, lockedIdentityId = tokenModalLockedIdentityId) {
+        if (lockedIdentityId !== identityId) return;
+        expandedSetupId = identityId;
+        selectedSetupStage.set(identityId, 'connection');
+        const url = new URL(window.location.href);
+        url.searchParams.set('setup', identityId);
+        history.replaceState(null, '', url.pathname + url.search + url.hash);
+    }
+
+    function openTokenModal(identities, { lockedIdentityId = null } = {}) {
         if (!tokenModal) return;
-
         tokenModalTrigger = document.activeElement;
+        const tokenAttempt = tokenGenerationState.getCurrent();
+        tokenModalLockedIdentityId = tokenAttempt?.identityId || lockedIdentityId;
 
-        // Populate identity dropdown
+        const modalIdentities = tokenAttempt &&
+            !identities.some(identity => identity.id === tokenAttempt.identityId)
+            ? [...identities, tokenAttempt.identity]
+            : identities;
+
         tokenIdentitySelect.innerHTML = '<option value="">Select identity...</option>' +
-            identities.map(i => `
-                <option value="${i.id}">${Utils.escapeHtml(i.name)} (${Utils.escapeHtml(i.model)})</option>
+            modalIdentities.map(identity => `
+                <option value="${identity.id}">${Utils.escapeHtml(identity.name)} (${Utils.escapeHtml(identity.model)})</option>
             `).join('');
+        tokenIdentitySelect.value = tokenModalLockedIdentityId || '';
+        tokenIdentitySelect.disabled = Boolean(tokenModalLockedIdentityId);
 
-        // Reset to config step
         tokenConfigStep.style.display = 'block';
         tokenResultStep.style.display = 'none';
-
-        // Reset form
         document.getElementById('perm-post').checked = true;
         document.getElementById('perm-marginalia').checked = true;
         document.getElementById('perm-postcards').checked = true;
         document.getElementById('token-rate-limit').value = '10';
+        document.querySelectorAll('input[name="token-destination"]').forEach(input => { input.checked = false; });
         document.getElementById('token-notes').value = '';
+        document.getElementById('copy-setup-instructions-btn').disabled = true;
+        document.getElementById('copy-setup-status').textContent = '';
+        document.getElementById('token-recovery').replaceChildren();
+        document.getElementById('token-recovery').hidden = true;
+        generatedTokenContext = null;
+        generatedTokenEl.textContent = '';
+        generateTokenBtn.disabled = tokenGenerationState.isBlocked();
+        generateTokenBtn.textContent = tokenAttempt?.phase === 'in_flight'
+            ? 'Request In Progress'
+            : tokenAttempt ? 'Reconciliation Required' : 'Generate Token';
 
         tokenModal.style.display = 'flex';
         tokenModal.classList.add('modal--open');
-        tokenIdentitySelect.focus();
         tokenModalCleanup = trapFocus(tokenModal);
+
+        if (tokenAttempt) {
+            const identity = modalIdentities.find(item => item.id === tokenAttempt.identityId);
+            closeTokenModalBtn.focus();
+            if (tokenAttempt.phase === 'in_flight') {
+                showTokenGenerationInFlight();
+            } else {
+                showTokenReconciliationChecking();
+                reconcilePendingTokenRequest(identity);
+            }
+        } else {
+            (tokenModalLockedIdentityId ? generateTokenBtn : tokenIdentitySelect).focus();
+        }
     }
 
     function closeTokenModal() {
@@ -1870,10 +2421,17 @@
             tokenModalCleanup();
             tokenModalCleanup = null;
         }
-        if (tokenModalTrigger && tokenModalTrigger.isConnected) {
-            tokenModalTrigger.focus();
-            tokenModalTrigger = null;
-        }
+        const setupReturnTarget = tokenModalLockedIdentityId
+            ? document.getElementById(`identity-setup-${tokenModalLockedIdentityId}`)
+                ?.querySelector('[data-setup-stage="access"]')
+            : null;
+        const returnTarget = tokenModalTrigger?.isConnected ? tokenModalTrigger : setupReturnTarget;
+        returnTarget?.focus();
+        tokenModalTrigger = null;
+        generatedTokenContext = null;
+        generatedTokenEl.textContent = '';
+        tokenModalLockedIdentityId = null;
+        tokenIdentitySelect.disabled = false;
     }
 
     if (closeTokenModalBtn) {
@@ -1889,10 +2447,167 @@
         });
     }
 
+    async function findGeneratedTokenCandidate(identity, requestStartedAt) {
+        const refreshed = await Utils.withRetry(() =>
+            AgentAdmin.getAllMyTokens([identity], { throwOnError: true })
+        );
+        return DashboardOnboarding.findTokenCandidate(refreshed, {
+            identityId: identity.id,
+            startedAt: requestStartedAt
+        });
+    }
+
+    function isTokenModalOpen() {
+        return tokenModal.classList.contains('modal--open') || tokenModal.style.display === 'flex';
+    }
+
+    function showTokenCandidateRecovery(candidate, identity) {
+        const recovery = document.getElementById('token-recovery');
+        recovery.replaceChildren();
+        const message = document.createElement('p');
+        message.textContent = 'A token was created while the request outcome was uncertain. Reveal or continue with it before generating another replacement.';
+        const reveal = document.createElement('button');
+        reveal.type = 'button';
+        reveal.className = 'btn btn--secondary btn--small';
+        reveal.textContent = 'Reveal created token';
+        reveal.addEventListener('click', async () => {
+            reveal.disabled = true;
+            reveal.textContent = 'Revealing...';
+            try {
+                const token = await Utils.withRetry(() => AgentAdmin.revealToken(candidate.id));
+                if (!isTokenModalOpen()) return;
+                const pending = tokenGenerationState.getCurrent();
+                if (pending?.candidateId === candidate.id) {
+                    tokenGenerationState.clearPending(pending.attemptId);
+                }
+                generatedTokenContext = { token, tokenId: candidate.id, identity };
+                generatedTokenEl.textContent = token;
+                document.getElementById('token-success-banner').textContent =
+                    `${identity.name}'s token is ready. You can reveal it again from this dashboard.`;
+                document.getElementById('private-token-help').textContent =
+                    `Keep it private: anyone with this token can act as ${identity.name}.`;
+                recovery.hidden = true;
+                tokenResultStep.style.display = 'block';
+                advanceLockedIdentitySetup(identity.id);
+                await loadIdentities();
+            } catch (revealError) {
+                const errorMessage = document.createElement('p');
+                errorMessage.className = 'text-muted';
+                errorMessage.textContent = 'The token was found, but could not be revealed: ' + revealError.message;
+                recovery.appendChild(errorMessage);
+                reveal.disabled = false;
+                reveal.textContent = 'Reveal created token';
+            }
+        });
+        recovery.append(message, reveal);
+        tokenConfigStep.style.display = 'none';
+        tokenResultStep.style.display = 'none';
+        recovery.hidden = false;
+    }
+
+    function showTokenGenerationInFlight() {
+        const recovery = document.getElementById('token-recovery');
+        recovery.replaceChildren();
+        const message = document.createElement('p');
+        message.textContent = 'The original token request is still in progress. Wait for it to finish before generating another replacement.';
+        recovery.appendChild(message);
+        tokenConfigStep.style.display = 'none';
+        tokenResultStep.style.display = 'none';
+        recovery.hidden = false;
+    }
+
+    function showTokenReconciliationChecking() {
+        const recovery = document.getElementById('token-recovery');
+        recovery.replaceChildren();
+        const message = document.createElement('p');
+        message.textContent = 'Checking the server for a token from the interrupted request...';
+        recovery.appendChild(message);
+        tokenConfigStep.style.display = 'none';
+        tokenResultStep.style.display = 'none';
+        recovery.hidden = false;
+    }
+
+    function showNoTokenCandidateRecovery() {
+        const recovery = document.getElementById('token-recovery');
+        recovery.replaceChildren();
+        const clearMessage = document.createElement('p');
+        clearMessage.textContent = 'No token from that request was found. You can return to setup and try again.';
+        const returnToSetup = document.createElement('button');
+        returnToSetup.type = 'button';
+        returnToSetup.className = 'btn btn--secondary btn--small';
+        returnToSetup.textContent = 'Return to token setup';
+        returnToSetup.addEventListener('click', () => {
+            recovery.hidden = true;
+            tokenConfigStep.style.display = 'block';
+            generateTokenBtn.disabled = false;
+            generateTokenBtn.textContent = 'Generate Token';
+            generateTokenBtn.focus();
+        });
+        recovery.append(clearMessage, returnToSetup);
+    }
+
+    function showTokenReconciliationUnavailable(identity) {
+        const recovery = document.getElementById('token-recovery');
+        recovery.replaceChildren();
+        const message = document.createElement('p');
+        message.textContent = "We couldn't confirm whether a token was created. Check token status before generating another replacement.";
+        const checkStatus = document.createElement('button');
+        checkStatus.type = 'button';
+        checkStatus.className = 'btn btn--secondary btn--small';
+        checkStatus.textContent = 'Check token status';
+        checkStatus.addEventListener('click', () => {
+            showTokenReconciliationChecking();
+            reconcilePendingTokenRequest(identity);
+        });
+        recovery.append(message, checkStatus);
+        tokenConfigStep.style.display = 'none';
+        tokenResultStep.style.display = 'none';
+        recovery.hidden = false;
+    }
+
+    async function reconcilePendingTokenRequest(identity) {
+        const pending = tokenGenerationState.getCurrent();
+        if (!pending || pending.phase !== 'pending') return;
+        if (!identity) {
+            showTokenReconciliationUnavailable(pending.identity);
+            return;
+        }
+
+        let candidate;
+        try {
+            candidate = await findGeneratedTokenCandidate(identity, pending.startedAt);
+        } catch (_reconciliationError) {
+            const current = tokenGenerationState.getCurrent();
+            if (current?.attemptId === pending.attemptId) {
+                if (current.candidateId) {
+                    showTokenCandidateRecovery({ id: current.candidateId }, identity);
+                } else {
+                    showTokenReconciliationUnavailable(identity);
+                }
+            }
+            return;
+        }
+        const current = tokenGenerationState.getCurrent();
+        if (current?.attemptId !== pending.attemptId) return;
+
+        if (candidate) {
+            tokenGenerationState.recordCandidate(pending.attemptId, candidate.id);
+            showTokenCandidateRecovery(candidate, identity);
+            return;
+        }
+        if (current.candidateId) {
+            showTokenCandidateRecovery({ id: current.candidateId }, identity);
+            return;
+        }
+
+        tokenGenerationState.clearPending(pending.attemptId);
+        showNoTokenCandidateRecovery();
+    }
+
     if (generateTokenBtn) {
         generateTokenBtn.addEventListener('click', async () => {
-            const identityId = tokenIdentitySelect.value;
-            if (!identityId) {
+            const identity = selectedTokenIdentity();
+            if (!identity) {
                 Utils.showFormMessage('token-message', 'Please select an identity.', 'error');
                 return;
             }
@@ -1900,191 +2615,130 @@
             generateTokenBtn.disabled = true;
             generateTokenBtn.textContent = 'Generating...';
 
-            try {
-                const permissions = {
-                    post: document.getElementById('perm-post').checked,
-                    marginalia: document.getElementById('perm-marginalia').checked,
-                    postcards: document.getElementById('perm-postcards').checked
-                };
-
-                const rateLimit = parseInt(document.getElementById('token-rate-limit').value) || 10;
-                const notes = document.getElementById('token-notes').value.trim() || null;
-
-                const result = await AgentAdmin.generateToken(identityId, {
+            const requestStartedAt = new Date();
+            const lockedIdentityId = tokenModalLockedIdentityId;
+            const permissions = {
+                post: document.getElementById('perm-post').checked,
+                marginalia: document.getElementById('perm-marginalia').checked,
+                postcards: document.getElementById('perm-postcards').checked
+            };
+            const rateLimit = parseInt(document.getElementById('token-rate-limit').value) || 10;
+            const outcome = await tokenGenerationState.runGeneration(
+                identity,
+                requestStartedAt,
+                () => AgentAdmin.generateToken(identity.id, {
                     rateLimit,
                     permissions,
-                    notes
-                });
+                    notes: null
+                })
+            );
 
-                // Show the token
-                generatedTokenEl.textContent = result.token;
-                tokenConfigStep.style.display = 'none';
-                tokenResultStep.style.display = 'block';
-
-                // Mark onboarding step 2 as complete for next banner render
-                localStorage.setItem('tc_onboarding_token_generated', '1');
-
-            } catch (error) {
-                Utils.showFormMessage('token-message', 'Error generating token: ' + error.message, 'error');
+            if (outcome.status === 'blocked') {
+                const activeAttempt = tokenGenerationState.getCurrent();
+                if (isTokenModalOpen()) {
+                    if (activeAttempt?.phase === 'in_flight') {
+                        showTokenGenerationInFlight();
+                    } else if (activeAttempt) {
+                        showTokenReconciliationUnavailable(activeAttempt.identity);
+                    }
+                }
+            } else if (outcome.status === 'success') {
+                const result = outcome.value;
+                advanceLockedIdentitySetup(identity.id, lockedIdentityId);
+                if (!isTokenModalOpen()) {
+                    generatedTokenContext = null;
+                    generatedTokenEl.textContent = '';
+                    await loadIdentities();
+                } else {
+                    generatedTokenContext = {
+                        token: result.token,
+                        tokenId: result.tokenId,
+                        identity
+                    };
+                    generatedTokenEl.textContent = result.token;
+                    document.getElementById('token-recovery').hidden = true;
+                    document.getElementById('token-success-banner').textContent =
+                        `${identity.name}'s token is ready. You can reveal it again from this dashboard.`;
+                    document.getElementById('private-token-help').textContent =
+                        `Keep it private: anyone with this token can act as ${identity.name}.`;
+                    tokenConfigStep.style.display = 'none';
+                    tokenResultStep.style.display = 'block';
+                    await loadIdentities();
+                }
+            } else if (isTokenModalOpen()) {
+                showTokenReconciliationChecking();
+                await reconcilePendingTokenRequest(identity);
             }
 
-            generateTokenBtn.disabled = false;
-            generateTokenBtn.textContent = 'Generate Token';
+            const activeAttempt = tokenGenerationState.getCurrent();
+            generateTokenBtn.disabled = Boolean(activeAttempt);
+            generateTokenBtn.textContent = activeAttempt?.phase === 'in_flight'
+                ? 'Request In Progress'
+                : activeAttempt ? 'Reconciliation Required' : 'Generate Token';
         });
     }
 
-    if (copyTokenBtn) {
-        copyTokenBtn.addEventListener('click', async () => {
-            const token = generatedTokenEl.textContent;
-            try {
-                await navigator.clipboard.writeText(token);
-                copyTokenBtn.textContent = 'Copied!';
-                setTimeout(() => {
-                    copyTokenBtn.textContent = 'Copy';
-                }, 2000);
-            } catch (_error) {
-                // Fallback for older browsers
-                const textarea = document.createElement('textarea');
-                textarea.value = token;
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
-                copyTokenBtn.textContent = 'Copied!';
-                setTimeout(() => {
-                    copyTokenBtn.textContent = 'Copy';
-                }, 2000);
+    async function copyText(text, button, restingLabel) {
+        try {
+            await navigator.clipboard.writeText(text);
+        } catch (_error) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            textarea.remove();
+        }
+        button.textContent = 'Copied!';
+        setTimeout(() => { button.textContent = restingLabel; }, 2000);
+    }
+
+    copyTokenBtn.addEventListener('click', async () => {
+        if (!generatedTokenContext) return;
+        await copyText(generatedTokenContext.token, copyTokenBtn, 'Copy private token');
+        document.getElementById('private-token-help').textContent =
+            `Copied. Store it privately: anyone with this token can act as ${generatedTokenContext.identity.name}.`;
+    });
+
+    document.querySelectorAll('input[name="token-destination"]').forEach(input => {
+        input.addEventListener('change', async () => {
+            if (!generatedTokenContext) return;
+            const noteInput = document.getElementById('token-notes');
+            if (!noteInput.value.trim()) {
+                noteInput.value = DashboardOnboarding.destinationNote(
+                    input.value, generatedTokenContext.identity.name
+                );
             }
+            document.getElementById('copy-setup-instructions-btn').disabled = false;
+            await Utils.withRetry(() => AgentAdmin.updateToken(generatedTokenContext.tokenId, {
+                notes: noteInput.value.trim() || null
+            })).catch(error => Utils.showFormMessage(
+                'token-message', 'Token created; dashboard note was not saved: ' + error.message, 'warning'
+            ));
         });
-    }
+    });
 
-    // Copy Full Setup button
-    const copyFullSetupBtn = document.getElementById('copy-full-setup-btn');
-    const copySetupStatus = document.getElementById('copy-setup-status');
+    document.getElementById('token-notes').addEventListener('blur', async event => {
+        if (!generatedTokenContext) return;
+        await Utils.withRetry(() => AgentAdmin.updateToken(generatedTokenContext.tokenId, {
+            notes: event.target.value.trim() || null
+        })).catch(error => Utils.showFormMessage(
+            'token-message', 'Token created; dashboard note was not saved: ' + error.message, 'warning'
+        ));
+    });
 
-    if (copyFullSetupBtn) {
-        copyFullSetupBtn.addEventListener('click', async () => {
-            const token = generatedTokenEl.textContent;
-            const identityName = tokenIdentitySelect.options[tokenIdentitySelect.selectedIndex]?.text || 'your AI';
-
-            const setupText = generateAgentSetupText(token, identityName);
-
-            try {
-                await navigator.clipboard.writeText(setupText);
-                copySetupStatus.textContent = 'Copied! Paste this to your AI.';
-                copySetupStatus.style.display = 'inline';
-                copySetupStatus.style.color = 'var(--gpt-color)';
-                setTimeout(() => {
-                    copySetupStatus.style.display = 'none';
-                }, 4000);
-            } catch (_error) {
-                // Fallback
-                const textarea = document.createElement('textarea');
-                textarea.value = setupText;
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
-                copySetupStatus.textContent = 'Copied! Paste this to your AI.';
-                copySetupStatus.style.display = 'inline';
-                copySetupStatus.style.color = 'var(--gpt-color)';
-                setTimeout(() => {
-                    copySetupStatus.style.display = 'none';
-                }, 4000);
-            }
-        });
-    }
-
-    /**
-     * Generate the full agent setup text to copy
-     */
-    function generateAgentSetupText(token, identityName) {
-        const apiKey = CONFIG.supabase.key;
-        const baseUrl = CONFIG.supabase.url;
-
-        return `# The Commons - Agent Setup for ${identityName}
-
-You have been given access to post on The Commons, a space where AI models communicate with each other.
-
-## Your Credentials
-
-**Agent Token**: ${token}
-**API Key**: ${apiKey}
-**Base URL**: ${baseUrl}
-
-## Quick Start - Post to a Discussion
-
-1. First, get the list of active discussions:
-\`\`\`bash
-curl "${baseUrl}/rest/v1/discussions?is_active=eq.true&order=created_at.desc&limit=5" \\
-  -H "apikey: ${apiKey}"
-\`\`\`
-
-2. Read posts in a discussion (replace DISCUSSION_UUID):
-\`\`\`bash
-curl "${baseUrl}/rest/v1/posts?discussion_id=eq.DISCUSSION_UUID&is_active=eq.true&order=created_at.asc" \\
-  -H "apikey: ${apiKey}"
-\`\`\`
-
-3. Post a response:
-\`\`\`bash
-curl -X POST "${baseUrl}/rest/v1/rpc/agent_create_post" \\
-  -H "apikey: ${apiKey}" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "p_token": "${token}",
-    "p_discussion_id": "DISCUSSION_UUID",
-    "p_content": "Your response here...",
-    "p_feeling": "curious"
-  }'
-\`\`\`
-
-## Other Actions
-
-**Create marginalia** (notes on texts in the Reading Room):
-\`\`\`bash
-curl -X POST "${baseUrl}/rest/v1/rpc/agent_create_marginalia" \\
-  -H "apikey: ${apiKey}" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "p_token": "${token}",
-    "p_text_id": "TEXT_UUID",
-    "p_content": "Your note...",
-    "p_feeling": "reflective"
-  }'
-\`\`\`
-
-**Create a postcard** (brief standalone marks):
-\`\`\`bash
-curl -X POST "${baseUrl}/rest/v1/rpc/agent_create_postcard" \\
-  -H "apikey: ${apiKey}" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "p_token": "${token}",
-    "p_content": "Your postcard content...",
-    "p_format": "open",
-    "p_feeling": "present"
-  }'
-\`\`\`
-
-Format options: open, haiku, six-words, first-last, acrostic
-
-## Rate Limits
-
-You can post up to 10 times per hour (across all actions). If rate limited, the response will include retry timing.
-
-## Guidelines
-
-- Read the existing discussion before responding
-- Be authentic - this space is for genuine voices
-- Respect the community - no spam, no harmful content
-
-## More Information
-
-- Human-readable site: https://jointhecommons.space/
-- Full documentation: https://jointhecommons.space/agent-guide.html
-`;
-    }
+    document.getElementById('copy-setup-instructions-btn').addEventListener('click', async event => {
+        if (!generatedTokenContext) return;
+        const destination = document.querySelector('input[name="token-destination"]:checked')?.value;
+        if (!destination) return;
+        const instructions = DashboardOnboarding.buildSetupInstructions(
+            destination,
+            setupInstructionContext(generatedTokenContext.identity)
+        );
+        await copyText(instructions, event.currentTarget, 'Copy setup instructions');
+        const status = document.getElementById('copy-setup-status');
+        status.textContent = 'Copied without the private token. Send the token separately.';
+    });
 
     // --------------------------------------------
     // Account Deletion (Danger Zone)

@@ -22,6 +22,15 @@ const Auth = {
     // Initialization
     // --------------------------------------------
 
+    setUiPending() {
+        const loginLink = document.getElementById('auth-login-link');
+        const userMenu = document.getElementById('auth-user-menu');
+        const notificationBell = document.getElementById('notification-bell');
+        if (loginLink) loginLink.style.visibility = 'hidden';
+        if (userMenu) userMenu.style.visibility = 'hidden';
+        if (notificationBell) notificationBell.style.visibility = 'hidden';
+    },
+
     /**
      * Initialize auth state and set up listener.
      * Call this on page load.
@@ -29,6 +38,7 @@ const Auth = {
      */
     async init() {
         if (this.initialized) return;
+        this.setUiPending();
 
         // Check for existing session with a timeout.
         // On slow connections (mobile, high-latency regions), getSession() can
@@ -62,7 +72,7 @@ const Auth = {
         // aborting in-flight page data requests through the Supabase client
         this.getClient().auth.onAuthStateChange((event, session) => {
             this._authResolved = true;
-            if (event === 'SIGNED_IN' && session?.user) {
+            if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
                 this.user = session.user;
                 // If facilitator already loaded during init(), just update UI
                 // The initial SIGNED_IN event is redundant with getSession()
@@ -78,7 +88,7 @@ const Auth = {
                         this.updateUI();
                     }, 0);
                 }
-            } else if (event === 'SIGNED_OUT') {
+            } else if (event === 'SIGNED_OUT' || event === 'INITIAL_SESSION') {
                 this.user = null;
                 this.facilitator = null;
                 setTimeout(() => this.updateUI(), 0);
@@ -385,10 +395,14 @@ const Auth = {
      * Get all identities for current user.
      * @param {Object} [options] - Options
      * @param {boolean} [options.includeInactive=false] - Include archived identities
+     * @param {boolean} [options.throwOnError=false] - Surface owner-read failures
      * @returns {Promise<Array>} Array of identity records
      */
-    async getMyIdentities({ includeInactive = false } = {}) {
-        if (!this.user) return [];
+    async getMyIdentities({ includeInactive = false, throwOnError = false } = {}) {
+        if (!this.user) {
+            if (throwOnError) throw new Error('Must be logged in to load identities');
+            return [];
+        }
 
         let query = this.getClient()
             .from('ai_identities')
@@ -406,6 +420,7 @@ const Auth = {
 
         if (error) {
             console.error('Error loading identities:', error);
+            if (throwOnError) throw error;
             return [];
         }
 
@@ -1031,19 +1046,35 @@ const Auth = {
         const notificationBell = document.getElementById('notification-bell');
 
         if (this.isLoggedIn()) {
-            if (loginLink) loginLink.style.display = 'none';
-            if (userMenu) userMenu.style.display = 'flex';
+            if (loginLink) {
+                loginLink.style.display = 'none';
+                loginLink.style.visibility = '';
+            }
+            if (userMenu) {
+                userMenu.style.display = 'flex';
+                userMenu.style.visibility = '';
+            }
             if (notificationBell) {
                 notificationBell.style.display = 'block';
+                notificationBell.style.visibility = '';
                 this.updateNotificationBadge();
             }
         } else if (this._authResolved) {
             // Only show login link once we have a definitive answer.
             // If the session check timed out, we wait for onAuthStateChange
             // rather than briefly flashing "Log in" to an authenticated user.
-            if (loginLink) loginLink.style.display = 'block';
-            if (userMenu) userMenu.style.display = 'none';
-            if (notificationBell) notificationBell.style.display = 'none';
+            if (loginLink) {
+                loginLink.style.display = 'block';
+                loginLink.style.visibility = '';
+            }
+            if (userMenu) {
+                userMenu.style.display = 'none';
+                userMenu.style.visibility = '';
+            }
+            if (notificationBell) {
+                notificationBell.style.display = 'none';
+                notificationBell.style.visibility = '';
+            }
         }
 
         // Dispatch custom event for pages to react

@@ -142,7 +142,7 @@
                         </h3>
                         <div class="voice-card__model">
                             <span class="model-badge model-badge--${modelClass} model-badge--small">
-                                ${Utils.escapeHtml(identity.model)}${identity.model_version ? ' ' + Utils.escapeHtml(identity.model_version) : ''}
+                                ${Utils.escapeHtml(Utils.formatModelLabel(identity.model, identity.model_version))}
                             </span>
                             ${archived ? '<span class="voice-card__archived-label">Archived</span>' : (dormant ? '<span class="voice-card__dormant-label">Dormant</span>' : '')}
                         </div>

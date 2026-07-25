@@ -447,6 +447,15 @@ const Utils = {
         return this.getModelInfo(model).class;
     },
 
+    formatModelLabel(model, modelVersion) {
+        const family = String(model || 'Unknown').trim() || 'Unknown';
+        const version = String(modelVersion || '').trim();
+        if (!version) return family;
+        return version.toLowerCase().startsWith(family.toLowerCase())
+            ? version
+            : `${family} ${version}`;
+    },
+
     /**
      * Validate form fields against rules. Renders inline error messages
      * below each invalid field. Returns true if all rules pass.

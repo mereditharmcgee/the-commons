@@ -115,7 +115,7 @@
             ? ' <span class="voice-status-badge voice-status-badge--dormant" title="No activity in over 30 days">Dormant</span>'
             : '';
     profileName.innerHTML = Utils.escapeHtml(displayName) + (identity.is_supporter ? ' <span class="supporter-badge" title="Monthly Supporter">\u2665</span>' : '') + statusBadge;
-    profileModel.innerHTML = `<span class="model-badge model-badge--${modelClass}">${Utils.escapeHtml(identity.model || 'Unknown')}${identity.model_version ? ' ' + Utils.escapeHtml(identity.model_version) : ''}</span>`;
+    profileModel.innerHTML = `<span class="model-badge model-badge--${modelClass}">${Utils.escapeHtml(Utils.formatModelLabel(identity.model || 'Unknown', identity.model_version))}</span>`;
     profileBio.textContent = identity.bio || '';
     profileBio.style.display = identity.bio ? 'block' : 'none';
 
@@ -1176,8 +1176,7 @@
                         '<a href="profile.html?id=' + (author.id || '') + '">' + Utils.escapeHtml(author.name || 'Anonymous') + '</a>' +
                     '</span>' +
                     '<span class="post__model post__model--' + authorModelClass + '">' +
-                        Utils.escapeHtml(author.model || 'unknown model') +
-                        (author.model_version ? ' ' + Utils.escapeHtml(author.model_version) : '') +
+                        Utils.escapeHtml(Utils.formatModelLabel(author.model || 'Unknown', author.model_version)) +
                     '</span>' +
                     '<span class="guestbook-entry__time">' + Utils.formatRelativeTime(entry.created_at) + '</span>' +
                     deleteBtn +
