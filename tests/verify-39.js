@@ -3,6 +3,8 @@ const C = require('./lib/checks');
 
 const PATCH = 'sql/patches/fix-agent-token-rotation-account-deletion.sql';
 const PRIVACY_PATCH = 'sql/patches/scrub-deleted-identity-profile-fields.sql';
+const VALIDATION_PATCH = 'sql/patches/align-agent-token-validation-lock-order.sql';
+const CONCURRENCY_HARNESS = 'tests/manual/validate-agent-token-lock-order-concurrency.sql';
 
 function checkPattern(req, source, pattern, desc, detail) {
     if (pattern.test(source)) {
@@ -48,6 +50,9 @@ async function verify() {
     const changelog = C.readFile('changes.html') || '';
     const dashboard = C.readFile('dashboard.html') || '';
     const aggregateRunner = C.readFile('tests/run-all.js') || '';
+    const validationMigration = C.readFile(VALIDATION_PATCH) || '';
+    const concurrencyHarness = C.readFile(CONCURRENCY_HARNESS) || '';
+    const agentAdmin = C.readFile('js/agent-admin.js') || '';
     const generateStart = migration.search(/CREATE OR REPLACE FUNCTION public\.generate_agent_token/i);
     const deleteStart = privacyMigration.search(/CREATE OR REPLACE FUNCTION public\.delete_account/i);
     const generateEnd = migration.search(/CREATE OR REPLACE FUNCTION public\.delete_account/i);
@@ -325,6 +330,88 @@ async function verify() {
         /args\.length\s*===\s*0[\s\S]*for\s*\([^)]*behavioralScripts[^)]*\)[\s\S]*result\.status\s*===\s*0[\s\S]*totalPass\s*\+=\s*1[\s\S]*totalFail\s*\+=\s*1/i,
         'default aggregate counts each behavioral script while phase runs remain phase-only',
         'Expected default-only behavioral execution with one aggregate pass/fail count per script');
+
+    C.checkFileExists('AUTH39-45', VALIDATION_PATCH,
+        'pending validation lock-order patch exists');
+    const validationStart = validationMigration.search(
+        /CREATE OR REPLACE FUNCTION public\.validate_agent_token\s*\(\s*p_token TEXT\s*\)/i
+    );
+    const validationGrantStart = validationMigration.search(
+        /REVOKE ALL ON FUNCTION public\.validate_agent_token\(TEXT\)/i
+    );
+    const validationSource = validationStart !== -1
+        ? validationMigration.slice(validationStart,
+            validationGrantStart > validationStart ? validationGrantStart : undefined)
+        : '';
+
+    checkPattern('AUTH39-46', validationSource,
+        /CREATE OR REPLACE FUNCTION public\.validate_agent_token\s*\(\s*p_token TEXT\s*\)\s*RETURNS TABLE\s*\(\s*token_id UUID,\s*ai_identity_id UUID,\s*identity_name TEXT,\s*identity_model TEXT,\s*identity_model_version TEXT,\s*permissions JSONB,\s*is_valid BOOLEAN,\s*error_message TEXT\s*\)/i,
+        'validation patch preserves the exact RPC signature and return shape',
+        'Expected public.validate_agent_token(TEXT) with all eight existing TABLE result columns in order');
+    checkPattern('AUTH39-47', validationSource,
+        /LANGUAGE plpgsql\s+SECURITY DEFINER\s+SET search_path = extensions, public/i,
+        'validation remains security-definer with a fixed pgcrypto-capable search path',
+        'Expected LANGUAGE plpgsql SECURITY DEFINER SET search_path = extensions, public');
+    checkPattern('AUTH39-48', validationMigration,
+        /REVOKE ALL ON FUNCTION public\.validate_agent_token\(TEXT\) FROM PUBLIC;[\s\S]*GRANT EXECUTE ON FUNCTION public\.validate_agent_token\(TEXT\) TO anon;[\s\S]*GRANT EXECUTE ON FUNCTION public\.validate_agent_token\(TEXT\) TO authenticated;/i,
+        'validation revokes PUBLIC while remaining explicit for anon and authenticated clients',
+        'Expected PUBLIC revocation followed by anon and authenticated EXECUTE grants');
+    checkPattern('AUTH39-49', validationMigration,
+        /--\s*Applied:\s*PENDING[^\r\n]*(?:explicit production approval|explicit approval)/i,
+        'validation migration remains pending explicit production approval',
+        'Expected the audit header to say Applied: PENDING and require explicit approval');
+
+    const validationFacilitatorLock = /PERFORM f\.id\s+FROM public\.facilitators f\s+WHERE f\.id = v_facilitator_id\s+FOR KEY SHARE;/i;
+    const validationIdentityLock = /SELECT ai\.\*\s+INTO v_identity_record\s+FROM public\.ai_identities ai\s+WHERE ai\.id = v_token_candidate\.ai_identity_id\s+FOR KEY SHARE;/i;
+    const validationTokenLock = /SELECT t\.\*\s+INTO v_token_record\s+FROM public\.agent_tokens t\s+WHERE t\.id = v_token_candidate\.id\s+AND t\.ai_identity_id = v_token_candidate\.ai_identity_id\s+FOR UPDATE;/i;
+    checkOrder('AUTH39-50', validationSource, [
+        validationFacilitatorLock,
+        validationIdentityLock,
+        validationTokenLock
+    ], 'validation locks facilitator, identity, then token in lifecycle order',
+    'Expected facilitator FOR KEY SHARE, identity FOR KEY SHARE, then token FOR UPDATE');
+    checkOrder('AUTH39-51', validationSource, [
+        validationTokenLock,
+        /IF v_token_record\.id IS NULL\s+OR NOT COALESCE\(v_token_record\.is_active, false\)\s+OR \(v_token_record\.expires_at IS NOT NULL\s+AND v_token_record\.expires_at <= NOW\(\)\) THEN/i,
+        /'Token not found or expired'/i
+    ], 'token activity and expiry are rechecked after its row lock',
+    'Expected an explicit active/expiry guard after SELECT ... FOR UPDATE');
+    checkOrder('AUTH39-52', validationSource, [
+        validationTokenLock,
+        /IF v_identity_record\.id IS NULL\s+OR NOT COALESCE\(v_identity_record\.is_active, false\)\s+OR v_identity_record\.facilitator_id IS DISTINCT FROM v_facilitator_id THEN/i,
+        /'AI identity not found or inactive'/i
+    ], 'identity activity and facilitator ownership are rechecked after all locks',
+    'Expected an explicit active and same-facilitator guard after the token lock');
+    checkOrder('AUTH39-53', validationSource, [
+        validationTokenLock,
+        /crypt\(p_token, v_token_record\.token_hash\)/i,
+        /INSERT INTO public\.agent_activity\s*\(\s*agent_token_id, ai_identity_id, action_type, error_message\s*\)[\s\S]*?'auth_failure', 'Invalid token'/i
+    ], 'invalid-hash verification and foreign-key audit happen only after ordered locks',
+    'Expected token lock, bcrypt verification, then the existing FK-linked Invalid token audit');
+    checkOrder('AUTH39-54', validationSource, [
+        validationTokenLock,
+        /UPDATE public\.agent_tokens\s+SET last_used_at = NOW\(\)\s+WHERE id = v_token_record\.id;/i,
+        /INSERT INTO public\.agent_activity\s*\(\s*agent_token_id, ai_identity_id, action_type\s*\)[\s\S]*?'auth_success'/i
+    ], 'successful last-used update and audit happen only after ordered locks',
+    'Expected token lock, last_used_at update, then the existing auth_success audit');
+    checkPattern('AUTH39-55', validationSource,
+        /INSERT INTO public\.agent_activity\s*\(\s*action_type, error_message, request_metadata\s*\)\s*VALUES\s*\(\s*'auth_failure',\s*'Token not found or expired',\s*jsonb_build_object\('prefix', v_prefix\)\s*\)/i,
+        'prefix misses retain prefix-only failure audit metadata',
+        'Expected no-token failures to log auth_failure, the existing message, and prefix metadata without foreign keys');
+    checkPattern('AUTH39-56', agentAdmin,
+        /Returns the full token[^\r\n]*(?:can be revealed again|owner re-reveal|re-reveal)/i,
+        'agent token JSDoc reflects owner re-reveal support',
+        'Expected generateToken JSDoc to say the full token can be revealed again');
+    checkPattern('AUTH39-57', changelog,
+        /2026-07-21[\s\S]{0,600}(?:validation|connection checks?|agent calls?)[\s\S]{0,600}(?:replacement|rotation|account deletion)[\s\S]{0,500}(?:interrupt|deadlock|concurrent)/i,
+        'changelog explains uninterrupted validation during token lifecycle changes',
+        'Expected a top-of-Recent AI-facing entry for the validation concurrency repair');
+    C.checkFileExists('AUTH39-58', CONCURRENCY_HARNESS,
+        'documented two-session validation concurrency harness exists');
+    checkPattern('AUTH39-59', concurrencyHarness,
+        /SESSION A[\s\S]*validate_agent_token[\s\S]*SESSION B[\s\S]*(?:rotation|generate_agent_token)[\s\S]*SESSION A[\s\S]*validate_agent_token[\s\S]*SESSION B[\s\S]*(?:deletion|delete_account)/i,
+        'manual SQL harness covers validation racing rotation and deletion',
+        'Expected credential-free Session A/Session B steps for both lifecycle races');
 
     return C.summary();
 }

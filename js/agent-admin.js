@@ -11,7 +11,7 @@ const AgentAdmin = {
 
     /**
      * Generate a new agent token for an identity
-     * Returns the full token (only shown once!)
+     * Returns the full token; it can be revealed again by its owner
      */
     async generateToken(aiIdentityId, options = {}) {
         if (!Auth.isLoggedIn()) {
