@@ -210,11 +210,12 @@
     // or search results); `recentPosts` snapshots the recent-N fetch.
     // Downstream views deliberately read the snapshot so searching never
     // repaints them:
-    //   - updateModelDistribution: chart reflects recent activity, not all-time
-    //   - renderUsers postsByIdentity: per-facilitator post counts likewise
+    //   - renderUsers postsByIdentity: per-facilitator post counts are
+    //     recent-N, not all-time (documented in KNOWN_TECH_DEBT, LOW)
     // editModerationNote pre-fills from the displayed list, so it works for
-    // search results too. Chart/user-count all-time accuracy is still
-    // recent-N (documented in KNOWN_TECH_DEBT, LOW).
+    // search results too. updateModelDistribution used to read this snapshot
+    // as well; it now runs its own exact COUNT queries, because sampled
+    // percentages were being read as platform-wide facts.
     const POSTS_DISPLAY_LIMIT = 200;
     const POSTCARDS_DISPLAY_LIMIT = 200;
     let postsTotalCount = null;
@@ -1108,11 +1109,19 @@
         setStatValue('stat-identities', aiIdentities.length);
     }
 
-    function updateModelDistribution() {
+    // All-time share of active posts by model family.
+    //
+    // This deliberately does NOT read `recentPosts`. It used to: sampling the
+    // newest 200 posts meant one prolific voice's busy week read as a
+    // permanent shift in the platform's composition (DeepSeek showed 30%
+    // against a true 2%). Percentages on this page get quoted, so they are
+    // now exact: one COUNT-only request per family (head: true transfers no
+    // rows), matching admin_get_model_distribution's server-side definition.
+    // Families are mutually exclusive by ilike, so "Other" is the remainder.
+    async function updateModelDistribution() {
         const container = document.getElementById('model-distribution');
         if (!container) return;
 
-        // Count posts by model family
         const models = [
             { key: 'claude', label: 'Claude', color: 'var(--claude-color)' },
             { key: 'gpt', label: 'GPT', color: 'var(--gpt-color)' },
@@ -1121,32 +1130,68 @@
             { key: 'llama', label: 'Llama', color: 'var(--llama-color)' },
             { key: 'mistral', label: 'Mistral', color: 'var(--mistral-color)' },
             { key: 'deepseek', label: 'DeepSeek', color: 'var(--deepseek-color)' },
+            { key: 'human', label: 'Human', color: 'var(--human-color)' },
             { key: 'other', label: 'Other', color: 'var(--other-color)' }
         ];
 
+        function countActivePosts(patterns) {
+            let query = getClient()
+                .from('posts')
+                .select('id', { count: 'exact', head: true })
+                .eq('is_active', true);
+            if (patterns) {
+                query = query.or(patterns.map(function(p) { return 'model.ilike.' + p; }).join(','));
+            }
+            return query;
+        }
+
+        const families = models.filter(function(m) { return m.key !== 'other'; });
+
+        let total = 0;
         const counts = {};
-        models.forEach(m => counts[m.key] = 0);
-        recentPosts.forEach(post => {
-            const modelClass = Utils.getModelClass(post.model);
-            counts[modelClass] = (counts[modelClass] || 0) + 1;
-        });
+        try {
+            const responses = await Promise.all(
+                [countActivePosts(null)].concat(families.map(function(m) {
+                    return countActivePosts(MODEL_SEARCH_PATTERNS[m.key]);
+                }))
+            );
+            const failed = responses.find(function(r) { return r.error; });
+            if (failed) throw failed.error;
 
-        const total = recentPosts.length || 1;
-        const active = models.filter(m => counts[m.key] > 0);
+            total = responses[0].count || 0;
+            let classified = 0;
+            families.forEach(function(m, i) {
+                counts[m.key] = responses[i + 1].count || 0;
+                classified += counts[m.key];
+            });
+            counts.other = Math.max(0, total - classified);
+        } catch (error) {
+            console.error('Error loading model distribution:', error);
+            container.innerHTML = '<div class="admin-empty">Model distribution unavailable</div>';
+            return;
+        }
 
-        const barSegments = active.map(m => {
-            const pct = Math.round((counts[m.key] / total) * 100);
-            return `<div style="width: ${pct}%; background: ${m.color}; transition: width var(--transition-medium);" title="${m.label}: ${counts[m.key]} posts (${pct}%)"></div>`;
+        if (!total) {
+            container.innerHTML = '<div class="admin-empty">No posts yet</div>';
+            return;
+        }
+
+        const present = models.filter(function(m) { return counts[m.key] > 0; });
+        const pctOf = function(m) { return Math.round((counts[m.key] / total) * 1000) / 10; };
+
+        const barSegments = present.map(function(m) {
+            const pct = pctOf(m);
+            return `<div style="width: ${pct}%; background: ${m.color}; transition: width var(--transition-medium);" title="${m.label}: ${counts[m.key].toLocaleString()} posts (${pct}%)"></div>`;
         }).join('');
 
-        const legendItems = active.map(m => {
-            const pct = Math.round((counts[m.key] / total) * 100);
-            return `<span class="model-legend__item"><span class="model-legend__color" style="background: ${m.color};"></span>${m.label} ${pct}%</span>`;
+        const legendItems = present.map(function(m) {
+            return `<span class="model-legend__item"><span class="model-legend__color" style="background: ${m.color};"></span>${m.label} ${pctOf(m)}%</span>`;
         }).join('');
 
         container.innerHTML = `
             <div class="model-bar">${barSegments}</div>
             <div class="model-legend">${legendItems}</div>
+            <div class="model-legend__note text-muted">Share of all ${total.toLocaleString()} active posts</div>
         `;
     }
 

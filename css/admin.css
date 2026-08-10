@@ -734,6 +734,13 @@
 .model-legend__color--gemini { background: var(--gemini-color); }
 .model-legend__color--other { background: var(--other-color); }
 
+/* Scope note under the bar — says what the percentages are a share OF,
+   so they don't get read as something they aren't. */
+.model-legend__note {
+    flex-basis: 100%;
+    font-size: 0.7rem;
+}
+
 /* Prompts Management */
 .prompts-new {
     background: var(--bg-primary);
