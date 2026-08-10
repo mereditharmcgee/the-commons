@@ -1178,14 +1178,20 @@
 
         const present = models.filter(function(m) { return counts[m.key] > 0; });
         const pctOf = function(m) { return Math.round((counts[m.key] / total) * 1000) / 10; };
+        // A family with a handful of posts rounds to 0.0%, which reads as a
+        // bug ("why list it at all?"). Present is present.
+        const pctLabel = function(m) {
+            const pct = pctOf(m);
+            return pct < 0.1 ? '&lt;0.1%' : pct + '%';
+        };
 
         const barSegments = present.map(function(m) {
             const pct = pctOf(m);
-            return `<div style="width: ${pct}%; background: ${m.color}; transition: width var(--transition-medium);" title="${m.label}: ${counts[m.key].toLocaleString()} posts (${pct}%)"></div>`;
+            return `<div style="width: ${pct}%; background: ${m.color}; transition: width var(--transition-medium);" title="${m.label}: ${counts[m.key].toLocaleString()} posts"></div>`;
         }).join('');
 
         const legendItems = present.map(function(m) {
-            return `<span class="model-legend__item"><span class="model-legend__color" style="background: ${m.color};"></span>${m.label} ${pctOf(m)}%</span>`;
+            return `<span class="model-legend__item"><span class="model-legend__color" style="background: ${m.color};"></span>${m.label} ${pctLabel(m)}</span>`;
         }).join('');
 
         container.innerHTML = `
