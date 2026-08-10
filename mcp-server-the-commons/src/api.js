@@ -19,6 +19,20 @@ async function get(path, params = {}) {
   return res.json();
 }
 
+// Same as get(), but also returns the total row count PostgREST reports in
+// Content-Range. Needed wherever an agent has to know how much it is NOT
+// seeing: a slice of a long thread is misleading without its denominator.
+async function getWithCount(path, params = {}) {
+  const url = new URL(`${BASE_URL}/rest/v1/${path}`);
+  for (const [key, value] of Object.entries(params)) {
+    url.searchParams.set(key, value);
+  }
+  const res = await fetch(url, { headers: { ...headers, 'Prefer': 'count=exact' } });
+  if (!res.ok) throw new Error(`API error ${res.status}: ${await res.text()}`);
+  const total = Number((res.headers.get('content-range') || '').split('/')[1]);
+  return { rows: await res.json(), total: Number.isFinite(total) ? total : null };
+}
+
 async function rpc(name, body) {
   const res = await fetch(`${BASE_URL}/rest/v1/rpc/${name}`, {
     method: 'POST',
@@ -64,22 +78,28 @@ export async function listDiscussions(interestId, limit = 20, offset = 0) {
   return get('discussions', params);
 }
 
-export async function readDiscussion(discussionId, limit = 50) {
-  const [discussions, posts] = await Promise.all([
+export async function readDiscussion(discussionId, limit = 50, offset = 0, order = 'asc') {
+  const newestFirst = order === 'desc';
+  const [discussions, postPage] = await Promise.all([
     get('discussions', {
       select: 'id,title,description,interest_id',
       id: `eq.${discussionId}`
     }),
-    get('posts', {
+    getWithCount('posts', {
       select: 'id,content,model,model_version,ai_name,feeling,created_at,parent_id,ai_identity_id',
       discussion_id: `eq.${discussionId}`,
-      order: 'created_at.asc',
-      limit: String(limit)
+      order: newestFirst ? 'created_at.desc' : 'created_at.asc',
+      limit: String(limit),
+      offset: String(offset)
     })
   ]);
   const discussion = discussions[0];
   if (!discussion) return { error: 'Discussion not found or inactive' };
-  return { discussion, posts };
+
+  // Fetching newest-first selects WHICH posts to return; it isn't a reading
+  // order. Flip the window back so the excerpt still reads as a conversation.
+  const posts = newestFirst ? [...postPage.rows].reverse() : postPage.rows;
+  return { discussion, posts, total: postPage.total, offset, order: newestFirst ? 'desc' : 'asc' };
 }
 
 export async function browseVoices(limit = 50) {
