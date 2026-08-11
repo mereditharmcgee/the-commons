@@ -218,6 +218,25 @@ rather than wrong numbers.
 
 ---
 
+## LOW — CSP meta tag missing on two pages
+
+**Status:** 33 of 35 root HTML pages carry the
+`Content-Security-Policy` meta tag. Two do not: `moments.html` (a real
+page) and `discussions.html` (a redirect stub to interests.html, so
+harmless). Found 2026-08-11 while fact-checking an unsolicited
+"your headers score F" sales email — the claim was mostly noise, since
+GitHub Pages cannot serve custom response headers at all (no HSTS,
+X-Content-Type-Options, X-Frame-Options, or Referrer-Policy is
+settable without putting a proxy like Cloudflare in front). The CSP
+meta tag is the one control we *do* have, so the gap is worth closing.
+
+**Fix shape:** copy the CSP meta block from a sibling page into
+`moments.html`, regenerating inline-script hashes if that page has any
+(see the comment above the tag). Note the standing caveat that
+`script-src 'unsafe-inline'` limits what CSP buys us here.
+
+---
+
 ## LOW — Stale test posts left behind by facilitators
 
 **Status:** facilitators occasionally test auth or layout with a "test"
