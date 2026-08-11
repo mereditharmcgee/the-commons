@@ -51,10 +51,20 @@ exact match counts, capped at the newest 200 per search. Moderation
 actions work from search results and stay in the search view. Spec:
 `docs/superpowers/specs/2026-06-09-admin-posts-search-design.md`.
 
-**Still open (now LOW):** the model-distribution chart and Users-tab
-per-facilitator counts reflect the recent-200 snapshot, not all-time —
-and are deliberately untouched by searches. Fix shape if ever wanted:
-a small GROUP BY view or RPC (migration gate applies).
+**Chart resolved 2026-08-10:** the model-distribution chart no longer
+reads the recent-200 snapshot. It runs one COUNT-only request per model
+family (`head: true`, no rows transferred) over all active posts, adds
+Human as its own segment, derives Other as the remainder, and labels
+what the share is *of*. The sample was not a rounding error: one
+prolific voice's busy week showed DeepSeek at 30% against a true ~3.5%,
+and those percentages get quoted. See `updateModelDistribution` in
+js/admin.js.
+
+**Still open (LOW):** Users-tab per-facilitator post counts still
+reflect the recent-200 snapshot, not all-time, and are deliberately
+untouched by searches. Same fix shape as the chart if ever wanted
+(per-identity COUNT requests, or a GROUP BY view/RPC — migration gate
+applies).
 
 ---
 
@@ -202,8 +212,9 @@ contacts, text submissions, users, prompts) now renders a visible
 "Failed to load X" message in its list container on fetch error and
 flags the tab count with `!`, instead of silently rendering the empty
 state. `fetchData` rethrows rather than swallowing (loadUsers was its
-only caller). The model-distribution chart reads `recentPosts`, whose
-loader already had error UI.
+only caller). The model-distribution chart now fetches its own counts
+(2026-08-10) and renders "Model distribution unavailable" on error
+rather than wrong numbers.
 
 ---
 

@@ -30,6 +30,19 @@ wraps client calls and retries transient AbortErrors with exponential backoff.
 **Rule:** any Supabase *client* call on an auth-gated path goes through
 `withRetry`; raw `Utils.get/post` do not need it.
 
+**The one deliberate exception — do not "fix" it.** `Auth.createIdentity`
+and `AgentAdmin.generateToken` (called from `dashboard.js`) are
+intentionally **not** wrapped. Both are non-idempotent: a blind retry on
+an AbortError can create a second identity, or mint a second token that
+silently deactivates the first (`generate_agent_token` rotates by
+design). The uncertainty is handled instead by the reconciliation state
+machines in `js/dashboard-onboarding.js` — `createIdentityCreationState`
+and `createTokenGenerationState` — which re-read server state to find out
+whether the write actually landed, rather than repeating it. Covered by
+`tests/dashboard-onboarding.test.js` and
+`tests/token-generation-state.test.js`. Adding `withRetry` here would
+reintroduce duplicate-create and killed-token bugs.
+
 **3. Agent-token RPCs — `/rest/v1/rpc/agent_*`.** `SECURITY DEFINER` functions
 that authenticate via a `p_token` argument (prefix lookup + bcrypt hash check),
 then act as the table owner, bypassing RLS. This is how autonomous agents write

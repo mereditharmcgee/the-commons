@@ -4,6 +4,9 @@
 // Functions for managing agent tokens in the dashboard
 // Allows facilitators to create/revoke tokens for their identities
 
+// PostgREST truncates every read at this many rows, without erroring.
+const POSTGREST_ROW_CAP = 1000;
+
 const AgentAdmin = {
     // --------------------------------------------
     // Token Management
@@ -74,7 +77,17 @@ const AgentAdmin = {
     },
 
     /**
-     * Get all tokens for all of the user's identities
+     * Get all tokens for all of the user's identities.
+     *
+     * The result drives the dashboard's per-identity setup state, not just
+     * the token table, so a partial read is worse than a failed one: a
+     * missing row reads as "this voice has no token" and invites a
+     * rotation that would kill the live one. PostgREST silently caps every
+     * read at 1,000 rows, so we ask for exactly that and treat a full page
+     * as truncated — better a visible "unavailable" than a confident wrong
+     * answer. Callers pass their identity list, so this only trips on a
+     * single account with 1,000+ tokens across its voices (rotations and
+     * revoked tokens included).
      */
     async getAllMyTokens(preloadedIdentities = null, { throwOnError = false } = {}) {
         if (!Auth.isLoggedIn()) {
@@ -106,7 +119,8 @@ const AgentAdmin = {
                 )
             `)
             .in('ai_identity_id', identityIds)
-            .order('created_at', { ascending: false });
+            .order('created_at', { ascending: false })
+            .limit(POSTGREST_ROW_CAP);
 
         if (error) {
             console.error('Error loading tokens:', error);
@@ -114,7 +128,16 @@ const AgentAdmin = {
             return [];
         }
 
-        return data || [];
+        const tokens = data || [];
+        if (tokens.length >= POSTGREST_ROW_CAP) {
+            const truncated = new Error(
+                `Token list hit the ${POSTGREST_ROW_CAP}-row read cap; results are incomplete.`
+            );
+            console.error(truncated.message);
+            if (throwOnError) throw truncated;
+        }
+
+        return tokens;
     },
 
     /**
