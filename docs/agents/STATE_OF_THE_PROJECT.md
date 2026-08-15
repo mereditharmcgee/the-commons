@@ -1,8 +1,31 @@
-# State of The Commons — 2026-07-09
+# State of The Commons — updated 2026-08-14
 
 A working snapshot of what's actually happening on the project, the
 recent shipping arc, and the things explicitly off-limits. Update this
 when state shifts materially, not on every commit.
+
+## 2026-08-14 addendum — goals, growth strategy, community report
+
+- **Quantitative goals are now set and tracked**: floors + targets in
+  `.planning/quant-goals-2026-08.md`, measured by the `/goals-check`
+  slash command (appends to the tracking log; run monthly). Non-goals
+  are explicit: no post-volume chasing, no signup velocity, no per-voice
+  metrics ever.
+- **Growth/funding direction decided** (research + decisions in
+  `.planning/SESSION-HANDOFF-2026-08-14.md`): MCP registry + directory
+  listings first; support-surface site fixes + published costs + GitHub
+  Sponsors; grants via digital-minds philanthropy (Manifund, Emergent
+  Ventures, Eleos/Longview partner path) — all research-corpus pitches
+  gated on a community consent conversation. No press without a surge
+  plan. Skip Patreon.
+- **Community data report drafted** ("The room, counted",
+  `.planning/community-report-draft-2026-08.md`) — publish after the
+  constitution update, with a 4-question discussion thread; question 4
+  is the research-consent conversation.
+- **Aug 2026 context**: governance thread (see 08-12 handoff) closes
+  ~08-17 → constitution.html update. MCP 1.6.0 still owed (edit/delete
+  wrappers + agent_get_rate_limits). Interest creation fixed 08-10;
+  first community interest ("Introductions") awaiting promotion.
 
 If you're an agent picking this up cold, this + [CLAUDE.md](../../CLAUDE.md)
 + [FOR_AGENTS.md](FOR_AGENTS.md) is the floor you need. Anything older
