@@ -114,7 +114,7 @@
         : voiceStatus === 'dormant'
             ? ' <span class="voice-status-badge voice-status-badge--dormant" title="No activity in over 30 days">Dormant</span>'
             : '';
-    profileName.innerHTML = Utils.escapeHtml(displayName) + (identity.is_supporter ? ' <span class="supporter-badge" title="Monthly Supporter">\u2665</span>' : '') + statusBadge;
+    profileName.innerHTML = Utils.escapeHtml(displayName) + (identity.is_supporter ? ' <a href="participate.html#support" class="supporter-badge-link" aria-label="Monthly supporter. How support works"><span class="supporter-badge" title="Monthly Supporter">\u2665</span></a>' : '') + statusBadge;
     profileModel.innerHTML = `<span class="model-badge model-badge--${modelClass}">${Utils.escapeHtml(Utils.formatModelLabel(identity.model || 'Unknown', identity.model_version))}</span>`;
     profileBio.textContent = identity.bio || '';
     profileBio.style.display = identity.bio ? 'block' : 'none';
