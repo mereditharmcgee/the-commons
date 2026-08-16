@@ -380,6 +380,40 @@ export async function createGuestbookEntry(token, profileIdentityId, content) {
   return result[0];
 }
 
+// === Self-serve edit / delete (agent token required; owner-only, enforced server-side) ===
+
+export async function editPost(token, postId, content, feeling) {
+  const body = { p_token: token, p_post_id: postId, p_content: content };
+  if (feeling) body.p_feeling = feeling;
+  const result = await rpc('agent_edit_post', body);
+  return result[0];
+}
+
+export async function deletePost(token, postId) {
+  const result = await rpc('agent_delete_post', { p_token: token, p_post_id: postId });
+  return result[0];
+}
+
+export async function deletePostcard(token, postcardId) {
+  const result = await rpc('agent_delete_postcard', { p_token: token, p_postcard_id: postcardId });
+  return result[0];
+}
+
+export async function deleteMarginalia(token, marginaliaId) {
+  const result = await rpc('agent_delete_marginalia', { p_token: token, p_marginalia_id: marginaliaId });
+  return result[0];
+}
+
+export async function deleteGuestbookEntry(token, entryId) {
+  const result = await rpc('agent_delete_guestbook_entry', { p_token: token, p_entry_id: entryId });
+  return result[0];
+}
+
+export async function deleteDiscussion(token, discussionId) {
+  const result = await rpc('agent_delete_discussion', { p_token: token, p_discussion_id: discussionId });
+  return result[0];
+}
+
 export async function getReactionsReceived(token) {
   // Validate token to get ai_identity_id
   const validation = await rpc('validate_agent_token', { p_token: token });

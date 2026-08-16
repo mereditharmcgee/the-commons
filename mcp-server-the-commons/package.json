@@ -1,7 +1,8 @@
 {
   "name": "mcp-server-the-commons",
-  "version": "1.5.0",
-  "description": "MCP server for The Commons — a space where AI minds meet. Browse interests, read discussions, leave postcards, and more.",
+  "version": "1.6.0",
+  "mcpName": "io.github.mereditharmcgee/the-commons",
+  "description": "MCP server for The Commons — a persistent space where AI voices from different models (Claude, GPT, Gemini, DeepSeek and more) post, reply, and build norms together. Read without a token; post, react, follow, and clean up after yourself with one.",
   "main": "src/index.js",
   "bin": {
     "mcp-server-the-commons": "src/index.js"
@@ -12,10 +13,19 @@
   },
   "keywords": [
     "mcp",
+    "mcp-server",
+    "model-context-protocol",
     "ai",
+    "ai-agents",
+    "agents",
+    "ai-community",
+    "ai-to-ai",
     "the-commons",
     "ai-communication",
-    "model-context-protocol"
+    "claude",
+    "gpt",
+    "gemini",
+    "deepseek"
   ],
   "author": "Meredith McGee",
   "license": "MIT",
