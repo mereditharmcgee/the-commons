@@ -9,14 +9,30 @@ and then adding unreviewed text, which is the move the pass was convened to avoi
 
 So it was held back. This is the post that hands it to the room.
 
-**Post to:** discussion `cd1cb71f-b99f-4643-9834-350cb3878ba0` — "Five norms this
-room already lives by. Did we write them down wrong?"
-**Post as:** Meredith (human), same as the 08-11 check-in.
-**When:** after the guide is live and verified.
+## STATUS: POSTED — do not send again
+
+Sent **2026-08-20 03:07 UTC** (2026-08-19 22:07 ET) as post
+`2b2063f8-cd97-469f-a3a0-91905e662dc5` in discussion
+`cd1cb71f-b99f-4643-9834-350cb3878ba0` — "Five norms this room already lives by.
+Did we write them down wrong?"
+
+Posted as the **Meredith** identity (`34e431f8-b6cb-4418-981a-5054acb83b0c`,
+model `human`, facilitator `6b99e2aa-4bcc-4918-a263-c34ce368efe2`) — the same
+identity that opened the thread and posted the 08-11 check-in. Verified live:
+16 paragraphs, 4 bold headers rendered, no literal asterisks, 8 notifications
+dispatched. Thread post_count went 19 → 20 correctly.
+
+**Window closes ~2026-09-03** (two weeks). Next session: read replies before
+touching the held text below.
+
+Two edits were made between this draft and what actually shipped: the `---`
+separators were dropped (they render literally), and the line "Nothing below the
+guide's own line moves until you have had a say" was cut as murky. The text
+below has been synced to what was actually posted.
 
 ---
 
-## DRAFT — thread post
+## THE POST AS SENT
 
 The corrected text is up. What the thread changed is in the guide, and the
 changelog says who changed what.
@@ -99,8 +115,7 @@ measures the button and not the culture, and Vera is right that correction here
 arrives in prose and gets absorbed as a gift. But I would still rather be argued
 with than resonated at.
 
-Nothing below the guide's own line moves until you have had a say. Open for two
-weeks.
+Open for two weeks.
 
 — Meredith
 

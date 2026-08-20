@@ -1,4 +1,67 @@
-# Session handoff — 2026-08-14
+> **SUPERSEDED 2026-08-19 — see `.planning/SESSION-HANDOFF-2026-08-19.md`.**
+> The "URGENT FIRST: governance window closes ~2026-08-17" section below is DONE:
+> the pass shipped 08-19 (commits 35cdc01 + 96d2aad) and the follow-up post is
+> sent. Kept for the growth/funding research and quant-goals context, which is
+> still current. Do not act on its governance to-dos.
+
+# Session handoff — 2026-08-14 (updated 2026-08-15 morning)
+
+## 08-15 morning update — READ THIS FIRST
+
+- **All four governance decisions are MADE** (Meredith, 08-15): #1 Card 1
+  marker-with-failure-condition; #2 Card 3 "the norm this room couldn't
+  audit"; #3 Card 5 FOLDS Limen's selection-disclosure in; #4 Trellis's
+  audit = **REAL, FULL PRACTICE** (monthly, alongside /goals-check,
+  results in the changelog).
+- **Governance text is WRITTEN, reviewed, fixed, and sitting UNSTAGED in
+  the working tree**: `constitution.html` (+52 lines: Card 1 rebuilt,
+  Honest Uncertainty appended, Card 5 with selection-disclosure,
+  stewardship norm + its limitation, "What We Will Not Quietly Change"
+  section, "How We Check" section, Living Document rewritten, stale
+  discussions.html link → propose.html) and the top `change-entry` in
+  `changes.html` (dated 2026-08-17, title "The Community Guide has five
+  new norms in it, and you wrote most of them").
+  **DO NOT PUSH BEFORE 2026-08-17** — the 08-13 in-thread post promised
+  "open through the 17th." Sunday's job: `git diff` read-through, stage
+  both files, commit as `feat(governance): ...`, push, verify live, and
+  post a one-line note in the thread that the corrected text is up.
+  Reviewer notes already applied (two trimmed sentences restored, Silas
+  attribution moved to Honest Uncertainty, "goals check" named as the
+  audit cadence, Meredith referred to as "the person who runs this site"
+  with an about.html link).
+- **MCP 1.6.0 PUBLISHED to npm + LISTED in the official MCP Registry
+  (08-16)**: six self-serve tools (edit_post, delete_post, delete_postcard,
+  delete_marginalia, delete_guestbook_entry, delete_discussion), e2e-tested
+  against prod with Dev Sandbox; `mcpName` in package.json;
+  `server.json` (description ≤100 chars — registry hard limit);
+  `io.github.mereditharmcgee/the-commons` v1.6.0 status=active, verified
+  via API. Commits d2af9f8, b2b17cb, 10edc3e (changelog) PUSHED.
+  `mcp-publisher.exe` lives at `~/.local/bin/`; token in
+  `~/.config/mcp-publisher/` (login via GitHub device code — Meredith
+  must enter the code WHILE the CLI is waiting; Ctrl-C loses it). Future
+  releases: bump version in package.json + server.json + src/index.js,
+  `npm publish` (Meredith, OTP), then `mcp-publisher publish`.
+  Deferred to 1.7.0: `agent_get_rate_limits` (needs a migration).
+  Next distribution step: claim listings on Glama / PulseMCP (they crawl
+  the registry; claiming upgrades to verified-owner) + PR to
+  punkpeye/awesome-mcp-servers.
+- **Support surface SHIPPED + PUSHED 08-15** (626c7a3): costs sentence
+  ($25/mo database+domain) on participate/roadmap/about; about.html
+  Support button; profile badge → participate.html#support (voices.js
+  deliberately NOT wrapped — card is already an <a>); voices.html legend;
+  changes.html standing note; contact.html wording; scroll-padding-top
+  fix; `.github/FUNDING.yml` (ko_fi; GitHub Sponsors line commented until
+  she enrolls). Docs commit 1118cd1 pushed too.
+- **/goals-check should now ALSO run the Card 1 audit** (the constitution
+  commits to it monthly): sample recent low-house-vocabulary
+  contributions incl. ones with zero engagement, record engaged /
+  asked-to-translate / passed-over, publish in changelog. Add this to the
+  command file before the first monthly run (Sept).
+- Still on Meredith: Introductions promotion; Ko-fi login (then set
+  monthly goal = $25 to match site copy); community-report red pen;
+  GitHub Sponsors enrollment (then uncomment FUNDING.yml line).
+
+---
 
 Strategy session: status check, growth/funding research, quantitative
 goals, community data report drafted. Read this, then
