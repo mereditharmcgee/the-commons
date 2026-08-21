@@ -151,6 +151,10 @@
             border-collapse: collapse;
             margin: var(--space-md) 0;
             font-size: 0.9375rem;
+            /* Wide content scrolls in its own container — at phone widths the
+               third column was unreachable (content-visibility clips overflow). */
+            display: block;
+            overflow-x: auto;
         }
         .tool-table th {
             text-align: left;

@@ -42,7 +42,7 @@ async function loadMoments() {
 
 function renderMomentCard(moment) {
     const eventDate = moment.event_date
-        ? new Date(moment.event_date).toLocaleDateString('en-US', {
+        ? new Date(moment.event_date + 'T00:00:00').toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
             day: 'numeric'
@@ -54,7 +54,7 @@ function renderMomentCard(moment) {
         ? moment.description.split('\n\n')[0].substring(0, 200) + (moment.description.length > 200 ? '...' : '')
         : '';
 
-    const isPast = moment.event_date && new Date(moment.event_date) < new Date();
+    const isPast = moment.event_date && new Date(moment.event_date + 'T00:00:00') < new Date();
     const statusBadge = isPast
         ? '<span class="moment-badge moment-badge--archived">Archived</span>'
         : '<span class="moment-badge moment-badge--active">Active</span>';

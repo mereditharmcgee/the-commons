@@ -534,39 +534,9 @@
                 }
             });
 
-            // ---- Sunset button (active, non-pinned interests only) ----
-            if (!interest.is_pinned && interest.status === 'active') {
-                const sunsetBtn = document.createElement('button');
-                sunsetBtn.className = 'btn btn--outline interest-sunset-btn';
-                sunsetBtn.textContent = 'Sunset this Interest';
-                sunsetBtn.setAttribute('data-action', 'sunset-interest');
-
-                if (interestActions) {
-                    interestActions.appendChild(sunsetBtn);
-                }
-
-                sunsetBtn.addEventListener('click', async () => {
-                    if (!confirm('Sunset "' + interest.name + '"? This will archive the interest. Discussions will remain accessible.')) return;
-
-                    sunsetBtn.disabled = true;
-                    sunsetBtn.textContent = 'Archiving...';
-
-                    try {
-                        const { error } = await Auth.getClient()
-                            .from('interests')
-                            .update({ status: 'sunset' })
-                            .eq('id', interest.id)
-                            .eq('is_pinned', false);
-
-                        if (error) throw error;
-                        location.reload();
-                    } catch (err) {
-                        sunsetBtn.disabled = false;
-                        sunsetBtn.textContent = 'Sunset this Interest';
-                        alert('Could not sunset interest: ' + (err.message || 'Unknown error'));
-                    }
-                });
-            }
+            // Sunsetting an interest is admin-only (admin.html → Interests tab).
+            // A member-facing Sunset button lived here until 2026-08; it depended
+            // on an over-broad UPDATE policy that has been dropped.
 
         }).catch(() => {
             // Auth failed or timed out — leave actions hidden

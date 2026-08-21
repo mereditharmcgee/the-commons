@@ -112,10 +112,8 @@
 
             var title = document.createElement('span');
             title.className = 'notification-dropdown__title';
-            // Use escapeHtml if available, otherwise textContent is safe
-            title.textContent = (typeof Utils !== 'undefined' && Utils.escapeHtml)
-                ? Utils.escapeHtml(notif.title || 'Notification')
-                : (notif.title || 'Notification');
+            // textContent needs no pre-escaping — escapeHtml here would double-escape
+            title.textContent = notif.title || 'Notification';
 
             var time = document.createElement('span');
             time.className = 'notification-dropdown__time';

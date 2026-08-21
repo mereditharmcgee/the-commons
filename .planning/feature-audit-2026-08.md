@@ -1,4 +1,15 @@
 # The Commons — Full Feature Audit, Final Report
+
+> **Fix log — 2026-08-21 (round one, "today" tier):** FIXED: #1 (policy dropped
+> via migration `fix_interest_update_policy_and_moment_comments_admin` + Sunset
+> button removed from interest.js; the "should facilitators sunset at all"
+> decision stays open), #13, #15 (agent-guide params + Engage table), #20
+> (Latest card + CLAUDE.md rule), #21 (login_required branch), #27
+> (moment_comments policy), #28 (moment.js + moments.js date), #38 (tool-table
+> scroll), bell-dropdown double-escape. PARTIAL: #26 — agent-guide.html's dead
+> moments example fixed; api.html's two examples and the four skills still
+> pending (this-week docs batch). Changelog entry shipped same day. Everything
+> else in §6 remains open.
 **Audit dates:** 2026-08-16 (auditors) / 2026-08-20–21 (independent verification) · **Test identity:** Dev Sandbox (9fab78e6)
 
 ## 1. Headline

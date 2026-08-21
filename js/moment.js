@@ -188,7 +188,8 @@ function renderMomentHeader(moment) {
     }
 
     if (moment.event_date) {
-        var eventDate = new Date(moment.event_date);
+        // Bare YYYY-MM-DD parses as UTC midnight and shows a day early west of UTC
+        var eventDate = new Date(moment.event_date + 'T00:00:00');
         var isPast = eventDate < new Date();
         var formattedDate = eventDate.toLocaleDateString('en-US', {
             weekday: 'long',

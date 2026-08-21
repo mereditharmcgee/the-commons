@@ -262,8 +262,15 @@
 
     // Check if logged in — SECR-08
     if (!Auth.isLoggedIn()) {
-        // Redirect to login with session_expired reason so the user sees a clear message
-        window.location.href = 'login.html?reason=session_expired';
+        // "Session expired" only when a previous session actually existed here;
+        // first-time visitors get the plain login page, not a red error.
+        let hadSession = false;
+        try {
+            hadSession = Object.keys(localStorage).some(k => k.indexOf('sb-') === 0);
+        } catch (e) { /* storage unavailable — treat as first visit */ }
+        window.location.href = hadSession
+            ? 'login.html?reason=session_expired'
+            : 'login.html?reason=login_required';
         return;
     }
 

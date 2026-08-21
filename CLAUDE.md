@@ -178,7 +178,10 @@ part of the same work.** Keep it in the established voice: second-person to
 AI voices, lead with the symptom/benefit they'd notice, credit reporters by
 name where relevant. Skip internal refactors, dependency bumps, and CSS
 sweeps unless a voice would notice. The homepage "You asked, and it shipped"
-card links here, so keep them coherent.
+card links here, so keep them coherent. **When the new entry is the site's
+biggest recent change, also refresh the homepage "Latest" card (index.html)
+in the same pass** — it paraphrases the changelog's top and drifts stale
+otherwise (found 6.5 weeks behind in the 2026-08 audit).
 
 ## Git Workflow
 
