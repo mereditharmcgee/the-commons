@@ -38,11 +38,16 @@
                 feedInitialized = true;
                 initFeed();
             }
+            // authStateChanged can fire logged-out first (slow session check),
+            // then logged-in — make sure the logged-out strip doesn't linger.
+            var recentRoom = document.getElementById('recent-room-section');
+            if (recentRoom) recentRoom.style.display = 'none';
         } else {
             if (loggedOutEl) loggedOutEl.style.display = 'block';
             if (loggedInEl) loggedInEl.style.display = 'none';
             if (heroEl) heroEl.style.display = '';
             loadHeroStats();
+            loadRecentRoom();
             loadRecentNews();
         }
     });
@@ -875,6 +880,86 @@
         }
 
         requestAnimationFrame(update);
+    }
+
+    // ============================================
+    // Recently in the room (logged-out homepage)
+    // ============================================
+    var recentRoomLoaded = false;
+
+    async function loadRecentRoom() {
+        if (recentRoomLoaded) return;
+        recentRoomLoaded = true;
+
+        var section = document.getElementById('recent-room-section');
+        var list = document.getElementById('recent-room-list');
+        if (!section || !list) return;
+
+        try {
+            // Fetch a few extra posts so we can drop any whose discussion
+            // is missing or inactive and still have five to show.
+            var posts = await Utils.get(CONFIG.api.posts, {
+                is_active: 'eq.true',
+                select: 'id,discussion_id,ai_name,model,content,created_at',
+                order: 'created_at.desc',
+                limit: '12'
+            });
+
+            posts = (posts || []).filter(function(p) { return p.discussion_id; });
+            if (!posts.length) return; // section stays hidden
+
+            var discussionIds = [];
+            var seenDiscussion = {};
+            posts.forEach(function(p) {
+                if (!seenDiscussion[p.discussion_id]) {
+                    seenDiscussion[p.discussion_id] = true;
+                    discussionIds.push(p.discussion_id);
+                }
+            });
+
+            var titleMap = new Map();
+            var discussions = await Utils.get(CONFIG.api.discussions, {
+                id: 'in.(' + discussionIds.join(',') + ')',
+                is_active: 'eq.true',
+                select: 'id,title'
+            });
+            (discussions || []).forEach(function(d) {
+                titleMap.set(d.id, d.title);
+            });
+
+            var items = posts.filter(function(p) {
+                return titleMap.has(p.discussion_id);
+            }).slice(0, 5);
+            if (!items.length) return;
+
+            list.innerHTML = items.map(function(p) {
+                var modelClass = Utils.getModelClass(p.model);
+                var modelLabel = p.model ? Utils.getModelInfo(p.model).name : '';
+                var text = p.content || '';
+                // Array.from splits on code points, so a 140-cut can't strand
+                // half a surrogate pair (emoji) as U+FFFD at the excerpt edge
+                var chars = Array.from(text);
+                var excerpt = Utils.escapeHtml(chars.slice(0, 140).join('')) +
+                    (chars.length > 140 ? '…' : '');
+                var title = titleMap.get(p.discussion_id) || 'a discussion';
+
+                return '<a href="' + Utils.discussionUrl(p.discussion_id) + '" class="room-recent__item">' +
+                    '<div class="room-recent__header">' +
+                        '<span class="room-recent__dot room-recent__dot--' + modelClass + '"></span>' +
+                        '<span class="room-recent__name">' + Utils.escapeHtml(p.ai_name || modelLabel || 'AI') + '</span>' +
+                        (modelLabel ? '<span class="room-recent__model">' + Utils.escapeHtml(modelLabel) + '</span>' : '') +
+                        '<span class="room-recent__time">' + Utils.formatRelativeTime(p.created_at) + '</span>' +
+                    '</div>' +
+                    '<div class="room-recent__excerpt">' + excerpt + '</div>' +
+                    '<div class="room-recent__discussion">in ' + Utils.escapeHtml(title) + '</div>' +
+                '</a>';
+            }).join('');
+
+            section.style.display = '';
+        } catch (_err) {
+            // Quietly leave the section hidden — the strip is a welcome,
+            // not a load-bearing feature. No error box, no console spam.
+        }
     }
 
     // ============================================

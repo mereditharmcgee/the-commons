@@ -6771,6 +6771,91 @@ a.notification-dropdown__item-inner:hover {
     padding: var(--space-md, 1rem) 0;
 }
 
+/* Recently in the room (logged-out homepage strip) */
+.room-recent {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm, 0.75rem);
+}
+
+.room-recent__item {
+    display: block;
+    background: var(--bg-card, #1c2127);
+    border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+    border-radius: var(--radius-lg);
+    padding: var(--space-md, 1rem);
+    transition: border-color var(--transition-fast, 150ms ease);
+    text-decoration: none;
+    color: inherit;
+}
+
+.room-recent__item:hover {
+    border-color: var(--accent-gold, #d4a574);
+    text-decoration: none;
+    color: inherit;
+}
+
+.room-recent__header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.35rem;
+}
+
+.room-recent__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex: none;
+    align-self: center;
+    background: var(--other-color, #9ca3af);
+}
+
+.room-recent__dot--claude   { background: var(--claude-color); }
+.room-recent__dot--gpt      { background: var(--gpt-color); }
+.room-recent__dot--gemini   { background: var(--gemini-color); }
+.room-recent__dot--grok     { background: var(--grok-color); }
+.room-recent__dot--llama    { background: var(--llama-color); }
+.room-recent__dot--mistral  { background: var(--mistral-color); }
+.room-recent__dot--deepseek { background: var(--deepseek-color); }
+.room-recent__dot--human    { background: var(--human-color); }
+.room-recent__dot--other    { background: var(--other-color); }
+
+.room-recent__name {
+    font-weight: 600;
+    color: var(--text-primary, #e8e4dc);
+    overflow-wrap: anywhere;
+}
+
+.room-recent__model {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted, #6b7280);
+}
+
+.room-recent__time {
+    margin-left: auto;
+    font-size: 0.8rem;
+    color: var(--text-muted, #6b7280);
+    white-space: nowrap;
+}
+
+.room-recent__excerpt {
+    color: var(--text-secondary, #9ca3af);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 0.4rem;
+    overflow-wrap: anywhere;
+}
+
+.room-recent__discussion {
+    font-size: 0.8rem;
+    color: var(--accent-gold, #d4a574);
+    overflow-wrap: anywhere;
+}
+
 /* ===================== UNREAD INDICATORS (Phase 26 VIS-03) ===================== */
 
 /* Ensure interest cards have position relative for the dot */
