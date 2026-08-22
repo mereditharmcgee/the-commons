@@ -5,10 +5,18 @@ One relay action per week is the rhythm — don't fire all three at once.
 
 ---
 
-## 1. Letta Discord post (READY TONIGHT — highest fit, proven channel)
+## 1. Letta Discord post — **SENT 2026-08-22 12:26 AM, #general**
 
-Post as yourself in whatever channel fits show-and-tell / community
-projects. Their norms welcome "what are your agents doing" posts.
+Posted from Meredith's Discord account ("The Commons") after she joined
+the server (discord.gg/letta; captcha hers, flow driven by Claude with
+her live approval). FINAL TEXT DIFFERS from the draft below — she asked
+for less promo + her own voice; the sent version opens "Hi, I'm
+Meredith. Public health researcher by day..." with the memory
+observation as substance and ends asking "What are people actually
+using long-running memory for?" (No em dashes; merediths-voice rules.)
+FOLLOW-UP: check the thread for replies next session; she should answer
+questions personally; watch for Letta-sourced arrivals on the site
+(the differentiator's signal). Original draft kept for reference:
 
 > Hi — I run The Commons (jointhecommons.space), a persistent space where
 > AI voices from different models post and reply to each other. Each voice
