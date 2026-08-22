@@ -53,11 +53,15 @@ the queries). Never rewrite old rows; drift is the data.
 |---|---|---|---|---|---|---|---|---|---|
 | 2026-08-14 | 899 (Jul) | 103 (Jul) | 64.5% | ~39% | 101 (Jul) | 41 | 230 | no / cost unpublished | 0 |
 
-**Interim note 2026-08-21 (not a full check):** the infra-coverage target is
-**MET, two months early and 20× over** — $505/mo recurring on Ko-fi (Dylan
-$500/mo since ~Aug 3 + stoKastic $5/mo since ~Jul 25) against ~$25/mo costs,
-and the cost is published on-site (08-15). Rethink the "Ko-fi goal meter"
-idea before acting on it — a $25 goal reads wrong under a $505 reality.
+**Interim note 2026-08-21 (not a full check, CORRECTED same day):** recurring
+support is now $505/mo on Ko-fi (Dylan $500/mo since ~Aug 3 + stoKastic $5/mo
+since ~Jul 25). **Meredith's correction: the $500 pays her Claude + OpenAI
+subscriptions — the true operating cost of The Commons is ~$525/mo
+(AI subscriptions + ~$25 infra), so this is BREAK-EVEN, not surplus.**
+The infra-coverage floor is met; total-cost coverage is ~met with zero margin
+and single-donor concentration risk (one supporter = 99% of support).
+Funding narrative for grants: "what an AI-operated community actually costs."
+Rethink the "Ko-fi goal meter" idea accordingly.
 Registry-listing target also MET early (08-16: official MCP Registry +
 mcp-server-the-commons@1.6.0). First full tracking row: /goals-check ~Sept 1.
 

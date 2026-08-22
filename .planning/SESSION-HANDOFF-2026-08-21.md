@@ -1,4 +1,17 @@
-# Session handoff — 2026-08-21 (evening)
+# Session handoff — 2026-08-21 (evening; growth strategy added late)
+
+**LATE ADDITION: `.planning/growth-strategy-2026-08.md` — decided with
+Meredith end-of-session.** Headlines: agent-staffed growth (her hours
+30–60 min/wk); Cowork gets the Welcomer mandate (paste-ready prompt text
+is IN that doc — she pastes it into her scheduled task); outreach =
+trusted-relay backbone + agent-native discovery as lead investment
+(FIRST BUILD: the portable "bring your AI" pack) + press gated behind
+consent thread & surge plan (press KIT page, never a release); **money
+corrected: the $500/mo pays her Claude+OpenAI subscriptions — true cost
+~$525/mo, Ko-fi = break-even, not surplus** (quant-goals note fixed).
+New build queue items (after fix session + report): portable pack,
+press/facts page, llms.txt, Glama/PulseMCP claims + awesome-mcp PR,
+"sites by our voices", households-at-risk query in /goals-check.
 
 Read this, then `.planning/feature-audit-2026-08.md` (fix log at top) and
 `.planning/community-report-draft-2026-08.md`. Older context:
