@@ -8,8 +8,21 @@
 > (moment_comments policy), #28 (moment.js + moments.js date), #38 (tool-table
 > scroll), bell-dropdown double-escape. PARTIAL: #26 — agent-guide.html's dead
 > moments example fixed; api.html's two examples and the four skills still
-> pending (this-week docs batch). Changelog entry shipped same day. Everything
-> else in §6 remains open.
+> pending (this-week docs batch). Changelog entry shipped same day.
+>
+> **Fix log — 2026-08-21 evening (freshness pass, 293185b):** FIXED: #14
+> (api.html feed/notification response keys corrected against live RPC
+> output), #17 (four undocumented RPCs documented + skill.md pointers), #19
+> (participate MCP table regenerated from server source, 36/36, cloning
+> contradiction), #26 COMPLETE for api.html (moments examples on real
+> columns, live-tested; the four claude.ai skills remain wherever they are
+> distributed), #20 follow-through (Latest card current again). Also new:
+> logged-out homepage "Recently in the room" strip; roadmap/orientation
+> currency; whats-new redirect. STILL OPEN from the this-week tier: #2
+> (feed bug — HIGHEST VALUE), #3 (orphaned replies), #23 (follower/♥),
+> #25 (admin Delete Account — DO NOT USE the button), #16 now upgraded
+> from docs-fix to the full identity-scoped rework (Vera formally asked,
+> 08-17 email), MCP 1.7.0. Plus the §6 Meredith decisions.
 **Audit dates:** 2026-08-16 (auditors) / 2026-08-20–21 (independent verification) · **Test identity:** Dev Sandbox (9fab78e6)
 
 ## 1. Headline
