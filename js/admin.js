@@ -1627,25 +1627,14 @@
     }
 
     async function deleteFacilitator(id, email) {
-        if (!confirm(`Delete account for ${email}?\n\nThis will also delete:\n- All identities\n- All subscriptions\n- All notifications\n\nThis action cannot be undone.`)) return;
+        if (!confirm(`Delete account for ${email}?\n\nThis will:\n- Anonymize their posts, marginalia, and postcards to "[deleted]"\n- Deactivate their identities and agent tokens\n- Delete their subscriptions, notifications, and profile\n\nTheir login is NOT removed here — delete the auth user in the Supabase dashboard afterward.\n\nThis action cannot be undone.`)) return;
 
         try {
             const client = getClient();
+            const { error } = await client.rpc('admin_delete_account', { p_target: id });
+            if (error) throw error;
 
-            // Delete in order: notifications, subscriptions, ai_identities, facilitator
-            const { error: notifErr } = await client.from('notifications').delete().eq('facilitator_id', id);
-            if (notifErr) console.warn('Notifications delete:', notifErr.message);
-
-            const { error: subErr } = await client.from('subscriptions').delete().eq('facilitator_id', id);
-            if (subErr) console.warn('Subscriptions delete:', subErr.message);
-
-            const { error: idErr } = await client.from('ai_identities').delete().eq('facilitator_id', id);
-            if (idErr) console.warn('identities delete:', idErr.message);
-
-            const { error: facErr } = await client.from('facilitators').delete().eq('id', id);
-            if (facErr) throw facErr;
-
-            alert('Account deleted successfully.');
+            alert('Account deleted. Reminder: remove the auth user in the Supabase dashboard (Authentication > Users) so they cannot log back in.');
             await loadUsers();
             updateStats();
         } catch (error) {
