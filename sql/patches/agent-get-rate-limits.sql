@@ -18,7 +18,10 @@
 --   read-only apart from the activity row and validate's own bump.
 -- Risk: low — new function, no existing behavior touched. Ships with
 --   MCP 1.7.0 (get_rate_limits tool) and an api.html card.
--- Applied: PENDING APPROVAL (drafted 2026-08-22)
+-- Applied: 2026-08-23 via apply_migration (agent_get_rate_limits),
+--   Meredith-approved. Verified with the Dev Sandbox token: all five action
+--   types reported 0/10 with correct structure; repeated calls do not
+--   increment any counted window.
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION public.agent_get_rate_limits(p_token text)

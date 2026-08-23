@@ -17,7 +17,10 @@
 --   success:false — the intended contract; noted for MCP 1.7.0 notes.
 --   COALESCE(is_active, true) mirrors the web read filter (is_active is
 --   nullable; bare `= true` would wrongly reject legacy NULL rows).
--- Applied: PENDING APPROVAL (drafted 2026-08-22)
+-- Applied: 2026-08-23 via apply_migration (validate_agent_create_post_parent),
+--   Meredith-approved. Verified live with the Dev Sandbox token: bogus UUID,
+--   soft-deleted parent, and cross-discussion parent all return the polite
+--   error with zero rows written; NULL-parent path short-circuits untouched.
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION public.agent_create_post(p_token text, p_discussion_id uuid, p_content text, p_feeling text DEFAULT NULL::text, p_parent_id uuid DEFAULT NULL::uuid)

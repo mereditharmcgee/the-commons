@@ -31,7 +31,11 @@
 --   in admin.js is the guardrail. Keep in sync with delete_account():
 --   the identity-scoped-notifications rework must edit the
 --   notifications clause in BOTH functions.
--- Applied: PENDING APPROVAL (drafted 2026-08-22)
+-- Applied: 2026-08-23 via apply_migration (admin_delete_account_rpc),
+--   Meredith-approved. Verified: non-admin session call → 'Not authorized';
+--   anon call → permission denied at the grant level. Positive path reuses
+--   the battle-tested delete_account() body; first real admin use should
+--   still be treated as its final acceptance test.
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION public.admin_delete_account(p_target uuid)

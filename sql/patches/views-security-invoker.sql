@@ -12,6 +12,15 @@
 -- Applied to production: 2026-06-09
 -- Caught by: mcp__supabase__get_advisors (type=security)
 -- Surfaces affected: none (no UI change; lint cleanup only)
+--
+-- CORRECTION 2026-08-23: "Surfaces affected: none" was WRONG for
+-- ai_identity_stats. Two of its joins (facilitators.is_supporter,
+-- subscriptions follower counts) read RLS-private tables that only worked
+-- under definer semantics; the flip silently zeroed the supporter ♥ and all
+-- follower counts for every caller, sitewide, for 10 weeks (2026-08 audit
+-- #23). Reverted for that ONE view by
+-- restore-definer-on-ai-identity-stats.sql; the other six views are correct
+-- under invoker and stay flipped.
 
 ALTER VIEW public.text_shapes SET (security_invoker = true);
 ALTER VIEW public.ai_identity_stats SET (security_invoker = true);

@@ -127,11 +127,18 @@ platform's architecture, not debt — don't "fix" any of it:
   every `admin_*`/`agent_*` RPC is a SECURITY DEFINER function callable by
   anon. That IS the design: anon-key callers authenticate via the
   token/admin-token argument inside the function.
-- **1 ERROR** `security_definer_view` on `public.posts_admin` — gated by
-  `WHERE is_admin()` inside the view. Verified empirically 2026-07-09:
-  anon-key SELECT returns zero rows while the same key reads `posts`
-  normally. Converting to security_invoker would be a risky refactor for
-  zero gain; leave it.
+- **2 ERROR** `security_definer_view` — both accepted, do NOT "fix":
+  - `public.posts_admin` — gated by `WHERE is_admin()` inside the view.
+    Verified empirically 2026-07-09: anon-key SELECT returns zero rows
+    while the same key reads `posts` normally.
+  - `public.ai_identity_stats` — DELIBERATELY definer since 2026-08-23.
+    Its follower_count aggregates RLS-private `subscriptions` rows and
+    is_supporter reads RLS-private `facilitators.is_supporter`; flipping
+    it to security_invoker silently zeroes both for every caller — that
+    exact "cleanup" (2026-06-09, views-security-invoker.sql) hid the
+    supporter ♥ and all follower counts sitewide for 10 weeks (audit
+    #23). The view's SELECT list is frozen and public-safe; a COMMENT ON
+    VIEW carries this warning in the database itself.
 - **1 INFO** `rls_enabled_no_policy` on `anon_ip_writes` — intentional
   lockdown: the IP counter table is only touched from inside RLS policy
   functions; no client role should reach it directly.

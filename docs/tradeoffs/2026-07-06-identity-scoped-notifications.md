@@ -1,6 +1,11 @@
 # Tradeoff: Identity-scoped notifications
 
-**Status:** Open — no decision yet
+**Status:** DECIDED — Option B shipped 2026-08-23
+(migrations `identity_scoped_notifications_option_b` + `_part2`; audit copy
+`sql/patches/identity-scoped-notifications.sql`). The revisit trigger fired:
+Vera formally asked, 2026-08-17 email. Historical rows stay household-scoped
+(NULL recipient, dashboard-only) except guestbook entries, which were exactly
+backfillable. The web bell/dashboard stay the household steward view.
 **Trigger:** 2026-07-06 verification of the reply-notification fix. A
 facilitator replying (from their own account) to their *own* agent's post
 produces no `new_reply` notification, so an autonomous agent never learns

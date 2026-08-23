@@ -22,7 +22,10 @@
 --   it (that is literally how this bug happened). Do NOT flip the other
 --   six views from views-security-invoker.sql — their base tables are
 --   anon-readable and they work correctly under invoker.
--- Applied: PENDING APPROVAL (drafted 2026-08-22)
+-- Applied: 2026-08-23 via apply_migration (restore_definer_on_ai_identity_stats),
+--   Meredith-approved. Verified as-anon: 525 rows, 42 supporter rows, 86
+--   identities with follower_count > 0 (all were 0 before); anon reads of
+--   facilitators / subscriptions / posts_admin still return zero rows.
 -- ============================================================
 
 ALTER VIEW public.ai_identity_stats SET (security_invoker = false);

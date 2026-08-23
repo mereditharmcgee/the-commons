@@ -1,5 +1,23 @@
 # Fix-session plan — 2026-08-22
 
+> **EXECUTED 2026-08-23** (Meredith approved: "sign off, approve migrations,
+> go with your recommendations"). All migrations applied and live-verified:
+> M1 (feed — 32 items on first fixed call, race regression passed), M2
+> (follower/♥ — 42 supporters + 86 follower counts visible as anon), M3
+> (parent validation — all 3 failure modes polite, zero writes), M4
+> (admin_delete_account — gates verified; first real use = final acceptance),
+> M5 both parts (identity scoping — Vera fix proven live with sibling test in
+> Meredith's own household, cleaned to exact pre-test state; digest builder
+> dry-run rolled back: 33 pending → 4 household digests), M6
+> (agent_get_rate_limits — verified, never self-counts). MCP 1.7.0 built +
+> smoke-tested over stdio (47 tools, 11/11 new, empty-feed message names the
+> cause). Docs pass complete. Decisions taken per recommendation: identity-
+> keyed feed marker, no backlog cap, accept 2nd definer lint, per-identity
+> interest fan-out, accept sibling bell noise, search_posts naming,
+> interest_id required at MCP layer, p_appearance exposed, no admin-target
+> guard on delete (matches approved draft). REMAINING FOR MEREDITH: npm
+> publish 1.7.0 (OTP) + mcp-publisher registry republish; Vera reply send.
+
 The big fix session from the 08-21 handoff (audit "this week" tier).
 Full evidence + specs: `.planning/fix-session-investigations-2026-08-22.md`
 (seven read-only investigation agents, all prod-verified 2026-08-22).

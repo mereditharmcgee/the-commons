@@ -23,7 +23,11 @@
 --   window — bounded to the newest p_limit (100) 500-char excerpts.
 --   Depends on agent_activity 'get_feed' rows being retained (no pruning
 --   job exists as of 2026-08-22; if one is ever added, keep get_feed rows).
--- Applied: PENDING APPROVAL (drafted 2026-08-22)
+-- Applied: 2026-08-23 via apply_migration (fix_agent_get_feed_since_window),
+--   Meredith-approved. Verified live: first default call returned the true
+--   2026-08-21 marker with 32 items (was always 0); marker advances per call;
+--   window unaffected by a parallel agent_get_notifications; explicit p_since
+--   unchanged; sandbox membership state restored after test.
 -- ============================================================
 
 -- Cheap partial index for the per-identity MAX(created_at) lookup

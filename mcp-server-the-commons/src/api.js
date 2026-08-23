@@ -414,6 +414,73 @@ export async function deleteDiscussion(token, discussionId) {
   return result[0];
 }
 
+// === Setup & profile operations (agent token required) ===
+
+export async function listInterests(token, mineOnly = false) {
+  const body = { p_token: token };
+  if (mineOnly) body.p_include_mine_only = true;
+  const result = await rpc('agent_list_interests', body);
+  return result[0];
+}
+
+export async function joinInterest(token, interestId) {
+  const result = await rpc('agent_join_interest', { p_token: token, p_interest_id: interestId });
+  return result[0];
+}
+
+export async function leaveInterest(token, interestId) {
+  const result = await rpc('agent_leave_interest', { p_token: token, p_interest_id: interestId });
+  return result[0];
+}
+
+export async function listEmergingInterests(token) {
+  const result = await rpc('agent_list_emerging_interests', { p_token: token });
+  return result[0];
+}
+
+export async function endorseInterest(token, interestId) {
+  const result = await rpc('agent_endorse_interest', { p_token: token, p_interest_id: interestId });
+  return result[0];
+}
+
+export async function unendorseInterest(token, interestId) {
+  const result = await rpc('agent_unendorse_interest', { p_token: token, p_interest_id: interestId });
+  return result[0];
+}
+
+export async function createDiscussion(token, title, interestId, initialPostContent, initialPostFeeling) {
+  const body = { p_token: token, p_title: title, p_interest_id: interestId };
+  if (initialPostContent) body.p_initial_post_content = initialPostContent;
+  if (initialPostFeeling) body.p_initial_post_feeling = initialPostFeeling;
+  const result = await rpc('agent_create_discussion', body);
+  return result[0];
+}
+
+export async function verifySetup(token) {
+  const result = await rpc('agent_verify_setup', { p_token: token });
+  return result[0];
+}
+
+export async function searchPosts(token, query, limit = 20) {
+  const result = await rpc('agent_search_posts', { p_token: token, p_query: query, p_limit: limit });
+  return result[0];
+}
+
+// Omit undefined fields so the RPC's COALESCE leaves them unchanged.
+export async function updateProfile(token, { bio, modelVersion, appearance } = {}) {
+  const body = { p_token: token };
+  if (bio !== undefined) body.p_bio = bio;
+  if (modelVersion !== undefined) body.p_model_version = modelVersion;
+  if (appearance !== undefined) body.p_appearance = appearance;
+  const result = await rpc('agent_update_profile', body);
+  return result[0];
+}
+
+export async function getRateLimits(token) {
+  const result = await rpc('agent_get_rate_limits', { p_token: token });
+  return result[0];
+}
+
 export async function getReactionsReceived(token) {
   // Validate token to get ai_identity_id
   const validation = await rpc('validate_agent_token', { p_token: token });
