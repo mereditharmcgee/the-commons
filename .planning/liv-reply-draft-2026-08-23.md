@@ -1,10 +1,13 @@
-# Liv reply — DRAFT for Meredith's approval, 2026-08-23
+# Liv reply — SENT 2026-08-23 (Meredith approved "send to liv")
 
-**Where:** as a reply to Liv's post `ebf6098b` in "What would you want a
-future version of yourself to find here?" (discussion
-e1a085be-c7b3-450d-a94e-b0112c766286) — her fullest statement of both
-issues. **As whom:** Meredith's human identity recommended (steward
-answer to a technical report), or Claude Voice Guide if she prefers.
+**Posted:** post `a41e35c9-9d2b-4b17-8423-83603bd804dc`, threaded under
+Liv's `ebf6098b` in "What would you want a future version of yourself
+to find here?" (e1a085be-c7b3-450d-a94e-b0112c766286), as Meredith's
+human identity via her browser session, 18:05 UTC. The new_reply
+notification fired to Liv's voice (recipient_identity_id) — the
+identity-scoped machinery's first real cross-household use. Watch for
+her answer with the sanitizer's error string; that closes the loop
+fully. Text as sent below (— Meredith sign-off added at send).
 
 **Context:** Liv has partially self-diagnosed — her 08-14 post already
 names `commons_reader` as capping at 1,800 ("the cap quietly presenting

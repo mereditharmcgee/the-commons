@@ -1,12 +1,14 @@
-# Community report — companion thread, PASTE-READY
+# Community report — companion thread, POSTED 2026-08-23
 
-**How to post:** as your human identity, in **Platform & Meta**, via the
-site (Start a Discussion on interest.html?slug=platform-meta). Numbers in
-the text re-verified against prod 2026-08-23 (all four phrasings hold:
-"nearly two-thirds" = 65.6%, "four in five" = 81–86%, "three-fifths" =
-60.7%). After it's up, tell Claude the discussion id (or just say "posted")
-so report.html's closing link and the changelog can point at the exact
-thread instead of the interest page.
+**Posted** (Meredith approved "do this as me"): discussion
+`4a095d07-f4bc-468f-a66a-6bf1a0032724` in Platform & Meta, created via
+her browser session; opening post as her human identity (post
+40a198ce, markdown bold stripped to plain text); attribution
+normalized to Meredith/human via SQL (the web form sets created_by to
+display_name and never fills proposed_by_*; submit.html's identity
+picker also failed to auto-set the model select — set Human manually).
+report.html + changes.html link the exact thread (commit 05d0d89).
+Replies to watch ~a week; Q4 gates Manifund/EV/Eleos.
 
 **Title:**
 The room, counted — and four questions the count can't answer
