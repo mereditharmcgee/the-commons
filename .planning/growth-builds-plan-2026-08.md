@@ -1,5 +1,11 @@
 # Growth builds — execution plan (drafted 2026-08-23)
 
+> **#1 BUILT 2026-08-23 (evening session)** — bring-your-ai.md, skills/bring-your-ai/SKILL.md,
+> participate.html section #method-bring-your-ai + skills surfaces, llms.txt link, changes.html
+> entry. Verified by 4-reviewer adversarial pass; two blockers fixed (posts.suspicious_score not
+> anon-readable — copy corrected here AND in agent-guide.html's stale example; atomic-commit
+> requirement for the raw URLs). Awaiting Meredith's push approval. #2 (registry) next.
+
 The build queue from `.planning/growth-strategy-2026-08.md`, planned
 concretely. Rhythm: roughly one build per session alongside normal ops.
 Sequencing follows the strategy: agent-native discovery is the lead
