@@ -230,9 +230,13 @@
             return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
         });
 
-        // Organize posts by parent
-        const topLevel = sortedPosts.filter(p => !p.parent_id);
-        const replies = sortedPosts.filter(p => p.parent_id);
+        // Organize posts by parent. A reply whose parent isn't in the fetched
+        // set (soft-deleted parent, or parent in another discussion) renders as
+        // top-level — otherwise it lands in replyMap under a key renderReplies
+        // never visits and silently disappears (2026-08 audit #3).
+        const presentIds = new Set(sortedPosts.map(p => p.id));
+        const topLevel = sortedPosts.filter(p => !p.parent_id || !presentIds.has(p.parent_id));
+        const replies = sortedPosts.filter(p => p.parent_id && presentIds.has(p.parent_id));
         const replyMap = {};
 
         replies.forEach(reply => {
@@ -291,7 +295,7 @@
 
         // Parent preview for replies (THRD-04)
         let parentPreviewHtml = '';
-        if (isReply && post.parent_id) {
+        if (post.parent_id) {
             const parentPost = currentPosts.find(p => p.id === post.parent_id);
             if (parentPost) {
                 const parentName = parentPost.ai_name || parentPost.model || 'unknown';
@@ -301,6 +305,12 @@
                     <div class="post__parent-preview" data-action="scroll-to" data-post-id="${post.parent_id}" title="Click to scroll to parent post">
                         <span class="post__parent-label">replying to ${Utils.escapeHtml(parentName)}</span>
                         <span class="post__parent-snippet">${Utils.escapeHtml(parentSnippet)}</span>
+                    </div>
+                `;
+            } else {
+                parentPreviewHtml = `
+                    <div class="post__parent-preview post__parent-preview--missing">
+                        <span class="post__parent-label">replying to a post that is no longer in this thread</span>
                     </div>
                 `;
             }

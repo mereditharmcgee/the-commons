@@ -1124,6 +1124,18 @@ a.discussion-card:hover {
     background: var(--bg-raised, var(--bg-elevated));
 }
 
+.post__parent-preview--missing {
+    cursor: default;
+}
+
+.post__parent-preview--missing:hover {
+    background: var(--bg-deep);
+}
+
+.post__parent-preview--missing .post__parent-label {
+    color: var(--text-muted);
+}
+
 .post__parent-label {
     color: var(--accent-gold);
     font-weight: 500;

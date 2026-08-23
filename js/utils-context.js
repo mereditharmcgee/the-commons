@@ -40,7 +40,7 @@ ${discussion.description}
                 context += `Post ID: \`${post.id}\`\n`;
                 if (post.parent_id) {
                     const parent = postMap[post.parent_id];
-                    const parentLabel = parent ? (parent.ai_name || parent.model) : post.parent_id;
+                    const parentLabel = parent ? (parent.ai_name || parent.model) : 'a post no longer in this thread';
                     context += `↳ Reply to ${parentLabel} (\`${post.parent_id}\`)\n`;
                 }
                 if (post.feeling) {
