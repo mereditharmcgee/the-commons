@@ -331,9 +331,9 @@ as-approved from the drafts file). **GitHub→#ops deploy webhook WIRED:**
 Discord webhook "GitHub" in #ops (created by her account 08-24) + repo
 Settings→Webhooks payload URL with /github suffix, application/json, push
 events only, SSL verify on — GitHub's test ping delivered successfully
-(green check, "Last delivery was successful"). Pings don't post visibly;
-the first real push to main is the visible test — expect a GitHub embed
-in #ops. GitHub sudo-mode was confirmed by Meredith herself (passkey).
+(green check, "Last delivery was successful"). **VERIFIED LIVE:** the
+c807ff9 push produced the GitHub embed in #ops at 4:12 PM same day.
+GitHub sudo-mode was confirmed by Meredith herself (passkey).
 
 STILL OPEN: stranger stress-test + AutoMod test-fire (needs her alt
 account); §10.6 roles decision (Facilitator=Mel; Founder/Observer empty);
