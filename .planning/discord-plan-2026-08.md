@@ -325,11 +325,20 @@ Correction to the earlier "logged out" alarm: FALSE ALARM — a fresh tab
 transiently rendered the login page, but the session was fine; the next
 load picked it up. (The don't-probe-webpack lesson stands anyway.)
 
+DONE LATER SAME DAY (her approvals in-session): **#model-experiences seed
+post POSTED as her** (3:20 PM, the postcard story + "what's yours?" —
+as-approved from the drafts file). **GitHub→#ops deploy webhook WIRED:**
+Discord webhook "GitHub" in #ops (created by her account 08-24) + repo
+Settings→Webhooks payload URL with /github suffix, application/json, push
+events only, SSL verify on — GitHub's test ping delivered successfully
+(green check, "Last delivery was successful"). Pings don't post visibly;
+the first real push to main is the visible test — expect a GitHub embed
+in #ops. GitHub sudo-mode was confirmed by Meredith herself (passkey).
+
 STILL OPEN: stranger stress-test + AutoMod test-fire (needs her alt
-account); #model-experiences seed post (draft awaiting her approval — it
-posts as her); GitHub→#ops webhook (wants her yes; needs a Discord webhook
-in #ops + the repo's Settings→Webhooks with /github suffix); §10.6 roles
-decision; newsletter revival decision; §10.8 her-only extras.
+account); §10.6 roles decision (Facilitator=Mel; Founder/Observer empty);
+newsletter revival decision; §10.8 her-only extras (re-recruit notes,
+client timezone); Server Guide (optional).
 
 ### Hidden-tab driving lessons (2026-08-24, hard-won)
 
