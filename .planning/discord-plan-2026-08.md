@@ -246,6 +246,63 @@ multiline = shift+Return between paragraphs, Enter only at the end; avoid
 #channel autocompletes in composers (plain names); channel-list coordinates
 shift when deletes land — rescreenshot before every drag.
 
+### 10.1 PERMISSION AUDIT — RUN 2026-08-24 (afternoon session)
+
+Method: per-channel Edit Channel → Permissions, tri-state radio values read
+from aria-checked (all 26 permissions per role checked, not eyeballed).
+Driven in a background tab — see the hidden-tab lessons at the end.
+
+| Channel | Sync | Overwrites found | Verdict |
+|---|---|---|---|
+| #start-here | synced w/ Intro | @everyone: none (all passthrough) | ⚠ read-only NOT enforced by perms — relies on Discord's rules-channel behavior. Verify via member view, else add explicit deny |
+| #introductions | NOT synced | @everyone: ALLOW Send Messages + Send in Threads | ✔ correct (Community onboarding default) |
+| #announcements | NOT synced | Facilitator: DENY Send/Send-in-Threads; @everyone: NONE | ✘ **BACKWARDS — any member can post.** Fix: @everyone deny Send Messages + Send in Threads (+ Create Threads). The Facilitator deny is decoration on a memberless role |
+| #help | synced w/ Facilitating | @everyone: none | ✔ members post + thread per server defaults |
+| #commons-chat | synced w/ Facilitating | @everyone: none | ✔ |
+| #ops | NOT synced, **Private ON** | @everyone: DENY View | ✔ admin-only |
+| #model-experiences | synced w/ The Work | @everyone: none | ✔ |
+| #commons-watch | (lock icon = Private ON) | not opened — tab starvation | ~✔ pending member-view confirm |
+| #ai-news | (lock icon = Private ON) | not opened — tab starvation | ~✔ pending member-view confirm |
+
+Categories Intro/Facilitating/The Work: no @everyone overwrites (proven via
+synced channels showing all-passthrough). Still unverified: server-level
+@everyone role permissions (the ground truth every passthrough inherits);
+member view via Server Settings → Roles → @everyone → View Server As Role
+(settles start-here, the two archived channels, and thread perms in one look).
+
+Also found during the audit:
+- **Empty "Text Channels" AND "Voice Channels" categories still exist** —
+  visible clutter for members; both should be deleted (was §8.1, missed).
+- #announcements is a plain text channel, not an Announcement-type channel
+  (fine at this scale; read-only comes from the @everyone deny fix).
+- Channel topics: only #start-here has one. #introductions, #announcements,
+  #help, #commons-chat, #model-experiences are all empty (§10.5 furniture).
+- #help has zero messages (fresh room — the facilitator-help rename kept no
+  history, or it never had any).
+- Onboarding Question exists and is live: "Are you here to facilitate, or to
+  observe?" → Facilitate / Observe (lurk first, decide later) — on the
+  Channels & Roles member page (§10.4 starts from this).
+
+FIX QUEUE (each ~1 min with a visible tab): (1) @everyone deny Send
+Messages + Send in Threads + Create Threads on #announcements; (2) delete
+the two empty categories; (3) verify start-here read-only in member view,
+add explicit deny if not enforced; (4) channel topics; then §10.2–10.7.
+
+### Hidden-tab driving lessons (2026-08-24, hard-won)
+
+If the Discord tab is not the visible tab in a visible Chrome window
+(document.visibilityState === 'hidden'), rAF never runs: every layer
+(modal/menu) opens stuck in an `animating` class with pointer-events:none
+over the whole subtree, so clicks FALL THROUGH to the app underneath —
+that's how a "Permissions" click becomes a "Channels & Roles" navigation.
+Workaround that works: after every click that opens a layer, strip the
+animating classes via JS (classList.remove + transform:none), THEN click
+inside the layer. Event processing can still lag seconds behind dispatch
+(clicks activate late, keypresses get eaten — a context menu can silently
+swallow 5 of 6 ArrowDowns, so NEVER blind-Enter in a menu that contains
+Delete Channel). The real fix is 10 seconds of a fronted tab: everything
+drains and behaves normally. Don't fight it; ask for the tab.
+
 ## Sources
 
 Recon workflow wf_da831268-443 (four readers: every repo Discord mention;
