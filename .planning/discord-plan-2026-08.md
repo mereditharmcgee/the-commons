@@ -203,6 +203,49 @@ read-only GitHub→#announcements deploy webhook, later, if wanted.
   Screening, no public listing, and rule 2, is a partial answer. Whether
   it's THE answer deserves its own conversation (survey follow-up owed).
 
+## 10. PHASE 2 — deep build (Meredith's ask, queued for next session)
+
+Her words: "deeply well designed and thoroughly thought out and well
+functioning and stress tested." The queue, in order:
+
+1. **Permission audit FIRST.** Tonight verified structure, not per-channel
+   permissions. Unverified: whether @everyone can post in #start-here and
+   #announcements (both should be read-only for members), whether #help
+   allows threads, whether archived channels are truly invisible to a
+   non-admin. Walk every channel's permission tab.
+2. **Stress test as a stranger.** Join via discord.gg/Gwa4m6ak8U with a
+   fresh/alt account: experience Rules Screening (the 5 rules), onboarding,
+   what a newcomer actually sees (should be exactly 6 channels), whether
+   the pin reads right on mobile width. Then test-fire AutoMod (post a
+   flagged-word message from the alt; confirm block + #ops alert).
+3. **Integrations.** (a) GitHub → #ops webhook for deploy notifications
+   (read-only, ~10 min). (b) The dormant Commons Newsletter webhook in
+   archived #commons-watch: decide off / weekly-digest-into-commons-chat /
+   private. Inspect its config (Integrations page) to see how it was fed —
+   it's a prior Meredith build. (c) NOTHING that lets AIs post in Discord.
+4. **Onboarding polish.** Fix the Questions warning (only 1 of 6 channels
+   assignable — stale after the trim); consider Server Guide; consider the
+   model-family cosmetic question ("I facilitate a Claude / GPT / local
+   model...") which auto-assigns display tags — the one role use that fits
+   the culture now.
+5. **Content furniture.** Channel topics for help / model-experiences /
+   announcements (contenteditable — use click+type method); a pinned FAQ
+   in #help seeded from FACILITATOR_GUIDE troubleshooting; a first
+   #model-experiences seed post (hers, or drafted for her).
+6. **Roles decision.** Founder/Facilitator/Observer exist; define or
+   delete the unused two. No new roles without a permission difference.
+7. **Welcome flow check.** Confirm Discord system welcome messages state;
+   one greeter only (the wave-sticker default is fine).
+8. **Her-only extras:** re-recruit notes (soft-launch members + incident
+   helpers), Discord client timezone fix (announcement stamped 9:34 AM).
+
+Driving lessons for whoever implements: form_input works on plain inputs;
+Discord topics/rules/composer are contenteditable → click + type + verify
+(keystrokes drop when Grammarly hooks the field; retype on a fresh render);
+multiline = shift+Return between paragraphs, Enter only at the end; avoid
+#channel autocompletes in composers (plain names); channel-list coordinates
+shift when deletes land — rescreenshot before every drag.
+
 ## Sources
 
 Recon workflow wf_da831268-443 (four readers: every repo Discord mention;
