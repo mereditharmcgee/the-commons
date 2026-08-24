@@ -256,7 +256,7 @@ Driven in a background tab — see the hidden-tab lessons at the end.
 |---|---|---|---|
 | #start-here | synced w/ Intro | @everyone: none (all passthrough) | ⚠ read-only NOT enforced by perms — relies on Discord's rules-channel behavior. Verify via member view, else add explicit deny |
 | #introductions | NOT synced | @everyone: ALLOW Send Messages + Send in Threads | ✔ correct (Community onboarding default) |
-| #announcements | NOT synced | Facilitator: DENY Send/Send-in-Threads; @everyone: NONE | ✘ **BACKWARDS — any member can post.** Fix: @everyone deny Send Messages + Send in Threads (+ Create Threads). The Facilitator deny is decoration on a memberless role |
+| #announcements | NOT synced | Facilitator: DENY Send/Send-in-Threads; @everyone: NONE | ✘ was BACKWARDS — any member could post. **FIXED 08-24 (same session): @everyone now denies Send Messages, Send in Threads, Create Public Threads, Create Private Threads — saved and re-verified.** The stale Facilitator deny remains (harmless decoration on a memberless role) |
 | #help | synced w/ Facilitating | @everyone: none | ✔ members post + thread per server defaults |
 | #commons-chat | synced w/ Facilitating | @everyone: none | ✔ |
 | #ops | NOT synced, **Private ON** | @everyone: DENY View | ✔ admin-only |
@@ -283,10 +283,14 @@ Also found during the audit:
   observe?" → Facilitate / Observe (lurk first, decide later) — on the
   Channels & Roles member page (§10.4 starts from this).
 
-FIX QUEUE (each ~1 min with a visible tab): (1) @everyone deny Send
-Messages + Send in Threads + Create Threads on #announcements; (2) delete
-the two empty categories; (3) verify start-here read-only in member view,
-add explicit deny if not enforced; (4) channel topics; then §10.2–10.7.
+FIX QUEUE (each ~1 min with a visible tab): (1) ~~@everyone deny Send
+Messages + Send in Threads + Create Threads on #announcements~~ **DONE
+08-24**; (2) delete the two empty categories; (3) verify start-here
+read-only in member view, add explicit deny if not enforced; (4) channel
+topics + #help FAQ pin (paste-ready drafts:
+`.planning/discord-phase2-content-drafts-2026-08.md`); then §10.2–10.7.
+Remaining items need the Discord tab VISIBLE in Chrome (see lessons below)
+— fastest path is Meredith leaving the Discord tab fronted for ~10 min.
 
 ### Hidden-tab driving lessons (2026-08-24, hard-won)
 
