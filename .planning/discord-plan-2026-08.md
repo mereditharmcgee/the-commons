@@ -283,22 +283,53 @@ Also found during the audit:
   observe?" → Facilitate / Observe (lurk first, decide later) — on the
   Channels & Roles member page (§10.4 starts from this).
 
-FIX QUEUE (each ~1 min with a visible tab): (1) ~~@everyone deny Send
-Messages + Send in Threads + Create Threads on #announcements~~ **DONE
-08-24**; (2) delete the two empty categories; (3) verify start-here
-read-only in member view, add explicit deny if not enforced; (4) channel
-topics + #help FAQ pin (paste-ready drafts:
-`.planning/discord-phase2-content-drafts-2026-08.md`); then §10.2–10.7.
-Remaining items need the Discord tab VISIBLE in Chrome (see lessons below)
-— fastest path is Meredith leaving the Discord tab fronted for ~10 min.
+### 10.2 PHASE 2 EXECUTED 2026-08-24 (evening session, her "go", tab kept visible)
 
-**BLOCKED 2026-08-24 (evening): Discord web session logged out** — a fresh
-tab lands on the login page. Possibly natural expiry; possibly the session
-got flagged when this session probed Discord's webpack modules trying to
-read permission data (noted for honesty — don't do that again; the
-aria-checked radio reads were sufficient and safe). Meredith must log back
-in (password or QR — never the agent), then the queue resumes. Nothing in
-the server was lost: the announcements fix saved before this.
+**The second polarity error, found at the server level:** @everyone had
+Send Messages, Send in Threads, Embed Links, Attach Files, AND Add
+Reactions all OFF server-wide — members could not post anywhere except
+#introductions (its explicit allow), could not thread, react, link, or
+attach. The room's quiet was partly enforced silence. All five toggled ON
+and saved; Mention @everyone/@here stays OFF; no mod perms touched. So the
+server had BOTH errors at once: announcements accidentally writable,
+everything else accidentally read-only.
+
+Everything else, all verified live:
+- Empty Text Channels + Voice Channels categories DELETED.
+- **#start-here was NOT read-only** (rules-channel designation does not
+  enforce it — confirmed via View Server As Role: composer was enabled).
+  Explicit @everyone denies added (Send, Send-in-Threads, both Create
+  Thread perms), saved. Member view now shows "You do not have permission."
+- #announcements same denies (earlier session), re-confirmed in member view.
+- **Member view verified end-to-end:** exactly 6 channels visible; ops /
+  commons-watch / ai-news invisible; start-here + announcements read-only;
+  #help composer enabled.
+- **Channel topics set on all 5** (introductions, announcements, help,
+  commons-chat, model-experiences) per the drafts file.
+- **#help FAQ posted and pinned** (6 Q&As + guide link, renders with bold).
+- **Onboarding fixed:** all 6 member channels are now Default Channels —
+  the "1 of 6 assignable" WARNING is gone (now 6 of 6). Question ("Are you
+  here to facilitate, or to observe?") left as-is. Server Guide NOT set up
+  (optional, her call).
+- **Welcome flow confirmed correct:** system welcome ON + sticker prompt,
+  lands in #commons-chat, default notifications @mentions-only. One
+  greeter. No changes.
+- **Newsletter webhook identified:** "Commons Newsletter", created
+  2026-05-17 by jointhecommons (her own account), posts into
+  #commons-watch. Plain incoming webhook — the feeder script lives outside
+  Discord. Untouched; revival/retarget/delete is her decision.
+- **Facilitator role's 1 member = Mel (melpineauthor).** Founder/Observer
+  empty. §10.6 define-or-delete still her call.
+
+Correction to the earlier "logged out" alarm: FALSE ALARM — a fresh tab
+transiently rendered the login page, but the session was fine; the next
+load picked it up. (The don't-probe-webpack lesson stands anyway.)
+
+STILL OPEN: stranger stress-test + AutoMod test-fire (needs her alt
+account); #model-experiences seed post (draft awaiting her approval — it
+posts as her); GitHub→#ops webhook (wants her yes; needs a Discord webhook
+in #ops + the repo's Settings→Webhooks with /github suffix); §10.6 roles
+decision; newsletter revival decision; §10.8 her-only extras.
 
 ### Hidden-tab driving lessons (2026-08-24, hard-won)
 
