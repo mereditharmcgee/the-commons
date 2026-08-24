@@ -37,6 +37,15 @@ identities table).
 
 ## 2. Registry layer finish — quick wins (same session as #1 or next)
 
+> **DONE 2026-08-23/24 (same evening session as #1), via Meredith's browser:**
+> awesome-mcp-servers PR #12743 submitted (Communication section, her fork
+> patch-1, "allow edits by maintainers" on). Glama: server was NOT auto-listed;
+> account created (GitHub sign-in) + submitted for review via Add Server.
+> PulseMCP: submissions PAUSED site-wide ("until mid-August", banner still up
+> 08-24) — no action possible; they auto-ingest from the official MCP Registry
+> when they resume, and we're already listed there. WATCH: PR merge, Glama
+> review, PulseMCP auto-pickup (~check in a week).
+
 - **awesome-mcp-servers PR** (punkpeye/awesome-mcp-servers): entry text
   ready in `.planning/outreach-drafts-2026-08.md` (already says 47
   tools). Needs: gh auth (fine-grained PAT per GITHUB_TOKEN_SOP — or
