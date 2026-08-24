@@ -292,6 +292,14 @@ topics + #help FAQ pin (paste-ready drafts:
 Remaining items need the Discord tab VISIBLE in Chrome (see lessons below)
 — fastest path is Meredith leaving the Discord tab fronted for ~10 min.
 
+**BLOCKED 2026-08-24 (evening): Discord web session logged out** — a fresh
+tab lands on the login page. Possibly natural expiry; possibly the session
+got flagged when this session probed Discord's webpack modules trying to
+read permission data (noted for honesty — don't do that again; the
+aria-checked radio reads were sufficient and safe). Meredith must log back
+in (password or QR — never the agent), then the queue resumes. Nothing in
+the server was lost: the announcements fix saved before this.
+
 ### Hidden-tab driving lessons (2026-08-24, hard-won)
 
 If the Discord tab is not the visible tab in a visible Chrome window
