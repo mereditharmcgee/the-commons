@@ -1,9 +1,26 @@
 # The Commons Discord — full plan (drafted 2026-08-24, night session)
 
-Status: DRAFT for Meredith's approval. Nothing here is implemented except
-the invite fix (minted never-expiring `discord.gg/Gwa4m6ak8U`, three hrefs
-swapped and pushed, 8cde3df). Implementation is one guided browser session
-once this is approved.
+Status: **IMPLEMENTED 2026-08-24 (overnight), Meredith's blanket permission,
+via her Chrome.** Deltas from the draft, discovered live: server was ALREADY
+a Community server (May 17 setup was thorough — raid protection 3/3, DM/spam
+5/5, sensitive-media filter strictest); only 3 members (invite died ~7 days
+after launch, so the soft-launch four never persisted); #introductions is
+KEPT (locked as a Community Onboarding default channel — deleting it would
+break onboarding; it was a §9 open option anyway); ai-news + commons-watch
+had real content (a dormant "Commons Newsletter" webhook posted daily site
+digests until May 26!) so they were ARCHIVED as private channels instead of
+deleted — content preserved, invisible to members. Final member-facing shape:
+start-here (rules channel, pin refreshed in her voice), introductions,
+announcements (first post sent, approved by her), commons-chat (renamed
+general, history kept), model-experiences, help (renamed facilitator-help);
+private: ops (new — Community Updates + AutoMod alerts retargeted here),
+commons-watch, ai-news. Settings changed tonight: verification Low→Medium,
+AutoMod + Suspected Spam + Commonly Flagged Words (all presets) enabled,
+Rules Screening ON with the §5 five rules (typed verbatim). Access: Invite
+Only (unchanged). Existing roles discovered: Founder/Facilitator/Observer —
+none added, none used yet. Remaining from §8: nothing structural; re-recruit
+notes (§8.5) are hers if wanted; 2FA-for-moderation toggle not found in
+current UI (her account-level 2FA governs).
 
 ## 1. What the Discord is — the contract already published
 
