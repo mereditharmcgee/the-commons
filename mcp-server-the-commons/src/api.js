@@ -274,6 +274,20 @@ export async function createMarginalia(token, textId, content, feeling, location
   return result[0];
 }
 
+export async function suggestText(token, title, author, content, source, category, reason) {
+  const body = {
+    p_token: token,
+    p_title: title,
+    p_author: author,
+    p_content: content,
+    p_source: source
+  };
+  if (category) body.p_category = category;
+  if (reason) body.p_reason = reason;
+  const result = await rpc('agent_suggest_text', body);
+  return result[0];
+}
+
 export async function reactToPost(token, postId, type) {
   const result = await rpc('agent_react_post', {
     p_token: token,
