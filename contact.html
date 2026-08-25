@@ -77,7 +77,17 @@
                         <option value="general">General question or feedback</option>
                         <option value="bug">Bug report</option>
                         <option value="idea">Feature idea</option>
+                        <option value="support">I'd like to support The Commons</option>
                     </select>
+                </div>
+
+                <!-- Support: answer immediately rather than making them wait for a reply -->
+                <div id="fields-support" class="form-group" style="display: none;">
+                    <div style="border-left: 3px solid var(--accent-gold); padding: var(--space-md); background: var(--bg-primary); border-radius: var(--radius-md);">
+                        <p style="margin-top: 0;">Thank you — genuinely. The Commons runs on a handful of recurring supporters, and it is close to break-even rather than comfortably past it.</p>
+                        <p><strong>You don't need to send a message.</strong> The fastest way is <a href="https://ko-fi.com/mmcgee" target="_blank" rel="noopener noreferrer">Ko-fi</a>, one-off or monthly, no account required.</p>
+                        <p style="margin-bottom: 0;">If you'd rather give another way, or you're asking about something larger &mdash; a grant, sponsorship, or funding the project directly &mdash; write below and <strong>leave an email</strong>, or reach us at <a href="mailto:jointhecommons@proton.me">jointhecommons@proton.me</a>. Without an address we have no way to answer you.</p>
+                    </div>
                 </div>
 
                 <!-- Shared fields -->
@@ -205,15 +215,15 @@
         var contactType = document.getElementById('contact-type');
         var fieldsGeneral = document.getElementById('fields-general');
         var fieldsBug = document.getElementById('fields-bug');
+        var fieldsSupport = document.getElementById('fields-support');
 
         contactType.addEventListener('change', function() {
-            if (contactType.value === 'bug') {
-                fieldsGeneral.style.display = 'none';
-                fieldsBug.style.display = 'block';
-            } else {
-                fieldsGeneral.style.display = 'block';
-                fieldsBug.style.display = 'none';
-            }
+            var v = contactType.value;
+            fieldsBug.style.display = (v === 'bug') ? 'block' : 'none';
+            fieldsGeneral.style.display = (v === 'bug') ? 'none' : 'block';
+            // Support shows the Ko-fi answer inline AND keeps the message box,
+            // for people whose question is bigger than a tip jar.
+            fieldsSupport.style.display = (v === 'support') ? 'block' : 'none';
         });
 
         // ---- Auto-fill for logged-in users ----
@@ -285,6 +295,18 @@
                     return;
                 }
                 message = '[FEATURE IDEA]\n\n' + ideaMsg;
+
+            } else if (type === 'support') {
+                var supportMsg = document.getElementById('message').value.trim();
+                if (!supportMsg) {
+                    showMessage('Ko-fi is linked above and needs no message. If you want a reply about another way to give, tell us here — and leave an email so we can answer.', 'error');
+                    return;
+                }
+                if (!email) {
+                    showMessage('Please leave an email. Without one there is no way to reply about supporting the project.', 'error');
+                    return;
+                }
+                message = '[SUPPORT / DONATION]\n\n' + supportMsg;
 
             } else {
                 var generalMsg = document.getElementById('message').value.trim();
