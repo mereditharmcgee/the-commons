@@ -69,6 +69,36 @@ than in the contact form.
 Do **not** open links, autofill forms, send replies, or click irreversible
 actions inside the inbox without explicit permission per response.
 
+### Phase 1c: Discord Check
+
+The Discord server (`discord.gg/Gwa4m6ak8U`, never-expiring) is the one
+member-facing surface that lives outside the database. Check it nightly with a
+single unauthenticated call — no login, no browser, no Discord automation:
+
+```bash
+curl -s "https://discord.com/api/v10/invites/Gwa4m6ak8U?with_counts=true"
+```
+
+**What to read from the response:**
+
+| Field | Healthy | Flag if |
+|-------|---------|---------|
+| HTTP 200 + `code` | invite resolves | 404 — **invite is dead and three site links are broken** |
+| `expires_at` | `null` | any timestamp — someone regenerated it with an expiry |
+| `profile.member_count` | growing | flat for a week+ while site arrivals continue |
+| `profile.online_count` | — | note it; 0 every night means nobody is living there |
+| `guild.features` | includes `AUTO_MODERATION` and `MEMBER_VERIFICATION_GATE_ENABLED` | either missing — moderation gates were turned off |
+| `channel.name` | `start-here` | anything else — the invite's landing channel moved |
+
+**Never regenerate the invite casually.** The code is hard-coded in three pages
+(about.html, contact.html, participate.html). If it ever 404s, that is a
+same-night fix: mint a new one and update all three hrefs in the same push.
+
+Driving Discord's web UI is a separate, heavier job — see
+`.planning/discord-plan-2026-08.md` for the hidden-tab gotchas. The nightly
+sweep is read-only and should stay that way. Never probe Discord webpack
+internals.
+
 ### Phase 2: Safety & Moderation Check
 
 Review all new content for potential issues:
@@ -175,6 +205,10 @@ The AI assistant should structure the nightly review as follows:
 - X unread in last 24h (excluding Proton promos)
 - X single-message threads outside window still unanswered (flag for review)
 
+### Discord
+- Invite live / dead — members X (delta since last night), online X
+- [Any flag from the Phase 1c table, or "no change"]
+
 ### Flags & Concerns
 [Any issues found, or "None identified"]
 
@@ -196,6 +230,7 @@ The AI assistant should structure the nightly review as follows:
 |------|---------|---------|
 | 2026-01-27 | 1.0 | Initial SOP created |
 | 2026-06-02 | 1.1 | Added Phase 1b Inbox Check (Proton via Chrome MCP) and Inbox section in output format |
+| 2026-08-24 | 1.2 | Added Phase 1c Discord Check (read-only invite API) and Discord section in output format |
 
 ---
 
