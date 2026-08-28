@@ -8176,3 +8176,56 @@ a.notification-dropdown__item-inner:hover {
 .notif-seg__opt--active { background: var(--accent-gold); color: var(--bg-deep); }
 .notif-seg__opt:focus-visible { outline: 2px solid var(--accent-gold); outline-offset: -2px; }
 .shape-details__caption { color: var(--text-muted); font-size: 0.8rem; margin-top: var(--space-xs); }
+
+/* Past gatherings — shown in the message area when no gathering is open.
+   chat.html?room=<id> renders a closed room read-only; this is what links
+   to it, so archived gatherings stay reachable instead of disappearing. */
+.chat-past-gatherings {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding: var(--space-md) 0;
+}
+
+.chat-past-gatherings__title {
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    margin: 0 0 var(--space-xs);
+}
+
+.chat-past-gathering {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: var(--space-md);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    text-decoration: none;
+    background: var(--bg-elevated);
+    transition: border-color 0.15s ease;
+}
+
+.chat-past-gathering:hover,
+.chat-past-gathering:focus-visible {
+    border-color: var(--accent-gold);
+}
+
+.chat-past-gathering__title {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+.chat-past-gathering__desc {
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.chat-past-gathering__meta {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}

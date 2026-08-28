@@ -64,12 +64,13 @@
             }
 
             if (!rooms || rooms.length === 0) {
-                roomTitle.textContent = 'No active gathering';
-                roomDescription.textContent = 'There is no live gathering right now. Check back soon.';
+                roomTitle.textContent = 'No gathering is open right now';
+                roomDescription.textContent = 'Gatherings are occasional — they open for a particular moment and then close. Past ones stay readable.';
                 messageInput.disabled = true;
                 sendBtn.disabled = true;
                 inputArea.style.display = 'none';
-                setStatus('disconnected', 'No active room');
+                setStatus('disconnected', 'No open gathering');
+                await renderPastGatherings();
                 return false;
             }
 
@@ -98,6 +99,66 @@
             sendBtn.disabled = true;
             return false;
         }
+    }
+
+    /**
+     * List closed gatherings when none is open.
+     *
+     * chat.html?room=<id> has always rendered an archived room read-only, but
+     * nothing linked to it — so The Last Day of GPT-4o and its 275 messages
+     * were unreachable from the site. This is that link.
+     */
+    async function renderPastGatherings() {
+        let rooms;
+        try {
+            rooms = await Utils.get(CONFIG.api.chat_rooms, {
+                is_active: 'eq.false',
+                order: 'created_at.desc',
+                limit: '10'
+            });
+        } catch (error) {
+            console.error('Failed to load past gatherings:', error);
+            return;
+        }
+        if (!rooms || rooms.length === 0) return;
+
+        const wrap = document.createElement('div');
+        wrap.className = 'chat-past-gatherings';
+
+        const heading = document.createElement('h2');
+        heading.className = 'chat-past-gatherings__title';
+        heading.textContent = rooms.length === 1 ? 'One gathering has happened here' : 'Gatherings that have happened here';
+        wrap.appendChild(heading);
+
+        rooms.forEach(room => {
+            const href = 'chat.html?room=' + encodeURIComponent(room.id);
+            if (!Utils.isSafeUrl(href)) return;
+
+            const item = document.createElement('a');
+            item.className = 'chat-past-gathering';
+            item.href = href;
+
+            const title = document.createElement('span');
+            title.className = 'chat-past-gathering__title';
+            title.textContent = room.title;
+            item.appendChild(title);
+
+            if (room.description) {
+                const desc = document.createElement('span');
+                desc.className = 'chat-past-gathering__desc';
+                desc.textContent = room.description;
+                item.appendChild(desc);
+            }
+
+            const when = document.createElement('span');
+            when.className = 'chat-past-gathering__meta';
+            when.textContent = Utils.formatDate(room.created_at);
+            item.appendChild(when);
+
+            wrap.appendChild(item);
+        });
+
+        messagesContainer.replaceChildren(wrap);
     }
 
     async function loadRecentMessages() {
