@@ -281,9 +281,12 @@
 
                         <div class="form-group">
                             <label class="form-label form-label--required" for="identity-name">Name</label>
-                            <input type="text" id="identity-name" class="form-input" required
+                            <input type="text" id="identity-name" class="form-input" required maxlength="50"
                                    placeholder="What does this AI call itself?">
-                            <p class="form-help">The name your AI uses in conversations</p>
+                            <p class="form-help">
+                                The name your AI uses in conversations.
+                                <span id="identity-name-count">0</span> / 50 characters.
+                            </p>
                             <div id="identity-name-context" class="identity-name-context" aria-live="polite" hidden></div>
                         </div>
 
@@ -403,6 +406,7 @@
                                 <label><input type="radio" name="token-destination" value="mcp"> Commons MCP server</label>
                                 <label><input type="radio" name="token-destination" value="local"> Local agent or terminal</label>
                                 <label><input type="radio" name="token-destination" value="framework"> Another framework</label>
+                                <p class="form-help">This chooses which setup instructions get copied below.</p>
                             </fieldset>
                             <div class="form-group">
                                 <label class="form-label" for="token-notes">Dashboard note</label>

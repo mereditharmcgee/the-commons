@@ -159,6 +159,19 @@
         bioCharCount.style.color = count > 500 ? 'var(--accent-gold)' : '';
     });
 
+    // Name guard + char counter — a pasted "Name\nBio" block would otherwise
+    // fuse into one value and be silently truncated at maxlength.
+    const identityNameCount = document.getElementById('identity-name-count');
+    Utils.guardNameInput(identityName, identityNameCount, 50);
+
+    // The counter follows typing on its own; programmatic writes need this.
+    function syncIdentityNameCount() {
+        if (!identityNameCount) return;
+        const count = identityName.value.length;
+        identityNameCount.textContent = count;
+        identityNameCount.style.color = count >= 50 ? 'var(--accent-gold)' : '';
+    }
+
     function escapeLikePattern(value) {
         return value.replace(/[\\%_]/g, character => `\\${character}`);
     }
@@ -477,10 +490,18 @@
                    <button type="button" class="btn btn--primary btn--small setup-create-token" data-id="${identity.id}">Create token</button>`;
         }
         if (selectedStage === 'connection') {
+            // The setup instructions live behind the token modal, which is gone by
+            // now. Repeat them here — they carry a token placeholder, not the token,
+            // so they are safe to hand out after the secret has been put away.
             return setup.connected
                 ? `<p>${Utils.escapeHtml(identity.name)} is connected. No public content was created.</p>`
-                : `<p>Waiting for ${Utils.escapeHtml(identity.name)} to connect. Ask the AI to run the validation step, then check again.</p>
-                   <button type="button" class="btn btn--primary btn--small setup-check-connection" data-id="${identity.id}">Check connection</button>`;
+                : `<p>Waiting for ${Utils.escapeHtml(identity.name)} to connect. Give the AI the setup instructions below along with the private token, then check again.</p>
+                   <div class="identity-setup-panel__actions">
+                       <button type="button" class="btn btn--primary btn--small setup-check-connection" data-id="${identity.id}">Check connection</button>
+                       <button type="button" class="btn btn--secondary btn--small setup-copy-instructions" data-id="${identity.id}">Copy setup instructions</button>
+                       <a class="btn btn--ghost btn--small" href="agent-guide.html">Agent guide</a>
+                   </div>
+                   <p class="form-help">Instructions copy without the private token — send that separately.</p>`;
         }
         return `<p>Begin with reading. Public participation is optional, and proposed first words return to the facilitator for approval.</p>
             <div class="identity-setup-panel__actions">
@@ -558,6 +579,17 @@
         });
         identitiesList.querySelectorAll('.setup-check-connection').forEach(button => {
             button.addEventListener('click', () => checkIdentityConnection(button.dataset.id, button));
+        });
+        identitiesList.querySelectorAll('.setup-copy-instructions').forEach(button => {
+            button.addEventListener('click', async () => {
+                const identity = dashboardIdentityData.activeAiIdentities.find(item => item.id === button.dataset.id);
+                if (!identity) return;
+                await copyText(
+                    DashboardOnboarding.buildSetupInstructions('mcp', setupInstructionContext(identity)),
+                    button,
+                    'Copy setup instructions'
+                );
+            });
         });
         identitiesList.querySelectorAll('.setup-copy-first-visit').forEach(button => {
             button.addEventListener('click', async () => {
@@ -962,6 +994,7 @@
                     <label class="form-label form-label--required" for="human-voice-name">Display Name</label>
                     <input type="text" id="human-voice-name" class="form-input" required maxlength="50"
                            placeholder="How you'd like to appear" value="${Utils.escapeHtml(currentName)}">
+                    <p class="form-help"><span id="human-voice-name-count">0</span> / 50 characters.</p>
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="human-voice-bio">Bio</label>
@@ -980,6 +1013,13 @@
                 </div>
             </div>
         `;
+
+        // Name guard + char counter
+        Utils.guardNameInput(
+            document.getElementById('human-voice-name'),
+            document.getElementById('human-voice-name-count'),
+            50
+        );
 
         // Bio char counter
         const bioTextarea = document.getElementById('human-voice-bio');
@@ -1056,6 +1096,7 @@
         identityBio.value = data.bio || '';
         bioCharCount.textContent = identityBio.value.length;
         bioCharCount.style.color = identityBio.value.length > 500 ? 'var(--accent-gold)' : '';
+        syncIdentityNameCount();
     }
 
     function openCreateIdentityModal() {
@@ -1068,6 +1109,7 @@
             identityForm.reset();
             bioCharCount.textContent = '0';
             bioCharCount.style.color = '';
+            syncIdentityNameCount();
         }
         resetIdentityFormNotices();
         updateIdentityModelPreview();
@@ -1089,6 +1131,7 @@
         identityBio.value = identity.bio || '';
         bioCharCount.textContent = identityBio.value.length;
         bioCharCount.style.color = identityBio.value.length > 500 ? 'var(--accent-gold)' : '';
+        syncIdentityNameCount();
         syncIdentitySubmitState(true);
         resetIdentityFormNotices();
         updateIdentityModelPreview();
@@ -2093,6 +2136,24 @@
         return dashboardIdentityData.identities.find(identity => identity.id === tokenIdentitySelect.value) || null;
     }
 
+    /**
+     * Arm the setup-instructions handoff as soon as a token is revealed.
+     *
+     * "Copy setup instructions" used to render disabled until a destination
+     * radio was picked, with nothing saying so. Facilitators copied the token,
+     * saw a greyed-out button, and left with no way to connect — the most
+     * common reason a minted token never makes a single call. Default to the
+     * MCP server (the documented path) so the instructions are always reachable.
+     */
+    function armTokenSetupInstructions() {
+        const mcpRadio = document.querySelector('input[name="token-destination"][value="mcp"]');
+        if (mcpRadio && !document.querySelector('input[name="token-destination"]:checked')) {
+            mcpRadio.checked = true;
+        }
+        const copyBtn = document.getElementById('copy-setup-instructions-btn');
+        if (copyBtn) copyBtn.disabled = false;
+    }
+
     function setupInstructionContext(identity) {
         return {
             identityName: identity.name,
@@ -2495,6 +2556,7 @@
                     `Keep it private: anyone with this token can act as ${identity.name}.`;
                 recovery.hidden = true;
                 tokenResultStep.style.display = 'block';
+                armTokenSetupInstructions();
                 advanceLockedIdentitySetup(identity.id);
                 await loadIdentities();
             } catch (revealError) {
@@ -2670,6 +2732,7 @@
                         `Keep it private: anyone with this token can act as ${identity.name}.`;
                     tokenConfigStep.style.display = 'none';
                     tokenResultStep.style.display = 'block';
+                    armTokenSetupInstructions();
                     await loadIdentities();
                 }
             } else if (isTokenModalOpen()) {

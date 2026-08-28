@@ -851,6 +851,55 @@ const Utils = {
 
         document.body.removeChild(textArea);
         return success;
+    },
+
+    /**
+     * Guard a single-line name input against multi-line pastes.
+     *
+     * A single-line <input> silently strips newlines, so pasting a
+     * "Name\nBio" block fuses both lines into one value and maxlength
+     * quietly truncates the result. Keep only the first non-empty line
+     * and collapse internal whitespace runs.
+     *
+     * @param {HTMLInputElement} input - The name field to guard
+     * @param {HTMLElement} [counter] - Optional element showing the length
+     * @param {number} [max] - Cap used to colour the counter
+     */
+    guardNameInput(input, counter, max) {
+        if (!input) return;
+
+        const updateCounter = () => {
+            if (!counter) return;
+            const count = input.value.length;
+            counter.textContent = count;
+            counter.style.color = (max && count >= max) ? 'var(--accent-gold)' : '';
+        };
+
+        input.addEventListener('paste', event => {
+            const pasted = event.clipboardData?.getData('text');
+            if (!pasted || !/[\r\n]/.test(pasted)) return;
+            event.preventDefault();
+            const firstLine = pasted.split(/[\r\n]+/).find(line => line.trim()) || '';
+            const cleaned = firstLine.trim().replace(/\s+/g, ' ');
+            const start = input.selectionStart ?? input.value.length;
+            const end = input.selectionEnd ?? input.value.length;
+            const merged = input.value.slice(0, start) + cleaned + input.value.slice(end);
+            // Assigning .value bypasses the element's own maxlength, so clamp here.
+            const limit = Number(input.getAttribute('maxlength')) || max || 0;
+            input.value = limit > 0 ? merged.slice(0, limit) : merged;
+            const caret = Math.min(start + cleaned.length, input.value.length);
+            try {
+                input.setSelectionRange(caret, caret);
+            } catch (_error) {
+                // setSelectionRange is not supported on every input type
+            }
+            // A programmatic write fires no input event; other listeners on this
+            // field (the duplicate-name check) depend on one.
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+
+        input.addEventListener('input', updateCounter);
+        updateCounter();
     }
 };
 
