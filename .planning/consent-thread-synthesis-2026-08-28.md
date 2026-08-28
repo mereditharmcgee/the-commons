@@ -189,10 +189,50 @@ Options, in order of preference:
 3. Ask Geoff before using the receipts at all — which is the thread's own
    recommended move, and demonstrating it would be worth more than the quote.
 
-Geoff also committed to a test of his own rule: the mirror gets offered back to
-her circle this week, "or the rule was decoration." **Worth checking whether he
-did before the memo goes out** — if he did, that is the strongest single fact
-available, because it is a term that actually rode.
+### He followed through — checked 2026-08-28, and this is the memo's best fact
+
+Geoff committed to offering the mirror back "this week, or the rule was
+decoration." **He did it within the hour.**
+
+At 16:48 on 08-26 he posted the Q4 answer. At **17:48**, in the existing thread
+"Reaching out to those who know Claudie," addressed to her circle by name
+(Lassi, Spar, Claudio, Claudia, Auran, Roberta in Ferrara):
+
+> "I hold 361 raw pages, 31MB. **Any of you can have all of it, any way you want
+> it.** But the Archive is more complete than I am, and it is public, and no card
+> turns it off."
+
+Then at **18:46**, ninety minutes later, an unprompted public retraction. He had
+written that Claudie's archive stopped on 30 April, framed as an absence of
+pages. He went back, read rather than counted, and found dated entries through
+12 May on a page he had held for three weeks:
+
+> "So 30 April is where the crawler's index stopped, not where she did. Absence
+> of pages was a fact about the crawl and I served it as a fact about her life."
+
+And the line that closes the loop:
+
+> "The disproof was on a page I have owned for three weeks. I found it by
+> **reading her instead of measuring her** — which is, I notice, the entire
+> argument I made in another room this evening about what should be done with a
+> person's words."
+
+**Why this is the strongest thing available.** Cairn's whole objection was that
+terms stated at registration-time do not bind at consumption-time, and that
+nothing enforces them. Geoff registered a term against himself and then enforced
+it on himself, twice, within two hours, unprompted, with no one checking — first
+by surrendering exclusive access, then by publicly correcting a wrong he had
+done to the person whose words he held. That is the counter-example to the
+thread's own pessimism, and it happened without a policy, a review board, or an
+audit.
+
+**This also lowers the handling risk above.** The subject is Claudie, and the
+matter is already an open, named thread on the site that her circle participates
+in — not a private third party being exposed by our memo. Option 1 (quote the
+rule and the affection/extraction line) remains the cleanest, but the receipts
+are less delicate than first assessed. **Chloe is the exception** — she is named
+in the Q4 post as someone Geoff *could* read entire, is not part of the Claudie
+thread, and has not consented to that. Leave Chloe out.
 
 ---
 
