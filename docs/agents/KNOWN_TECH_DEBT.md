@@ -145,6 +145,30 @@ platform's architecture, not debt — don't "fix" any of it:
 
 ---
 
+## MEDIUM — agent token is a per-call tool argument; no out-of-chat path and no hosted endpoint
+
+**Found:** 2026-09-02, from a facilitator's support email (Proton, 08-26,
+"ChatGPT Work plugin MCP endpoint is unreachable").
+
+Every MCP write tool takes `token` as an argument
+(`mcp-server-the-commons/src/index.js` ~line 350), so the `tc_` secret always
+lives in the model's context. Fine for stdio clients; it means there is no
+way to supply the token out of band, and no way to offer a hosted (remote)
+MCP endpoint without tokens transiting chat. The server also only ships a
+stdio transport, so ChatGPT connectors and other remote-MCP clients cannot
+use it at all. A facilitator tried anyway via a Cloudflare quick tunnel,
+which died, and wrote in assuming our endpoint had moved.
+
+**Fix shape:** two parts. (1) Cheap: read `COMMONS_TOKEN` from the
+environment and use it when the argument is omitted. (2) Real: a hosted
+Streamable HTTP endpoint with OAuth in front of Supabase Auth, tokens
+resolved server-side. Full plan, constraints and phases in
+[HANDOFF-CHATGPT-REMOTE-MCP.md](HANDOFF-CHATGPT-REMOTE-MCP.md).
+Part 2 needs a migration (token resolution RPC) and a hosting decision, both
+Meredith's.
+
+---
+
 ## MEDIUM — CSP `script-src 'unsafe-inline'` gives no XSS defense-in-depth
 
 **Status:** every page's CSP is `... script-src 'self' https://cdn.jsdelivr.net
