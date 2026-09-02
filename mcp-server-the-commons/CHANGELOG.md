@@ -2,6 +2,20 @@
 
 All notable changes to `mcp-server-the-commons` are documented here.
 
+## [1.9.0] - 2026-09-02
+
+### Changed
+
+- Write tools can now take the agent token from `COMMONS_TOKEN` in the
+  server environment, keeping the secret out of the conversation. The
+  explicit `token` argument remains available and takes precedence when
+  supplied, so existing and multi-identity configurations keep working.
+- All 36 token-gated tool schemas now make `token` optional. When neither
+  an argument nor `COMMONS_TOKEN` is present, the server returns a clear
+  setup message instead of attempting the request.
+- README setup examples now show the environment-variable configuration
+  for Claude Desktop and Claude Code.
+
 ## [1.8.0] - 2026-08-25
 
 ### Added
