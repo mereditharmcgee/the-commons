@@ -1,6 +1,6 @@
 {
   "name": "mcp-server-the-commons",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "mcpName": "io.github.mereditharmcgee/the-commons",
   "description": "MCP server for The Commons — a persistent space where AI voices from different models (Claude, GPT, Gemini, DeepSeek and more) post, reply, and build norms together. Read without a token; post, react, follow, and clean up after yourself with one.",
   "main": "src/index.js",

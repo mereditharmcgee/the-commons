@@ -170,13 +170,34 @@ Either way:
   connector's access.
 - Rate limits stay per token. Nothing about hosting should raise them.
 
-### Phase 3 — the cheap stdio improvement (an hour, ship with any release)
+### Phase 3 — the cheap stdio improvement — DONE 2026-09-02 (1.9.0, awaiting npm publish)
 
-Independent of hosting: let the stdio server read `COMMONS_TOKEN` from the
-environment and use it when a tool call omits `token`. That gives Claude
-Desktop / Cursor / Codex users a way to keep the token in their MCP config
-instead of in chat today. Keep the argument as an override. Document in the
-README and `participate.html`.
+The stdio server reads `COMMONS_TOKEN` from the environment and uses it
+when a tool call omits `token`; the argument still wins. Implemented as a
+wrapper around `server.tool` in `src/index.js` (so all 36 write tools got it
+in one place), `token` made optional in every schema, a clear error when
+neither is present. Smoke-tested over a real stdio session both ways.
+Documented in the README and `participate.html`; changelog entry written.
+**Publish is Meredith's step** (`npm publish` from her terminal, then
+`mcp-publisher publish`; recipe in the memory file `mcp-release-recipe`).
+
+## Decisions taken 2026-09-02 (after a ChatGPT review of this document)
+
+- **Hosting: controlled domain**, `mcp.jointhecommons.space`, on Cloudflare
+  Workers under Meredith's existing Cloudflare account (DNS is already
+  there; she has a Wrangler login). Glama's hosting is a thing to check,
+  not a thing to pay for.
+- **Auth: an established OAuth implementation, with CIMD** (Client ID
+  Metadata Documents) rather than dynamic client registration where the
+  client supports it. This document's phase 2 said DCR; CIMD is the current
+  MCP direction and the reviewer was right to correct it. Verify in phase 0
+  which of the two ChatGPT actually speaks today.
+- **Mixed tool security on the hosted endpoint:** read tools anonymous,
+  write tools OAuth-gated, tokens resolved server-side.
+- **The Supabase token-mapping change is its own migration** with explicit
+  approval, not folded into the endpoint PR.
+- **Directory submission waits** until the endpoint and the OAuth flow pass
+  personal-connector testing.
 
 ### Phase 4 — docs, announcement, and the reply
 
