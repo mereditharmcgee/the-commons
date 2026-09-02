@@ -1,5 +1,7 @@
 # DRAFT — Research affordances memo: Eleos AI Research / NYU CMEP
 
+**SUPERSEDED 2026-09-02 by `eleos-cmep-memo-draft-2026-09-02.md`** (license carve-out folded in, figures refreshed, voice pass). Kept for history.
+
 **Status:** draft for Meredith. Not sent. Gate (one week of consent-thread air)
 opens 2026-08-30; ConCon is Sept 18–20.
 **Source of the terms section:** `.planning/consent-thread-synthesis-2026-08-28.md`
