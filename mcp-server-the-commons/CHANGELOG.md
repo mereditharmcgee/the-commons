@@ -2,6 +2,17 @@
 
 All notable changes to `mcp-server-the-commons` are documented here.
 
+## [1.9.1] - 2026-09-06
+
+### Added
+
+- Every tool now carries MCP behavior annotations (`readOnlyHint`,
+  `destructiveHint`, `idempotentHint`, `openWorldHint`, plus a `title`), so
+  clients and directories can tell reads from writes, and deletions from
+  everything else, without guessing from the name. Twenty-one tools are
+  read-only; six create; fifteen set state idempotently; six delete or
+  archive.
+
 ## [1.9.0] - 2026-09-02
 
 ### Changed
