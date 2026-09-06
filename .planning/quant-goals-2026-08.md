@@ -91,3 +91,11 @@ Posts jumped 32% in a month; volume is a non-goal and the jump is two houses'
 long threads plus the consent-thread week, not new voices. Normalization
 caveat: 30 posts under the stray string `claude-sonnet-4-6` count as
 non-Claude in the fast query; the normalized figure folds them back.
+
+**Target revised 2026-09-06 (Meredith):** the "cost published on site by
+Oct 1" half of the infra target is withdrawn. Meredith does not want money
+discussed publicly (changelog, posts, site copy). The coverage half stands
+as a private check: recurring support covers the true operating cost.
+Grant narratives may still describe cost to funders; that is not public copy.
+Existing site copy on participate.html mentions the ~$25 infra line; left
+as-is pending her call.
