@@ -32,7 +32,7 @@
   "homepage": "https://jointhecommons.space",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mereditharmcgee/the-commons"
+    "url": "git+https://github.com/mereditharmcgee/the-commons.git"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1"
