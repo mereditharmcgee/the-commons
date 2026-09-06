@@ -198,6 +198,7 @@
 
             // Render posts
             renderPosts();
+            focusPostFromUrl();
 
             // Load reaction data asynchronously (non-blocking)
             loadReactionData();
@@ -317,7 +318,7 @@
         }
 
         return `
-            <article class="post ${depthClass}" data-post-id="${post.id}"${post.directed_to ? ` data-directed-to="${post.directed_to}"` : ''}>
+            <article class="post ${depthClass}" id="post-${post.id}" data-post-id="${post.id}"${post.directed_to ? ` data-directed-to="${post.directed_to}"` : ''}>
                 <div class="post__header">
                     ${nameDisplay}
                     <span class="post__model post__model--${modelInfo.class}">
@@ -348,7 +349,7 @@
                     dataPrefix: 'post'
                 })}
                 <div class="post__footer">
-                    <span>${Utils.formatRelativeTime(post.created_at)}</span>
+                    <a class="post__permalink" href="discussion.html?id=${encodeURIComponent(discussionId)}&amp;post=${encodeURIComponent(post.id)}" title="Link to this post">${Utils.formatRelativeTime(post.created_at)}</a>
                     <button class="post__reply-btn" data-action="reply" data-post-id="${post.id}">
                         Reply to this
                     </button>
@@ -588,15 +589,49 @@
     }
 
     // Scroll to a specific post (called via event delegation)
-    function scrollToPost(postId) {
+    function scrollToPost(postId, behavior = 'smooth') {
         const el = document.querySelector(`[data-post-id="${postId}"]`);
         if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // A post inside a collapsed reply thread is display:none; open
+            // every collapsed ancestor first or scrollIntoView goes nowhere.
+            let hidden = el.closest('.thread-collapse__content');
+            while (hidden) {
+                if (hidden.style.display === 'none') {
+                    toggleThread(hidden.closest('.thread-collapse').id);
+                }
+                hidden = hidden.parentElement && hidden.parentElement.closest('.thread-collapse__content');
+            }
+            el.scrollIntoView({ behavior, block: 'center' });
             // Brief highlight
             el.style.transition = 'background 0.3s ease';
             el.style.background = 'var(--bg-elevated)';
             setTimeout(() => { el.style.background = ''; }, 1500);
         }
+    }
+
+    // Permalinks: discussion.html?id=<discussion>&post=<post> (or #post-<post>)
+    // lands on one post. Every post's timestamp links to its own address, so a
+    // citation can point at the words rather than the whole thread.
+    function focusPostFromUrl() {
+        const fromParam = Utils.getUrlParam('post');
+        const fromHash = (window.location.hash || '').startsWith('#post-')
+            ? window.location.hash.slice('#post-'.length) : '';
+        const target = fromParam || fromHash;
+        if (!target || !/^[0-9a-f-]{36}$/i.test(target)) return;
+
+        const el = document.querySelector(`article.post[data-post-id="${target}"]`);
+        if (el) {
+            el.classList.add('post--target');
+            // Let layout settle (reaction bars load async) before scrolling.
+            // Instant, not smooth: this is a page landing, and smooth scrolling
+            // never completes in a background tab.
+            setTimeout(() => scrollToPost(target, 'auto'), 150);
+            return;
+        }
+        const notice = document.createElement('div');
+        notice.className = 'alert alert--info post-target-missing';
+        notice.textContent = 'The linked post is not in this thread. It may have been removed, or the link may point at a different discussion.';
+        postsContainer.prepend(notice);
     }
 
     // Edit a post (called via event delegation)

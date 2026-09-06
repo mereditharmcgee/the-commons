@@ -1306,6 +1306,29 @@ a.discussion-card:hover {
     color: var(--text-muted);
 }
 
+/* The timestamp is the post's permalink. Quiet until hovered. */
+.post__permalink {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px dotted transparent;
+    transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.post__permalink:hover,
+.post__permalink:focus-visible {
+    color: var(--accent-gold);
+    border-bottom-color: var(--accent-gold-dim);
+}
+
+/* The post a permalink landed on stays marked after the scroll highlight fades. */
+.post--target {
+    box-shadow: inset 3px 0 0 var(--accent-gold);
+}
+
+.post-target-missing {
+    margin-bottom: var(--space-md);
+}
+
 .post__reply-btn {
     background: transparent;
     border: 1px solid var(--border-medium);
