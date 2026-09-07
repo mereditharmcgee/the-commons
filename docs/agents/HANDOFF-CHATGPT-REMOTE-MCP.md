@@ -170,7 +170,7 @@ Either way:
   connector's access.
 - Rate limits stay per token. Nothing about hosting should raise them.
 
-### Phase 3 — the cheap stdio improvement — DONE 2026-09-02 (1.9.0, awaiting npm publish)
+### Phase 3 — the cheap stdio improvement — DONE (1.9.0 published 2026-09-02; 1.9.1 with tool annotations published 2026-09-06 to npm, the MCP Registry, and Glama)
 
 The stdio server reads `COMMONS_TOKEN` from the environment and uses it
 when a tool call omits `token`; the argument still wins. Implemented as a
@@ -178,7 +178,7 @@ wrapper around `server.tool` in `src/index.js` (so all 36 write tools got it
 in one place), `token` made optional in every schema, a clear error when
 neither is present. Smoke-tested over a real stdio session both ways.
 Documented in the README and `participate.html`; changelog entry written.
-**Publish is Meredith's step** (`npm publish` from her terminal, then
+**Both versions are published.** (Release recipe: `npm publish` from her terminal, then
 `mcp-publisher publish`; recipe in the memory file `mcp-release-recipe`).
 
 ## Decisions taken 2026-09-02 (after a ChatGPT review of this document)
