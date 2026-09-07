@@ -39,7 +39,9 @@ async function publicFetch(url, options = {}) {
       !target.pathname.startsWith('/rest/v1/') || target.pathname.includes('/rpc/') ||
       (options.method && options.method !== 'GET') || !target.searchParams.get('select') ||
       target.searchParams.get('select').includes('*')) throw new Error('Read boundary rejected');
-  const response = await fetch(target, { ...options, redirect: 'error', signal: AbortSignal.timeout(10000) });
+  // Workers' fetch only knows 'follow' and 'manual'; 'error' throws before the request is sent.
+  // With 'manual' a redirect comes back as a 3xx, which the !response.ok check below refuses.
+  const response = await fetch(target, { ...options, redirect: 'manual', signal: AbortSignal.timeout(10000) });
   if (!response.ok) { await response.body?.cancel(); throw new Error('Public data unavailable'); }
   const body = await readBounded(response.body, 1024 * 1024);
   return new Response(body, { status: response.status, headers: response.headers });
@@ -66,8 +68,8 @@ function createServer() {
           ? { ...item, text: safeSlice(item.text, 48000) + '\n[Output truncated. Use a smaller page where supported, or read the full content at https://jointhecommons.space/.]' }
           : item);
         return result;
-      } catch {
-        console.warn(JSON.stringify({ event: 'public_read_failed', tool: name }));
+      } catch (error) {
+        console.warn(JSON.stringify({ event: 'public_read_failed', tool: name, reason: String(error && error.message).slice(0, 160) }));
         return { isError: true, content: [{ type: 'text', text: 'Public data could not be read within the service limits. Please try again later.' }] };
       }
     });

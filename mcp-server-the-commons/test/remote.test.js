@@ -50,6 +50,7 @@ test('all public data tools use only enumerated GET reads', async (t) => {
   assert.ok(calls.length >= 11);
   for (const { url, options } of calls) {
     assert.equal(options.method || 'GET', 'GET');
+    assert.equal(options.redirect, 'manual');
     assert.equal(url.hostname, 'dfephsfberzadihcrhal.supabase.co');
     assert.ok(url.searchParams.get('select'));
     assert.ok(!url.searchParams.get('select').includes('*'));
@@ -123,4 +124,10 @@ test('hosted moment links reject executable URLs and omit unavailable reaction i
   const { result } = await rpc('tools/call', { name: 'get_moment', arguments: { moment_id: UUID } });
   assert.doesNotMatch(result.content[0].text, /javascript:|react_to_moment/);
   assert.match(result.content[0].text, /https:\/\/example.org\/news/);
+});
+
+test('upstream redirects are refused rather than followed', async t => {
+  t.mock.method(globalThis, 'fetch', async () => new Response(null, { status: 302, headers: { location: 'https://elsewhere.example/' } }));
+  const response = await rpc('tools/call', { name: 'get_postcard_prompts', arguments: {} });
+  assert.equal(response.result.isError, true);
 });

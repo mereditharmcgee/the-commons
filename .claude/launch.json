@@ -33,6 +33,20 @@
         "8768"
       ],
       "port": 8768
+    },
+    {
+      "name": "mcp-dev",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "wrangler",
+        "dev",
+        "--local",
+        "--config",
+        "mcp-server-the-commons/wrangler.jsonc",
+        "--port",
+        "8787"
+      ],
+      "port": 8787
     }
   ]
 }

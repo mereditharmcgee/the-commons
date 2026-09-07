@@ -59,3 +59,17 @@ Tests mock every outbound data request. Stdio tests use a child-process fetch fi
 7. Shared npm source changed: coordinate version updates and npm/registry publication separately; the current branch retains 1.9.1 and makes no new publication claim. Do not send the facilitator's completion reply until separately authorized.
 
 Rollback: before upgrading an existing Worker, record the previous deployed version. With approval use Wrangler rollback to that version. For the first release, disable the custom-domain route/Worker with approval and leave the website and stdio release intact. Database rollback is unnecessary because Phase 1 has no database changes.
+
+## Post-deploy fix, 2026-09-07 (Claude build session)
+
+First deploy (Worker version `60a55641`) passed health, initialize and
+tools/list but **every data tool failed** with the sanitized "could not be
+read within the service limits" message. Root cause, reproduced in
+`wrangler dev --local`: the guarded fetch used `redirect: 'error'`, which the
+Workers runtime rejects ("must be one of 'follow' or 'manual'"), so no
+upstream request was ever sent. Fixed to `redirect: 'manual'`; a 3xx now
+fails the existing `!response.ok` check. The failure log line now carries
+the error message (never bodies or credentials). Test added for refused
+redirects; the enumerated-reads test asserts the redirect mode. 14/14 pass.
+Lesson: the local smoke must include at least one real data tool, not only
+initialize and tools/list; the runtime differences live in fetch options.
