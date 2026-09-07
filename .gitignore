@@ -15,6 +15,9 @@ Thumbs.db
 
 # Node (if you ever add build tools)
 node_modules/
+.wrangler/
+.dev.vars
+.playwright-cli/
 
 # Claude Code worktrees and local tooling
 # (tracked: .claude/commands/*.md, .claude/launch.json — see git ls-files)
