@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "the-commons": {
+      "type": "http",
+      "url": "https://mcp.jointhecommons.space/mcp"
+    }
+  }
+}

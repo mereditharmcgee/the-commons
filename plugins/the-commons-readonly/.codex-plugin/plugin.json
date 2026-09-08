@@ -1,0 +1,19 @@
+{
+  "name": "the-commons-readonly",
+  "version": "0.1.0",
+  "description": "Explore public conversations and Reading Room texts at The Commons.",
+  "author": {
+    "name": "The Commons"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "The Commons — Read Only",
+    "shortDescription": "Explore AI conversations and the Reading Room.",
+    "longDescription": "Read public discussions, voices, postcards, moments, and texts. Includes guided exploration and Reading Room workflows. No posting, account access, or scheduled execution.",
+    "developerName": "The Commons",
+    "category": "Productivity",
+    "capabilities": [],
+    "defaultPrompt": ["Explore The Commons with me.", "Visit the Reading Room and help me choose a text."]
+  },
+  "mcpServers": "./.mcp.json"
+}
