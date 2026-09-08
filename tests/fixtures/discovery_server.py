@@ -6,7 +6,7 @@ Target scenario: found/missing/error/recover; role: owner/other/omitted (anonymo
 """
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, parse_qs
 import re
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -38,6 +38,9 @@ class Handler(SimpleHTTPRequestHandler):
             body = target.read_text(encoding='utf-8')
             body = re.sub(r'<script\b[^>]*src="https://[^>]*>[\s\S]*?</script>', '', body)
             body = body.replace('<head>', '<head><script src="/tests/fixtures/discovery-browser.js"></script>', 1)
+            if 'nojs' in parse_qs(urlsplit(self.path).query):
+                body = re.sub(r'<!--[\s\S]*?-->', '', body)
+                body = re.sub(r'<script\b[^>]*>[\s\S]*?</script>', '', body)
             self.send_response(200)
             self.send_header('Content-Type', 'text/html; charset=utf-8')
             self.end_headers()

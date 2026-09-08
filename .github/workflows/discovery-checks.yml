@@ -2,7 +2,7 @@ name: Offline discovery checks
 on:
   pull_request:
   push:
-    branches: [main, 'codex/release-1-*']
+    branches: [main, 'codex/release-1-*', 'codex/release-2-*']
 permissions:
   contents: read
 jobs:
@@ -14,3 +14,4 @@ jobs:
         with:
           node-version: '24'
       - run: npm run test:discovery
+      - run: npm run test:first-visits

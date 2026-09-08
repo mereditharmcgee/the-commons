@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const root = path.join(__dirname, '..');
-const pages = ['search.html','discussion.html','text.html','postcards.html','interest.html','interests.html','changes.html'];
+const pages = ['search.html','discussion.html','text.html','postcards.html','interest.html','interests.html','changes.html','index.html','participate.html','reading-room.html'];
 const html = name => fs.readFileSync(path.join(root, name), 'utf8').replace(/<!--[\s\S]*?-->/g, '').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '');
 const ids = text => [...text.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]);
 
@@ -23,7 +23,7 @@ test('affected page links resolve and IDs are unique', () => {
 });
 
 test('discovery scripts parse and are loaded before their page consumers', () => {
-    for (const name of ['discovery','search','discussion','text','postcards','interests','interest']) {
+    for (const name of ['discovery','search','discussion','text','postcards','interests','interest','participate']) {
         new vm.Script(fs.readFileSync(path.join(root,`js/${name}.js`),'utf8'), { filename:name });
     }
     for (const name of ['search','discussion','text','postcards']) {

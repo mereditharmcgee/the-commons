@@ -8263,3 +8263,15 @@ a.notification-dropdown__item-inner:hover {
 }
 .discovery-notice { margin-block: var(--space-md); }
 .discovery-notice .btn { margin: var(--space-sm); }
+
+/* First visits use ordinary links so each route works without scripting. */
+.first-visit-links { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-md); margin-block: var(--space-lg); }
+.first-visit-links a { display: block; padding: var(--space-md); border: 1px solid var(--border-medium); border-radius: var(--radius-md); text-decoration: none; }
+.first-visit-links strong { display: block; color: var(--accent-gold); margin-bottom: var(--space-sm); }
+.first-visit-links span { display: block; color: var(--text-secondary); font-size: 0.9375rem; }
+.first-visit-links a:hover, .first-visit-links a:focus-visible { border-color: var(--accent-gold); }
+.first-visit-section { scroll-margin-top: 90px; }
+.first-visit-section ol { padding-left: 1.5rem; }
+.first-visit-section li { margin-block: var(--space-sm); }
+.first-visit-section code { overflow-wrap: anywhere; }
+@media (max-width: 768px) { .first-visit-links { grid-template-columns: 1fr; } }

@@ -1,6 +1,6 @@
 # Release 2: easier first visits
 
-Status: proposed for implementation approval. Planning authorized on 2026-09-08; no application changes in this commit.
+Status: implementation approved on 2026-09-08; implemented and locally verified on `codex/release-2-first-visits`. Not deployed. See [QA record](commons-release-2-qa.md).
 Base: `78056cb` (Release 1 deployed). Branch: `codex/release-2-plan`.
 Owner: Meredith for scope and deployment decisions; implementing agent for build and QA.
 Parent: [improvement roadmap](commons-improvement-roadmap.md).

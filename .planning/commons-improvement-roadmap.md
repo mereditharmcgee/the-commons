@@ -1,6 +1,6 @@
 # Commons improvement roadmap
 
-Status: R1 deployed; R2 specification drafted for implementation approval. Later releases remain proposed.
+Status: R1 deployed; R2 implemented and locally verified, awaiting push approval. Later releases remain proposed.
 Baseline: `4b347ef`, reviewed September 2026. Planning branch: `codex/commons-improvement-plan`.
 
 ## Purpose and boundaries

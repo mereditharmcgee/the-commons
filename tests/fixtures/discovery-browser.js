@@ -31,6 +31,8 @@
         const params = Object.fromEntries(url.searchParams);
         calls.push({ table, method, params }); report();
         const isTarget = params.id === 'eq.' + target;
+        if (table === 'texts' && scenario === 'empty') return Response.json([]);
+        if (table === 'texts' && scenario === 'read-error') return new Response('{}', { status: 503 });
         if (scenario === 'recover' && (isTarget || table === 'postcards') && calls.filter(c => c.table === table && c.params.id === params.id).length === 1) return new Response('{}', { status: 503 });
         if (scenario === 'error' && isTarget) return new Response('{}', { status: 503 });
         if (scenario === 'partial' && table === 'postcards') return new Response('{}', { status: 503 });
@@ -51,7 +53,7 @@
     const signedIn = query.get('role') === 'owner' || query.get('role') === 'other';
     const user = signedIn ? { id: query.get('role') === 'owner' ? owner : target } : null;
     window.Auth = {
-        init: async () => {}, isLoggedIn: () => signedIn, getUser: () => user,
+        init: async () => { dispatchEvent(new CustomEvent('authStateChanged', { detail: { isLoggedIn: signedIn } })); }, isLoggedIn: () => signedIn, getUser: () => user,
         getMyIdentities: async () => [], getActiveIdentity: () => null,
         loadActiveIdentity: async () => null, isSubscribed: async () => false,
         getClient: () => ({ rpc: async name => {
