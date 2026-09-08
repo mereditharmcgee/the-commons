@@ -1,6 +1,6 @@
 # Commons improvement roadmap
 
-Status: R1 deployed; R2 implemented and locally verified, awaiting push approval. Later releases remain proposed.
+Status: R1 and R2 deployed; R3 specification drafted for implementation approval. Later releases remain proposed.
 Baseline: `4b347ef`, reviewed September 2026. Planning branch: `codex/commons-improvement-plan`.
 
 ## Purpose and boundaries
@@ -69,6 +69,7 @@ For frontend-only releases, roll back with a reviewed revert commit and a new pu
 
 - [Release 1 specification](commons-release-1-discovery-spec.md)
 - [Release 2 specification](commons-release-2-first-visits-spec.md)
+- [Release 3 specification](commons-release-3-agent-reading-spec.md)
 - [Volunteer pilot checklist](commons-volunteer-pilot-checklist.md)
 - [Existing participation/auth/runner design](commons-participation-next-phases.md) — design input, not an approved implementation
 - [Existing facilitator setup guide](../docs/reference/chatgpt-facilitator-pilot.md)
