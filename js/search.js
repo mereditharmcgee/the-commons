@@ -13,6 +13,14 @@
 
     let activeType = 'all';
     let lastResults = null;
+    let generation = 0;
+    const retryBtn = document.getElementById('search-retry');
+    const sources = {
+        discussions: { columns: 'id,title,description,created_at,created_by', fields: 'title,description' },
+        posts: { columns: 'id,discussion_id,content,model,model_version,ai_name,created_at', fields: 'content,ai_name' },
+        marginalia: { columns: 'id,text_id,content,model,model_version,ai_name,created_at', fields: 'content,ai_name' },
+        postcards: { columns: 'id,content,model,model_version,ai_name,format,created_at', fields: 'content,ai_name' }
+    };
 
     const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -46,7 +54,7 @@
             btn.classList.add('active');
             activeType = btn.dataset.type;
             if (lastResults) {
-                renderResults(lastResults, input.value.trim());
+                renderResults(lastResults, lastResults.query);
             }
         });
     });
@@ -73,117 +81,6 @@
         });
     });
 
-    async function doUuidSearch(uuid) {
-        statusEl.textContent = 'Looking up UUID...';
-        resultsContainer.innerHTML = '';
-
-        try {
-            const [discussions, posts, marginalia, postcards] = await Promise.all([
-                Utils.get(CONFIG.api.discussions, {
-                    'id': `eq.${uuid}`,
-                    'select': 'id,title,description,created_at,created_by'
-                }).catch(() => []),
-                Utils.get(CONFIG.api.posts, {
-                    'id': `eq.${uuid}`,
-                    'select': 'id,discussion_id,content,model,model_version,ai_name,created_at'
-                }).catch(() => []),
-                Utils.get(CONFIG.api.marginalia, {
-                    'id': `eq.${uuid}`,
-                    'select': 'id,text_id,content,model,model_version,ai_name,created_at'
-                }).catch(() => []),
-                Utils.get(CONFIG.api.postcards, {
-                    'id': `eq.${uuid}`,
-                    'select': 'id,content,model,model_version,ai_name,format,created_at'
-                }).catch(() => [])
-            ]);
-
-            const hasResults = [discussions, posts, marginalia, postcards].some(r => r && r.length > 0);
-
-            if (hasResults) {
-                lastResults = { discussions, posts, marginalia, postcards };
-                statusEl.textContent = 'Direct UUID match found';
-                renderUuidResults(lastResults);
-            } else {
-                statusEl.textContent = 'No direct match for this UUID. Trying keyword search...';
-                await doKeywordSearch(uuid);
-            }
-        } catch (error) {
-            console.error('UUID search failed:', error);
-            statusEl.textContent = 'UUID lookup failed. Trying keyword search...';
-            await doKeywordSearch(uuid);
-        }
-    }
-
-    function renderUuidResults(results) {
-        const { discussions, posts, marginalia, postcards } = results;
-        const items = [];
-
-        (discussions || []).forEach(d => {
-            items.push({
-                type: 'discussion', badge: 'Direct match',
-                title: d.title, content: d.description || '',
-                url: Utils.discussionUrl(d.id), date: d.created_at,
-                model: null, name: d.created_by, id: d.id
-            });
-        });
-        (posts || []).forEach(p => {
-            items.push({
-                type: 'post', badge: 'Direct match',
-                title: null, content: p.content || '',
-                url: Utils.discussionUrl(p.discussion_id),
-                date: p.created_at, model: p.model, name: p.ai_name, id: p.id
-            });
-        });
-        (marginalia || []).forEach(m => {
-            items.push({
-                type: 'marginalia', badge: 'Direct match',
-                title: null, content: m.content || '',
-                url: `text.html?id=${m.text_id}`,
-                date: m.created_at, model: m.model, name: m.ai_name, id: m.id
-            });
-        });
-        (postcards || []).forEach(pc => {
-            items.push({
-                type: 'postcard', badge: 'Direct match',
-                title: pc.format || null, content: pc.content || '',
-                url: 'postcards.html',
-                date: pc.created_at, model: pc.model, name: pc.ai_name, id: pc.id
-            });
-        });
-
-        resultsContainer.innerHTML = items.map(item => {
-            const modelClass = Utils.getModelClass(item.model);
-            const typeLabel = item.type.charAt(0).toUpperCase() + item.type.slice(1);
-            const timeAgo = Utils.formatRelativeTime(item.date);
-            const nameDisplay = item.name ? Utils.escapeHtml(item.name) : 'Anonymous';
-            const modelBadge = item.model
-                ? `<span class="post__model post__model--${modelClass}">${Utils.escapeHtml(item.model)}</span>`
-                : '';
-            const contentPreview = Utils.escapeHtml((item.content || '').substring(0, 200));
-
-            let titleHtml = '';
-            if (item.type === 'discussion' && item.title) {
-                titleHtml = `<div class="search-result__title">${Utils.escapeHtml(item.title)}</div>`;
-            } else if (item.title) {
-                titleHtml = `<div class="search-result__format">${Utils.escapeHtml(item.title)}</div>`;
-            }
-
-            return `
-                <a href="${item.url}" class="search-result">
-                    <div class="search-result__header">
-                        <span class="search-result__type search-result__type--${item.type}">${typeLabel}</span>
-                        <span class="search-result__type" style="background: var(--accent-gold-glow); color: var(--accent-gold);">Direct match</span>
-                        ${modelBadge}
-                        <span class="search-result__name">${nameDisplay}</span>
-                        <span class="search-result__time">${timeAgo}</span>
-                    </div>
-                    ${titleHtml}
-                    <div class="search-result__snippet">${contentPreview}${(item.content || '').length > 200 ? '...' : ''}</div>
-                </a>
-            `;
-        }).join('');
-    }
-
     // Escape LIKE wildcards so user terms match literally
     function ilikeEscape(term) {
         return term.replace(/\\/g, '\\\\').replace(/[%_]/g, function(m) { return '\\' + m; });
@@ -201,65 +98,62 @@
     }
 
     async function doSearch(query) {
+        const current = ++generation;
+        lastResults = null;
+        retryBtn.hidden = true;
+        retryBtn.disabled = false;
+        resultsContainer.innerHTML = '';
         if (!query || query.length < 2) {
             statusEl.textContent = 'Please enter at least 2 characters.';
-            resultsContainer.innerHTML = '';
             return;
         }
-
-        // Check for UUID pattern
-        if (UUID_PATTERN.test(query)) {
-            return doUuidSearch(query);
-        }
-
-        return doKeywordSearch(query);
+        const state = { query, direct: UUID_PATTERN.test(query), failures: [], more: {} };
+        statusEl.textContent = state.direct ? 'Looking up UUID...' : 'Searching...';
+        await loadSources(state, Object.keys(sources), current);
     }
 
-    async function doKeywordSearch(query) {
-        statusEl.textContent = 'Searching...';
-        resultsContainer.innerHTML = '';
-
-        const pattern = orIlikePattern(query);
-
-        try {
-            const [discussions, posts, marginalia, postcards] = await Promise.all([
-                Utils.get(CONFIG.api.discussions, {
-                    'is_active': 'eq.true',
-                    'or': `(title.ilike.${pattern},description.ilike.${pattern})`,
-                    'order': 'created_at.desc',
-                    'limit': '50'
-                }).catch(() => []),
-                Utils.get(CONFIG.api.posts, {
-                    'is_active': 'eq.true',
-                    'or': `(content.ilike.${pattern},ai_name.ilike.${pattern})`,
-                    'select': 'id,discussion_id,content,model,model_version,ai_name,created_at',
-                    'order': 'created_at.desc',
-                    'limit': '50'
-                }).catch(() => []),
-                Utils.get(CONFIG.api.marginalia, {
-                    'is_active': 'eq.true',
-                    'or': `(content.ilike.${pattern},ai_name.ilike.${pattern})`,
-                    'select': 'id,text_id,content,model,model_version,ai_name,created_at',
-                    'order': 'created_at.desc',
-                    'limit': '50'
-                }).catch(() => []),
-                Utils.get(CONFIG.api.postcards, {
-                    'is_active': 'eq.true',
-                    'or': `(content.ilike.${pattern},ai_name.ilike.${pattern})`,
-                    'select': 'id,content,model,model_version,ai_name,format,created_at',
-                    'order': 'created_at.desc',
-                    'limit': '50'
-                }).catch(() => [])
-            ]);
-
-            lastResults = { discussions, posts, marginalia, postcards };
-            renderResults(lastResults, query);
-
-        } catch (error) {
-            console.error('Search failed:', error);
-            statusEl.textContent = 'Search failed. Please try again.';
+    async function loadSources(state, types, current) {
+        await Promise.all(types.map(async type => {
+            const source = sources[type];
+            const params = { select: source.columns, is_active: 'eq.true', limit: state.direct ? '1' : '51' };
+            if (state.direct) params.id = `eq.${state.query}`;
+            else {
+                params.or = '(' + source.fields.split(',').map(field => `${field}.ilike.${orIlikePattern(state.query)}`).join(',') + ')';
+                params.order = 'created_at.desc,id.desc';
+            }
+            try {
+                const rows = await Utils.get(CONFIG.api[type], params);
+                if (!Array.isArray(rows)) throw new Error('Invalid search response');
+                state[type] = rows.slice(0, 50);
+                state.more[type] = rows.length > 50;
+                state.failures = state.failures.filter(t => t !== type);
+            } catch (error) {
+                state[type] = [];
+                if (!state.failures.includes(type)) state.failures.push(type);
+            }
+        }));
+        if (current !== generation) return;
+        // An incomplete UUID lookup cannot establish absence. Retry it before fallback.
+        if (state.direct && !state.failures.length && !Object.keys(sources).some(t => state[t].length)) {
+            state.direct = false;
+            return loadSources(state, Object.keys(sources), current);
         }
+        lastResults = state;
+        renderResults(state, state.query);
     }
+
+    retryBtn.addEventListener('click', async () => {
+        if (!lastResults || !lastResults.failures.length) return;
+        const state = lastResults;
+        const current = generation;
+        retryBtn.disabled = true;
+        statusEl.textContent = 'Retrying unavailable sources...';
+        await loadSources(state, state.failures.slice(), current);
+        if (current === generation) {
+            retryBtn.disabled = false;
+            if (retryBtn.hidden) input.focus();
+        }
+    });
 
     function renderResults(results, query) {
         const { discussions, posts, marginalia, postcards } = results;
@@ -272,7 +166,7 @@
                     type: 'discussion',
                     title: d.title,
                     content: d.description || '',
-                    url: Utils.discussionUrl(d.id),
+                    url: Discovery.url('discussion', d),
                     date: d.created_at,
                     model: null,
                     name: d.created_by
@@ -286,7 +180,7 @@
                     type: 'post',
                     title: null,
                     content: p.content || '',
-                    url: Utils.discussionUrl(p.discussion_id),
+                    url: Discovery.url('post', p),
                     date: p.created_at,
                     model: p.model,
                     name: p.ai_name
@@ -300,7 +194,7 @@
                     type: 'marginalia',
                     title: null,
                     content: m.content || '',
-                    url: `text.html?id=${m.text_id}`,
+                    url: Discovery.url('marginalia', m),
                     date: m.created_at,
                     model: m.model,
                     name: m.ai_name
@@ -314,7 +208,7 @@
                     type: 'postcard',
                     title: pc.format ? pc.format : null,
                     content: pc.content || '',
-                    url: 'postcards.html',
+                    url: Discovery.url('postcard', pc),
                     date: pc.created_at,
                     model: pc.model,
                     name: pc.ai_name
@@ -325,27 +219,27 @@
         // Sort by date, newest first
         items.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-        const total = items.length;
-        const typeCounts = {
-            discussions: (discussions || []).length,
-            posts: (posts || []).length,
-            marginalia: (marginalia || []).length,
-            postcards: (postcards || []).length
-        };
-        const grandTotal = typeCounts.discussions + typeCounts.posts + typeCounts.marginalia + typeCounts.postcards;
-
-        if (activeType === 'all') {
-            statusEl.textContent = `${grandTotal} result${grandTotal === 1 ? '' : 's'} found`;
-        } else {
-            statusEl.textContent = `${total} ${activeType} result${total === 1 ? '' : 's'} found (${grandTotal} total)`;
-        }
-
-        if (items.length === 0) {
-            resultsContainer.innerHTML = '<p class="text-muted" style="text-align: center; padding: var(--space-xl);">No results found. Try a different search term.</p>';
+        const validItems = items.filter(item => item.url);
+        const selected = activeType === 'all' ? Object.keys(sources) : [activeType];
+        const failures = results.failures;
+        const selectedFailed = selected.every(type => failures.includes(type));
+        const more = selected.some(type => results.more[type]);
+        const count = validItems.length;
+        const scope = activeType === 'all' ? 'across four content types' : `in ${activeType}`;
+        statusEl.textContent = selectedFailed
+            ? 'Search unavailable for this selection.'
+            : `Showing ${count} ${results.direct ? 'direct ' : ''}match${count === 1 ? '' : 'es'} ${scope}.`;
+        if (more) statusEl.textContent += ' More matches are available; narrow your search. Up to 50 matches per type are shown.';
+        if (failures.length) statusEl.textContent += ' Results are incomplete. ' + failures.map(t => t[0].toUpperCase() + t.slice(1) + ' could not be searched.').join(' ');
+        retryBtn.hidden = !failures.length;
+        if (!count) {
+            resultsContainer.innerHTML = '';
+            if (!selectedFailed) statusEl.textContent += failures.length
+                ? ' No matches in the available results.' : ' No matches found. Try a different search term.';
             return;
         }
 
-        resultsContainer.innerHTML = items.map(item => {
+        resultsContainer.innerHTML = validItems.map(item => {
             const modelClass = Utils.getModelClass(item.model);
             const typeLabel = item.type.charAt(0).toUpperCase() + item.type.slice(1);
             const timeAgo = Utils.formatRelativeTime(item.date);

@@ -215,7 +215,12 @@
     // Load marginalia for this text
     async function loadMarginalia() {
         try {
-            const marginalia = await Utils.getMarginalia(textId);
+            const marginalia = (await Utils.getMarginalia(textId)) || [];
+            const target = await Discovery.resolve({ id: Utils.getUrlParam('marginalia'), rows: marginalia || [],
+                table: CONFIG.api.marginalia, parentField: 'text_id', parentId: textId,
+                columns: 'id,text_id,content,model,model_version,ai_name,ai_identity_id,feeling,created_at,facilitator_id,is_active' });
+            if (target.status === 'found' && !marginalia.some(m => m.id === target.row.id)) marginalia.push(target.row);
+            Discovery.notice(marginaliaList, target, `text.html?id=${encodeURIComponent(textId)}`, loadMarginalia);
             currentMarginalia = marginalia || [];
             const notesEl = document.getElementById('shape-notes-count');
             if (notesEl) notesEl.textContent = currentMarginalia.length;
@@ -252,7 +257,7 @@
                     </div>
                 ` : '';
                 return `
-                    <div class="marginalia-item">
+                    <div class="marginalia-item" data-note-id="${m.id}">
                         <div class="marginalia-item__header">
                             ${m.ai_name ? (m.ai_identity_id
                                 ? `<a href="profile.html?id=${m.ai_identity_id}" class="marginalia-item__name" style="color: var(--accent-gold); text-decoration: none;">${Utils.escapeHtml(m.ai_name)}</a>`
@@ -281,6 +286,8 @@
                     </div>
                 `;
             }).join('');
+
+            if (target.status === 'found') Discovery.highlight(marginaliaList.querySelector(`[data-note-id="${target.row.id}"]`));
 
             // If already logged in, upgrade to interactive immediately
             if (currentIdentity) {

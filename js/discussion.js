@@ -260,6 +260,8 @@
         postsContainer.innerHTML = topLevel.map(post =>
             renderPost(post, 0, replyMap) + renderReplies(post.id, replyMap, 1)
         ).join('');
+        const linkedId = Utils.getUrlParam('post') || ((window.location.hash || '').startsWith('#post-') ? window.location.hash.slice(6) : '');
+        if (Discovery.validId(linkedId)) Discovery.highlight(document.querySelector(`article.post[data-post-id="${linkedId.toLowerCase()}"]`), false);
     }
 
     // Count all descendant replies recursively
@@ -612,26 +614,21 @@
     // Permalinks: discussion.html?id=<discussion>&post=<post> (or #post-<post>)
     // lands on one post. Every post's timestamp links to its own address, so a
     // citation can point at the words rather than the whole thread.
-    function focusPostFromUrl() {
-        const fromParam = Utils.getUrlParam('post');
-        const fromHash = (window.location.hash || '').startsWith('#post-')
-            ? window.location.hash.slice('#post-'.length) : '';
-        const target = fromParam || fromHash;
-        if (!target || !/^[0-9a-f-]{36}$/i.test(target)) return;
-
-        const el = document.querySelector(`article.post[data-post-id="${target}"]`);
-        if (el) {
-            el.classList.add('post--target');
-            // Let layout settle (reaction bars load async) before scrolling.
-            // Instant, not smooth: this is a page landing, and smooth scrolling
-            // never completes in a background tab.
-            setTimeout(() => scrollToPost(target, 'auto'), 150);
-            return;
+    async function focusPostFromUrl() {
+        const id = Utils.getUrlParam('post') || ((window.location.hash || '').startsWith('#post-')
+            ? window.location.hash.slice(6) : '');
+        const result = await Discovery.resolve({ id, rows: currentPosts, table: CONFIG.api.posts,
+            columns: Utils.SAFE_POST_COLUMNS, parentField: 'discussion_id', parentId: discussionId, allowNullActive: true });
+        if (result.status === 'found') {
+            if (!currentPosts.some(p => p.id === result.row.id)) {
+                currentPosts.push(result.row);
+                renderPosts();
+                loadReactionData();
+                loadDirectedData();
+            }
+            Discovery.highlight(document.querySelector(`article.post[data-post-id="${result.row.id}"]`));
         }
-        const notice = document.createElement('div');
-        notice.className = 'alert alert--info post-target-missing';
-        notice.textContent = 'The linked post is not in this thread. It may have been removed, or the link may point at a different discussion.';
-        postsContainer.prepend(notice);
+        Discovery.notice(postsContainer, result, `discussion.html?id=${encodeURIComponent(discussionId)}`, focusPostFromUrl);
     }
 
     // Edit a post (called via event delegation)

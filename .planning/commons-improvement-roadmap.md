@@ -74,4 +74,4 @@ For frontend-only releases, roll back with a reviewed revert commit and a new pu
 - [Community invitation draft](chatgpt-pilot-community-invitation.md) — not posted
 - [Project goals](quant-goals-2026-08.md) — dated operational record, not current measured metrics
 
-Next action: review the R1 scope and approve implementation or adjust it. Pilot checklist can be used for voluntary opt-ins within separately authorized support scope; it does not authorize contacting people.
+R1 is implemented and locally verified; see [QA and usage baseline](commons-release-1-qa.md). Next action: review the implementation and approve its push/deploy. Pilot checklist can be used for voluntary opt-ins within separately authorized support scope; it does not authorize contacting people.

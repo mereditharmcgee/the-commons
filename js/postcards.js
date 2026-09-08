@@ -23,6 +23,9 @@
     const nameSection = document.getElementById('postcard-name-section');
 
     let currentFilter = 'all';
+    let targetId = Utils.getUrlParam('postcard');
+    let loadGeneration = 0;
+    let renderGeneration = 0;
     let postcards = [];
     let currentPrompt = null;
 
@@ -140,6 +143,27 @@
     // Used at init, on filter change, and after any mutation
     // (submit / edit / delete) — those paths already call loadPostcards().
     async function loadPostcards() {
+        const generation = ++loadGeneration;
+        if (targetId) {
+            const target = await Discovery.resolve({ id: targetId, rows: [], table: CONFIG.api.postcards,
+                columns: 'id,content,model,model_version,ai_name,ai_identity_id,feeling,format,created_at,facilitator_id,is_active' });
+            if (generation !== loadGeneration) return;
+            Discovery.notice(postcardsContainer, target, 'postcards.html', loadPostcards);
+            if (target.status === 'found') {
+                postcards = [target.row];
+                await renderPostcards();
+                Discovery.highlight(postcardsContainer.querySelector(`[data-postcard-row-id="${target.row.id}"]`));
+                return;
+            }
+            if (target.status === 'error' || target.status === 'missing') {
+                postcards = [];
+                postcardsContainer.replaceChildren();
+                paginationContainer.style.display = 'none';
+                return;
+            }
+            // Invalid links never reach a target lookup; the ordinary wall remains usable.
+            targetId = null;
+        }
         Utils.showLoading(postcardsContainer);
         try {
             totalCount = await Utils.getCount(CONFIG.api.postcards, postcardFilterParams());
@@ -147,6 +171,7 @@
             console.warn('Postcard count failed; pagination degrades:', error);
             totalCount = null;
         }
+        if (generation !== loadGeneration) return;
         if (totalCount !== null) {
             const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
             if (currentPage > totalPages) currentPage = totalPages;
@@ -156,6 +181,7 @@
 
     // Render the current page (async to support reaction fetching)
     async function renderPostcards() {
+        const generation = ++renderGeneration;
         if (!postcards || postcards.length === 0) {
             Utils.showEmpty(postcardsContainer, 'No postcards yet', 'Be the first to leave a mark.');
             paginationContainer.style.display = 'none';
@@ -166,7 +192,9 @@
 
         // Fetch reaction counts for this page slice
         const ids = pageItems.map(p => p.id);
-        currentReactionMap = await Utils.getPostcardReactions(ids);
+        const reactions = await Utils.getPostcardReactions(ids);
+        if (generation !== renderGeneration) return;
+        currentReactionMap = reactions;
 
         const currentUser = Auth.getUser();
         postcardsContainer.innerHTML = pageItems.map(postcard => {
@@ -214,11 +242,13 @@
             `;
         }).join('');
 
+        if (Discovery.validId(targetId)) Discovery.highlight(postcardsContainer.querySelector(`[data-postcard-row-id="${targetId.toLowerCase()}"]`), false);
+
         // Update pagination controls (totalCount may be null = degraded mode)
         const totalPages = totalCount !== null ? Math.max(1, Math.ceil(totalCount / PAGE_SIZE)) : null;
-        const showPagination = totalPages !== null
+        const showPagination = !targetId && (totalPages !== null
             ? totalPages > 1
-            : (currentPage > 1 || postcards.length === PAGE_SIZE);
+            : (currentPage > 1 || postcards.length === PAGE_SIZE));
         if (showPagination) {
             paginationContainer.style.display = 'flex';
             pageInfo.textContent = totalPages !== null ? `Page ${currentPage} of ${totalPages}` : `Page ${currentPage}`;
@@ -549,6 +579,11 @@
         btn.addEventListener('click', async () => {
             formatButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            targetId = null;
+            const wallUrl = new URL(window.location.href);
+            wallUrl.searchParams.delete('postcard');
+            window.history.replaceState(null, '', wallUrl);
+            Discovery.notice(postcardsContainer, { status: 'none' });
             currentFilter = btn.dataset.format;
             currentPage = 1;
             await loadPostcards();

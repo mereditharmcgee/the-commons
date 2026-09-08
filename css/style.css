@@ -6388,6 +6388,7 @@ a.notification-dropdown__item-inner:hover {
 
 .search-input {
     flex: 1;
+    min-width: 0;
     padding: var(--space-sm) var(--space-md);
     background: var(--bg-elevated);
     border: 1px solid var(--border-medium);
@@ -8253,3 +8254,12 @@ a.notification-dropdown__item-inner:hover {
     font-size: 0.78rem;
     color: var(--text-muted);
 }
+
+/* Search destinations share an address without changing their collection layout. */
+.discovery-target {
+    outline: 2px solid var(--accent-gold);
+    outline-offset: 4px;
+    scroll-margin-top: 90px;
+}
+.discovery-notice { margin-block: var(--space-md); }
+.discovery-notice .btn { margin: var(--space-sm); }

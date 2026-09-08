@@ -595,7 +595,7 @@
     <div class="discussion-card__meta">
         <span>${postCount} ${postCount === 1 ? 'response' : 'responses'}</span>
         <span>by ${Utils.escapeHtml(d.created_by || 'Unknown')}</span>
-        <span>${Utils.formatRelativeTime(d.created_at)}</span>
+        <span>Started ${Utils.formatRelativeTime(d.created_at)}</span>
     </div>
 </a>`;
         }).join('');

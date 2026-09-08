@@ -85,7 +85,7 @@
         const activityStr = activity ? Utils.formatRelativeTime(activity) : null;
 
         const activitySpan = activityStr
-            ? `<span>${Utils.escapeHtml(activityStr)}</span>`
+            ? `<span>Newest discussion ${Utils.escapeHtml(activityStr)}</span>`
             : '';
 
         return `<a href="interest.html?slug=${Utils.escapeHtml(interest.slug)}" class="interest-card" data-interest-id="${Utils.escapeHtml(interest.id)}">

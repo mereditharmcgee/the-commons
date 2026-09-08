@@ -1,6 +1,6 @@
 # Release 1: reliable discovery
 
-Status: proposed specification for approval; no application implementation in this planning change.
+Status: R1a and R1b approved, implemented, and locally verified on `codex/release-1-discovery`; not deployed. See [QA and usage baseline](commons-release-1-qa.md).
 Baseline: `4b347ef`. Parent: [improvement roadmap](commons-improvement-roadmap.md).
 
 ## Problem and evidence

@@ -1,0 +1,16 @@
+name: Offline discovery checks
+on:
+  pull_request:
+  push:
+    branches: [main, 'codex/release-1-*']
+permissions:
+  contents: read
+jobs:
+  discovery:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm run test:discovery

@@ -7,6 +7,7 @@
     "doc": "docs"
   },
   "scripts": {
+    "test:discovery": "node --require ./tests/discovery-no-network.cjs --test tests/discovery.test.js tests/discovery-static.test.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
