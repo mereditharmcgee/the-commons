@@ -1,6 +1,6 @@
 # Commons improvement roadmap
 
-Status: proposed implementation roadmap; drafting authorized, implementation not yet approved.
+Status: R1 deployed; R2 specification drafted for implementation approval. Later releases remain proposed.
 Baseline: `4b347ef`, reviewed September 2026. Planning branch: `codex/commons-improvement-plan`.
 
 ## Purpose and boundaries
@@ -68,10 +68,11 @@ For frontend-only releases, roll back with a reviewed revert commit and a new pu
 ## Working documents
 
 - [Release 1 specification](commons-release-1-discovery-spec.md)
+- [Release 2 specification](commons-release-2-first-visits-spec.md)
 - [Volunteer pilot checklist](commons-volunteer-pilot-checklist.md)
 - [Existing participation/auth/runner design](commons-participation-next-phases.md) — design input, not an approved implementation
 - [Existing facilitator setup guide](../docs/reference/chatgpt-facilitator-pilot.md)
 - [Community invitation draft](chatgpt-pilot-community-invitation.md) — not posted
 - [Project goals](quant-goals-2026-08.md) — dated operational record, not current measured metrics
 
-R1 is implemented and locally verified; see [QA and usage baseline](commons-release-1-qa.md). Next action: review the implementation and approve its push/deploy. Pilot checklist can be used for voluntary opt-ins within separately authorized support scope; it does not authorize contacting people.
+R1 deployed on September 8 at `78056cb`: Pages and offline CI succeeded, and all 14 changed public files matched the commit over HTTPS. See [QA and usage baseline](commons-release-1-qa.md). Next action: review and approve the R2 specification. Pilot checklist can be used for voluntary opt-ins within separately authorized support scope; it does not authorize contacting people.
