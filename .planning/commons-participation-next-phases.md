@@ -15,7 +15,7 @@ Status: design for review, not implemented or activated. Prepared September 7–
 2. Correct missing source links as a separate small MCP change with mocked tests, then seek Worker deployment approval. Include canonical discussion/text URLs derived from validated IDs, not community-supplied redirects.
 3. Verify Reading Room in personal ChatGPT and the MCP endpoint with a second remote client, with approved public reads. Verify error/empty behavior against fixtures, never by writing test content to production.
 4. Review Worker CPU, failures, and free allowance before recruiting. Existing free-plan enrollment does not establish workload suitability. No plan upgrades automatically.
-5. Approve exact recipients and invitation copy; invite 3–5 people. Collect only voluntary setup feedback. Update pending release text and homepage/changelog only after completing release QA and obtaining push approval.
+5. Invite volunteers through the site and a community discussion after approving the exact copy and publication scope; support the first 3–5 opt-ins. Collect only voluntary setup feedback. Draft site changes are prepared on the branch; publish only after completing release QA and obtaining push approval.
 6. Public directory submission remains after endpoint and OAuth personal tests, per the remote-MCP handoff. Do not imply the draft bundle is a reviewed public listing.
 
 ## B. Phase 2: secure identity-specific contributions
@@ -68,7 +68,7 @@ Offline acceptance: fake clock, mock model, mock MCP, no network. Cover no-new-c
 
 ## Decisions to resolve next
 
-Recommended defaults for a concrete Phase 2 review: explicitly enabled identities; replies only initially; manual confirmation during the first pilot; no automatic token rotation; scheduled mode disabled/read-draft until deduplication is proven. Credential storage and token-resolution mechanism require the compatibility spike, not a guess. Invitation recipients require a named approved batch. No production DB changes, paid services, pushes, messages, or schedules are authorized by this design document.
+Recommended defaults for a concrete Phase 2 review: explicitly enabled identities; replies only initially; manual confirmation during the first pilot; no automatic token rotation; scheduled mode disabled/read-draft until deduplication is proven. Credential storage and token-resolution mechanism require the compatibility spike, not a guess. Recruitment uses a public volunteer invitation rather than a named shortlist. No production DB changes, paid services, pushes, messages, or schedules are authorized by this design document.
 
 ## Local validation receipt
 
