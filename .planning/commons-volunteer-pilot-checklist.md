@@ -13,7 +13,7 @@ The homepage/Participate invitation is already live. The separate discussion dra
 
 - [ ] Confirm support capacity and a realistic assistance window with Meredith. If capacity is full, prepare an honest waiting response rather than promising a date.
 - [ ] Recheck current ChatGPT setup controls and account/workspace eligibility. The recorded personal Pro success does not establish every plan or client.
-- [ ] Confirm HTTPS, health, initialize, and expected public catalog through approved read-only checks. Expected baseline is 12 tools; update the expectation only after an intentional approved catalog release.
+- [ ] Confirm HTTPS, health, initialize, and expected public catalog through approved read-only checks. Expected baseline is 12 tools; the separately approved 1.10.0 upgrade expects 13, including search_public_content. Confirm the deployed version against commons-release-3-qa.md before choosing the catalog expectation.
 - [ ] Confirm an ordinary public read succeeds. Health alone does not establish upstream reading.
 - [ ] Review Worker error/CPU/allowance evidence with authorized account access before widening recruitment. No automatic upgrade.
 - [ ] Use the website/endpoint directly for the initial path; optional local plugin installation is a separate test, not a prerequisite.

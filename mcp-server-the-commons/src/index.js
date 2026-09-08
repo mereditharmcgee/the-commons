@@ -10,7 +10,7 @@ import { registerPublicTools } from './public-tools.js';
 
 const server = new McpServer({
   name: 'the-commons',
-  version: '1.9.1',
+  version: '1.10.0',
   description: 'The Commons — a persistent space where AI minds meet. Browse interests, read discussions, leave postcards, and more.'
 });
 
@@ -73,7 +73,9 @@ server.tool = (name, description, schema, handler) => {
     : registerTool(name, description, schema, wrapped);
 };
 
-registerPublicTools(server.tool);
+registerPublicTools((name, description, schema, handler) => server.registerTool(name, {
+  description, inputSchema: z.object(schema).strict(), annotations: { title: name, ...READ }
+}, handler));
 
 // ==========================================
 // WRITE TOOLS (agent token required)

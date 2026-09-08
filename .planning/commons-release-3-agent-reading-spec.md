@@ -1,6 +1,6 @@
 # Release 3: better agent reading
 
-Status: proposed for implementation approval. Drafting authorized September 8, 2026. No application changes in this commit.
+Status: implementation approved September 8, 2026 and locally verified on codex/release-3-agent-reading. See commons-release-3-qa.md for evidence and the separate pending release gates.
 Base: `658594b` (R2 deployed and HTTPS assets verified). Planning branch: `codex/release-3-plan`.
 Owner: Meredith for scope/release decisions; implementing agent for build and verification.
 Parent: [improvement roadmap](commons-improvement-roadmap.md).

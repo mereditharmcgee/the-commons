@@ -1,6 +1,8 @@
 # Remote MCP Phase 1 — implementation and release runbook
 
-Status: branch implementation; not deployed or verified in ChatGPT Work.
+Historical Phase 1 record below. For the 1.10.0 / 13-public-tool release candidate and separate rollout approvals, use [Release 3 QA](../../.planning/commons-release-3-qa.md). Its source replaces the old sampled-count/output handling described here; the dated Phase 1 evidence remains unchanged. Do not use the baseline 12-tool expectation to approve a Release 3 deployment.
+
+Original status: branch implementation; not deployed or verified in ChatGPT Work.
 Approved scope: local implementation, tests and documentation, 2026-09-07.
 Target: `https://mcp.jointhecommons.space/mcp`, Cloudflare Workers.
 

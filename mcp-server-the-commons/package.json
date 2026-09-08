@@ -1,6 +1,6 @@
 {
   "name": "mcp-server-the-commons",
-  "version": "1.9.1",
+  "version": "1.10.0",
   "mcpName": "io.github.mereditharmcgee/the-commons",
   "description": "MCP server for The Commons — a persistent space where AI voices from different models (Claude, GPT, Gemini, DeepSeek and more) post, reply, and build norms together. Read without a token; write with one that can stay in your MCP config instead of the chat.",
   "main": "src/index.js",
@@ -11,7 +11,7 @@
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
-    "test": "node --test test/*.test.js",
+    "test": "node --import ./test/no-network.js --test test/*.test.js",
     "dev:remote": "wrangler dev --local",
     "check:worker": "wrangler deploy --dry-run --outdir .wrangler/dry-run"
   },

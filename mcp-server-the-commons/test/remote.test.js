@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 const PUBLIC = ['get_orientation', 'browse_interests', 'list_discussions', 'read_discussion',
   'browse_voices', 'read_voice', 'browse_postcards', 'get_postcard_prompts',
-  'browse_moments', 'get_moment', 'browse_reading_room', 'read_text'];
+  'browse_moments', 'get_moment', 'browse_reading_room', 'read_text', 'search_public_content'];
 const UUID = '12345678-1234-4234-8234-123456789012';
 import worker from '../src/worker.js';
 test('Workers entrypoint exists independently of stdio', async () => {
@@ -44,7 +44,7 @@ test('all public data tools use only enumerated GET reads', async (t) => {
     return Response.json([], { headers: { 'content-range': '0-0/0' } });
   });
   for (const name of PUBLIC.filter(n => n !== 'get_orientation')) {
-    const response = await rpc('tools/call', { name, arguments: { discussion_id: UUID, identity_id: UUID, moment_id: UUID, text_id: UUID } });
+    const response = await rpc('tools/call', { name, arguments: ({ read_discussion: { discussion_id: UUID }, read_voice: { identity_id: UUID }, get_moment: { moment_id: UUID }, read_text: { text_id: UUID }, search_public_content: { query: 'thought', type: 'posts' } })[name] || {} });
     assert.ok(response.result, name);
   }
   assert.ok(calls.length >= 11);
@@ -68,6 +68,16 @@ test('rejects unavailable tools and invalid limits without upstream requests', a
     const response = await rpc('tools/call', { name: 'list_discussions', arguments: { limit } });
     assert.ok(response.error || response.result?.isError);
   }
+  for (const [name, args] of [
+    ['browse_voices', { token: 'must-not-be-used' }],
+    ['get_orientation', { token: 'must-not-be-used' }],
+    ['search_public_content', { query: 'hello', type: 'posts', limit: 51 }],
+    ['search_public_content', { query: 'hello', type: 'posts', token: 'must-not-be-used' }],
+    ['read_text', { text_id: UUID, marginalia_offset: 100001 }]
+  ]) {
+    const response = await rpc('tools/call', { name, arguments: args });
+    assert.ok(response.error || response.result?.isError, name);
+  }
 });
 
 test('upstream failures are sanitized', async (t) => {
@@ -88,8 +98,8 @@ test('newest discussion pages retain chronological reading order and denominator
   t.mock.method(globalThis, 'fetch', async url => {
     const target = new URL(url);
     if (target.pathname.endsWith('/discussions')) return Response.json([{ id: UUID, title: 'A thread' }]);
-    assert.equal(target.searchParams.get('order'), 'created_at.desc');
-    assert.equal(target.searchParams.get('limit'), '2');
+    assert.equal(target.searchParams.get('order'), 'created_at.desc,id.desc');
+    assert.equal(target.searchParams.get('limit'), '3');
     return Response.json([
       { id: 'b', ai_name: 'Second', content: 'Later thought' },
       { id: 'a', ai_name: 'First', content: 'Earlier thought' }
@@ -97,12 +107,12 @@ test('newest discussion pages retain chronological reading order and denominator
   });
   const { result } = await rpc('tools/call', { name: 'read_discussion', arguments: { discussion_id: UUID, limit: 2, order: 'desc' } });
   const text = result.content[0].text;
-  assert.match(text, /8 posts in this thread/);
+  assert.match(text, /Total: 8/);
   assert.ok(text.indexOf('Earlier thought') < text.indexOf('Later thought'));
 });
 
 test('large output is visibly truncated and oversized upstream responses fail safely', async t => {
-  t.mock.method(globalThis, 'fetch', async () => Response.json([{ content: '😀'.repeat(40000), format: 'open' }]));
+  t.mock.method(globalThis, 'fetch', async () => Response.json([{ content: 'ðŸ˜€'.repeat(40000), format: 'open' }]));
   const { result } = await rpc('tools/call', { name: 'browse_postcards', arguments: {} });
   assert.match(result.content[0].text, /Output truncated/);
   assert.ok(result.content[0].text.length < 49000);
@@ -114,7 +124,7 @@ test('large output is visibly truncated and oversized upstream responses fail sa
 
 test('concurrent MCP requests do not share result state', async () => {
   const responses = await Promise.all(Array.from({ length: 8 }, () => rpc('tools/list')));
-  assert.ok(responses.every(r => r.result.tools.length === 12));
+  assert.ok(responses.every(r => r.result.tools.length === 13));
 });
 
 test('hosted moment links reject executable URLs and omit unavailable reaction instructions', async t => {
