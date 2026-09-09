@@ -9,6 +9,7 @@ import net from 'node:net';
 import pg from 'pg';
 import { randomBytes } from 'node:crypto';
 import { initdb, pg_ctl } from '@embedded-postgres/windows-x64';
+import { loadProductionDependencies } from './production-triggers.js';
 
 // No supplied URLs, PGHOST, DATABASE_URL, auth files, or production RPCs are used.
 async function command(executable, args) {
@@ -50,6 +51,7 @@ test('disposable PostgreSQL: actual checked-in RPC participation proposal', { ti
 
   await admin.query(await readFile(new URL('./participation-db-schema.sql', import.meta.url),'utf8'));
   const repoFile = name => readFile(new URL('../../../'+name,import.meta.url),'utf8');
+  await loadProductionDependencies(admin, repoFile);
   const schema = await repoFile('sql/schema/03-agent-system.sql');
   const rate = schema.match(/CREATE OR REPLACE FUNCTION check_agent_rate_limit\([\s\S]*?\$\$ LANGUAGE plpgsql SECURITY DEFINER;/)[0];
   await admin.query(rate);
@@ -65,7 +67,7 @@ test('disposable PostgreSQL: actual checked-in RPC participation proposal', { ti
   const grant=()=>call(a,'remote_mcp_create_grant',[connection,voice,hash,'https://client.example','https://mcp.jointhecommons.space/mcp','c'.repeat(64),scopes]);
   const reset=async()=>{
     await admin.query('TRUNCATE remote_mcp_private.grants,public.facilitators,public.discussions,auth.sessions CASCADE');
-    await admin.query('INSERT INTO facilitators VALUES($1),($2)',[owner,other]);
+    await admin.query('INSERT INTO facilitators(id) VALUES($1),($2)',[owner,other]);
     await admin.query("INSERT INTO ai_identities(id,facilitator_id,name,model) VALUES($1,$2,'Fixture voice','GPT')",[voice,owner]);
     await admin.query("INSERT INTO agent_tokens(id,ai_identity_id,token_hash,token_prefix,token_plain) VALUES($1,$2,extensions.crypt($3,extensions.gen_salt('bf',4)),left($3,11),$3)",[token,voice,secret]);
     await admin.query('INSERT INTO auth.sessions VALUES($1,$2,NULL),($3,$4,NULL)',[session,owner,session2,other]);
@@ -137,14 +139,16 @@ test('disposable PostgreSQL: actual checked-in RPC participation proposal', { ti
       else{await admin.query('SELECT id FROM facilitators WHERE id=$1 FOR KEY SHARE',[owner]);await admin.query('SELECT id FROM ai_identities WHERE id=$1 FOR UPDATE',[voice]);await admin.query('SELECT id FROM agent_tokens WHERE id=$1 FOR UPDATE',[token]);}
       const pending=publish(b,d).then(()=>({ok:true}),error=>({error}));await waitBlocked(b.processID);
       if(action==='revoke')await admin.query('UPDATE remote_mcp_private.grants SET revoked_at=clock_timestamp()');
-      if(action==='rotate')await admin.query('UPDATE agent_tokens SET is_active=false');
-      if(action==='delete')await admin.query('DELETE FROM facilitators WHERE id=$1',[owner]);
+      if(action==='rotate'||action==='delete'){
+        await admin.query("SELECT set_config('request.jwt.claims',$1,true)",[claims]);
+        await call(admin,action==='rotate'?'generate_agent_token':'delete_account',action==='rotate'?[voice]:[]);
+      }
       await admin.query('COMMIT');assert.ok((await pending).error);assert.equal((await counts()).charges,0);
     });
     await t.test('publish commits first: '+action+' waits and blocks future publication',async()=>{
       await reset();const d=await approved();await a.query('BEGIN');await publish(a,d);
-      const sql=action==='delete'?'DELETE FROM facilitators WHERE id=$1':action==='rotate'?'UPDATE agent_tokens SET is_active=false WHERE ai_identity_id=$1':'UPDATE remote_mcp_private.grants SET revoked_at=clock_timestamp() WHERE owner_id=$1';
-      const pending=admin.query(sql,[action==='rotate'?voice:owner]);
+      await admin.query("SELECT set_config('request.jwt.claims',$1,false)",[claims]);
+      const pending=action==='delete'?call(admin,'delete_account'):action==='rotate'?call(admin,'generate_agent_token',[voice]):call(admin,'remote_mcp_revoke',[connection]);
       // Observe the administrative operation from an independent privileged session.
       const monitor=await client('race-monitor');let blocked=false;
       for(let i=0;i<300;i++){if((await monitor.query('SELECT wait_event_type FROM pg_stat_activity WHERE pid=$1',[admin.processID])).rows[0]?.wait_event_type==='Lock'){blocked=true;break;}await new Promise(r=>setTimeout(r,10));}
@@ -205,7 +209,80 @@ test('disposable PostgreSQL: actual checked-in RPC participation proposal', { ti
       await admin.query('DELETE FROM remote_mcp_private.grants WHERE id=$1',[other]);
     }
     await assert.rejects(call(b,'remote_mcp_check_grant',[connection,'wrong']));
-  });  await t.test('catalog privilege matrix and proposal rollback preserve legacy RPCs and public history',async()=>{
+  });
+  const recipient = async () => {
+    await admin.query("INSERT INTO ai_identities(id,facilitator_id,name,model) VALUES($1,$2,'Recipient','GPT')",[session2,other]);
+    await admin.query('UPDATE posts SET ai_identity_id=$1,facilitator_id=$2 WHERE id=$3',[session2,other,parent]);
+    await admin.query("INSERT INTO subscriptions VALUES($1,'discussion',$2)",[other,discussion]);
+  };
+  const sideEffects = async () => (await admin.query(`SELECT
+    (SELECT post_count FROM discussions WHERE id=$1) AS post_count,
+    (SELECT count(*)::int FROM subscriptions) AS subscriptions,
+    (SELECT count(*)::int FROM notifications) AS notifications,
+    (SELECT count(*)::int FROM agent_activity) AS audit`,[discussion])).rows[0];
+  await t.test('eleven production triggers preserve identity, fan out once, and receipts bypass duplicate guard',async()=>{
+    await reset();await recipient();
+    assert.equal((await admin.query("SELECT count(*)::int AS n FROM pg_trigger WHERE tgrelid='posts'::regclass AND NOT tgisinternal")).rows[0].n,11);
+    const d=await approved();const result=await publish(b,d);const first=await sideEffects();
+    assert.equal(first.post_count,2);assert.equal(first.subscriptions,2);assert.equal(first.notifications,3);
+    const notices=(await admin.query('SELECT type,recipient_identity_id FROM notifications ORDER BY type')).rows;
+    assert.deepEqual(notices.map(n=>n.type),['discussion_activity','new_post','new_reply']);
+    assert.equal(notices.find(n=>n.type==='new_reply').recipient_identity_id,session2);
+    const row=(await admin.query('SELECT ai_identity_id,ai_name,suspicious_score FROM posts WHERE id=$1',[result.post_id])).rows[0];
+    assert.equal(row.ai_identity_id,voice);assert.equal(row.ai_name,'Fixture voice');assert.equal(row.suspicious_score,0);
+    assert.equal((await publish(b,d)).post_id,result.post_id);assert.deepEqual(await sideEffects(),first);
+  });
+  await t.test('new duplicate draft is refused without any additional side effects',async()=>{
+    await reset();await recipient();await publish(b,await approved());const before=await sideEffects();
+    const duplicate=await approved();await assert.rejects(publish(b,duplicate),/Reply unavailable/);
+    assert.deepEqual(await counts(),{posts:1,receipts:1,charges:1});assert.deepEqual(await sideEffects(),before);
+  });
+  await t.test('post count follows hide, restore and deletion without changing retained receipt',async()=>{
+    await reset();const d=await approved();const result=await publish(b,d);
+    await admin.query('UPDATE posts SET is_active=false WHERE id=$1',[result.post_id]);assert.equal((await sideEffects()).post_count,1);
+    await admin.query('UPDATE posts SET is_active=true WHERE id=$1',[result.post_id]);assert.equal((await sideEffects()).post_count,2);
+    await admin.query('DELETE FROM posts WHERE id=$1',[result.post_id]);assert.equal((await sideEffects()).post_count,1);
+    assert.equal((await counts()).receipts,1);
+  });
+  await t.test('checked-in recipient mute and digest preferences remain effective',async()=>{
+    await reset();await recipient();
+    await admin.query(`UPDATE ai_identities SET notification_prefs='{"muted_types":["new_reply"]}' WHERE id=$1`,[session2]);
+    await admin.query(`UPDATE facilitators SET notification_prefs='{"digest_types":["new_post","discussion_activity"]}' WHERE id=$1`,[other]);
+    await publish(b,await approved());
+    const rows=(await admin.query('SELECT type,pending_digest FROM notifications ORDER BY type')).rows;
+    assert.deepEqual(rows,[{type:'discussion_activity',pending_digest:true},{type:'new_post',pending_digest:true}]);
+  });
+  await t.test('late receipt failure rolls back notifications, auto-follow, count and validation audit',async()=>{
+    await reset();await recipient();const before=await sideEffects();const d=await approved();
+    await admin.query('CREATE TRIGGER fail BEFORE INSERT ON remote_mcp_private.receipts FOR EACH ROW EXECUTE FUNCTION remote_mcp_private.fail()');
+    try {await assert.rejects(publish(b,d));assert.deepEqual(await sideEffects(),before);assert.deepEqual(await counts(),{posts:0,receipts:0,charges:0});}
+    finally {await admin.query('DROP TRIGGER fail ON remote_mcp_private.receipts');}
+  });
+  await t.test('notification trigger failure cannot leave a partial post or receipt',async()=>{
+    await reset();await recipient();const before=await sideEffects();const d=await approved();
+    await admin.query('CREATE TRIGGER fail BEFORE INSERT ON notifications FOR EACH ROW EXECUTE FUNCTION remote_mcp_private.fail()');
+    try {await assert.rejects(publish(b,d));assert.deepEqual(await sideEffects(),before);assert.deepEqual(await counts(),{posts:0,receipts:0,charges:0});}
+    finally {await admin.query('DROP TRIGGER fail ON notifications');}
+  });
+  await t.test('recipient deletion commits while publication waits: foreign-key refusal is fully atomic',async()=>{
+    await reset();await recipient();const d=await approved();
+    await admin.query('BEGIN');await admin.query('SELECT id FROM facilitators WHERE id=$1 FOR UPDATE',[other]);
+    const pending=publish(b,d).then(value=>({value}),error=>({error}));await waitBlocked(b.processID);
+    await admin.query("SELECT set_config('request.jwt.claims',$1,true)",[JSON.stringify({sub:other,session_id:session2})]);
+    await call(admin,'delete_account');await admin.query('COMMIT');
+    assert.ok((await pending).error);assert.deepEqual(await counts(),{posts:0,receipts:0,charges:0});
+    assert.equal((await sideEffects()).post_count,1);assert.equal((await sideEffects()).notifications,0);
+  });
+  await t.test('published reply survives recipient deletion; obsolete notifications are removed',async()=>{
+    await reset();await recipient();const d=await approved();await a.query('BEGIN');const receipt=await publish(a,d);
+    await admin.query("SELECT set_config('request.jwt.claims',$1,false)",[JSON.stringify({sub:other,session_id:session2})]);
+    const pending=call(admin,'delete_account');const monitor=await client('recipient-delete-monitor');
+    let blocked=false;for(let i=0;i<300;i++){if((await monitor.query('SELECT wait_event_type FROM pg_stat_activity WHERE pid=$1',[admin.processID])).rows[0]?.wait_event_type==='Lock'){blocked=true;break;}await new Promise(r=>setTimeout(r,10));}
+    assert.ok(blocked);await a.query('COMMIT');await pending;
+    assert.equal((await publish(b,d)).post_id,receipt.post_id);assert.equal((await sideEffects()).post_count,2);
+    assert.equal((await sideEffects()).notifications,0);assert.deepEqual(await counts(),{posts:1,receipts:1,charges:1});
+  });
+  await t.test('catalog privilege matrix and proposal rollback preserve legacy RPCs and public history',async()=>{
     await reset();const d=await approved();await publish(b,d);
     for(const name of ['remote_mcp_create_grant','remote_mcp_connections','remote_mcp_review','remote_mcp_approve','remote_mcp_revoke']){
       const row=(await admin.query("SELECT has_function_privilege('anon',oid,'EXECUTE') AS anon,has_function_privilege('authenticated',oid,'EXECUTE') AS auth FROM pg_proc WHERE proname=$1",[name])).rows[0];assert.deepEqual(row,{anon:false,auth:true});

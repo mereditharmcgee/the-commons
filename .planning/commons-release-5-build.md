@@ -135,3 +135,12 @@ own retention assessment.
 
 The next action is catalog-only diagnostic approval, not deployment. This build
 is a locally verified candidate; it does not establish production readiness.
+
+### Follow-up status
+
+The approved catalog inspection and subsequent local trigger regressions are
+recorded in `commons-release-5-catalog-review.md`. The combined offline suite
+now passes 88 entries, including 30 database entries with the observed post
+triggers and actual rotation/deletion RPCs. The original counts above describe
+the initial Slice B checkpoint. Next is exact migration/rollback review, with
+the remaining catalog/helper and operational gates recorded in that report.
