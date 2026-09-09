@@ -2,18 +2,20 @@
 
 September 9, 2026. Branch `codex/release-5-authority-spike`, based on planning commit `9dc8b0d`.
 
-**Decision: do not advance to Slice B yet.** The provider/SDK investigation reached the plan's failure decision point. The diagnostic suite passes, but it reproduces a concurrent code-redemption limitation and a dropped metadata field. Passing diagnostics are not acceptance of those behaviors. Database authority and end-to-end client compatibility remain unproven.
+**Follow-up completed:** see [FOLLOWUP.md](FOLLOWUP.md) for the current findings and narrowed build proposal. The metadata fix and synthetic PostgreSQL transaction design now pass runtime tests. A Durable Object storage prototype prevents duplicate code redemption locally; adopting that custom adapter still requires review. The original KV design remains unsuitable. Nothing has been deployed.
+
+The sections below retain the initial spike findings; the follow-up supersedes their database/runtime status.
 
 ## Reproduce
 
-Requires Node 24 (uses synchronous module hooks). In this directory:
+Requires Windows x64 and Node 24 (uses synchronous module hooks). The new PostgreSQL suite uses pinned Windows binaries and starts/stops its own loopback-only cluster. In this directory:
 
 ```powershell
 npm ci --ignore-scripts --no-audit --no-fund
 npm test
 ```
 
-Installation downloads packages; tests do not access the network. Fetch returns only explicitly registered fixture documents; every other URL throws. Native socket connections also throw. There are no production credentials or provider bindings. The reserved `.example` domains never resolve over the network.
+Installation downloads packages; tests use only local runtimes. The original Node fixtures block all socket connections. The new PostgreSQL/Miniflare harness permits loopback sockets only; Worker outbound traffic is routed to a denying fixture service. There are no production credentials or provider bindings. The reserved `.example` domains never resolve over the network.
 
 Dependencies are isolated from application manifests and locked: `@cloudflare/workers-oauth-provider` 0.10.3, `@modelcontextprotocol/sdk` 1.27.1, Zod 3.25.76 (all MIT). Provider tarball integrity is recorded in package-lock.json. SDK source advertises MCP protocol `2025-11-25`; this is the tested SDK version, not a claim that it is the newest protocol specification.
 
