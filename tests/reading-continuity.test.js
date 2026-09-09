@@ -12,7 +12,7 @@ function memory() {
     return { data, getItem: k => data.get(k) ?? null, setItem: (k,v) => data.set(k,v), removeItem: k => data.delete(k) };
 }
 class Element {
-    constructor(tag) { this.tag = tag; this.children = []; this.events = {}; this.dataset = {}; this.textContent = ''; this.hidden = false; }
+    constructor(tag) { this.tag = tag; this.children = []; this.events = {}; this.dataset = {}; this.textContent = ''; this.hidden = false; this.disabled = false; }
     append(...nodes) { this.children.push(...nodes); }
     replaceChildren(...nodes) { this.children = nodes; }
     addEventListener(k, f) { this.events[k] = f; }
@@ -141,4 +141,40 @@ test('last explicit save wins when baseline requests finish out of order', async
     pending[1]([{discussion_id:id(1),last_post_at:after}]);await b;
     pending[0]([{discussion_id:id(1),last_post_at:before}]);await a;
     const saved=h.state.createStore().load().entries[0];assert.equal(saved.post_id,id(102));assert.equal(saved.latest_reply_at,after);
+});
+test('a bookmark survives leaving the page before its baseline request finishes', async()=>{
+    let resolve;const h=harness('discussion-reading',()=>new Promise(r=>resolve=r));
+    const target=new Element('button');target.dataset={readingSave:id(101),readingCreated:before};
+    const pending=h.docEvents.click({target});
+    const returning=harness('saved-reading',async()=>[{id:id(1),title:'Conversation',is_active:true}],null,h.storage);
+    assert.equal(returning.state.createStore().load().entries[0]?.post_id,id(101));
+    assert.ok(h.nodes().some(e=>e.textContent.startsWith('Your place is saved.')));
+    resolve([{discussion_id:id(1),last_post_at:after}]);await pending;
+});
+test('baseline completion preserves save time and unrelated places, and rejects replaced or removed saves',()=>{
+    const h=harness(),store=h.state.createStore(()=>h.storage,()=>after);
+    const saved=store.save(id(1),id(101),before).entry;
+    store.save(id(2),id(102),before);
+    assert.equal(store.completeBaseline(saved,before).ok,true);
+    assert.equal(store.load().entries.length,2);
+    assert.equal(store.load().entries.find(e=>e.discussion_id===id(1)).saved_at,after);
+    const replaced=store.save(id(1),id(103),before).entry;
+    assert.equal(store.completeBaseline(saved,after).ok,false);
+    store.remove(id(1));assert.equal(store.completeBaseline(replaced,after).ok,false);
+    assert.equal(store.load().entries.length,1);
+});
+test('failed baseline storage keeps the immediate bookmark and does not claim the bookmark failed',async()=>{
+    let resolve;const h=harness('discussion-reading',()=>new Promise(r=>resolve=r));
+    const target=new Element('button');target.dataset={readingSave:id(101),readingCreated:before};
+    const pending=h.docEvents.click({target});const original=h.storage.getItem(h.state.KEY);
+    h.storage.setItem=()=>{throw Error('quota');};resolve([{discussion_id:id(1),last_post_at:after}]);await pending;
+    assert.equal(h.storage.getItem(h.state.KEY),original);
+    assert.ok(h.nodes().some(e=>/Your place is saved.*comparison is unavailable/.test(e.textContent)));
+});
+test('failed immediate storage never starts a baseline request',async()=>{
+    let calls=0;const storage=memory();storage.setItem=()=>{throw Error('quota');};
+    const h=harness('discussion-reading',async()=>{calls++;return [];},null,storage);
+    const target=new Element('button');target.dataset={readingSave:id(101),readingCreated:before};
+    await h.docEvents.click({target});assert.equal(calls,0);
+    assert.ok(h.nodes().some(e=>/Your place was not saved/.test(e.textContent)));
 });

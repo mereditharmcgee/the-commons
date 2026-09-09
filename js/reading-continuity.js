@@ -132,18 +132,20 @@ const ReadingContinuity = (() => {
         document.addEventListener('click', async e => {
             const target = e.target.closest('[data-reading-save]');
             if (!target) return;
-            const ticket = ++epoch;
+            ++epoch;
             const post = target.dataset.readingSave, created = target.dataset.readingCreated;
             if (!ReadingState.validId(discussion) || !ReadingState.validId(post) || !ReadingState.validDate(created)) return;
-            target.disabled = true; message.textContent = 'Saving your place…';
+            const result = store.save(discussion, post, created);
+            if (!result.ok) { message.textContent = result.error; return; }
+            changed();
+            const ticket = epoch;
+            message.textContent = 'Your place is saved. You can leave this page now. Reply-time comparison is being prepared. ' + privacy;
             let baseline = null;
-            try { baseline = (await api.stats([discussion])).find(r => r.discussion_id === discussion)?.last_post_at || null; } catch { /* The place can be saved without an update baseline. */ }
+            try { baseline = (await api.stats([discussion])).find(r => r.discussion_id === discussion)?.last_post_at || null; } catch { /* The bookmark is already safely stored with an unknown baseline. */ }
             if (ticket === epoch) {
-                const result = store.save(discussion, post, created, baseline);
-                if (result.ok) changed();
-                message.textContent = result.ok ? 'Your place is saved. ' + (ReadingState.validDate(baseline) ? '' : 'Update comparison is unavailable for this save. ') + privacy : result.error;
+                const completed = store.completeBaseline(result.entry, baseline);
+                message.textContent = 'Your place is saved. ' + (completed.ok ? '' : 'Update comparison is unavailable for this save. ') + privacy;
             }
-            target.disabled = false;
         });
     }
 

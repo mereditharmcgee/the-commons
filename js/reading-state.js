@@ -42,7 +42,18 @@ const ReadingState = (() => {
             if (entries.length >= 20) return { ok: false, error: 'You have 20 saved discussions. Remove a saved place from Continue reading on the homepage before adding another.' };
             entries.unshift({ discussion_id: discussion.toLowerCase(), post_id: post.toLowerCase(), post_created_at: created,
                 saved_at: now(), latest_reply_at: validDate(baseline) ? baseline : null });
-            return write(entries);
+            const result = write(entries);
+            return result.ok ? { ...result, entry: { ...entries[0] } } : result;
+        }
+        function completeBaseline(expected, baseline) {
+            if (!expected || !validDate(baseline)) return { ok: false };
+            const current = load();
+            if (current.error) return { ok: false };
+            const entry = current.entries.find(e => e.discussion_id === expected.discussion_id);
+            // A late response must never recreate a removed place or replace a newer save.
+            if (!entry || Object.keys(entry).some(key => entry[key] !== expected[key])) return { ok: false };
+            entry.latest_reply_at = baseline;
+            return write(current.entries);
         }
         function remove(id) {
             const current = load();
@@ -52,7 +63,7 @@ const ReadingState = (() => {
             try { storage().removeItem(KEY); return { ok: true }; }
             catch { return { ok: false, error: 'Saved places could not be cleared. Browser storage is unavailable.' }; }
         }
-        return { load, save, remove, clear };
+        return { load, save, completeBaseline, remove, clear };
     }
     return { KEY, validId, validDate, url, createStore };
 })();
