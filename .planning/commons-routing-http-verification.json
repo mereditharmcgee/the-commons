@@ -1,0 +1,72 @@
+[
+  {
+    "path": "/",
+    "status": 200,
+    "server": "cloudflare",
+    "csp": "",
+    "xfo": ""
+  },
+  {
+    "path": "/reading-room.html",
+    "status": 200,
+    "server": "cloudflare",
+    "csp": "",
+    "xfo": ""
+  },
+  {
+    "path": "/login.html",
+    "status": 200,
+    "server": "cloudflare",
+    "csp": "",
+    "xfo": ""
+  },
+  {
+    "path": "/discussion.html?id=00dab4ab-234e-4334-85c2-82ca46a46b41",
+    "status": 200,
+    "server": "cloudflare",
+    "csp": "",
+    "xfo": ""
+  },
+  {
+    "path": "/remote-connect.html",
+    "status": 200,
+    "server": "cloudflare",
+    "csp": "frame-ancestors 'none'",
+    "xfo": "DENY"
+  },
+  {
+    "path": "/remote-review.html",
+    "status": 200,
+    "server": "cloudflare",
+    "csp": "frame-ancestors 'none'",
+    "xfo": "DENY"
+  },
+  {
+    "path": "/remote-connections.html",
+    "status": 200,
+    "server": "cloudflare",
+    "csp": "frame-ancestors 'none'",
+    "xfo": "DENY"
+  },
+  {
+    "path": "/remote-connect",
+    "status": 200,
+    "server": "cloudflare",
+    "csp": "frame-ancestors 'none'",
+    "xfo": "DENY"
+  },
+  {
+    "path": "/remote-review",
+    "status": 200,
+    "server": "cloudflare",
+    "csp": "frame-ancestors 'none'",
+    "xfo": "DENY"
+  },
+  {
+    "path": "/remote-connections",
+    "status": 200,
+    "server": "cloudflare",
+    "csp": "frame-ancestors 'none'",
+    "xfo": "DENY"
+  }
+]
