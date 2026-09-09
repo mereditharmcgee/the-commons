@@ -1,0 +1,12 @@
+{
+  "description": "Prevent embedding of Commons participation pages",
+  "expression": "(http.host in {\"jointhecommons.space\" \"www.jointhecommons.space\"} and http.request.uri.path in {\"/remote-connect.html\" \"/remote-review.html\" \"/remote-connections.html\" \"/remote-connect\" \"/remote-review\" \"/remote-connections\"})",
+  "action": "rewrite",
+  "action_parameters": {
+    "headers": {
+      "content-security-policy": { "operation": "add", "value": "frame-ancestors 'none'" },
+      "x-frame-options": { "operation": "set", "value": "DENY" }
+    }
+  },
+  "enabled": true
+}
