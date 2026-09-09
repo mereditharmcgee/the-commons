@@ -1,0 +1,41 @@
+{
+  "project": "dfephsfberzadihcrhal",
+  "preflight": {
+    "user": "postgres",
+    "extension": "1.6.4",
+    "maxRunningJobs": 32,
+    "activeJobsBefore": 1,
+    "runningJobsBefore": 0,
+    "targetPreviouslyAbsent": true
+  },
+  "verification": {
+    "job": {
+      "name": "commons-remote-mcp-cleanup",
+      "jobid": 2,
+      "owner": "postgres",
+      "active": true,
+      "command": "BEGIN; SET LOCAL statement_timeout = '30s'; SET LOCAL lock_timeout = '2s'; SELECT remote_mcp_private.cleanup(); COMMIT;",
+      "database": "postgres",
+      "schedule": "*/5 * * * *"
+    },
+    "now": "2026-09-09T20:00:18.808752+00:00",
+    "runs": [
+      {
+        "runid": 101,
+        "status": "succeeded",
+        "end_time": "2026-09-09T20:00:00.021217+00:00",
+        "start_time": "2026-09-09T20:00:00.014945+00:00",
+        "return_message": "COMMIT"
+      },
+      {
+        "runid": 100,
+        "status": "succeeded",
+        "end_time": "2026-09-09T19:55:00.20962+00:00",
+        "start_time": "2026-09-09T19:55:00.196118+00:00",
+        "return_message": "COMMIT"
+      }
+    ],
+    "overdue_bodies": 0,
+    "client_rpc_access": 0
+  }
+}

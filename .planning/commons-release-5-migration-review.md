@@ -110,3 +110,21 @@ Evidence: .planning/commons-release-5-dormant-install-evidence.json.
 No token/session/content rows read, new RPC invoked, cleanup scheduled, access
 activated, Worker deployed, npm publication or push performed. Next stage remains
 separate cleanup scheduling approval and verification before activation.
+
+## Cleanup installed and verified September 9, 2026
+
+Explicit approval covered the five-minute cleanup schedule. Applied the reviewed
+schedule through the authenticated Supabase SQL Editor on dfephsfberzadihcrhal.
+Preflight: pg_cron 1.6.4 exists, postgres owns cleanup and the new job; one active
+job existed, none running, configured maximum 32, target name absent.
+Job 2 is active with the exact reviewed command, five-minute cadence, 30-second
+statement timeout and two-second lock timeout. No extension or billing changes.
+Scheduled runs 100 (19:55 UTC) and 101 (20:00 UTC) both succeeded with COMMIT,
+in approximately 14ms and 6ms. Aggregate overdue bodies: zero. Client RPC access
+remains zero. No private bodies or tokens were read, no pilot calls made.
+Evidence: commons-release-5-cleanup-evidence.json. Audit SQL:
+sql/patches/remote-mcp-participation-cleanup-schedule.sql.
+
+Separately approved main push deployed exactly 890451c through GitHub Pages;
+see commons-release-5-deploy-qa.md. These newer audit records remain local on
+the feature branch. Worker deployment and participation activation remain pending.
