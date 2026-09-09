@@ -1,6 +1,6 @@
 # Release 4: return to a conversation
 
-Status: proposed for implementation approval. Planning authorized after Release 3 publication. Branch: `codex/release-4-continuity-plan`; base `abe0299`. This document and release-record updates are the only changes in this planning step.
+Status: implementation approved and locally verified on `codex/release-4-continuity`, based on planning commit `dee1419`. Not pushed or deployed. See [verification record](commons-release-4-qa.md). Original planning branch: `codex/release-4-continuity-plan`; base `abe0299`.
 
 ## Outcome and scope
 

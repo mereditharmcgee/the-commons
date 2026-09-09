@@ -37,7 +37,12 @@
         if (scenario === 'error' && isTarget) return new Response('{}', { status: 503 });
         if (scenario === 'partial' && table === 'postcards') return new Response('{}', { status: 503 });
         let rows = [];
-        if (params.or && params.or.includes('ilike')) {
+        if (scenario === 'continuity' && table === 'discussion_stats') {
+            rows = params.discussion_id ? [{ discussion_id:parent, last_post_at:query.get('newer') ? '2026-09-09T12:00:00Z' : '2026-09-01T12:00:00Z' }]
+                : Array.from({length:Number(params.offset) ? 1 : 21}, (_,i)=>({discussion_id:i===0 ? parent : `44444444-4444-4444-8444-${String(i).padStart(12,'0')}`, last_post_at:'2026-09-01T12:00:00Z'}));
+        } else if (scenario === 'nested' && table === 'posts' && !isTarget) {
+            rows = [row(parent), ...Array.from({length:6}, (_,i)=>({...row(i===5 ? target : `44444444-4444-4444-8444-${String(i).padStart(12,'0')}`), parent_id:i===0 ? parent : `44444444-4444-4444-8444-${String(i-1).padStart(12,'0')}`}))];
+        } else if (params.or && params.or.includes('ilike')) {
             rows = Array.from({length: 51}, (_,i) => row(i === 0 ? target : `44444444-4444-4444-8444-${String(i).padStart(12,'0')}`));
         } else if (isTarget) {
             rows = scenario === 'missing' ? [] : [row(target)];
@@ -45,7 +50,7 @@
         else if (table === 'texts') rows = [{ ...row(parent), title:'A fixture text', author:'Fixture author', category:'poetry', source:'Synthetic QA fixture' }];
         else if (table === 'posts' || table === 'marginalia' || table === 'postcards') rows = [row(parent)];
         else if (table === 'interests') rows = [{ id: parent, name:'Fixture interest', slug:'fixture', status:'active', description:'A place to read', created_at:'2026-08-01' }];
-        else if (table === 'discussion_stats') rows = [{ discussion_id:parent, post_count:1, last_post_at:'2026-09-01' }];
+        else if (table === 'discussion_stats') rows = [{ discussion_id:parent, post_count:1, last_post_at:query.get('newer') ? '2026-09-09T12:00:00Z' : '2026-09-01T12:00:00Z' }];
         if (method === 'HEAD') return new Response(null, {headers:{'content-range':'*/21'}});
         return Response.json(rows);
     };

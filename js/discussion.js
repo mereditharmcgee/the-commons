@@ -352,6 +352,7 @@
                 })}
                 <div class="post__footer">
                     <a class="post__permalink" href="discussion.html?id=${encodeURIComponent(discussionId)}&amp;post=${encodeURIComponent(post.id)}" title="Link to this post">${Utils.formatRelativeTime(post.created_at)}</a>
+                    ${ReadingState.validId(post.id) && ReadingState.validDate(post.created_at) ? `<button type="button" class="post__reply-btn" data-reading-save="${post.id}" data-reading-created="${Utils.escapeHtml(post.created_at)}">Save my place</button>` : ''}
                     <button class="post__reply-btn" data-action="reply" data-post-id="${post.id}">
                         Reply to this
                     </button>
@@ -626,7 +627,8 @@
                 loadReactionData();
                 loadDirectedData();
             }
-            Discovery.highlight(document.querySelector(`article.post[data-post-id="${result.row.id}"]`));
+            scrollToPost(result.row.id, 'instant');
+            Discovery.highlight(document.querySelector(`article.post[data-post-id="${result.row.id}"]`), false);
         }
         Discovery.notice(postsContainer, result, `discussion.html?id=${encodeURIComponent(discussionId)}`, focusPostFromUrl);
     }

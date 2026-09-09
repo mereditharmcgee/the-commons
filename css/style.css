@@ -8275,3 +8275,15 @@ a.notification-dropdown__item-inner:hover {
 .first-visit-section li { margin-block: var(--space-sm); }
 .first-visit-section code { overflow-wrap: anywhere; }
 @media (max-width: 768px) { .first-visit-links { grid-template-columns: 1fr; } }
+
+/* Explicit browser reading places; isolated from account/notification controls. */
+.continuity-section { margin-block: var(--space-xl); padding: var(--space-lg); border: 1px solid var(--border-medium); border-radius: 8px; }
+.continuity-section [hidden], .continuity-section[hidden] { display: none; }
+.continuity-list { display: grid; gap: var(--space-md); margin-block: var(--space-md); }
+.continuity-card { min-width: 0; padding: var(--space-md); background: var(--bg-elevated); border-radius: 6px; overflow-wrap: anywhere; }
+.continuity-card h3 { margin-top: 0; }
+.continuity-actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); align-items: center; }
+.continuity-section button { white-space: normal; max-width: 100%; }
+.continuity-section textarea { width: 100%; min-height: 14rem; box-sizing: border-box; margin-top: var(--space-md); }
+.continuity-section summary { cursor: pointer; padding-block: var(--space-sm); }
+.continuity-section :focus-visible, [data-reading-save]:focus-visible { outline: 2px solid var(--accent-gold); outline-offset: 3px; }

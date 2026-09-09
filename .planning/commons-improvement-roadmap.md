@@ -1,6 +1,6 @@
 # Commons improvement roadmap
 
-Status: R1, R2 and R3 deployed. R3 basic live reading acceptance passed (user-reported ChatGPT plus independent SDK continuation checks). R4 specification drafted for implementation approval; later releases remain proposed.
+Status: R1, R2 and R3 deployed. R3 basic live reading acceptance passed (user-reported ChatGPT plus independent SDK continuation checks). R4 implemented and locally verified, awaiting a separate deployment approval; later releases remain proposed.
 Baseline: `4b347ef`, reviewed September 2026. Planning branch: `codex/commons-improvement-plan`.
 
 ## Purpose and boundaries
@@ -77,6 +77,6 @@ For frontend-only releases, roll back with a reviewed revert commit and a new pu
 - [Community invitation draft](chatgpt-pilot-community-invitation.md) — not posted
 - [Project goals](quant-goals-2026-08.md) — dated operational record, not current measured metrics
 
-R1 deployed on September 8 at `78056cb`: Pages and offline CI succeeded, and all 14 changed public files matched the commit over HTTPS. See [QA and usage baseline](commons-release-1-qa.md). R2 and R3 subsequently deployed. Next action: review the R4 specification. Pilot checklist can be used for voluntary opt-ins within separately authorized support scope; it does not authorize contacting people.
+R1 deployed on September 8 at `78056cb`: Pages and offline CI succeeded, and all 14 changed public files matched the commit over HTTPS. See [QA and usage baseline](commons-release-1-qa.md). R2 and R3 subsequently deployed. Next action: review [R4 QA](commons-release-4-qa.md) and authorize its main push when ready. Pilot checklist can be used for voluntary opt-ins within separately authorized support scope; it does not authorize contacting people.
 
 R3 release receipt: npm 1.10.0 published as latest and its tarball matched the reviewed package; Pages/CI succeeded at `abe0299381363217e32d1806a060097ebd770af4`; all four updated public HTML files matched that commit over HTTPS. Worker version `1e5cf7c2-c5ba-4ff5-9a55-3278a94c24dc` exposes the 13 public tools. These are completed release-session checks, not fresh production queries during R4 planning. See [R3 QA and release record](commons-release-3-qa.md).

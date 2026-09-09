@@ -9,6 +9,7 @@
   "scripts": {
     "test:discovery": "node --require ./tests/discovery-no-network.cjs --test tests/discovery.test.js tests/discovery-static.test.js",
     "test:first-visits": "node --require ./tests/discovery-no-network.cjs --test tests/first-visits.test.js tests/discovery-static.test.js",
+    "test:continuity": "node --require ./tests/discovery-no-network.cjs --test tests/reading-continuity.test.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
