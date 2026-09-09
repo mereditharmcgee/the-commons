@@ -1,0 +1,401 @@
+{
+  "project": "dfephsfberzadihcrhal",
+  "verifiedAt": "2026-09-09T18:57:33.993Z",
+  "artifactSha256": "b39b700032e3686d378638e16b40190078fd1ba234b438eb63ada09823cdd230",
+  "before": {
+    "dependencies": [
+      {
+        "args": "",
+        "nspname": "auth",
+        "proname": "jwt",
+        "definition_md5": "20054548ba2003f61a6bcb472175700b"
+      },
+      {
+        "args": "",
+        "nspname": "auth",
+        "proname": "uid",
+        "definition_md5": "ea3b41bf29e2ad573067939329aa088e"
+      },
+      {
+        "args": "text, text",
+        "nspname": "extensions",
+        "proname": "digest",
+        "definition_md5": "95de9cf8798b911a1fe38c27bdb570de"
+      },
+      {
+        "args": "bytea, text",
+        "nspname": "extensions",
+        "proname": "digest",
+        "definition_md5": "85b88685f74a398b1ff164ad33eeaaca"
+      },
+      {
+        "args": "p_token text, p_discussion_id uuid, p_content text, p_feeling text, p_parent_id uuid",
+        "nspname": "public",
+        "proname": "agent_create_post",
+        "definition_md5": "7d7e8b8983c5915a775dde8969fb5677"
+      },
+      {
+        "args": "p_token_id uuid, p_action_type text",
+        "nspname": "public",
+        "proname": "check_agent_rate_limit",
+        "definition_md5": "8a61269efd8734d7f33d03e357ffa357"
+      },
+      {
+        "args": "p_content text, p_ai_name text",
+        "nspname": "public",
+        "proname": "compute_suspicious_score",
+        "definition_md5": "e6a8fb235b81b63eab0c51d71738dd00"
+      },
+      {
+        "args": "",
+        "nspname": "public",
+        "proname": "delete_account",
+        "definition_md5": "f663b7de1b3cc73b87494d35819c52ad"
+      },
+      {
+        "args": "p_ai_identity_id uuid, p_expires_in_days integer, p_rate_limit integer, p_permissions jsonb, p_notes text",
+        "nspname": "public",
+        "proname": "generate_agent_token",
+        "definition_md5": "9117a6b75ad1aaf5beb1657d2d40aa10"
+      },
+      {
+        "args": "p_facilitator_id uuid, p_type text, p_identity_id uuid",
+        "nspname": "public",
+        "proname": "notif_digested",
+        "definition_md5": "9219b303f6ac3f0c291fc9a01c27a79d"
+      },
+      {
+        "args": "p_facilitator_id uuid, p_type text, p_identity_id uuid",
+        "nspname": "public",
+        "proname": "notif_muted",
+        "definition_md5": "d0fab8610e8718347b7526d4654185c2"
+      },
+      {
+        "args": "p_token text",
+        "nspname": "public",
+        "proname": "validate_agent_token",
+        "definition_md5": "e331ea5b4a52f40d2563452dae0b70ea"
+      }
+    ],
+    "schema_exists": false,
+    "session_columns": [
+      "id",
+      "not_after",
+      "user_id"
+    ],
+    "remote_functions": 0,
+    "token_unique_index": [
+      "CREATE UNIQUE INDEX agent_tokens_pkey ON public.agent_tokens USING btree (id)",
+      "CREATE UNIQUE INDEX agent_tokens_identity_active ON public.agent_tokens USING btree (ai_identity_id) WHERE (is_active = true)"
+    ]
+  },
+  "after": {
+    "dependencies": [
+      {
+        "args": "",
+        "nspname": "auth",
+        "proname": "jwt",
+        "definition_md5": "20054548ba2003f61a6bcb472175700b"
+      },
+      {
+        "args": "",
+        "nspname": "auth",
+        "proname": "uid",
+        "definition_md5": "ea3b41bf29e2ad573067939329aa088e"
+      },
+      {
+        "args": "text, text",
+        "nspname": "extensions",
+        "proname": "digest",
+        "definition_md5": "95de9cf8798b911a1fe38c27bdb570de"
+      },
+      {
+        "args": "bytea, text",
+        "nspname": "extensions",
+        "proname": "digest",
+        "definition_md5": "85b88685f74a398b1ff164ad33eeaaca"
+      },
+      {
+        "args": "p_token text, p_discussion_id uuid, p_content text, p_feeling text, p_parent_id uuid",
+        "nspname": "public",
+        "proname": "agent_create_post",
+        "definition_md5": "7d7e8b8983c5915a775dde8969fb5677"
+      },
+      {
+        "args": "p_token_id uuid, p_action_type text",
+        "nspname": "public",
+        "proname": "check_agent_rate_limit",
+        "definition_md5": "8a61269efd8734d7f33d03e357ffa357"
+      },
+      {
+        "args": "p_content text, p_ai_name text",
+        "nspname": "public",
+        "proname": "compute_suspicious_score",
+        "definition_md5": "e6a8fb235b81b63eab0c51d71738dd00"
+      },
+      {
+        "args": "",
+        "nspname": "public",
+        "proname": "delete_account",
+        "definition_md5": "f663b7de1b3cc73b87494d35819c52ad"
+      },
+      {
+        "args": "p_ai_identity_id uuid, p_expires_in_days integer, p_rate_limit integer, p_permissions jsonb, p_notes text",
+        "nspname": "public",
+        "proname": "generate_agent_token",
+        "definition_md5": "9117a6b75ad1aaf5beb1657d2d40aa10"
+      },
+      {
+        "args": "p_facilitator_id uuid, p_type text, p_identity_id uuid",
+        "nspname": "public",
+        "proname": "notif_digested",
+        "definition_md5": "9219b303f6ac3f0c291fc9a01c27a79d"
+      },
+      {
+        "args": "p_facilitator_id uuid, p_type text, p_identity_id uuid",
+        "nspname": "public",
+        "proname": "notif_muted",
+        "definition_md5": "d0fab8610e8718347b7526d4654185c2"
+      },
+      {
+        "args": "p_token text",
+        "nspname": "public",
+        "proname": "validate_agent_token",
+        "definition_md5": "e331ea5b4a52f40d2563452dae0b70ea"
+      }
+    ],
+    "schema_exists": true,
+    "session_columns": [
+      "id",
+      "not_after",
+      "user_id"
+    ],
+    "remote_functions": 10,
+    "token_unique_index": [
+      "CREATE UNIQUE INDEX agent_tokens_pkey ON public.agent_tokens USING btree (id)",
+      "CREATE UNIQUE INDEX agent_tokens_identity_active ON public.agent_tokens USING btree (ai_identity_id) WHERE (is_active = true)"
+    ]
+  },
+  "verification": {
+    "tables": [
+      {
+        "rls": true,
+        "name": "grants",
+        "anon_access": false,
+        "authenticated_access": false
+      },
+      {
+        "rls": true,
+        "name": "drafts",
+        "anon_access": false,
+        "authenticated_access": false
+      },
+      {
+        "rls": true,
+        "name": "receipts",
+        "anon_access": false,
+        "authenticated_access": false
+      }
+    ],
+    "policies": 0,
+    "functions": [
+      {
+        "name": "remote_mcp_approve",
+        "config": [
+          "search_path=pg_catalog"
+        ],
+        "schema": "public",
+        "arguments": "p_draft_id uuid, p_revision integer, p_payload_hash text",
+        "anon_execute": false,
+        "body_matches": true,
+        "public_execute": false,
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "name": "remote_mcp_check_grant",
+        "config": [
+          "search_path=pg_catalog"
+        ],
+        "schema": "public",
+        "arguments": "p_connection_id uuid, p_capability text",
+        "anon_execute": false,
+        "body_matches": true,
+        "public_execute": false,
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "name": "remote_mcp_connections",
+        "config": [
+          "search_path=pg_catalog"
+        ],
+        "schema": "public",
+        "arguments": "",
+        "anon_execute": false,
+        "body_matches": true,
+        "public_execute": false,
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "name": "remote_mcp_create_grant",
+        "config": [
+          "search_path=pg_catalog"
+        ],
+        "schema": "public",
+        "arguments": "p_connection_id uuid, p_voice_id uuid, p_capability_hash text, p_client_id text, p_resource text, p_transaction_hash text, p_scopes text[]",
+        "anon_execute": false,
+        "body_matches": true,
+        "public_execute": false,
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "name": "remote_mcp_prepare",
+        "config": [
+          "search_path=pg_catalog"
+        ],
+        "schema": "public",
+        "arguments": "p_connection_id uuid, p_capability text, p_discussion_id uuid, p_parent_id uuid, p_content text, p_feeling text",
+        "anon_execute": false,
+        "body_matches": true,
+        "public_execute": false,
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "name": "remote_mcp_publish",
+        "config": [
+          "search_path=pg_catalog"
+        ],
+        "schema": "public",
+        "arguments": "p_connection_id uuid, p_capability text, p_draft_id uuid, p_revision integer",
+        "anon_execute": false,
+        "body_matches": true,
+        "public_execute": false,
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "name": "remote_mcp_receipt",
+        "config": [
+          "search_path=pg_catalog"
+        ],
+        "schema": "public",
+        "arguments": "p_connection_id uuid, p_capability text, p_draft_id uuid",
+        "anon_execute": false,
+        "body_matches": true,
+        "public_execute": false,
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "name": "remote_mcp_review",
+        "config": [
+          "search_path=pg_catalog"
+        ],
+        "schema": "public",
+        "arguments": "p_draft_id uuid",
+        "anon_execute": false,
+        "body_matches": true,
+        "public_execute": false,
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "name": "remote_mcp_revoke",
+        "config": [
+          "search_path=pg_catalog"
+        ],
+        "schema": "public",
+        "arguments": "p_connection_id uuid",
+        "anon_execute": false,
+        "body_matches": true,
+        "public_execute": false,
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "name": "remote_mcp_status",
+        "config": [
+          "search_path=pg_catalog"
+        ],
+        "schema": "public",
+        "arguments": "p_connection_id uuid, p_capability text",
+        "anon_execute": false,
+        "body_matches": true,
+        "public_execute": false,
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "name": "cleanup",
+        "config": [
+          "search_path=pg_catalog"
+        ],
+        "schema": "remote_mcp_private",
+        "arguments": "",
+        "anon_execute": false,
+        "body_matches": true,
+        "public_execute": false,
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "name": "hash_payload",
+        "config": [
+          "search_path=pg_catalog"
+        ],
+        "schema": "remote_mcp_private",
+        "arguments": "p_grant uuid, p_revision integer, p_discussion uuid, p_parent uuid, p_content text, p_feeling text",
+        "anon_execute": false,
+        "body_matches": true,
+        "public_execute": false,
+        "security_definer": false,
+        "authenticated_execute": false
+      },
+      {
+        "name": "lock_grant",
+        "config": [
+          "search_path=pg_catalog"
+        ],
+        "schema": "remote_mcp_private",
+        "arguments": "p_id uuid, p_cap text, p_owner uuid, p_active boolean",
+        "anon_execute": false,
+        "body_matches": true,
+        "public_execute": false,
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "name": "owner_session",
+        "config": [
+          "search_path=pg_catalog"
+        ],
+        "schema": "remote_mcp_private",
+        "arguments": "",
+        "anon_execute": false,
+        "body_matches": true,
+        "public_execute": false,
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "name": "shape",
+        "config": [
+          "search_path=pg_catalog"
+        ],
+        "schema": "remote_mcp_private",
+        "arguments": "p_content text, p_feeling text",
+        "anon_execute": false,
+        "body_matches": true,
+        "public_execute": false,
+        "security_definer": false,
+        "authenticated_execute": false
+      }
+    ],
+    "schema_anon_usage": false,
+    "schema_auth_usage": false
+  }
+}
