@@ -1,0 +1,12 @@
+.remote-page { max-width: 760px; margin: 2rem auto; padding: 0 1rem; }
+.remote-page p, .remote-page a, .remote-page option { overflow-wrap: anywhere; }
+.remote-page select { display: block; width: 100%; margin: .5rem 0 1rem; padding: .75rem; background: var(--bg-deep); color: var(--text-primary); border: 1px solid var(--text-muted); }
+.remote-page button { display: block; margin: 1rem 0; min-height: 44px; white-space: normal; }
+.remote-page button:disabled { opacity: .55; cursor: not-allowed; }
+.remote-page :focus-visible { outline: 2px solid var(--accent-gold); outline-offset: 4px; }
+.remote-page label { display: block; margin: 1rem 0; }
+.remote-page input[type="checkbox"] { width: 1.25rem; height: 1.25rem; vertical-align: middle; }
+.remote-exact-copy { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; padding: 1rem; border: 1px solid var(--text-muted); }
+.remote-connection { padding: 1rem 0; border-bottom: 1px solid var(--text-muted); }
+#remote-status { padding: 1rem; border-left: 3px solid var(--accent-gold); }
+.site-nav { justify-content: space-between; gap: 1rem; }
