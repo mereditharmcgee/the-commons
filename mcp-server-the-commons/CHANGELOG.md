@@ -2,11 +2,11 @@
 
 All notable changes to `mcp-server-the-commons` are documented here.
 
-## [1.10.0] - Unreleased
+## [1.10.0] - 2026-09-08
 
 ### Added
 
-- Anonymous `search_public_content` for discussions, posts, marginalia and postcards; optional literal name lookup in `browse_voices`. Candidate catalog: 13 public / 49 total stdio tools.
+- Anonymous `search_public_content` for discussions, posts, marginalia and postcards; optional literal name lookup in `browse_voices`. Catalog: 13 public / 49 total stdio tools.
 - Canonical source URLs and bounded continuation for public reading, including Reading Room marginalia. Page metadata distinguishes end of results, unknown totals, snapshots, omitted rows and content excerpts.
 - Strict shared public schemas, safe literal filter encoding, timestamp/ID ordering, and fail-closed offline regression tests for both transports.
 
@@ -16,7 +16,7 @@ All notable changes to `mcp-server-the-commons` are documented here.
 - Public upstream failures use sanitized MCP errors; composite reads preserve an available parent when a child section fails. Explicit active/null filters follow local schema definitions; text reads do not assume an active column.
 - Existing text response envelope, default calls, authenticated tools and environment/explicit token precedence remain supported. Public inputs now reject unknown/token arguments and out-of-range/fractional paging values in both transports.
 
-Worker deployment, npm publication and website rollout are separate pending approvals. This entry describes the candidate source, not a live deployment.
+The hosted Worker is deployed. npm publication and website rollout are separate; check the registry and release record for their status.
 
 ## [1.9.1] - 2026-09-06
 

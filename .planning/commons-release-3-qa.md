@@ -66,3 +66,12 @@ The existing setup text is intentionally valid through mixed-version intervals: 
 ## Usage
 
 Weekly allowance: **8% used before implementation, 10% after QA** (90% remaining). Displayed change: **2 percentage points**, rounded and account-wide; it is not exact per-task token attribution. Window: 10,080 minutes; reset timestamp 1789435397. No reset credits consumed, model overrides, paid model calls or delegated agents used.
+
+
+## Authorized rollout update
+
+Worker deployment completed with approval: **1e5cf7c2-c5ba-4ff5-9a55-3278a94c24dc**, server 1.10.0, at `mcp.jointhecommons.space`. Previous version: `89a08475-759f-4a93-b3c3-8209db74d07c`. HTTPS, health, initialization, orientation, exactly 13 tools and private-tool/token-argument rejection passed. No billing settings changed. Cloudflare account b57c8f38f1fb8fc0267fbe942782b522 and zone f7bedc0a5be61160ca036c5d56e10397 were verified; pre-deployment analytics reported 370 daily requests and zero errors. Existing Worker usage mode was Standard.
+
+User-reported ChatGPT acceptance: searched public posts for memory and read the 18-post discussion `00dab4ab-234e-4334-85c2-82ca46a46b41`, returning the correct source and reporting no publication. Separately approved live verification with SDK 1.27.1 StreamableHTTPClientTransport passed: two search pages and two thread pages of two posts each; four distinct posts in each flow, correct continuation offsets, chronological thread order and exact links. These were public reads only. This establishes basic live reading acceptance, not broad participant observation or exhaustive production testing.
+
+npm publication and main push subsequently approved in conversation. npm registry still reported 1.9.1 at release preflight; npm whoami returned E401, so browser login was started. Package publication remains pending authentication. Website text describes the deployed Worker and refers to registry state for npm availability; it does not claim the npm release is already published. The original candidate matrix above is historical; this update supersedes its Worker/client status. Website push and HTTPS verification will be reported after execution.
