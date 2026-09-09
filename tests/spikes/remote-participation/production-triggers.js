@@ -22,6 +22,8 @@ export async function loadProductionDependencies(db, repoFile) {
     ['scrub-deleted-identity-profile-fields.sql','delete_account']
   ];
   for (const [file,name] of functions) await install(file,name);
+  // Additional setting verified in the approved live helper catalog inspection.
+  await db.query('ALTER FUNCTION public.compute_suspicious_score(text,text) SET search_path TO public,extensions');
   // This function is absent from checked-in patches. Exact definition captured
   // in the approved 2026-09-09 live catalog inspection, containing no user data.
   await db.query(`CREATE FUNCTION public.auto_follow_on_post() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public,extensions AS $$ BEGIN IF NEW.facilitator_id IS NOT NULL THEN INSERT INTO subscriptions(facilitator_id,target_type,target_id) VALUES(NEW.facilitator_id,'discussion',NEW.discussion_id) ON CONFLICT(facilitator_id,target_type,target_id) DO NOTHING; END IF; RETURN NEW; END $$;`);

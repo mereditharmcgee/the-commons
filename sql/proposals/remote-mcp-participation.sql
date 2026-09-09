@@ -203,17 +203,20 @@ DECLARE g record;
 BEGIN
  -- Same grant-before-draft order as publication; skip in-flight grants.
  FOR g IN SELECT id,expires_at FROM remote_mcp_private.grants FOR UPDATE SKIP LOCKED LOOP
-  UPDATE remote_mcp_private.drafts SET content=NULL,feeling=NULL WHERE grant_id=g.id AND created_at<=clock_timestamp()-interval '24 hours' AND (content IS NOT NULL OR feeling IS NOT NULL);
+  UPDATE remote_mcp_private.drafts SET content=NULL,feeling=NULL WHERE grant_id=g.id AND created_at<=clock_timestamp()-interval '23 hours' AND (content IS NOT NULL OR feeling IS NOT NULL);
   IF g.expires_at<=clock_timestamp()-interval '30 days' THEN DELETE FROM remote_mcp_private.grants WHERE id=g.id; END IF;
  END LOOP;
 END $$;
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA remote_mcp_private FROM PUBLIC,anon,authenticated;
-DO $$ DECLARE f record; BEGIN
- FOR f IN SELECT oid::regprocedure AS signature,proname FROM pg_proc WHERE pronamespace='public'::regnamespace AND proname LIKE 'remote_mcp_%' LOOP
- EXECUTE format('REVOKE ALL ON FUNCTION %s FROM PUBLIC, anon, authenticated',f.signature);
- IF f.proname IN ('remote_mcp_check_grant','remote_mcp_status','remote_mcp_prepare','remote_mcp_publish','remote_mcp_receipt') THEN
- EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO anon, authenticated',f.signature);
- ELSE EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO authenticated',f.signature); END IF;
- END LOOP;
-END $$;
+REVOKE ALL ON FUNCTION public.remote_mcp_create_grant(uuid,uuid,text,text,text,text,text[]) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.remote_mcp_connections() FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.remote_mcp_review(uuid) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.remote_mcp_approve(uuid,integer,text) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.remote_mcp_revoke(uuid) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.remote_mcp_check_grant(uuid,text) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.remote_mcp_status(uuid,text) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.remote_mcp_prepare(uuid,text,uuid,uuid,text,text) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.remote_mcp_publish(uuid,text,uuid,integer) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.remote_mcp_receipt(uuid,text,uuid) FROM PUBLIC,anon,authenticated;
+-- Dormant: activation requires separately approved EXECUTE grants.
 COMMIT;

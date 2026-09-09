@@ -58,6 +58,19 @@ test('disposable PostgreSQL: actual checked-in RPC participation proposal', { ti
   await admin.query(await repoFile('sql/patches/align-agent-token-validation-lock-order.sql'));
   await admin.query(await repoFile('sql/patches/validate-agent-create-post-parent.sql'));
   await admin.query(await repoFile('sql/proposals/remote-mcp-participation.sql'));
+  await t.test('dormant installation denies every new RPC to both public client roles',async()=>{
+    const rows=(await admin.query("SELECT oid,proname FROM pg_proc WHERE pronamespace='public'::regnamespace AND proname LIKE 'remote_mcp_%'")).rows;
+    assert.equal(rows.length,10);
+    for(const row of rows)for(const role of ['anon','authenticated']){
+      assert.equal((await admin.query('SELECT has_function_privilege($1,$2,\'EXECUTE\') AS allowed',[role,row.oid])).rows[0].allowed,false);
+    }
+    await a.query('SET ROLE authenticated');
+    await assert.rejects(a.query('SELECT public.remote_mcp_connections()'),{code:'42501'});
+    await a.query('RESET ROLE');
+    assert.equal((await admin.query('SELECT count(*)::int AS n FROM remote_mcp_private.grants')).rows[0].n,0);
+  });
+  // LOCAL ONLY: exercise separately proposed activation before existing flow tests.
+  await admin.query(await repoFile('sql/proposals/remote-mcp-participation-activate.sql'));
   const ids = Array.from({length:9},(_,i)=>`00000000-0000-4000-8000-${String(i+1).padStart(12,'0')}`);
   const [owner,voice,token,session,discussion,parent,connection,other,session2]=ids;
   const cap='a'.repeat(64), hash='b'.repeat(64), secret='tc_01234567890123456789012345678901';
@@ -123,8 +136,15 @@ test('disposable PostgreSQL: actual checked-in RPC participation proposal', { ti
     await reset();for(const c of [a,b]){for(const table of ['grants','drafts','receipts'])await assert.rejects(c.query('SELECT * FROM remote_mcp_private.'+table),{code:'42501'});await assert.rejects(c.query('SELECT remote_mcp_private.cleanup()'),{code:'42501'});}
     await assert.rejects(call(b,'remote_mcp_status',[connection,'wrong']));assert.ok(!(JSON.stringify(await call(a,'remote_mcp_connections'))).includes(cap));
   });
-  await t.test('retention clears bodies at 24h and keeps spent tombstones until grant retention ends',async()=>{
-    await reset();const d=await approved();await publish(b,d);await admin.query("UPDATE remote_mcp_private.drafts SET created_at=clock_timestamp()-interval '25 hours';SELECT remote_mcp_private.cleanup()");
+  await t.test('scheduled cleanup command preserves fresh bodies, clears at 23h and retains receipts',async()=>{
+    await reset();const d=await approved();await publish(b,d);
+    const schedule=await repoFile('sql/proposals/remote-mcp-participation-cleanup-schedule.sql');
+    const command=schedule.match(/'(BEGIN; SET LOCAL[\s\S]*?COMMIT;)'/)[1].replaceAll("''","'");
+    await admin.query("UPDATE remote_mcp_private.drafts SET created_at=clock_timestamp()-interval '22 hours'");
+    await admin.query(command);
+    assert.notEqual((await admin.query('SELECT content FROM remote_mcp_private.drafts')).rows[0].content,null);
+    await admin.query("UPDATE remote_mcp_private.drafts SET created_at=clock_timestamp()-interval '23 hours'");
+    await admin.query(command);
     assert.equal((await admin.query('SELECT content FROM remote_mcp_private.drafts')).rows[0].content,null);assert.equal((await counts()).receipts,1);
     await admin.query("UPDATE remote_mcp_private.grants SET expires_at=clock_timestamp()-interval '31 days';SELECT remote_mcp_private.cleanup()");assert.equal((await counts()).receipts,0);
   });
@@ -287,6 +307,13 @@ test('disposable PostgreSQL: actual checked-in RPC participation proposal', { ti
     for(const name of ['remote_mcp_create_grant','remote_mcp_connections','remote_mcp_review','remote_mcp_approve','remote_mcp_revoke']){
       const row=(await admin.query("SELECT has_function_privilege('anon',oid,'EXECUTE') AS anon,has_function_privilege('authenticated',oid,'EXECUTE') AS auth FROM pg_proc WHERE proname=$1",[name])).rows[0];assert.deepEqual(row,{anon:false,auth:true});
     }
+    for(const name of ['remote_mcp_check_grant','remote_mcp_status','remote_mcp_prepare','remote_mcp_publish','remote_mcp_receipt']){
+      const row=(await admin.query("SELECT has_function_privilege('anon',oid,'EXECUTE') AS anon,has_function_privilege('authenticated',oid,'EXECUTE') AS auth FROM pg_proc WHERE proname=$1",[name])).rows[0];assert.deepEqual(row,{anon:true,auth:true});
+    }
+    await admin.query(await repoFile('sql/proposals/remote-mcp-participation-disable.sql'));
+    await assert.rejects(call(a,'remote_mcp_connections'),{code:'42501'});
+    await assert.rejects(call(b,'remote_mcp_status',[connection,cap]),{code:'42501'});
+    assert.equal((await counts()).receipts,1);
     await admin.query(await repoFile('sql/proposals/remote-mcp-participation-rollback.sql'));
     assert.equal((await admin.query('SELECT count(*)::int AS n FROM posts')).rows[0].n,2);
     assert.ok((await admin.query("SELECT to_regprocedure('public.agent_create_post(text,uuid,text,text,uuid)') AS fn")).rows[0].fn);

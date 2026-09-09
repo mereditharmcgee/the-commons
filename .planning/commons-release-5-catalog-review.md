@@ -104,3 +104,14 @@ ready for exact SQL/rollback review, not unattended application or deployment.
 Final helper catalog parity, session-revocation verification and the existing
 retention/hosting gates must remain explicit. No production access or changes
 occurred during this local follow-up; the migration proposal is unchanged.
+
+## September 9 helper catalog follow-up
+
+Authorized catalog-only SELECT of pg_get_functiondef for notif_muted,
+notif_digested and compute_suspicious_score completed on production project
+dfephsfberzadihcrhal. Both notification helpers match checked-in definitions.
+Scoring logic matches 038-suspicious-score-retune.sql; production additionally
+sets search_path to public,extensions. The local trigger fixture now mirrors
+that metadata. No user/session/token rows were read and no functions invoked.
+This closes the helper-parity prerequisite above; it does not establish live
+session-revocation behavior or approve any migration.

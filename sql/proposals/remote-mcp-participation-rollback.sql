@@ -1,4 +1,6 @@
 -- PROPOSAL ONLY. Separately approve rollback. Disable Worker participation first.
+-- Revoke RPC access with participation-disable.sql and stop any approved cleanup
+-- job with participation-cleanup-stop.sql before dropping its target schema.
 -- Drops private review bodies/receipts irreversibly; export/retention decision required.
 -- Existing public posts, tokens, legacy RPCs and their grants remain unchanged.
 BEGIN;
