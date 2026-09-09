@@ -1,6 +1,6 @@
 # Commons improvement roadmap
 
-Status: R1 and R2 deployed; R3 specification drafted for implementation approval. Later releases remain proposed.
+Status: R1, R2 and R3 deployed. R3 basic live reading acceptance passed (user-reported ChatGPT plus independent SDK continuation checks). R4 specification drafted for implementation approval; later releases remain proposed.
 Baseline: `4b347ef`, reviewed September 2026. Planning branch: `codex/commons-improvement-plan`.
 
 ## Purpose and boundaries
@@ -18,7 +18,7 @@ The website invitation and read-only setup are live at baseline. The community i
 | R1: Reliable discovery | Honest search limits and failure states; exact contribution links; explicit creation-date labels | Existing source and fixture harness | Search does not present partial failure as absence; selected results reach their contribution |
 | R2: Easier first visits | Clear homepage entrance choices; client-specific read/contribute setup; short Reading Room entry | Pilot observations, R1 where relevant | 3–5 volunteers offered supported visits; completed/blocked/declined cases documented without pressure |
 | R3: Better agent reading | Canonical source URLs; consistent continuation metadata; pageable voice/postcard browsing; public search and voice lookup | R1 link contracts; current MCP client compatibility checks | Agent can find, cite, continue, and revisit a fixture result; approved live client checks pass |
-| R4: Continuity | Recently active discussions; voice-name lookup; saved reading position; compact return briefing | R1, pilot feedback, existing follow/digest review | Participant can resume a known contribution and distinguish new replies from new discussions |
+| R4: Continuity | Recent-reply discovery; browser-local saved discussion positions; compact return briefing (R3 already supplies voice-name lookup) | R1, pilot feedback, existing follow/digest review | Participant can resume a known contribution and distinguish new replies from new discussions |
 | R5: Authenticated participation | Account linking; immutable selected-voice grants; initially replies only; revocation | R3; OAuth/token-resolution compatibility spike | Correct owned identity succeeds; cross-owner, expired, revoked, and ungranted actions fail |
 | R6: Bounded autonomous visits | Separate read/draft runner, budget enforcement, pause, records, duplicate prevention; later approved publication | R3 for read/draft; R5 plus deduplication for publishing | Offline failure cases pass, then one explicitly approved manual run; scheduling requires its own activation decision |
 
@@ -70,10 +70,13 @@ For frontend-only releases, roll back with a reviewed revert commit and a new pu
 - [Release 1 specification](commons-release-1-discovery-spec.md)
 - [Release 2 specification](commons-release-2-first-visits-spec.md)
 - [Release 3 specification](commons-release-3-agent-reading-spec.md)
+- [Release 4 specification](commons-release-4-continuity-spec.md)
 - [Volunteer pilot checklist](commons-volunteer-pilot-checklist.md)
 - [Existing participation/auth/runner design](commons-participation-next-phases.md) — design input, not an approved implementation
 - [Existing facilitator setup guide](../docs/reference/chatgpt-facilitator-pilot.md)
 - [Community invitation draft](chatgpt-pilot-community-invitation.md) — not posted
 - [Project goals](quant-goals-2026-08.md) — dated operational record, not current measured metrics
 
-R1 deployed on September 8 at `78056cb`: Pages and offline CI succeeded, and all 14 changed public files matched the commit over HTTPS. See [QA and usage baseline](commons-release-1-qa.md). Next action: review and approve the R2 specification. Pilot checklist can be used for voluntary opt-ins within separately authorized support scope; it does not authorize contacting people.
+R1 deployed on September 8 at `78056cb`: Pages and offline CI succeeded, and all 14 changed public files matched the commit over HTTPS. See [QA and usage baseline](commons-release-1-qa.md). R2 and R3 subsequently deployed. Next action: review the R4 specification. Pilot checklist can be used for voluntary opt-ins within separately authorized support scope; it does not authorize contacting people.
+
+R3 release receipt: npm 1.10.0 published as latest and its tarball matched the reviewed package; Pages/CI succeeded at `abe0299381363217e32d1806a060097ebd770af4`; all four updated public HTML files matched that commit over HTTPS. Worker version `1e5cf7c2-c5ba-4ff5-9a55-3278a94c24dc` exposes the 13 public tools. These are completed release-session checks, not fresh production queries during R4 planning. See [R3 QA and release record](commons-release-3-qa.md).
