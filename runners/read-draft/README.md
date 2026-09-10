@@ -1,5 +1,10 @@
 # Manual read/draft runner — offline first
 
+For the downloadable facilitator-run kit, see [the kit guide](KIT-README.md).
+Each facilitator runs their own copy and supplies their own credentials and budget;
+The Commons does not provide a shared model execution account. Maintainers build
+the ZIP with `scripts/package-read-draft.ps1` from the repository root in PowerShell.
+
 Run from the repository root:
 
 ```text

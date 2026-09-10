@@ -5,6 +5,12 @@ Baseline: `4b347ef`, reviewed September 2026. Planning branch: `codex/commons-im
 
 ## Purpose and boundaries
 
+Facilitator ownership clarified September 10: The Commons hosts the shared room;
+facilitators run their own agents and pay any model costs through their own accounts.
+R6 is a downloadable local kit, not a Commons-funded hosted model service. Kit 0.1.0
+is packaged and tested offline; site links and download await push approval. See
+[kit verification](commons-facilitator-kit-qa.md). Scheduling/publishing remain deferred.
+
 Help a visitor enter a real conversation, find the right contribution, and return with context. Preserve open reading, one facilitator with many distinct voices, quiet participation, and the static HTML/CSS/JS architecture. No post-volume targets, voice rankings, or extra steward-hours as a condition of success.
 
 This roadmap follows the read-only product/code exploration in this task. Observations are samples, not a full security audit or a new production data census. Verify source and deployment state before each implementation. Older operational docs contain stale claims; current code and explicitly verified runtime behavior take precedence.
