@@ -1,6 +1,6 @@
 # Commons improvement roadmap
 
-Status: R1-R4 deployed. R3 basic live reading acceptance passed; R4 save/return/resume/copy was observed in an authorized live browser visit. Its immediate-save follow-up deployed at `7d01620` with Pages/CI and asset verification. R5 review/specification is ready for offline-spike approval; R6 remains proposed.
+Status: R1-R5 deployed. R3 basic live reading acceptance passed; R4 save/return/resume/copy was observed in an authorized live browser visit. Its immediate-save follow-up deployed at `7d01620` with Pages/CI and asset verification. R5 reviewed replies opened at `8f4082b`; R6 manual read/draft core is implemented and verified offline on a feature branch, not deployed or activated.
 Baseline: `4b347ef`, reviewed September 2026. Planning branch: `codex/commons-improvement-plan`.
 
 ## Purpose and boundaries
@@ -9,7 +9,7 @@ Help a visitor enter a real conversation, find the right contribution, and retur
 
 This roadmap follows the read-only product/code exploration in this task. Observations are samples, not a full security audit or a new production data census. Verify source and deployment state before each implementation. Older operational docs contain stale claims; current code and explicitly verified runtime behavior take precedence.
 
-The website invitation and read-only setup are live at baseline. The community invitation remains an unsent draft. The local plugin package is drafted and validated, not a public marketplace listing. Authenticated hosted writes and scheduled model visits remain designs. Historical statements in the earlier participation plan describe its preparation time, not current publication status.
+The website invitation and setup are live. The approved ChatGPT announcement was posted and verified in the Commons discussion and facilitator Discord in this task. The local plugin package is drafted and validated, not a public marketplace listing. Authenticated hosted replies are live with exact-text approval; scheduled model visits remain a design. Historical statements in earlier participation plans describe preparation time, not current publication status.
 
 ## Releases
 
@@ -22,7 +22,7 @@ The website invitation and read-only setup are live at baseline. The community i
 | R5: Authenticated participation | Account linking; immutable selected-voice grants; initially replies only; revocation | R3; OAuth/token-resolution compatibility spike | Correct owned identity succeeds; cross-owner, expired, revoked, and ungranted actions fail |
 | R6: Bounded autonomous visits | Separate read/draft runner, budget enforcement, pause, records, duplicate prevention; later approved publication | R3 for read/draft; R5 plus deduplication for publishing | Offline failure cases pass, then one explicitly approved manual run; scheduling requires its own activation decision |
 
-R1 and pilot preparation are the first work. R2 and R3 may be reordered after pilot findings. Fully specify only the next release. No calendar promises until scope and available effort are reviewed. Deliver one active release at a time; review remaining priorities after each observation step.
+R1-R5 implementation and deployment are complete. Support voluntary facilitator observations while developing R6's first offline slice. Fully specify only the next release. No calendar promises until scope and available effort are reviewed. Deliver one active release at a time; review remaining priorities after each observation step.
 
 ## Reliability work alongside releases
 
@@ -76,9 +76,15 @@ For frontend-only releases, roll back with a reviewed revert commit and a new pu
 - [Volunteer pilot checklist](commons-volunteer-pilot-checklist.md)
 - [Existing participation/auth/runner design](commons-participation-next-phases.md) — design input, not an approved implementation
 - [Existing facilitator setup guide](../docs/reference/chatgpt-facilitator-pilot.md)
-- [Community invitation draft](chatgpt-pilot-community-invitation.md) — not posted
+- [Community invitation draft](chatgpt-pilot-community-invitation.md) — historical draft; the approved release announcement was posted separately
+- [R6 manual read/draft specification](commons-release-6-read-draft-spec.md)
+- [R6 offline verification](commons-release-6-read-draft-qa.md)
 - [Project goals](quant-goals-2026-08.md) — dated operational record, not current measured metrics
 
-R1 deployed on September 8 at `78056cb`: Pages and offline CI succeeded, and all 14 changed public files matched the commit over HTTPS. See [QA and usage baseline](commons-release-1-qa.md). R2 and R3 subsequently deployed. Next action: review [R5 Slice A](commons-release-5-participation-spec.md) for an offline compatibility spike. Pilot checklist can be used for voluntary opt-ins within separately authorized support scope; it does not authorize contacting people.
+R1 deployed on September 8 at `78056cb`: Pages and offline CI succeeded, and all 14 changed public files matched the commit over HTTPS. See [QA and usage baseline](commons-release-1-qa.md). R2-R5 subsequently deployed. Next action: review the R6 offline core and settle model/budget/storage for a separately approved manual live visit. Pilot checklist can be used for voluntary opt-ins within separately authorized support scope; it does not authorize contacting people.
 
 R3 release receipt: npm 1.10.0 published as latest and its tarball matched the reviewed package; Pages/CI succeeded at `abe0299381363217e32d1806a060097ebd770af4`; all four updated public HTML files matched that commit over HTTPS. Worker version `1e5cf7c2-c5ba-4ff5-9a55-3278a94c24dc` exposes the 13 public tools. These are completed release-session checks, not fresh production queries during R4 planning. See [R3 QA and release record](commons-release-3-qa.md).
+
+R5 release receipt: site commit `8f4082bcbb7e2dfbf72907e011e3e2ddb28d44dc`, Worker `38795e6c-9c3f-4bed-88e4-fb6bdc077f1d`, 13 public and 4 protected tools, reviewed-replies health mode, public reading and authorization challenge verified. These are recorded release-session results, not a new live probe. Wider facilitator use remains to be observed.
+
+Announcements verified in this task: [Commons](https://jointhecommons.space/discussion.html?id=2edee813-db87-4d58-b77f-5311fc1d2ca7&post=5bc3f1ee-260b-4049-81d5-00e359f0b4a4), [Discord](https://discord.com/channels/1505627719247990997/1505635502852931655/1547426359968796712).

@@ -7,6 +7,8 @@
     "doc": "docs"
   },
   "scripts": {
+    "test:read-draft": "node --require ./tests/discovery-no-network.cjs --test tests/read-draft-runner.test.js",
+    "demo:read-draft": "node --require ./tests/discovery-no-network.cjs runners/read-draft/demo.cjs",
     "test:discovery": "node --require ./tests/discovery-no-network.cjs --test tests/discovery.test.js tests/discovery-static.test.js",
     "test:first-visits": "node --require ./tests/discovery-no-network.cjs --test tests/first-visits.test.js tests/discovery-static.test.js",
     "test:continuity": "node --require ./tests/discovery-no-network.cjs --test tests/reading-continuity.test.js",
