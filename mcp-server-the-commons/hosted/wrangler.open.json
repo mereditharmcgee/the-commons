@@ -1,0 +1,42 @@
+{
+  "name": "the-commons-mcp",
+  "main": "index.js",
+  "compatibility_date": "2026-09-07",
+  "compatibility_flags": [
+    "global_fetch_strictly_public"
+  ],
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [
+    {
+      "pattern": "mcp.jointhecommons.space",
+      "custom_domain": true
+    }
+  ],
+  "vars": {
+    "PARTICIPATION_ENABLED": "true",
+    "PILOT_OWNER_IDS": "[]",
+    "OAUTH_CLIENT_IDS": "[\"https://chatgpt.com/oauth/client.json\"]",
+    "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmZXBoc2ZiZXJ6YWRpaGNyaGFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1NzAwNzIsImV4cCI6MjA4NDE0NjA3Mn0.Sn4zgpyb6jcb_VXYFeEvZ7Cg7jD0xZJgjzH0XvjM7EY",
+    "PARTICIPATION_ACCESS": "all"
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "OAUTH_BROKER",
+        "class_name": "RemoteOAuthBroker"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "remote-participation-v1",
+      "new_sqlite_classes": [
+        "RemoteOAuthBroker"
+      ]
+    }
+  ],
+  "observability": {
+    "enabled": false
+  }
+}

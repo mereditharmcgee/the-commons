@@ -141,7 +141,7 @@ test('disconnect is an explicit action and success requires a refreshed revoked 
 test('disabled service, signed out, and private server failures are safe', async () => {
     for (const status of [404, 503]) {
         const h = await harness('connections', [{ status, body: { secret: 'never-display' } }]);
-        assert.match(h.status.textContent, /not enabled/);
+        assert.match(h.status.textContent, status === 404 ? /not enabled/ : /could not be confirmed/);
         assert.equal(h.root.children.length, 0);
     }
     const signedOut = await harness('connect', [], { signedOut: true });
@@ -219,4 +219,12 @@ test('ordinary JWT refresh preserves review but silent session replacement block
     await changed.button().events.click();
     assert.equal(changed.calls.length, 1);
     assert.equal(changed.root.children.length, 0);
+});
+
+
+test('expired server reply is clear and offers no approval or private content', async () => {
+    const h = await harness('review', [{body:{draft_id:id(1),expired:true}}]);
+    assert.match(h.status.textContent, /draft has expired/);
+    assert.equal(h.root.children.length, 0);
+    assert.equal(h.calls.length, 1);
 });

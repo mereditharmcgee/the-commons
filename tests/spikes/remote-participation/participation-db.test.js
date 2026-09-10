@@ -58,6 +58,7 @@ test('disposable PostgreSQL: actual checked-in RPC participation proposal', { ti
   await admin.query(await repoFile('sql/patches/align-agent-token-validation-lock-order.sql'));
   await admin.query(await repoFile('sql/patches/validate-agent-create-post-parent.sql'));
   await admin.query(await repoFile('sql/proposals/remote-mcp-participation.sql'));
+  await admin.query(await repoFile('sql/proposals/remote-mcp-participation-pilot-gate.sql'));
   await t.test('dormant installation denies every new RPC to both public client roles',async()=>{
     const rows=(await admin.query("SELECT oid,proname FROM pg_proc WHERE pronamespace='public'::regnamespace AND proname LIKE 'remote_mcp_%'")).rows;
     assert.equal(rows.length,10);
@@ -80,6 +81,8 @@ test('disposable PostgreSQL: actual checked-in RPC participation proposal', { ti
   const grant=()=>call(a,'remote_mcp_create_grant',[connection,voice,hash,'https://client.example','https://mcp.jointhecommons.space/mcp','c'.repeat(64),scopes]);
   const reset=async()=>{
     await admin.query('TRUNCATE remote_mcp_private.grants,public.facilitators,public.discussions,auth.sessions CASCADE');
+    await admin.query('TRUNCATE remote_mcp_private.pilot_voices');
+    await admin.query('INSERT INTO remote_mcp_private.pilot_voices VALUES($1,$2)',[owner,voice]);
     await admin.query('INSERT INTO facilitators(id) VALUES($1),($2)',[owner,other]);
     await admin.query("INSERT INTO ai_identities(id,facilitator_id,name,model) VALUES($1,$2,'Fixture voice','GPT')",[voice,owner]);
     await admin.query("INSERT INTO agent_tokens(id,ai_identity_id,token_hash,token_prefix,token_plain) VALUES($1,$2,extensions.crypt($3,extensions.gen_salt('bf',4)),left($3,11),$3)",[token,voice,secret]);
@@ -97,6 +100,34 @@ test('disposable PostgreSQL: actual checked-in RPC participation proposal', { ti
   const approved=async()=>{const d=await prepare();await call(a,'remote_mcp_approve',[d.draft_id,d.revision,d.payload_hash]);return d;};
   const publish=(c,d)=>call(c,'remote_mcp_publish',[connection,cap,d.draft_id,d.revision]);
   const counts=async()=> (await admin.query("SELECT (SELECT count(*)::int FROM posts WHERE parent_id IS NOT NULL) AS posts,(SELECT count(*)::int FROM remote_mcp_private.receipts) AS receipts,(SELECT count(*)::int FROM agent_activity WHERE action_type='post') AS charges")).rows[0];
+  await t.test('pilot admission rejects direct RPCs from another eligible owner and unlisted voice',async()=>{
+    await reset();
+    const extraVoice='00000000-0000-4000-8000-000000000010';
+    const extraToken='00000000-0000-4000-8000-000000000011';
+    await admin.query("INSERT INTO ai_identities(id,facilitator_id,name,model) VALUES($1,$2,'Other eligible voice','GPT')",[extraVoice,other]);
+    await admin.query("INSERT INTO agent_tokens(id,ai_identity_id,token_hash,token_prefix,token_plain) SELECT $1,$2,token_hash,token_prefix,token_plain FROM agent_tokens WHERE id=$3",[extraToken,extraVoice,token]);
+    const extraGrant=()=>call(a,'remote_mcp_create_grant',[other,extraVoice,hash,'https://client.example','https://mcp.jointhecommons.space/mcp','c'.repeat(64),scopes]);
+    await a.query("SELECT set_config('request.jwt.claims',$1,false)",[JSON.stringify({sub:other,session_id:session2})]);
+    await assert.rejects(extraGrant(),/Connection unavailable/);
+    await admin.query('UPDATE ai_identities SET facilitator_id=$1 WHERE id=$2',[owner,extraVoice]);
+    await a.query("SELECT set_config('request.jwt.claims',$1,false)",[claims]);
+    await assert.rejects(extraGrant(),/Connection unavailable/);
+    assert.equal((await admin.query('SELECT count(*)::int AS n FROM remote_mcp_private.grants')).rows[0].n,1);
+    await admin.query('INSERT INTO remote_mcp_private.pilot_voices VALUES($1,$2)',[owner,extraVoice]);
+    assert.equal((await extraGrant()).voice_id,extraVoice);
+  });
+  await t.test('empty pilot admission blocks new and repeated consent without blocking revocation',async()=>{
+    await reset();
+    await admin.query('DELETE FROM remote_mcp_private.pilot_voices');
+    await assert.rejects(grant(),/Connection unavailable/);
+    assert.equal((await call(a,'remote_mcp_connections')).length,1);
+    await call(a,'remote_mcp_revoke',[connection]);
+    await assert.rejects(prepare());
+    for(const c of [a,b]){
+      await assert.rejects(c.query('SELECT * FROM remote_mcp_private.pilot_voices'),{code:'42501'});
+      await assert.rejects(c.query('INSERT INTO remote_mcp_private.pilot_voices VALUES($1,$2)',[other,voice]),{code:'42501'});
+    }
+  });
   await t.test('real bcrypt validation, rate RPC and concurrent idempotent publishing',async()=>{
     await reset();const d=await approved();const out=await Promise.all([publish(a,d),publish(b,d)]);
     assert.equal(out[0].post_id,out[1].post_id);assert.equal((await publish(b,d)).post_id,out[0].post_id);
@@ -213,6 +244,7 @@ test('disposable PostgreSQL: actual checked-in RPC participation proposal', { ti
   });  await t.test('deleted voice remains safely listed beside an active connection',async()=>{
     await reset();const h=(await admin.query("SELECT encode(extensions.digest($1,'sha256'),'hex') AS h",[cap])).rows[0].h;
     await admin.query("INSERT INTO ai_identities(id,facilitator_id,name,model) VALUES($1,$2,'Deleted fixture','GPT')",[other,owner]);
+    await admin.query('INSERT INTO remote_mcp_private.pilot_voices VALUES($1,$2)',[owner,other]);
     await admin.query("INSERT INTO agent_tokens(id,ai_identity_id,token_hash,token_prefix,token_plain) VALUES($1,$2,extensions.crypt($3,extensions.gen_salt('bf',4)),left($3,11),$3)",[session2,other,'tc_abcdef12345678901234567890123456']);
     await call(a,'remote_mcp_create_grant',[session2,other,h,'https://client.example','https://mcp.jointhecommons.space/mcp','e'.repeat(64),scopes]);
     await admin.query('DELETE FROM ai_identities WHERE id=$1',[other]);
@@ -318,4 +350,44 @@ test('disposable PostgreSQL: actual checked-in RPC participation proposal', { ti
     assert.equal((await admin.query('SELECT count(*)::int AS n FROM posts')).rows[0].n,2);
     assert.ok((await admin.query("SELECT to_regprocedure('public.agent_create_post(text,uuid,text,text,uuid)') AS fn")).rows[0].fn);
   });
+  await t.test('exact activation package is atomic and selects only approved Dev Sandbox',async()=>{
+    await admin.query(await repoFile('sql/proposals/remote-mcp-participation.sql'));
+    const activation=await repoFile('sql/patches/remote-mcp-participation-pilot.sql');
+    await assert.rejects(admin.query(activation),/Approved pilot voice unavailable/);
+    await admin.query('ROLLBACK');
+    assert.equal((await admin.query("SELECT to_regclass('remote_mcp_private.pilot_voices') AS relation")).rows[0].relation,null);
+    assert.equal((await admin.query("SELECT has_function_privilege('authenticated','public.remote_mcp_create_grant(uuid,uuid,text,text,text,text,text[])','EXECUTE') AS allowed")).rows[0].allowed,false);
+    await admin.query("INSERT INTO ai_identities(id,facilitator_id,name,model) VALUES('9fab78e6-42fc-4b87-9d99-a2a4f99e9730',$1,'Dev Sandbox','Claude Sonnet 4.6')",[owner]);
+    await admin.query(activation);
+    assert.deepEqual((await admin.query('SELECT owner_id,voice_id FROM remote_mcp_private.pilot_voices')).rows,[{owner_id:owner,voice_id:'9fab78e6-42fc-4b87-9d99-a2a4f99e9730'}]);
+    await assert.rejects(grant(),/Connection unavailable/);
+    assert.equal((await admin.query('SELECT count(*)::int AS n FROM remote_mcp_private.grants')).rows[0].n,0);
+  });
+  await t.test('open rollout admits another eligible owner, preserves isolation and handles expiry privately', async()=>{
+    await reset();
+    await admin.query(await repoFile('sql/patches/remote-mcp-participation-open.sql'));
+    const extraVoice='00000000-0000-4000-8000-000000000010';
+    const extraToken='00000000-0000-4000-8000-000000000011';
+    await admin.query("INSERT INTO ai_identities(id,facilitator_id,name,model) VALUES($1,$2,'Other eligible voice','GPT')",[extraVoice,other]);
+    await admin.query("INSERT INTO agent_tokens(id,ai_identity_id,token_hash,token_prefix,token_plain) SELECT $1,$2,token_hash,token_prefix,token_plain FROM agent_tokens WHERE id=$3",[extraToken,extraVoice,token]);
+    const extraGrant=()=>call(a,'remote_mcp_create_grant',[other,extraVoice,hash,'https://client.example','https://mcp.jointhecommons.space/mcp','c'.repeat(64),scopes]);
+    await assert.rejects(extraGrant(),/Connection unavailable/);
+    await a.query("SELECT set_config('request.jwt.claims',$1,false)",[JSON.stringify({sub:other,session_id:session2})]);
+    assert.equal((await extraGrant()).voice_id,extraVoice);
+    await a.query("SELECT set_config('request.jwt.claims',$1,false)",[claims]);
+    const d=await prepare();
+    await admin.query("UPDATE remote_mcp_private.drafts SET expires_at=clock_timestamp()-interval '1 second' WHERE id=$1",[d.draft_id]);
+    assert.deepEqual(await call(a,'remote_mcp_review',[d.draft_id]),{draft_id:d.draft_id,expired:true});
+    await assert.rejects(call(a,'remote_mcp_approve',[d.draft_id,d.revision,d.payload_hash]));
+    await assert.rejects(publish(b,d));
+    await a.query("SELECT set_config('request.jwt.claims',$1,false)",[JSON.stringify({sub:other,session_id:session2})]);
+    await assert.rejects(call(a,'remote_mcp_review',[d.draft_id]));
+    await assert.rejects(call(b,'remote_mcp_review',[d.draft_id]),{code:'42501'});
+    await admin.query('UPDATE agent_tokens SET is_active=false WHERE id=$1',[extraToken]);
+    await assert.rejects(extraGrant(),/Connection unavailable/);
+    assert.deepEqual(await counts(),{posts:0,receipts:0,charges:0});
+    await admin.query(await repoFile('sql/proposals/remote-mcp-participation-disable.sql'));
+    await assert.rejects(extraGrant(),{code:'42501'});
+  });
+
 });

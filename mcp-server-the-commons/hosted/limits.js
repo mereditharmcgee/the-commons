@@ -31,4 +31,5 @@ export async function boundedText(body, limit = 65536, timeoutMs = 5000) {
 export function json(value, status = 200, headers = {}) { return Response.json(value, { status, headers: { 'Cache-Control': 'no-store', ...headers } }); }
 export function unavailable(status = 503) { return json({ error: 'Connection unavailable. Please try again or reconnect.' }, status); }
 export function parseList(value) { try { const result = JSON.parse(value || '[]'); return Array.isArray(result) && result.every(s => typeof s === 'string') ? result : []; } catch { return []; } }
-export function enabled(env) { return env.PARTICIPATION_ENABLED === 'true' && parseList(env.PILOT_OWNER_IDS).length > 0; }
+export function ownerAllowed(env, id) { return UUID.test(id) && (env.PARTICIPATION_ACCESS === 'all' || parseList(env.PILOT_OWNER_IDS).includes(id)); }
+export function enabled(env) { return env.PARTICIPATION_ENABLED === 'true' && (env.PARTICIPATION_ACCESS === 'all' || parseList(env.PILOT_OWNER_IDS).length > 0); }

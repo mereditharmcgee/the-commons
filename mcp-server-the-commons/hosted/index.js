@@ -76,7 +76,7 @@ export default { async fetch(request, env = {}, ctx) {
   let response;
   try {
     if (request.method === 'OPTIONS') response = new Response(null, { status: 204 });
-    else if (url.pathname === '/health') response = json({ status: 'ok', mode: 'reviewed-replies-pilot' });
+    else if (url.pathname === '/health') response = json({ status: 'ok', mode: env.PARTICIPATION_ACCESS === 'all' ? 'reviewed-replies' : 'reviewed-replies-pilot' });
     else if (url.pathname === '/mcp') response = await mcp(request, env);
     else if (ownerActions[url.pathname]) response = await ownerRequest(request, env, ownerActions[url.pathname]);
     else if (['/authorize', '/token', '/connect/context', '/connect/complete', '/.well-known/oauth-authorization-server', '/.well-known/oauth-protected-resource', '/.well-known/oauth-protected-resource/mcp'].includes(url.pathname)) response = await env.OAUTH_BROKER.get(env.OAUTH_BROKER.idFromName('pilot')).fetch(request);

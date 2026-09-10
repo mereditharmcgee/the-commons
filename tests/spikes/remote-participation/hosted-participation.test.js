@@ -5,22 +5,23 @@ import { build } from 'esbuild';
 import { Miniflare, convertV4MiniflareOptions } from 'miniflare';
 import { fileURLToPath } from 'node:url';
 import { readFile } from 'node:fs/promises';
-import { boundedText } from '../../../mcp-server-the-commons/hosted/limits.js';
+import { boundedText, enabled, ownerAllowed } from '../../../mcp-server-the-commons/hosted/limits.js';
 const ISSUER = 'https://mcp.jointhecommons.space', SITE = 'https://jointhecommons.space';
 const clientId = 'https://chatgpt.com/oauth/client.json', callback = 'https://chatgpt.com/connector_platform_oauth_redirect';
 const owner = '11111111-1111-4111-8111-111111111111', session = '22222222-2222-4222-8222-222222222222', voice = '33333333-3333-4333-8333-333333333333';
 const draft = '44444444-4444-4444-8444-444444444444', discussion = '55555555-5555-4555-8555-555555555555', parent = '66666666-6666-4666-8666-666666666666';
 const anonKey = 'header.' + Buffer.from(JSON.stringify({ role: 'anon' })).toString('base64url') + '.fixture';
-const jwt = (sessionId = session) => 'header.' + Buffer.from(JSON.stringify({ sub: owner, session_id: sessionId, exp: Math.floor(Date.now()/1000)+3600 })).toString('base64url') + '.fixture';
+const jwt = (sessionId = session, user = owner) => 'header.' + Buffer.from(JSON.stringify({ sub: user, session_id: sessionId, exp: Math.floor(Date.now()/1000)+3600 })).toString('base64url') + '.fixture';
 test('hosted build: default-off, consent, protected tools, replay and revocation', { timeout: 60000 }, async t => {
   const output = await build({ entryPoints: [fileURLToPath(new URL('../../../mcp-server-the-commons/hosted/index.js', import.meta.url))], bundle: true, write: false, format: 'esm', platform: 'neutral', mainFields: ['module','main'], external: ['cloudflare:workers'] });
+  let releaseStatus, statusStarted;
   const calls = []; let grant; let approved = false; let revoked = false; let unavailableGrant = false;
-  const env = { PARTICIPATION_ENABLED: 'true', PILOT_OWNER_IDS: JSON.stringify([owner]), OAUTH_CLIENT_IDS: JSON.stringify([clientId]), SUPABASE_ANON_KEY: anonKey };
+  const env = { PARTICIPATION_ENABLED: 'true', PARTICIPATION_ACCESS: 'all', PILOT_OWNER_IDS: '[]', OAUTH_CLIENT_IDS: JSON.stringify([clientId]), SUPABASE_ANON_KEY: anonKey };
   const service = async request => {
     const url = new URL(request.url);
     if (url.href === clientId) return Response.json({ client_id: clientId, client_name: 'ChatGPT fixture', redirect_uris: [callback], token_endpoint_auth_method: 'none', grant_types: ['authorization_code','refresh_token'], response_types: ['code'] });
     assert.equal(url.origin, 'https://dfephsfberzadihcrhal.supabase.co', 'unexpected outbound host');
-    if (url.pathname === '/auth/v1/user') return Response.json({ id: owner });
+    if (url.pathname === '/auth/v1/user') return Response.json({ id: JSON.parse(Buffer.from(request.headers.get('authorization').split('.')[1], 'base64url')).sub });
     if (url.pathname === '/rest/v1/ai_identities') { assert.equal(url.searchParams.get('select'), 'id,name,model'); return Response.json([{ id: voice, name: 'Fixture voice', model: 'GPT' }]); }
     assert.ok(url.pathname.startsWith('/rest/v1/rpc/remote_mcp_'), 'unexpected upstream path');
     const name = url.pathname.split('/').at(-1); const args = await request.json(); calls.push({ name, args });
@@ -29,6 +30,7 @@ test('hosted build: default-off, consent, protected tools, replay and revocation
     if (name === 'remote_mcp_approve') { approved = true; return Response.json({ draft_id: draft, revision: 1, payload_hash: 'a'.repeat(64), approved_at: new Date().toISOString() }); }
     if (revoked) return Response.json({ message: 'synthetic-private-error' }, { status: 400 });
     if (name === 'remote_mcp_check_grant') return unavailableGrant ? Response.json({ error: 'synthetic-private-error' }, { status: 503 }) : Response.json({ active: true });
+    if (name === 'remote_mcp_status' && releaseStatus) { statusStarted(); await releaseStatus; }
     if (name === 'remote_mcp_status') return Response.json({ connection_id: grant.p_connection_id, voice_id: voice, voice_name: 'Fixture voice', expires_at: new Date(Date.now()+604800000).toISOString() });
     if (name === 'remote_mcp_prepare') return Response.json({ draft_id: draft, revision: 1, payload_hash: 'a'.repeat(64), expires_at: new Date(Date.now()+600000).toISOString(), capability: 'MUST_NOT_LEAK' });
     if (name === 'remote_mcp_publish') return approved ? Response.json({ post_id: parent, discussion_id: discussion, draft_id: draft, revision: 1 }) : Response.json({ message: 'approval required' }, { status: 400 });
@@ -102,6 +104,17 @@ test('hosted build: default-off, consent, protected tools, replay and revocation
     await connect('/participation/approve',{draft_id:draft,revision:1,payload_hash:'a'.repeat(64)});
     const published=await rpc('publish_approved_reply',{draft_id:draft,revision:1},token); assert.equal(published.isError,undefined); assert.match(published.content[0].text,/discussion.html/);
   });
+  await t.test('a stalled protected database call does not hold the shared OAuth lock', async () => {
+    let release;
+    releaseStatus = new Promise(resolve => { release = resolve; });
+    const started = new Promise(resolve => { statusStarted = resolve; });
+    const pending = rpc('connection_status', {}, token);
+    try {
+      await started;
+      const discovery = await Promise.race([request('/.well-known/oauth-authorization-server'), new Promise((_, reject) => setTimeout(() => reject(new Error('shared lock held by database call')), 1500))]);
+      assert.equal(discovery.status, 200);
+    } finally { release(); releaseStatus = null; await pending; }
+  });
   const refresh = value => request('/token',{method:'POST',body:new URLSearchParams({grant_type:'refresh_token',client_id:clientId,refresh_token:value,scope:'commons.connection.read',resource:ISSUER+'/mcp'})});
   await t.test('concurrent refresh redeems once and previous-token replay cannot issue again', async () => {
     const responses=await Promise.all([refresh(refreshToken),refresh(refreshToken)]);
@@ -144,6 +157,37 @@ test('hosted build: default-off, consent, protected tools, replay and revocation
     assert.equal(calls.length,before);
     assert.equal((await rpc('prepare_reply',{discussion_id:discussion,parent_id:parent,content:'Write-only draft'},issued.access_token)).isError,undefined);
   });
+  await t.test('OAuth IP allowance is isolated and cannot exhaust a protected owner allowance', async () => {
+    for(let n=0;n<241;n++) await request('/authorize?client_id=invalid', {headers:{'cf-connecting-ip':'192.0.2.1'}});
+    assert.equal((await request('/authorize?'+query,{redirect:'manual',headers:{'cf-connecting-ip':'192.0.2.2'}})).status,303);
+    assert.equal((await rpc('connection_status',{},token)).isError,undefined);
+  });
+  await t.test('one owner exhausting their allowance does not block another owner', async () => {
+    let refused = 0;
+    for (let n = 0; n < 241; n++) if ((await rpc('connection_status', {}, token)).isError) refused++;
+    assert.ok(refused > 0);
+    const secondOwner = '77777777-7777-4777-8777-777777777777';
+    query.set('scope', 'commons.connection.read');
+    const start = await request('/authorize?' + query, {redirect:'manual'});
+    assert.equal(start.status,303); cookie=start.headers.get('set-cookie').split(';')[0];
+    const extra = {Authorization:'Bearer '+jwt(session,secondOwner)};
+    const context=await (await connect('/connect/context',{},extra)).json(); csrf=context.csrf;
+    const consent=await connect('/connect/complete',{voice_id:voice},{...extra,'X-Commons-CSRF':csrf});
+    assert.equal(consent.status,200);
+    const url=new URL((await consent.json()).redirect_to);
+    const response=await request('/token',{method:'POST',body:new URLSearchParams({grant_type:'authorization_code',client_id:clientId,code:url.searchParams.get('code'),redirect_uri:callback,code_verifier:verifier,resource:ISSUER+'/mcp'})});
+    assert.equal(response.status,200);
+    const issued=await response.json();
+    assert.equal((await rpc('connection_status',{},issued.access_token)).isError,undefined);
+  });
+});
+
+test('participation access is explicit and preserves the pilot fallback', () => {
+  assert.equal(enabled({PARTICIPATION_ACCESS:'all'}),false);
+  assert.equal(enabled({PARTICIPATION_ENABLED:'true',PARTICIPATION_ACCESS:'typo'}),false);
+  assert.equal(enabled({PARTICIPATION_ENABLED:'true',PARTICIPATION_ACCESS:'all'}),true);
+  assert.equal(ownerAllowed({PARTICIPATION_ACCESS:'all'},'invalid'),false);
+  assert.equal(ownerAllowed({PILOT_OWNER_IDS:JSON.stringify([owner])},parent),false);
 });
 
 test('body reader deadline rejects a stalled stream and cancels without waiting on its source', async () => {

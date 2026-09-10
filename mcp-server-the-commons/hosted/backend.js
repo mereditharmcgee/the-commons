@@ -1,4 +1,4 @@
-import { boundedText, Unavailable, parseList, UUID } from './limits.js';
+import { boundedText, Unavailable, ownerAllowed, UUID } from './limits.js';
 const BACKEND = 'https://dfephsfberzadihcrhal.supabase.co';
 const RPCS = new Set(['remote_mcp_create_grant', 'remote_mcp_connections', 'remote_mcp_review', 'remote_mcp_approve', 'remote_mcp_revoke', 'remote_mcp_check_grant', 'remote_mcp_status', 'remote_mcp_prepare', 'remote_mcp_publish', 'remote_mcp_receipt']);
 // The published anon key is configured at deployment; never accept service-role credentials.
@@ -29,7 +29,7 @@ export async function verifiedOwner(env, header) {
   let claims;
   try { claims = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))); } catch { throw new Unavailable(); }
   // Claims are used only after auth server verification, never user_metadata.
-  if (!UUID.test(user.id) || claims.sub !== user.id || !UUID.test(claims.session_id) || !Number.isFinite(claims.exp) || claims.exp * 1000 <= Date.now() || !parseList(env.PILOT_OWNER_IDS).includes(user.id)) throw new Unavailable();
+  if (!UUID.test(user.id) || claims.sub !== user.id || !UUID.test(claims.session_id) || !Number.isFinite(claims.exp) || claims.exp * 1000 <= Date.now() || !ownerAllowed(env, user.id)) throw new Unavailable();
   return { id: user.id, sessionId: claims.session_id, token };
 }
 export async function ownedVoices(env, owner) {

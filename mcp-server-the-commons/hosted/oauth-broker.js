@@ -1,7 +1,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import OAuthProvider, { getOAuthApi, OAuthError } from '@cloudflare/workers-oauth-provider';
 import { OAuthStore } from './oauth-store.js';
-import { ISSUER, SITE, RESOURCE, SCOPES, boundedText, randomSecret, digest, json, unavailable, parseList, enabled, Unavailable, UUID } from './limits.js';
+import { ISSUER, SITE, RESOURCE, SCOPES, boundedText, randomSecret, digest, json, unavailable, parseList, enabled, ownerAllowed, Unavailable, UUID } from './limits.js';
 import { rpc, verifiedOwner, ownedVoices } from './backend.js';
 import { protectedTools } from './participation.js';
 
@@ -54,8 +54,13 @@ export class RemoteOAuthBroker extends DurableObject {
       return await this.run(operation => operation.fetch(request), () => unavailable());
     } catch { return unavailable(400); }
   }
-  callTool(bearer, name, input, resource) {
-    return this.run(operation => operation.callTool(bearer, name, input, resource), () => ({ failed: true }));
+  async callTool(bearer, name, input, resource) {
+    const authorized = await this.run(operation => operation.authorizeTool(bearer, name, input, resource), () => ({ failed: true }));
+    if (authorized.failed || authorized.authRequired) return authorized;
+    // Only provider state needs global serialization. PostgreSQL rechecks the
+    // grant and owns publication/revocation ordering while this call is in flight.
+    try { return { value: await rpc(this.env, authorized.rpc, authorized.args) }; }
+    catch { return { failed: true }; }
   }
 }
 
@@ -82,7 +87,7 @@ class BrokerOperation {
         }
         const props = options.props;
         const remaining = Math.floor((Date.parse(props?.expiresAt) - Date.now()) / 1000);
-        if (!Number.isFinite(remaining) || remaining < 60 || !parseList(this.env.PILOT_OWNER_IDS).includes(options.userId)) throw new OAuthError('invalid_grant', { description: 'Connection expired' });
+        if (!Number.isFinite(remaining) || remaining < 60 || !ownerAllowed(this.env, options.userId)) throw new OAuthError('invalid_grant', { description: 'Connection expired' });
         // Database revocation is authoritative even when a client still has an access token.
         const status = await rpc(this.env, 'remote_mcp_check_grant', { p_connection_id: props.connectionId, p_capability: props.capability });
         if (status?.active !== true) throw new OAuthError('invalid_grant', { description: 'Connection unavailable' });
@@ -98,8 +103,8 @@ class BrokerOperation {
     if (!parseList(this.env.OAUTH_CLIENT_IDS).includes(id)) return false;
     try { const url = new URL(id); return url.protocol === 'https:' && !url.username && !url.password && !url.search && !url.hash; } catch { return false; }
   }
-  async admission() {
-    const key = 'rate:' + Math.floor(Date.now() / 60000);
+  async admission(subject) {
+    const key = 'rate:' + Math.floor(Date.now() / 60000) + ':' + await digest(subject);
     const count = Number(await this.store.get(key) || 0);
     if (count >= 120) throw new Unavailable();
     await this.store.put(key, String(count + 1), { expirationTtl: 120 });
@@ -108,8 +113,8 @@ class BrokerOperation {
   async fetch(request) {
       if (!enabled(this.env)) return unavailable(404);
       try {
-        await this.admission();
         const url = new URL(request.url);
+        if (!url.pathname.startsWith('/.well-known/')) await this.admission('ip:' + (request.headers.get('cf-connecting-ip') || 'unknown'));
         if (url.origin !== ISSUER) return unavailable(400);
         if (url.pathname.startsWith('/connect/')) return await this.connect(request);
         if (url.pathname === '/token') {
@@ -188,19 +193,18 @@ class BrokerOperation {
       return unavailable();
     }
   }
-  async callTool(bearer, name, input, resource) {
+  async authorizeTool(bearer, name, input, resource) {
       try {
         if (!enabled(this.env) || resource !== RESOURCE || typeof bearer !== 'string' || bearer.length > 4096) return { authRequired: true };
-        await this.admission();
         const token = await this.helpers.unwrapToken(bearer);
         const tool = protectedTools.find(item => item.name === name);
         const audience = Array.isArray(token?.audience) ? token.audience : [token?.audience];
-        if (!tool || !token || !audience.includes(RESOURCE) || !token.scope.includes(tool.scope) || !parseList(this.env.PILOT_OWNER_IDS).includes(token.userId) || !this.allowedClient(token.grant.clientId)) return { authRequired: true };
+        if (!tool || !token || !audience.includes(RESOURCE) || !token.scope.includes(tool.scope) || !ownerAllowed(this.env, token.userId) || !this.allowedClient(token.grant.clientId)) return { authRequired: true };
+        await this.admission('owner:' + token.userId);
         const props = token.grant.props;
         if (!props || !Number.isFinite(Date.parse(props.expiresAt)) || Date.parse(props.expiresAt) <= Date.now()) return { authRequired: true };
         const args = tool.schema.parse(input);
-        const value = await rpc(this.env, tool.rpc, { p_connection_id: props.connectionId, p_capability: props.capability, ...Object.fromEntries(Object.entries(args).map(([key, value]) => ['p_' + key, value])) });
-        return { value };
+        return { rpc: tool.rpc, args: { p_connection_id: props.connectionId, p_capability: props.capability, ...Object.fromEntries(Object.entries(args).map(([key, value]) => ['p_' + key, value])) } };
       } catch { return { failed: true }; }
   }
 }

@@ -88,7 +88,7 @@
                 credentials: path.startsWith('/connect/') ? 'include' : 'omit',
                 cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(15000)
             });
-            if (response.status === 404 || response.status === 503) throw new Error('unavailable');
+            if (response.status === 404) throw new Error('unavailable');
             if (response.status === 401) throw new Error('login');
             if (!response.ok) throw new Error('request');
             const value = await response.json();
@@ -173,6 +173,11 @@
             const id = new URLSearchParams(window.location.search).get('draft');
             if (!uuid(id)) { say('This review link is invalid. Ask your client for a new draft review link.'); return; }
             const draft = await request('/participation/review', { draft_id: id });
+            if (draft?.draft_id === id && draft.expired === true) {
+                root.replaceChildren();
+                say('This draft has expired. Ask your client for a new draft.');
+                return;
+            }
             if (!validDraft(draft, id)) throw new Error('shape');
             root.replaceChildren(node('h2', 'Reply as ' + draft.voice_name));
             root.append(link('View voice profile', SITE + '/profile.html?id=' + draft.voice_id), node('p', 'Revision ' + draft.revision + ' · Expires ' + time(draft.expires_at)));
