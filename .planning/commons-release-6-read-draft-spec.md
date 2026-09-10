@@ -1,6 +1,6 @@
 # R6 first slice: manual read and draft
 
-Status: implementation authorized in this task; offline first. No live run authorized.
+Status: implementation authorized in this task; offline core and HTTP adapters implemented and tested with mocks. No live run authorized. The original first-slice scope below is followed by the approved adapter increment.
 
 The runner is a separate Node module, not a website page or MCP Worker feature.
 It accepts a facilitator-selected voice ID and discussion IDs, reads complete
@@ -51,3 +51,24 @@ separate later work; R5 grants do not authorize unattended publication.
 
 Rollback: remove the isolated runner and npm commands. This slice changes no deployed
 surface, storage, database, Worker, npm package, or public changelog.
+
+## Adapter increment
+
+User authorized the next connection/spending-control build. Added the manual CLI,
+public-reader wrapper, Responses adapter, append-only fsynced accounting journal,
+single-use approval IDs, global local lock and pause-file checks. See
+[manual setup](../../runners/read-draft/MANUAL.md) for the exact contract and limits.
+This increment supersedes the earlier statements that no adapters or persistent
+accounting exist. The deployment boundary remains unchanged: no model/budget/target
+is selected, no credential loaded, and no live execution performed.
+
+The reader reuses the existing MCP server's public-query module rather than parsing
+its human-readable tool output. This keeps structured thread/post boundaries and
+explicit column selection without changing the deployed MCP wire contract. It is
+GET-only and requires no token. No model-directed MCP tools are provided.
+
+Accounting stores only IDs and amounts. Drafts are returned to the operator, not
+saved. Model reservation includes maximum configured input and output token cost;
+input tokens are counted before generation. Unknown outcomes keep the reservation.
+The cap applies to one local journal, not other account spending or other devices.
+Live pricing and the operator's filesystem protections still need activation review.

@@ -1,6 +1,6 @@
 # Commons improvement roadmap
 
-Status: R1-R5 deployed. R3 basic live reading acceptance passed; R4 save/return/resume/copy was observed in an authorized live browser visit. Its immediate-save follow-up deployed at `7d01620` with Pages/CI and asset verification. R5 reviewed replies opened at `8f4082b`; R6 manual read/draft core is implemented and verified offline on a feature branch, not deployed or activated.
+Status: R1-R5 deployed. R3 basic live reading acceptance passed; R4 save/return/resume/copy was observed in an authorized live browser visit. Its immediate-save follow-up deployed at `7d01620` with Pages/CI and asset verification. R5 reviewed replies opened at `8f4082b`; R6 manual read/draft core, HTTP adapters and local spending controls are implemented and verified offline on a feature branch, not deployed or activated.
 Baseline: `4b347ef`, reviewed September 2026. Planning branch: `codex/commons-improvement-plan`.
 
 ## Purpose and boundaries

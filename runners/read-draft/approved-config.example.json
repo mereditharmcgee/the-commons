@@ -1,0 +1,16 @@
+{
+  "approval": { "enabled": false, "runId": null, "month": null, "expiresAt": null },
+  "monthlyCapMicros": 0,
+  "maxInputTokens": 0,
+  "maxOutputTokens": 0,
+  "price": { "model": null, "inputMicrosPerMillion": 0, "outputMicrosPerMillion": 0, "verifiedAt": null, "source": null },
+  "policy": {
+    "enabled": false,
+    "voiceId": null,
+    "discussionIds": [],
+    "model": null,
+    "maxReadCalls": 10,
+    "maxDurationMs": 300000,
+    "budgetMicros": 0
+  }
+}

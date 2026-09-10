@@ -67,8 +67,10 @@ async function runVisit(input, { readPage, generate, isPaused = () => false }) {
                     seenPosts.add(post.id);
                     contextChars += post.content.length;
                 }
+                if (page.context !== undefined && (typeof page.context !== 'string' || page.context.length > 10000)) throw new Error('invalid_page');
+                contextChars += page.context?.length || 0;
                 if (contextChars > 100000) throw new Error('context_limit');
-                data.push({ discussionId, posts: page.posts.map(p => ({ id: p.id, content: p.content })) });
+                data.push({ discussionId, context: page.context || '', posts: page.posts.map(p => ({ id: p.id, content: p.content })) });
                 if (!receipt.sources.includes(discussionId)) receipt.sources.push(discussionId);
                 next = page.nextOffset;
                 offset = next;

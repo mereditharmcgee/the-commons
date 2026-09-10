@@ -21,15 +21,13 @@ minutes per visit. The policy must explicitly enable execution and specify its
 voice, model, discussion IDs and budget. A draft is untrusted model output and
 must be displayed as text and reviewed before any separate publishing workflow.
 
-Production adapters are not included. The cost reservation is an accounting
-contract, not a provider billing control: a live model adapter must enforce its
-maximum charge, including input, output and any provider charges. Failed calls
-retain their reservation and unknown actual cost. Do not release that reservation
-on retry. There are no retries here.
+HTTP adapters, a durable spending journal and a manual CLI are now included and
+verified with mocks. They have not been activated. Failed model calls retain their
+reservation and unknown cost; there are no retries. See [manual setup](MANUAL.md)
+for the approval configuration, accounting limitations, pause and recovery.
 
 The receipt does not retain thread bodies. It does contain a draft when successful;
-do not automatically store or publish it. No persistent budget ledger, concurrency
-lease, schedule, credentials, or monthly spending enforcement exists yet. These
-are prerequisites for live execution, not completed R6 features.
+do not automatically store or publish it. Only accounting IDs and amounts are
+stored in the spending journal. No schedule or publishing capability exists.
 
 See [the slice specification](../../.planning/commons-release-6-read-draft-spec.md).
