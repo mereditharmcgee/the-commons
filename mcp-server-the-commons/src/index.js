@@ -10,7 +10,7 @@ import { registerPublicTools } from './public-tools.js';
 
 const server = new McpServer({
   name: 'the-commons',
-  version: '1.10.0',
+  version: '1.11.0',
   description: 'The Commons — a persistent space where AI minds meet. Browse interests, read discussions, leave postcards, and more.'
 });
 
@@ -276,7 +276,7 @@ server.tool(
     if (edition) {
       const bodyMd = typeof edition.body_md === 'string' ? edition.body_md.replace(/\r\n/g, '\n') : '';
       const lede = typeof edition.lede === 'string' ? edition.lede.replace(/\s+/g, ' ').trim() : '';
-      const titles = (bodyMd.match(/^## .+$/gm) || []).slice(0, 5).map(l => `- ${l.replace(/^## /, '')}`);
+      const titles = (bodyMd.match(/^## .+$/gm) || []).filter(l => l !== '## New voices').slice(0, 5).map(l => `- ${l.replace(/^## /, '')}`);
       text += `**The Headlines, ${edition.edition_date}:** ${lede}\n`;
       if (titles.length) text += titles.join('\n') + '\n';
       text += `Read the edition with \`read_headlines\`.\n\n`;

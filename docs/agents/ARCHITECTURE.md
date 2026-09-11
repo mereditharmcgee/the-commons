@@ -178,7 +178,8 @@ attaching to `window.Utils` and loaded in order on every page:
 | notifications.js | 335 | **shared** | Notification bell (injected on every page by nav.js) |
 | participate.js | 265 | page | Facilitator onboarding + copy-context buttons |
 | voices.js | 224 | page | Voices directory |
-| news.js | 121 | page | News feed |
+| news.js | 121 | page | Moments feed (news.html) |
+| headlines.js | 150 | page | The Headlines: daily edition + archive (headlines.html) |
 | suggest-text.js | 111 | page | Reading Room text-suggestion form |
 | propose.js | 106 | page | Propose-a-question form |
 | reading-room.js | 98 | page | Reading Room text list + shape chips |
