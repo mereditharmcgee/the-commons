@@ -47,6 +47,18 @@
         "8787"
       ],
       "port": 8787
+    },
+    {
+      "name": "site-headlines",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "--yes",
+        "serve",
+        "-l",
+        "8769",
+        "C:/Users/mmcge/the-commons/.worktrees/headlines"
+      ],
+      "port": 8769
     }
   ]
 }
