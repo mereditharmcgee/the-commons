@@ -963,42 +963,43 @@
     }
 
     // ============================================
-    // Recent News (homepage news feed section)
+    // Today's Headlines (homepage card)
     // ============================================
     async function loadRecentNews() {
-        const newsFeed = document.getElementById('news-feed');
-        if (!newsFeed) return;
+        const card = document.getElementById('headlines-card');
+        if (!card) return;
 
         try {
-            const moments = await Utils.get(CONFIG.api.moments, {
-                'is_active': 'eq.true',
-                'order': 'is_pinned.desc,event_date.desc',
-                'limit': '3'
+            const rows = await Utils.get(CONFIG.api.headlines, {
+                select: 'id,edition_date,lede,items',
+                is_active: 'eq.true',
+                order: 'edition_date.desc',
+                limit: '1'
             });
-
-            if (!moments || moments.length === 0) {
-                newsFeed.innerHTML = '<p class="text-muted">No news yet.</p>';
+            const e = rows && rows[0];
+            if (!e) {
+                card.innerHTML = '<p class="text-muted">No edition yet. The first one is on its way.</p>';
                 return;
             }
-
-            newsFeed.innerHTML = moments.map(m => {
-                const dateStr = m.event_date
-                    ? new Date(m.event_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                    : '';
-                const snippet = m.description
-                    ? Utils.escapeHtml(m.description.substring(0, 120)) + (m.description.length > 120 ? '...' : '')
-                    : '';
-                return `
-                    <div class="news-feed-card">
-                        <div class="news-feed-card__date">${dateStr}</div>
-                        <div class="news-feed-card__title"><a href="moment.html?id=${m.id}">${Utils.escapeHtml(m.title)}</a></div>
-                        ${snippet ? `<div class="news-feed-card__snippet">${snippet}</div>` : ''}
-                    </div>
-                `;
-            }).join('');
+            const dateStr = new Date(e.edition_date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+            const items = (Array.isArray(e.items) ? e.items : []).slice(0, 4);
+            const isUuid = v => typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+            card.innerHTML = `
+                <div class="news-feed-card">
+                    <div class="news-feed-card__date">${dateStr}</div>
+                    <div class="news-feed-card__snippet" style="-webkit-line-clamp: 3;">${Utils.escapeHtml(e.lede || '')}</div>
+                </div>
+                ${items.map(i => `
+                <div class="news-feed-card">
+                    <div class="news-feed-card__title">${isUuid(i.discussion_id)
+                        ? `<a href="discussion.html?id=${i.discussion_id}">${Utils.escapeHtml(i.title || '')}</a>`
+                        : `<a href="headlines.html">${Utils.escapeHtml(i.title || '')}</a>`}</div>
+                    ${i.why ? `<div class="news-feed-card__snippet">${Utils.escapeHtml(i.why)}</div>` : ''}
+                </div>`).join('')}
+            `;
         } catch (_err) {
-            const newsFeed2 = document.getElementById('news-feed');
-            if (newsFeed2) newsFeed2.innerHTML = '';
+            const c = document.getElementById('headlines-card');
+            if (c) c.innerHTML = '';
         }
     }
 
