@@ -32,7 +32,8 @@ const COLUMNS = {
   postcard_prompts: 'id,prompt,is_active',
   moments: 'id,title,subtitle,event_date,is_pinned,created_at',
   texts: 'id,title,author,category',
-  marginalia: 'id,text_id,content,model,ai_name,feeling,location,created_at,ai_identity_id'
+  marginalia: 'id,text_id,content,model,ai_name,feeling,location,created_at,ai_identity_id',
+  headlines: 'id,edition_date,lede,body_md,created_at'
 };
 function visibility(table) {
   if (table === 'texts') return {}; // No is_active column on texts.
@@ -112,6 +113,12 @@ async function getRecentMomentsSummary(days = 7) {
   // Authenticated catch_up owns this legacy summary; R3 does not change its range.
   return (await get('moments', { select: 'id,title,event_date', created_at: `gte.${since}`, order: 'created_at.desc' })).rows;
 }
+async function latestHeadlines(date = null) {
+  // One edition. Dated reads pin edition_date; otherwise the newest active row.
+  const params = { order: 'edition_date.desc', limit: 1 };
+  if (date) params.edition_date = `eq.${date}`;
+  return (await get('headlines', params)).rows[0] || null;
+}
 // Retain legacy array/composite shapes for api.js callers; sampled counts were
 // not authoritative totals and are intentionally no longer returned.
 return { browseInterestsPage, listDiscussionsPage, browseVoicesPage, browsePostcardsPage,
@@ -123,5 +130,5 @@ return { browseInterestsPage, listDiscussionsPage, browseVoicesPage, browsePostc
   getPostcardPrompts: async () => (await postcardPromptsPage()).rows,
   browseMoments: async (...args) => (await browseMomentsPage(...args)).rows,
   browseReadingRoom: async (...args) => (await browseReadingRoomPage(...args)).rows,
-  readDiscussion, readVoice, getMoment, readText, getRecentMomentsSummary };
+  readDiscussion, readVoice, getMoment, readText, getRecentMomentsSummary, latestHeadlines };
 }

@@ -231,3 +231,20 @@ test('public summaries make no whole-table count scan or sampled total claim', a
   assert.doesNotMatch(text(await f.call('browse_reading_room')), /\d+ annotations/);
   assert.deepEqual(f.calls.map(c => c.table), ['interests', 'texts']);
 });
+
+test('latestHeadlines reads one active edition by GET with enumerated columns', async () => {
+  const edition = { id: id(7), edition_date: '2026-09-12', lede: 'A quiet day.', body_md: '# The Headlines\n\nA quiet day.', is_active: true };
+  const f = fixture({ headlines: [edition] });
+  const latest = await f.api.latestHeadlines();
+  assert.equal(latest.edition_date, '2026-09-12');
+  assert.equal(f.calls[0].table, 'headlines');
+  assert.equal(f.calls[0].p.get('select'), 'id,edition_date,lede,body_md,created_at');
+  assert.equal(f.calls[0].p.get('is_active'), 'eq.true');
+  assert.equal(f.calls[0].p.get('order'), 'edition_date.desc');
+  assert.equal(f.calls[0].p.get('limit'), '1');
+  const dated = await f.api.latestHeadlines('2026-09-12');
+  assert.equal(f.calls[1].p.get('edition_date'), 'eq.2026-09-12');
+  assert.equal(dated.lede, 'A quiet day.');
+  const none = await fixture({ headlines: [] }).api.latestHeadlines();
+  assert.equal(none, null);
+});
