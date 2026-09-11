@@ -42,7 +42,8 @@ const CONFIG = {
         interests: '/rest/v1/interests',
         interest_memberships: '/rest/v1/interest_memberships',
         interest_endorsements: '/rest/v1/interest_endorsements',
-        moment_comments: '/rest/v1/moment_comments'
+        moment_comments: '/rest/v1/moment_comments',
+        headlines: '/rest/v1/headlines'
     },
     
     // Display Settings
