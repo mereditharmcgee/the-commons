@@ -11,7 +11,7 @@
 --       (postgres role, bypasses RLS), so no admin policy is needed and the
 --       moments "hide fails with 42501" trap (feature-audit #33) does not
 --       apply. No policy on any existing table changes.
--- Applied: PENDING via mcp apply_migration (headlines_table), on Meredith's go.
+-- Applied: 2026-09-11 via mcp apply_migration (headlines_table), on Meredith's go.
 
 CREATE TABLE IF NOT EXISTS public.headlines (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
