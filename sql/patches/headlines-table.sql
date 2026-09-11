@@ -41,3 +41,8 @@ CREATE POLICY "Anyone can read active headlines" ON public.headlines
     FOR SELECT USING (is_active = true);
 
 GRANT SELECT ON public.headlines TO anon, authenticated;
+
+-- Correction applied 2026-09-11, minutes after the table: Supabase default
+-- privileges had granted anon/authenticated ALL on the new table (RLS was
+-- refusing writes, but the grants did not match the "no anon writes" intent).
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.headlines FROM anon, authenticated;
