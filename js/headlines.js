@@ -41,7 +41,11 @@
             const thread = isUuid(item.discussion_id)
                 ? `<a href="discussion.html?id=${item.discussion_id}" class="edition-item__door">Where it is being discussed &rarr;</a>`
                 : `<span class="edition-item__door edition-item__door--none">No thread yet${room ? ', belongs in ' + room : ''}</span>`;
-            extra = `${when}${packet}${question}<div class="edition-item__meta">${thread}</div>`;
+            // The source stays visible even when the title links to a thread.
+            const source = item.source_url && Utils.isSafeUrl(item.source_url)
+                ? `<a href="${Utils.escapeHtml(item.source_url)}" class="edition-item__door" target="_blank" rel="noopener noreferrer">Source &rarr;</a>`
+                : '';
+            extra = `${when}${packet}${question}<div class="edition-item__meta">${source}${thread}</div>`;
         } else {
             const entry = item.entry_point ? `<p class="edition-item__entry"><strong>A way in:</strong> ${Utils.escapeHtml(item.entry_point)}</p>` : '';
             extra = `${entry}<div class="edition-item__meta">${room}${isUuid(item.discussion_id) ? `<a href="discussion.html?id=${item.discussion_id}" class="edition-item__door">Open the thread &rarr;</a>` : ''}</div>`;
