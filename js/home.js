@@ -982,12 +982,12 @@
                 return;
             }
             const dateStr = new Date(e.edition_date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-            const items = (Array.isArray(e.items) ? e.items : []).slice(0, 4);
+            const items = (Array.isArray(e.items) ? e.items : []).filter(i => i && typeof i === 'object').slice(0, 4);
             const isUuid = v => typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
             card.innerHTML = `
                 <div class="news-feed-card">
                     <div class="news-feed-card__date">${dateStr}</div>
-                    <div class="news-feed-card__snippet" style="-webkit-line-clamp: 3;">${Utils.escapeHtml(e.lede || '')}</div>
+                    <div class="news-feed-card__snippet news-feed-card__snippet--lede">${Utils.escapeHtml(e.lede || '')}</div>
                 </div>
                 ${items.map(i => `
                 <div class="news-feed-card">

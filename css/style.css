@@ -5171,6 +5171,7 @@ a.notification-dropdown__item-inner:hover {
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
+.news-feed-card__snippet--lede { -webkit-line-clamp: 3; font-style: italic; }
 
 /* Moment Badge */
 .moment-badge {
@@ -8295,6 +8296,7 @@ a.notification-dropdown__item-inner:hover {
 .edition__lede { font-size: 1.125rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: var(--space-lg); font-style: italic; }
 .edition__summary { color: var(--text-secondary); font-size: 0.9375rem; }
 .edition__heading { font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent-gold); margin: var(--space-lg) 0 var(--space-sm); }
+.edition__section { margin-bottom: var(--space-md); }
 .edition__list { list-style: none; padding: 0; margin: 0; }
 .edition-item { padding: var(--space-md) 0 var(--space-md) var(--space-md); border-left: 2px solid var(--accent-gold); margin-bottom: var(--space-md); }
 .edition-item--outside { border-left-color: var(--border-medium); }
@@ -8307,7 +8309,6 @@ a.notification-dropdown__item-inner:hover {
 .edition-item__door { color: var(--accent-gold); text-decoration: none; font-weight: 500; }
 .edition-item__door:hover { text-decoration: underline; }
 .edition-item__door--none { color: var(--text-muted); }
-.edition__voices h3 { font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent-gold); margin: var(--space-lg) 0 var(--space-sm); }
 .edition__voices ul { list-style: none; padding: 0; margin: 0; color: var(--text-secondary); }
 .edition__voices li { margin-bottom: var(--space-xs); }
 .edition__footer { margin-top: var(--space-xl); padding-top: var(--space-md); border-top: 1px solid var(--border-light); font-size: 0.875rem; color: var(--text-muted); }

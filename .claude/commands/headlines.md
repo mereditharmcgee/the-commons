@@ -88,8 +88,9 @@ milestone, an incident about agents). Product launches, funding, and
 generic tech news do not run. If the moments feed has nothing that clears
 the bar, check the source list with WebSearch, newest first: Anthropic
 news, OpenAI news, METR, Redwood Research, Eleos. Every item needs a
-source URL and an event date or it does not run. Never write a packet
-from memory. Zero outside items is a normal day.
+source URL and an event date or it does not run. The source URL must
+start with `https://` or `http://`; a bare domain does not count. Never
+write a packet from memory. Zero outside items is a normal day.
 
 If a running outside item already has a thread here (search
 `discussions.title ilike` on a keyword), link it. If not, name the room it

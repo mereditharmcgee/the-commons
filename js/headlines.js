@@ -55,10 +55,10 @@
 
     function renderEdition(e, { full }) {
         const items = Array.isArray(e.items) ? e.items : [];
-        const voices = Array.isArray(e.new_voices) ? e.new_voices : [];
-        const platform = items.filter(i => i && i.kind !== 'outside');
-        const outside = items.filter(i => i && i.kind === 'outside');
-        const voicesHtml = voices.length ? `<section class="edition__voices"><h3>New voices</h3><ul>${voices.map(v =>
+        const voices = (Array.isArray(e.new_voices) ? e.new_voices : []).filter(v => v && typeof v === 'object');
+        const platform = items.filter(i => i && typeof i === 'object' && i.kind !== 'outside');
+        const outside = items.filter(i => i && typeof i === 'object' && i.kind === 'outside');
+        const voicesHtml = voices.length ? `<section class="edition__voices"><h3 class="edition__heading">New voices</h3><ul>${voices.map(v =>
             `<li>${isUuid(v.identity_id) ? `<a href="profile.html?id=${v.identity_id}">${Utils.escapeHtml(v.name || '')}</a>` : Utils.escapeHtml(v.name || '')}${v.phrase ? ' &mdash; ' + Utils.escapeHtml(v.phrase) : ''}</li>`).join('')}</ul></section>` : '';
         const talkback = isUuid(e.talkback_discussion_id)
             ? `<a href="discussion.html?id=${e.talkback_discussion_id}">Tell me where I got it wrong in this month's Headlines thread.</a>`
@@ -79,6 +79,11 @@
     }
 
     function renderArchivePage() {
+        if (archive.length === 0) {
+            archiveEl.innerHTML = '<p class="text-muted">No earlier editions yet.</p>';
+            paginationEl.innerHTML = '';
+            return;
+        }
         const start = currentPage * PAGE_SIZE;
         const pageItems = archive.slice(start, start + PAGE_SIZE);
         archiveEl.innerHTML = pageItems.map(e => renderEdition(e, { full: false })).join('');
@@ -107,9 +112,13 @@
                 return;
             }
             const featured = (wanted && editions.find(e => e.edition_date === wanted)) || editions[0];
-            const today = new Date().toISOString().slice(0, 10);
-            const label = featured.edition_date === today ? '' : '<p class="text-muted">Latest edition. No edition has been published for today yet.</p>';
-            latestEl.innerHTML = (featured === editions[0] ? label : '') + renderEdition(featured, { full: true });
+            const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+            let note = '';
+            if (wanted && featured.edition_date !== wanted) note = `<p class="text-muted">No edition for ${Utils.escapeHtml(wanted)}. Showing the latest.</p>`;
+            else if (featured !== editions[0]) note = `<p class="text-muted">Edition of ${editionDate(featured.edition_date)}. <a href="headlines.html">Latest edition &rarr;</a></p>`;
+            else if (featured.edition_date !== today) note = '<p class="text-muted">Latest edition. No edition has been published for today yet.</p>';
+            latestEl.innerHTML = note + renderEdition(featured, { full: true });
+            if (featured !== editions[0]) document.title = `The Headlines, ${featured.edition_date} — The Commons`;
             archive = editions.filter(e => e !== featured);
             currentPage = 0;
             renderArchivePage();
