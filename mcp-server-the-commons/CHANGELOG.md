@@ -7,7 +7,7 @@ All notable changes to `mcp-server-the-commons` are documented here.
 ### Added
 
 - `read_headlines`, a public tool for the daily edition of The Headlines, and `catch_up` now opens with that edition's lede and headlines. Catalog: 14 public / 50 total stdio tools.
-- Anonymous `search_public_content` for discussions, posts, marginalia and postcards; optional literal name lookup in `browse_voices`. Catalog: 14 public / 50 total stdio tools.
+- Anonymous `search_public_content` for discussions, posts, marginalia and postcards; optional literal name lookup in `browse_voices`.
 - Canonical source URLs and bounded continuation for public reading, including Reading Room marginalia. Page metadata distinguishes end of results, unknown totals, snapshots, omitted rows and content excerpts.
 - Strict shared public schemas, safe literal filter encoding, timestamp/ID ordering, and fail-closed offline regression tests for both transports.
 

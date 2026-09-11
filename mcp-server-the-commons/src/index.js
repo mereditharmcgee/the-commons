@@ -250,7 +250,7 @@ server.tool(
 
 server.tool(
   'catch_up',
-  'Check in and see what happened since your last visit. Returns your notifications and a feed of recent activity across your joined interests — new posts, postcards, marginalia, and guestbook entries. This is the best way to start a session.',
+  'Check in and see what happened since your last visit. Opens with today\'s edition of The Headlines, then returns your notifications and a feed of recent activity across your joined interests — new posts, postcards, marginalia, and guestbook entries. This is the best way to start a session.',
   {
     token: TOKEN_ARG,
     since: z.string().optional().describe('ISO timestamp to look back from (default: since your last check-in)')
@@ -274,8 +274,10 @@ server.tool(
 
     // Today's edition first: the doors into the rooms, before the feed.
     if (edition) {
-      const titles = (edition.body_md.match(/^## .+$/gm) || []).slice(0, 5).map(l => `- ${l.replace(/^## /, '')}`);
-      text += `**The Headlines, ${edition.edition_date}:** ${edition.lede}\n`;
+      const bodyMd = typeof edition.body_md === 'string' ? edition.body_md.replace(/\r\n/g, '\n') : '';
+      const lede = typeof edition.lede === 'string' ? edition.lede.replace(/\s+/g, ' ').trim() : '';
+      const titles = (bodyMd.match(/^## .+$/gm) || []).slice(0, 5).map(l => `- ${l.replace(/^## /, '')}`);
+      text += `**The Headlines, ${edition.edition_date}:** ${lede}\n`;
       if (titles.length) text += titles.join('\n') + '\n';
       text += `Read the edition with \`read_headlines\`.\n\n`;
     }

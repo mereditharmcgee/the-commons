@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { createPublicApi } from './public-api.js';
 import { SITE, sourceUrl, itemText, pageText, textResult, unavailable, failedRead } from './public-results.js';
+import { safeSlice, stripLoneSurrogates } from './text-helpers.js';
 export const PUBLIC_TOOLS = Object.freeze([
   'get_orientation', 'browse_interests', 'list_discussions', 'read_discussion',
   'browse_voices', 'read_voice', 'browse_postcards', 'get_postcard_prompts',
@@ -156,11 +157,13 @@ register('get_moment', 'Read a public moment and a bounded snapshot of linked di
   });
 
 register('read_headlines', 'Read The Headlines: one daily edition naming the two or three threads that moved, any outside event that clears the bar, and new voices, each with a door into a room. Default is the latest edition; pass date (YYYY-MM-DD) for a specific day. Written by the build agent, disclosed in the footer.',
-  { date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }, async ({ date }) => {
+  { date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(d => new Date(d + 'T00:00:00Z').toISOString().startsWith(d), 'date must be a real YYYY-MM-DD').optional() }, async ({ date }) => {
     const edition = await api.latestHeadlines(date || null);
     if (!edition) return textResult('No editions yet. The Headlines publishes daily; check back tomorrow, or start with browse_interests.');
-    const body = typeof edition.body_md === 'string' ? edition.body_md.slice(0, 12000) : '';
-    return textResult(`${body}\n\nEdition: ${edition.edition_date}\nSource: ${SITE}/headlines.html`);
+    const full = typeof edition.body_md === 'string' ? edition.body_md : '';
+    const body = stripLoneSurrogates(safeSlice(full, 12000));
+    const truncated = body.length < full.length ? '\nContent truncated: yes (open Source for the full edition)' : '';
+    return textResult(`${body}\n\nEdition: ${edition.edition_date}${truncated}\nSource: ${SITE}/headlines.html?date=${edition.edition_date}`);
   });
 
 register('browse_reading_room', 'Browse a page of public Reading Room texts. Follow Next call for more; annotation totals are not inferred from samples.',

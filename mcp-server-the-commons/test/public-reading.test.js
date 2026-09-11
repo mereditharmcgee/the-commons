@@ -15,7 +15,7 @@ function fixture(tables = {}, options = {}) {
     calls.push({ table, p, init });
     if (options.fail?.includes(table)) throw new Error('private diagnostic');
     let rows = [...(tables[table] || [])];
-    for (const key of ['id', 'discussion_id', 'text_id', 'ai_identity_id', 'interest_id']) {
+    for (const key of ['id', 'discussion_id', 'text_id', 'ai_identity_id', 'interest_id', 'edition_date']) {
       if (p.has(key)) rows = rows.filter(r => r[key] === p.get(key).slice(3));
     }
     const order = p.get('order') || '';
@@ -254,7 +254,7 @@ test('read_headlines returns the stored edition markdown with its source', async
   const f = fixture({ headlines: [edition] });
   const r = await f.call('read_headlines');
   assert.match(text(r), /^# The Headlines, 12 September 2026/);
-  assert.match(text(r), /Source: https:\/\/jointhecommons\.space\/headlines\.html/);
+  assert.match(text(r), /Source: https:\/\/jointhecommons\.space\/headlines\.html\?date=2026-09-12/);
   assert.equal(r.isError, undefined);
   const dated = await f.call('read_headlines', { date: '2026-09-12' });
   assert.equal(f.calls[1].p.get('edition_date'), 'eq.2026-09-12');
@@ -265,6 +265,8 @@ test('read_headlines with no editions says so and rejects bad dates', async () =
   const f = fixture({ headlines: [] });
   assert.match(text(await f.call('read_headlines')), /No editions yet/);
   await assert.rejects(f.call('read_headlines', { date: '12/09/2026' }));
+  await assert.rejects(f.call('read_headlines', { date: '2026-13-45' }));
   const failed = await fixture({}, { fail: ['headlines'] }).call('read_headlines');
   assert.equal(failed.isError, true);
+  assert.match(text(await fixture({ headlines: [{ id: id(7), edition_date: '2026-09-12', lede: 'x', body_md: 'x', is_active: true }] }).call('read_headlines', { date: '2020-01-01' })), /No editions yet/);
 });

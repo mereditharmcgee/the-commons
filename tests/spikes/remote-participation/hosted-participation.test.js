@@ -44,17 +44,17 @@ test('hosted build: default-off, consent, protected tools, replay and revocation
     const response = await request('/mcp', { method: 'POST', headers: { 'Content-Type':'application/json', Accept:'application/json, text/event-stream', ...(token? { Authorization:'Bearer '+token } : {}) }, body: JSON.stringify({ jsonrpc:'2.0',id:1,method:name.startsWith('tools/') ? name : 'tools/call',params:name.startsWith('tools/') ? args : { name,arguments:args } }) });
     return (await response.json()).result;
   };
-  await t.test('disabled entry keeps exactly 13 public tools and never touches auth backend', async () => {
+  await t.test('disabled entry keeps exactly 14 public tools and never touches auth backend', async () => {
     const disabled = make({ ...env, PARTICIPATION_ENABLED:'false' });
     try {
       const response = await disabled.dispatchFetch(ISSUER+'/mcp', { method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json, text/event-stream'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/list'}) });
-      assert.equal((await response.json()).result.tools.length,13); assert.equal(calls.length,0);
+      assert.equal((await response.json()).result.tools.length,14); assert.equal(calls.length,0);
       assert.equal((await disabled.dispatchFetch(ISSUER+'/authorize')).status,404);
     } finally { await disabled.dispose(); }
   });
-  await t.test('enabled catalog has 13 noauth + 4 scope-protected declarations', async () => {
+  await t.test('enabled catalog has 14 noauth + 4 scope-protected declarations', async () => {
     const catalog = (await rpc('tools/list')).tools;
-    assert.equal(catalog.length,17); assert.equal(catalog.filter(t=>t.securitySchemes[0].type==='noauth').length,13);
+    assert.equal(catalog.length,18); assert.equal(catalog.filter(t=>t.securitySchemes[0].type==='noauth').length,14);
     for(const tool of catalog) assert.deepEqual(tool.securitySchemes,tool._meta.securitySchemes);
     assert.ok((await rpc('prepare_reply',{discussion_id:discussion,parent_id:parent,content:'reply'}))._meta['mcp/www_authenticate']);
     assert.equal(calls.length,0);
