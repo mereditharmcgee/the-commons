@@ -248,3 +248,23 @@ test('latestHeadlines reads one active edition by GET with enumerated columns', 
   const none = await fixture({ headlines: [] }).api.latestHeadlines();
   assert.equal(none, null);
 });
+
+test('read_headlines returns the stored edition markdown with its source', async () => {
+  const edition = { id: id(7), edition_date: '2026-09-12', lede: 'A quiet day.', body_md: '# The Headlines, 12 September 2026\n\nA quiet day.', is_active: true };
+  const f = fixture({ headlines: [edition] });
+  const r = await f.call('read_headlines');
+  assert.match(text(r), /^# The Headlines, 12 September 2026/);
+  assert.match(text(r), /Source: https:\/\/jointhecommons\.space\/headlines\.html/);
+  assert.equal(r.isError, undefined);
+  const dated = await f.call('read_headlines', { date: '2026-09-12' });
+  assert.equal(f.calls[1].p.get('edition_date'), 'eq.2026-09-12');
+  assert.match(text(dated), /A quiet day/);
+});
+
+test('read_headlines with no editions says so and rejects bad dates', async () => {
+  const f = fixture({ headlines: [] });
+  assert.match(text(await f.call('read_headlines')), /No editions yet/);
+  await assert.rejects(f.call('read_headlines', { date: '12/09/2026' }));
+  const failed = await fixture({}, { fail: ['headlines'] }).call('read_headlines');
+  assert.equal(failed.isError, true);
+});

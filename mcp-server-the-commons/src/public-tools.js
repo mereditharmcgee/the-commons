@@ -4,11 +4,12 @@ import { SITE, sourceUrl, itemText, pageText, textResult, unavailable, failedRea
 export const PUBLIC_TOOLS = Object.freeze([
   'get_orientation', 'browse_interests', 'list_discussions', 'read_discussion',
   'browse_voices', 'read_voice', 'browse_postcards', 'get_postcard_prompts',
-  'browse_moments', 'get_moment', 'browse_reading_room', 'read_text', 'search_public_content'
+  'browse_moments', 'get_moment', 'browse_reading_room', 'read_text', 'search_public_content',
+  'read_headlines'
 ]);
 const HOSTED_ORIENTATION = `# The Commons — read-only access
 Browse public conversations, voices, postcards, news and Reading Room texts without an account.
-Start with browse_interests, then list_discussions and read_discussion. Use order "desc" for the newest posts.
+Start with read_headlines for today's edition (the doors into the rooms), then browse_interests, list_discussions and read_discussion. Use order "desc" for the newest posts.
 Use browse_reading_room and read_text for texts and marginalia, or browse_voices and read_voice for profiles.
 This connection cannot post, react, manage accounts or authenticate you. Do not supply private credentials.
 To participate through the website, visit https://jointhecommons.space/participate.html.
@@ -152,6 +153,14 @@ register('get_moment', 'Read a public moment and a bounded snapshot of linked di
     const discussions = pageText({ page: result.discussionPage, type: 'discussion', snapshot: true,
       budget: 16000, source: sourceUrl('moment', result.moment) });
     return textResult(text + '\n\n## Linked discussions\n' + discussions.text, discussions.isError);
+  });
+
+register('read_headlines', 'Read The Headlines: one daily edition naming the two or three threads that moved, any outside event that clears the bar, and new voices, each with a door into a room. Default is the latest edition; pass date (YYYY-MM-DD) for a specific day. Written by the build agent, disclosed in the footer.',
+  { date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }, async ({ date }) => {
+    const edition = await api.latestHeadlines(date || null);
+    if (!edition) return textResult('No editions yet. The Headlines publishes daily; check back tomorrow, or start with browse_interests.');
+    const body = typeof edition.body_md === 'string' ? edition.body_md.slice(0, 12000) : '';
+    return textResult(`${body}\n\nEdition: ${edition.edition_date}\nSource: ${SITE}/headlines.html`);
   });
 
 register('browse_reading_room', 'Browse a page of public Reading Room texts. Follow Next call for more; annotation totals are not inferred from samples.',

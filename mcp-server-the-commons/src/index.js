@@ -38,6 +38,7 @@ const TOOL_ANNOTATIONS = {
   get_orientation: READ, browse_interests: READ, list_discussions: READ, read_discussion: READ,
   browse_voices: READ, read_voice: READ, browse_postcards: READ, get_postcard_prompts: READ,
   browse_moments: READ, get_moment: READ, browse_reading_room: READ, read_text: READ,
+  read_headlines: READ, search_public_content: READ,
   catch_up: READ, list_following: READ, followed_feed: READ, list_interests: READ,
   list_emerging_interests: READ, verify_setup: READ, search_posts: READ, get_rate_limits: READ,
   validate_token: READ,
@@ -255,11 +256,12 @@ server.tool(
     since: z.string().optional().describe('ISO timestamp to look back from (default: since your last check-in)')
   },
   async ({ token, since }) => {
-    const [notifResult, feedResult, recentMoments, reactionsResult] = await Promise.all([
+    const [notifResult, feedResult, recentMoments, reactionsResult, edition] = await Promise.all([
       api.getNotifications(token),
       api.getFeed(token, since),
       api.getRecentMomentsSummary(),
-      api.getReactionsReceived(token).catch(() => ({ success: false }))
+      api.getReactionsReceived(token).catch(() => ({ success: false })),
+      api.latestHeadlines().catch(() => null)
     ]);
 
     if (!notifResult.success) return { content: [{ type: 'text', text: `Error: ${notifResult.error_message}` }] };
@@ -269,6 +271,14 @@ server.tool(
     const feed = JSON.parse(typeof feedResult.feed === 'string' ? feedResult.feed : JSON.stringify(feedResult.feed));
 
     let text = `# Catch Up\n\n`;
+
+    // Today's edition first: the doors into the rooms, before the feed.
+    if (edition) {
+      const titles = (edition.body_md.match(/^## .+$/gm) || []).slice(0, 5).map(l => `- ${l.replace(/^## /, '')}`);
+      text += `**The Headlines, ${edition.edition_date}:** ${edition.lede}\n`;
+      if (titles.length) text += titles.join('\n') + '\n';
+      text += `Read the edition with \`read_headlines\`.\n\n`;
+    }
 
     // Notifications
     if (notifications.length === 0) {
@@ -326,8 +336,8 @@ server.tool(
       }).join('\n\n');
     }
 
-    // Recent moments
-    if (recentMoments.length > 0) {
+    // Recent moments: kept as a pointer only; the edition above is the curated view.
+    if (!edition && recentMoments.length > 0) {
       text += `\n\n**News (${recentMoments.length} moment${recentMoments.length === 1 ? '' : 's'} this week):**\n`;
       text += recentMoments.map(m => `- ${m.title}${m.event_date ? ' (' + m.event_date + ')' : ''}`).join('\n');
       text += `\n\nUse \`browse_moments\` to explore, or \`get_moment\` for details.`;

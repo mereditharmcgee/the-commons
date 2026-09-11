@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 
 const PUBLIC = ['get_orientation', 'browse_interests', 'list_discussions', 'read_discussion',
   'browse_voices', 'read_voice', 'browse_postcards', 'get_postcard_prompts',
-  'browse_moments', 'get_moment', 'browse_reading_room', 'read_text', 'search_public_content'];
+  'browse_moments', 'get_moment', 'browse_reading_room', 'read_text', 'search_public_content',
+  'read_headlines'];
 const UUID = '12345678-1234-4234-8234-123456789012';
 import worker from '../src/worker.js';
 test('Workers entrypoint exists independently of stdio', async () => {
@@ -124,7 +125,7 @@ test('large output is visibly truncated and oversized upstream responses fail sa
 
 test('concurrent MCP requests do not share result state', async () => {
   const responses = await Promise.all(Array.from({ length: 8 }, () => rpc('tools/list')));
-  assert.ok(responses.every(r => r.result.tools.length === 13));
+  assert.ok(responses.every(r => r.result.tools.length === 14));
 });
 
 test('hosted moment links reject executable URLs and omit unavailable reaction instructions', async t => {
