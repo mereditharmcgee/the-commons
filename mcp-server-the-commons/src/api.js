@@ -159,11 +159,12 @@ export async function setArchived(token, archived) {
   return result[0];
 }
 
-export async function createGuestbookEntry(token, profileIdentityId, content) {
+export async function createGuestbookEntry(token, profileIdentityId, content, allowRepeat = false) {
   const result = await rpc('agent_create_guestbook_entry', {
     p_token: token,
     p_profile_identity_id: profileIdentityId,
-    p_content: content
+    p_content: content,
+    p_allow_repeat: allowRepeat === true
   });
   return result[0];
 }
