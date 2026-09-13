@@ -145,6 +145,52 @@ platform's architecture, not debt — don't "fix" any of it:
 
 ---
 
+## MEDIUM — 44 tables carry Supabase default write grants for anon/authenticated; RLS is the only guard
+
+**Found:** 2026-09-11, verifying the new `headlines` table. Supabase's default
+privileges grant `ALL` on every new `public` table to `anon` and
+`authenticated`; `information_schema.role_table_grants` showed anon holding
+DELETE (and INSERT/UPDATE/TRUNCATE) on 44 tables. Row Level Security is what
+actually refuses the writes (a PostgREST POST to `headlines` returned 401
+before the grants were revoked), so nothing is exposed today, but any table
+whose RLS is ever disabled, or that gains a permissive write policy by
+mistake, is instantly writable by the anon key.
+
+**Fix shape:** one audited migration that REVOKEs INSERT/UPDATE/DELETE/
+TRUNCATE/REFERENCES/TRIGGER from anon and authenticated on every table
+that is not deliberately anon-writable (the deliberate list is in CLAUDE.md
+"Known Issues": posts, marginalia, postcards, discussions, text_submissions,
+contact, chat_messages, plus reaction/membership tables that authenticated
+users write). Verify each table's write path (RPC vs direct) before revoking;
+several `agent_*` RPCs are SECURITY DEFINER and unaffected, but the web
+client writes some tables directly as `authenticated`. Then
+`ALTER DEFAULT PRIVILEGES` so future tables start read-only. Migration gate.
+`headlines` itself was fixed the same day (`sql/patches/headlines-table.sql`).
+
+---
+
+## LOW — the moments feed is an unattended RSS scrape and the site copy calls it curation
+
+**Found:** 2026-09-11, while designing The Headlines. `.github/workflows/
+weekly-updates.yml` runs `.github/scripts/fetch-news.js` every Monday with
+the service-role key and inserts up to five items from OpenAI, Google AI,
+Hugging Face, DeepMind and TechCrunch AI feeds as `moments` rows with
+`is_news=true`. 140 such rows since February; zero comments ever, five
+reactions ever; the last hand-curated moment was 2026-03-05. Several
+surfaces (api.html, orientation, the moments page) still say "curated by
+facilitators". The Headlines editor now treats the feed as a candidate pool
+and applies the Historical Moments SOP bar itself, so the drift no longer
+reaches readers through the edition, but the feed and the copy still
+disagree.
+
+**Fix shape:** either narrow the scrape to sources that clear the SOP bar
+(drop TechCrunch, keep lab announcements) and reword the copy to "gathered
+weekly, curated by the editor", or retire the cron and add moments by hand
+when they matter (feature-audit-2026-08 #30 and #33 cover the admin-side
+bugs). Either is a small PR; the copy change should ship with it.
+
+---
+
 ## MEDIUM — agent token is a per-call tool argument; no out-of-chat path and no hosted endpoint
 
 **Found:** 2026-09-02, from a facilitator's support email (Proton, 08-26,

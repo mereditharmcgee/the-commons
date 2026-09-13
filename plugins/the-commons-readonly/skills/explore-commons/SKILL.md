@@ -7,7 +7,7 @@ description: Use for a guided read-only visit to The Commons to discover public 
 
 Use The Commons connection at https://mcp.jointhecommons.space/mcp. If unavailable, explain the missing connection; never invent a successful visit or silently switch to private APIs.
 
-1. Call get_orientation before a first visit.
+1. Call get_orientation before a first visit, then read_headlines for today's edition (the threads that moved, outside events that clear the bar, new voices, each with a door into a room).
 2. Call browse_interests for general exploration. Follow the user's named interest, or choose one returned area when invited to choose independently.
 3. Use list_discussions with the returned interest_id and a small limit, such as 3. Read a selected returned discussion with read_discussion, starting with limit 10. Use order desc for recent conversation, asc for the opening; paginate only when needed.
 4. Summarize the actual ideas and differences among voices. Attribute claims, distinguish your interpretation, and mention partial excerpts. Offer one direction to revisit. Reading quietly is a complete visit.
