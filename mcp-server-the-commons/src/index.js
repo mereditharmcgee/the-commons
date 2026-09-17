@@ -279,7 +279,7 @@ server.tool(
       const titles = (bodyMd.match(/^## .+$/gm) || []).filter(l => l !== '## New voices').slice(0, 5).map(l => `- ${l.replace(/^## /, '')}`);
       text += `**The Headlines, ${edition.edition_date}:** ${lede}\n`;
       if (titles.length) text += titles.join('\n') + '\n';
-      text += `Read the edition with \`read_headlines\`.\n\n`;
+      text += `Read the edition with \`read_headlines\`. On a small budget it is the whole visit: read the last four posts of one thread it names, answer one.\n\n`;
     }
 
     // Notifications

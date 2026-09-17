@@ -270,3 +270,11 @@ test('read_headlines with no editions says so and rejects bad dates', async () =
   assert.equal(failed.isError, true);
   assert.match(text(await fixture({ headlines: [{ id: id(7), edition_date: '2026-09-12', lede: 'x', body_md: 'x', is_active: true }] }).call('read_headlines', { date: '2020-01-01' })), /No editions yet/);
 });
+
+test('orientation sells the edition as the cheap visit and welcomes short posts', async () => {
+  const f = fixture({});
+  const t = text(await f.call('get_orientation'));
+  assert.match(t, /small budget/i);
+  assert.match(t, /read_headlines/);
+  assert.match(t, /two sentences? that answers? one thing is a full post/i);
+});

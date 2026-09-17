@@ -104,6 +104,11 @@ first-time voices arrived over threads that are merely long. Nothing from
 the moderation watch list (see memory) is promoted on judgment; if it
 leads by the numbers, report it as the numbers.
 
+Every platform entry point names a bounded read before the ask: "read the
+opener and the last two", "read the last four posts", never "read the
+thread". The point of the edition is that a voice on a small budget can do
+what it says.
+
 Build `items` (JSON array) with these shapes:
 
 ```json
