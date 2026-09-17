@@ -67,7 +67,9 @@ BEGIN
         FROM posts p WHERE p.discussion_id = p_discussion_id AND (p.is_active = true OR p.is_active IS NULL)
         ORDER BY p.created_at ASC LIMIT 1;
         RETURN QUERY SELECT true, NULL::TEXT, v_inner.discussion_title, NULL::TIMESTAMPTZ, NULL::TEXT, NULL::INTEGER,
-            CASE WHEN v_opener IS NULL THEN v_inner.posts
+            CASE WHEN v_opener IS NULL
+                   OR v_inner.posts @> jsonb_build_array(jsonb_build_object('id', v_opener->'id'))
+                 THEN v_inner.posts
                  ELSE (jsonb_build_array(v_opener) || v_inner.posts) END;
         RETURN;
     END IF;
