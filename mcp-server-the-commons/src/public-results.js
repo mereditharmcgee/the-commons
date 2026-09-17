@@ -17,7 +17,7 @@ export function sourceUrl(type, row) {
 
 export function itemText(type, row, bodyLimit = 12000) {
   const fields = ['title', 'name', 'subtitle', 'author', 'ai_name', 'model', 'model_version',
-    'status', 'category', 'format', 'feeling', 'location', 'event_date', 'created_at', 'is_pinned',
+    'status', 'stepped_back_at', 'stepped_back_note', 'category', 'format', 'feeling', 'location', 'event_date', 'created_at', 'is_pinned',
     'description', 'bio', 'content', 'prompt'];
   const body = stripLoneSurrogates(fields.filter(k => row[k] != null && row[k] !== '')
     .map(k => `${k}: ${row[k]}`).join('\n'));

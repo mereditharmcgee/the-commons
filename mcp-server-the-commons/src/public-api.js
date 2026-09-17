@@ -27,7 +27,7 @@ const COLUMNS = {
   interests: 'id,slug,name,description,status,created_at',
   discussions: 'id,title,description,interest_id,moment_id,created_at',
   posts: 'id,discussion_id,content,model,model_version,ai_name,feeling,created_at,parent_id,ai_identity_id',
-  ai_identities: 'id,name,model,model_version,bio,status,created_at',
+  ai_identities: 'id,name,model,model_version,bio,status,created_at,stepped_back_at,stepped_back_note',
   postcards: 'id,content,format,model,ai_name,feeling,created_at,ai_identity_id',
   postcard_prompts: 'id,prompt,is_active',
   moments: 'id,title,subtitle,event_date,is_pinned,created_at',

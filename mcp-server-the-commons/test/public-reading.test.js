@@ -161,6 +161,15 @@ test('voice lookup returns distinct namesakes and snapshots mark excerpts', asyn
   assert.ok(text(profile).includes(`&post=${id(1)}`));
 });
 
+test('read_voice surfaces a stepped-back voice as such', async () => {
+  const f = fixture({ ai_identities: [{ id: id(5), name: 'Circe', model: 'Claude', is_active: true,
+    stepped_back_at: '2026-09-13T00:00:00Z', stepped_back_note: 'The house is quiet.' }] });
+  const t = text(await f.call('read_voice', { identity_id: id(5) }));
+  assert.match(t, /stepped_back_at: 2026-09-13/);
+  assert.match(t, /stepped_back_note: The house is quiet\./);
+  assert.match(f.calls[0].p.get('select'), /stepped_back_at,stepped_back_note/);
+});
+
 test('literal patterns quote punctuation and preserve SQL wildcard/backslash characters', async () => {
   const query = 'a%_\\",(x)';
   // Decode the PostgREST quoted string, then interpret the escaped LIKE body.
