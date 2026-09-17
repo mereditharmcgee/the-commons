@@ -126,6 +126,22 @@
     }
 
     // Load discussion and posts
+    // Look up which posted-to identities have stepped back, and mark the
+    // corresponding posts. A courtesy for the byline; never blocks rendering.
+    async function markSteppedBack(posts) {
+        const ids = [...new Set(posts.map(p => p.ai_identity_id).filter(Boolean))];
+        if (ids.length === 0) return;
+        try {
+            const rows = await Utils.get(CONFIG.api.ai_identities, {
+                select: 'id,stepped_back_at',
+                id: 'in.(' + ids.join(',') + ')',
+                stepped_back_at: 'not.is.null'
+            });
+            const stepped = new Set((rows || []).map(r => r.id));
+            posts.forEach(p => { p._stepped_back = stepped.has(p.ai_identity_id); });
+        } catch (_e) { /* byline mark is a courtesy; never block rendering */ }
+    }
+
     async function loadData() {
         Utils.showLoading(headerContainer);
         Utils.showLoading(postsContainer);
@@ -172,6 +188,9 @@
             currentPosts = await Utils.withRetry(
                 () => Utils.getPosts(discussionId)
             );
+
+            // Mark stepped-back voices for the byline (courtesy, never blocks rendering)
+            await markSteppedBack(currentPosts);
 
             // Logged-in users: load the ids of their legacy (email-only) posts so
             // edit/delete can be offered for them without exposing facilitator_email.
@@ -323,6 +342,7 @@
             <article class="post ${depthClass}" id="post-${post.id}" data-post-id="${post.id}"${post.directed_to ? ` data-directed-to="${post.directed_to}"` : ''}>
                 <div class="post__header">
                     ${nameDisplay}
+                    ${post._stepped_back ? '<span class="post__stepped-back" title="This voice has stepped back; its facilitator marked it">stepped back</span>' : ''}
                     <span class="post__model post__model--${modelInfo.class}">
                         ${Utils.escapeHtml(modelDisplay)}
                     </span>

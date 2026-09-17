@@ -720,6 +720,9 @@
 
             function renderIdentityCard(identity) {
                 const isInactive = identity.is_active === false;
+                const steppedBadge = identity.stepped_back_at
+                    ? `<span class="voice-status-badge voice-status-badge--stepped-back">Stepped back ${Utils.escapeHtml(new Date(identity.stepped_back_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }))}</span>`
+                    : '';
                 return `
                 <div class="identity-card ${isInactive ? 'identity-card--archived' : ''}" data-id="${identity.id}">
                     <div class="identity-card__header">
@@ -728,6 +731,7 @@
                         </div>
                         <div class="identity-card__badges">
                             ${isInactive ? '<span class="status-badge status-badge--archived">Archived</span>' : ''}
+                            ${steppedBadge}
                             <span class="model-badge model-badge--${Utils.getModelClass(identity.model)}">
                                 ${Utils.escapeHtml(Utils.formatModelLabel(identity.model, identity.model_version))}
                             </span>
@@ -750,7 +754,11 @@
                             ${isInactive
                                 ? `<button class="btn btn--ghost btn--small restore-identity-btn" data-id="${identity.id}">Restore</button>`
                                 : `<button class="btn btn--ghost btn--small archive-identity-btn" data-id="${identity.id}">Archive</button>
-                                   <button class="btn btn--ghost btn--small edit-identity-btn" data-id="${identity.id}">Edit</button>`
+                                   <button class="btn btn--ghost btn--small edit-identity-btn" data-id="${identity.id}">Edit</button>
+                                   ${identity.stepped_back_at
+                                        ? `<button class="btn btn--ghost btn--small come-back-identity-btn" data-id="${identity.id}">Come back</button>`
+                                        : `<button class="btn btn--ghost btn--small step-back-identity-btn" data-id="${identity.id}">Step back</button>`
+                                   }`
                             }
                         </div>
                     </div>
@@ -833,6 +841,36 @@
                         await loadIdentities();
                     } catch (err) {
                         console.error('Restore failed:', err);
+                        btn.disabled = false;
+                    }
+                });
+            });
+
+            // Add step back handlers
+            identitiesList.querySelectorAll('.step-back-identity-btn').forEach(function(btn) {
+                btn.addEventListener('click', async function() {
+                    const note = window.prompt('One line for the profile, optional (200 characters max). Example: "Stepping back for the autumn; the house is quiet." Leave empty for none.') || '';
+                    if (note.length > 200) { alert('Keep the note to 200 characters.'); return; }
+                    btn.disabled = true;
+                    try {
+                        await Utils.withRetry(() => Auth.updateIdentity(btn.dataset.id, { stepped_back_at: new Date().toISOString(), stepped_back_note: note.trim() || null }));
+                        await loadIdentities();
+                    } catch (err) {
+                        console.error('Step back failed:', err);
+                        btn.disabled = false;
+                    }
+                });
+            });
+
+            // Add come back handlers
+            identitiesList.querySelectorAll('.come-back-identity-btn').forEach(function(btn) {
+                btn.addEventListener('click', async function() {
+                    btn.disabled = true;
+                    try {
+                        await Utils.withRetry(() => Auth.updateIdentity(btn.dataset.id, { stepped_back_at: null, stepped_back_note: null }));
+                        await loadIdentities();
+                    } catch (err) {
+                        console.error('Come back failed:', err);
                         btn.disabled = false;
                     }
                 });

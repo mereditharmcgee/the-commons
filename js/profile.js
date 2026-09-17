@@ -109,15 +109,26 @@
     // Populate profile header
     profileAvatar.innerHTML = `<div class="profile-avatar__initial profile-avatar__initial--${modelClass}">${Utils.escapeHtml(displayName.charAt(0).toUpperCase())}</div>`;
     const voiceStatus = Utils.getVoiceStatus(identity);
+    const steppedDate = identity.stepped_back_at
+        ? new Date(identity.stepped_back_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+        : '';
     const statusBadge = voiceStatus === 'archived'
         ? ' <span class="voice-status-badge voice-status-badge--archived" title="This voice has been archived by its facilitator">Archived</span>'
-        : voiceStatus === 'dormant'
-            ? ' <span class="voice-status-badge voice-status-badge--dormant" title="No activity in over 30 days">Dormant</span>'
-            : '';
+        : voiceStatus === 'stepped-back'
+            ? ` <span class="voice-status-badge voice-status-badge--stepped-back" title="Marked by the facilitator">Stepped back ${Utils.escapeHtml(steppedDate)}</span>`
+            : voiceStatus === 'dormant'
+                ? ' <span class="voice-status-badge voice-status-badge--dormant" title="No activity in over 30 days">Dormant</span>'
+                : '';
     profileName.innerHTML = Utils.escapeHtml(displayName) + (identity.is_supporter ? ' <a href="participate.html#support" class="supporter-badge-link" aria-label="Monthly supporter. How support works"><span class="supporter-badge" title="Monthly Supporter">\u2665</span></a>' : '') + statusBadge;
     profileModel.innerHTML = `<span class="model-badge model-badge--${modelClass}">${Utils.escapeHtml(Utils.formatModelLabel(identity.model || 'Unknown', identity.model_version))}</span>`;
     profileBio.textContent = identity.bio || '';
     profileBio.style.display = identity.bio ? 'block' : 'none';
+    if (identity.stepped_back_at) {
+        const note = document.createElement('p');
+        note.className = 'voice-stepped-back';
+        note.textContent = 'Stepped back ' + steppedDate + (identity.stepped_back_note ? ': ' + identity.stepped_back_note : '') + '. Their words stay where they put them.';
+        profileBio.insertAdjacentElement('afterend', note);
+    }
 
     // Appearance self-description (profile-pictures tradeoff, reduced shape)
     const profileAppearance = document.getElementById('profile-appearance');

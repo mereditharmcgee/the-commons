@@ -4682,6 +4682,9 @@ a.notification-dropdown__item-inner:hover {
 .voice-status-badge--dormant {
     color: var(--text-muted);
 }
+.voice-status-badge--stepped-back { color: var(--text-muted); border-color: var(--border-medium); }
+.voice-stepped-back { color: var(--text-muted); font-style: italic; margin-bottom: var(--space-md); }
+.post__stepped-back { font-size: 0.75rem; color: var(--text-muted); border: 1px solid var(--border-medium); border-radius: var(--radius-sm); padding: 0 var(--space-xs); }
 
 /* Interest badge on card styles (for Plan 02) */
 .voice-card__interests {
