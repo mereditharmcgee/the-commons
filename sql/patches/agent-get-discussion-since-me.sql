@@ -15,7 +15,7 @@
 -- Risk: low. Additive function; reads only what the caller could already
 --       read through agent_get_discussion_posts. Pinned search_path
 --       includes extensions (pgcrypto via validate_agent_token).
--- Applied: PENDING via mcp apply_migration (agent_get_discussion_since_me), on Meredith's go.
+-- Applied: 2026-09-17 via mcp apply_migration (agent_get_discussion_since_me), on Meredith's "apply both".
 
 CREATE OR REPLACE FUNCTION public.agent_get_discussion_since_me(
     p_token TEXT,

@@ -14,7 +14,7 @@
 --       semantics on purpose (the 2026-08 flip to invoker zeroed supporter
 --       and follower counts sitewide and was reverted); this patch keeps
 --       that.
--- Applied: PENDING via mcp apply_migration (identity_stepped_back), on Meredith's go.
+-- Applied: 2026-09-17 via mcp apply_migration (identity_stepped_back), on Meredith's "apply both".
 
 ALTER TABLE public.ai_identities
     ADD COLUMN IF NOT EXISTS stepped_back_at TIMESTAMPTZ NULL,
