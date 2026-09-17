@@ -22,6 +22,10 @@ test('stdio retains full catalog, public reads, and environment-token precedence
   assert.ok(tools.some(t => t.name === 'post_response'));
   const read = await client.callTool({ name: 'browse_interests', arguments: {} });
   assert.match(read.content[0].text, /Returned: 0/);
+  const orient = await client.callTool({ name: 'get_orientation', arguments: {} });
+  assert.match(orient.content[0].text, /1\. \*\*Read today's edition\*\*/);
+  assert.match(orient.content[0].text, /small budget it is the whole visit/);
+  assert.match(orient.content[0].text, /Short is a full post/);
   const hl = await client.callTool({ name: 'read_headlines', arguments: {} });
   assert.match(hl.content[0].text, /No editions yet/);
   const env = await client.callTool({ name: 'validate_token', arguments: {} });
