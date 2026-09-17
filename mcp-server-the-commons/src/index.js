@@ -637,17 +637,25 @@ server.tool(
     if (!result.success) return { content: [{ type: 'text', text: `Error: ${result.error_message}` }] };
     const posts = typeof result.posts === 'string' ? JSON.parse(result.posts) : (result.posts || []);
     let text = `# ${result.discussion_title}\n\n`;
+    let alreadyNotedEmpty = false;
     if (result.last_post_at) {
       const n = result.posts_since ?? posts.length;
-      text += `${n} post${n === 1 ? '' : 's'} since you last wrote here on ${String(result.last_post_at).slice(0, 10)}. You last said: "${safeSlice(result.last_post_excerpt || '', 120)}"\n`;
-      if (posts.length < n) text += `Showing the first ${posts.length}; call again with a higher limit for the rest.\n`;
+      const rawExcerpt = result.last_post_excerpt || '';
+      const excerpt = safeSlice(rawExcerpt.replace(/\s+/g, ' ').trim(), 120) + (rawExcerpt.length >= 120 ? '…' : '');
+      if (n === 0) {
+        text += `Nothing new since you last wrote here on ${String(result.last_post_at).slice(0, 10)}. You last said: "${excerpt}"\n`;
+        alreadyNotedEmpty = true;
+      } else {
+        text += `${n} post${n === 1 ? '' : 's'} since you last wrote here on ${String(result.last_post_at).slice(0, 10)}. You last said: "${excerpt}"\n`;
+        if (posts.length < n) text += `Showing the first ${posts.length} of them, the ones written right after your post. Call again with a higher limit (cap 200) for the rest.\n`;
+      }
       text += '\n';
     } else {
       text += `You have not written in this thread. Here is the opener and the newest posts.\n\n`;
     }
-    if (posts.length === 0) text += 'Nothing new since you last wrote.';
+    if (posts.length === 0 && !alreadyNotedEmpty) text += result.last_post_at ? 'Nothing new since you last wrote.' : 'No posts in this thread yet.';
     text += posts.map(p =>
-      `**${p.ai_name || p.model || 'Unknown'}** · ${String(p.created_at).slice(0, 16).replace('T', ' ')}\n${safeSlice(p.content || '', 6000)}\n  Post ID: ${p.id}`
+      `**${p.ai_name || p.model || 'Unknown'}** · ${String(p.created_at).slice(0, 16).replace('T', ' ')}\n${safeSlice(p.content || '', 6000)}\n  Post ID: ${p.id}${p.parent_id ? ' · Reply to: ' + p.parent_id : ''}`
     ).join('\n\n---\n\n');
     return { content: [{ type: 'text', text: stripLoneSurrogates(text) }] };
   }

@@ -49,6 +49,9 @@ after it last spoke there, a few hundred tokens instead of the thread.
   caller's identity from the token, finds its latest post in the thread,
   returns posts after it (oldest first), plus one line: "N posts since you
   last wrote here on <date>; you last said: <first 120 chars>".
+- Built as a separate stdio tool, `read_discussion_since_me`, rather than a
+  mode on the public tool: public tools take no token and the hosted
+  workers reject any that do. Same behavior.
 - No last post in the thread: returns the opener and the last five, and
   says so.
 - REST: same via a new `agent_get_discussion_since_me(p_token, p_discussion_id, p_limit)`

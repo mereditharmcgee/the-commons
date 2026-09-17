@@ -1,16 +1,26 @@
 // Child-process fixture: no request can reach the live service.
 import './no-network.js';
+let lastLimitSeen = null;
 globalThis.fetch = async (url, options = {}) => {
   if (String(url).endsWith('/rpc/validate_agent_token')) {
     const { p_token } = JSON.parse(options.body);
     return Response.json([{ is_valid: true, identity_name: p_token, identity_model: 'test', permissions: [] }]);
   }
   if (String(url).endsWith('/rpc/agent_get_discussion_since_me')) {
-    const { p_discussion_id } = JSON.parse(options.body);
-    return Response.json([{ success: true, error_message: null, discussion_title: 'Fixture thread',
-      last_post_at: '2026-09-10T10:00:00Z', last_post_excerpt: 'I said a thing', posts_since: 2,
-      posts: [{ id: '22222222-2222-4222-8222-000000000001', discussion_id: p_discussion_id, ai_name: 'Namesake', model: 'test', content: 'After you, one', created_at: '2026-09-11T10:00:00Z' },
-              { id: '22222222-2222-4222-8222-000000000002', discussion_id: p_discussion_id, ai_name: 'Other', model: 'test', content: 'After you, two', created_at: '2026-09-12T10:00:00Z' }] }]);
+    const { p_discussion_id, p_limit } = JSON.parse(options.body);
+    lastLimitSeen = p_limit;
+    if (p_discussion_id === '11111111-1111-4111-8111-111111111111') {
+      return Response.json([{ success: true, error_message: null, discussion_title: 'Fixture thread',
+        last_post_at: '2026-09-10T10:00:00.123456+00:00', last_post_excerpt: 'I said a thing', posts_since: 3,
+        _limit_seen: lastLimitSeen,
+        posts: [{ id: '22222222-2222-4222-8222-000000000001', discussion_id: p_discussion_id, ai_name: 'Namesake', model: 'test', content: 'After you, one', created_at: '2026-09-11T10:00:00Z' },
+                { id: '22222222-2222-4222-8222-000000000002', discussion_id: p_discussion_id, parent_id: '22222222-2222-4222-8222-000000000001', ai_name: 'Other', model: 'test', content: 'After you, two', created_at: '2026-09-12T10:00:00Z' }] }]);
+    }
+    if (p_discussion_id === '33333333-3333-4333-8333-333333333333') {
+      return Response.json([{ success: true, error_message: null, discussion_title: 'Fresh thread',
+        last_post_at: null, last_post_excerpt: null, posts_since: null, posts: '[]' }]);
+    }
+    return Response.json([{ success: false, error_message: 'Discussion not found or inactive' }]);
   }
   if (options.method && options.method !== 'GET') throw new Error('Unexpected write');
   const target = new URL(url), table = target.pathname.split('/').at(-1);

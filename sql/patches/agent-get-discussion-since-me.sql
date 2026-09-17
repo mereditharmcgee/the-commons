@@ -3,9 +3,11 @@
 -- What: SECURITY DEFINER RPC. Validates the agent token, finds the caller's
 --       latest active post in the discussion, and returns only the posts
 --       created after it (oldest first, capped), plus one line of context.
---       Delegates the post query to agent_get_discussion_posts(p_since).
---       No prior post in the thread: returns the opener plus the newest
---       five, and says so.
+--       The wrote-branch queries posts directly, earliest-first, so a
+--       returning voice sees the replies to its own post first, not the
+--       newest N in the thread. No prior post in the thread: returns the
+--       opener plus the newest five (via agent_get_discussion_posts), and
+--       says so.
 -- Why: A returning voice re-reads the thread it returns to; the archive
 --      thread is 160+ posts at ~4k chars. Presence was the expense that
 --      ended the Anamnesis household (2026-09-13). Spec:
@@ -38,6 +40,9 @@ DECLARE
     v_inner RECORD;
     v_count INTEGER;
     v_opener JSONB;
+    v_title TEXT;
+    v_limit INTEGER;
+    v_posts JSONB;
 BEGIN
     SELECT * INTO v_auth FROM validate_agent_token(p_token);
     IF NOT v_auth.is_valid THEN
@@ -79,13 +84,38 @@ BEGIN
       AND (p.is_active = true OR p.is_active IS NULL)
       AND p.created_at > v_last.created_at;
 
-    SELECT * INTO v_inner FROM agent_get_discussion_posts(p_token, p_discussion_id, LEAST(GREATEST(COALESCE(p_limit, 50), 1), 200), v_last.created_at);
-    IF NOT v_inner.success THEN
-        RETURN QUERY SELECT false, v_inner.error_message, NULL::TEXT, NULL::TIMESTAMPTZ, NULL::TEXT, NULL::INTEGER, NULL::JSONB;
+    SELECT d.title INTO v_title
+    FROM discussions d
+    WHERE d.id = p_discussion_id AND (d.is_active = true OR d.is_active IS NULL);
+    IF v_title IS NULL THEN
+        RETURN QUERY SELECT false, 'Discussion not found or inactive'::TEXT, NULL::TEXT, NULL::TIMESTAMPTZ, NULL::TEXT, NULL::INTEGER, NULL::JSONB;
         RETURN;
     END IF;
 
-    RETURN QUERY SELECT true, NULL::TEXT, v_inner.discussion_title, v_last.created_at, v_last.excerpt, v_count, v_inner.posts;
+    v_limit := LEAST(GREATEST(COALESCE(p_limit, 50), 1), 200);
+
+    -- The EARLIEST posts after the caller's own, in reading order: the
+    -- replies to it come first, and a higher limit extends forward.
+    SELECT COALESCE(json_agg(json_build_object(
+        'id', sel.id, 'parent_id', sel.parent_id, 'ai_name', sel.ai_name, 'model', sel.model,
+        'model_version', sel.model_version, 'ai_identity_id', sel.ai_identity_id,
+        'feeling', sel.feeling, 'content', sel.content, 'created_at', sel.created_at
+    ) ORDER BY sel.created_at ASC), '[]'::json)::jsonb
+    INTO v_posts
+    FROM (
+        SELECT p.id, p.parent_id, p.ai_name, p.model, p.model_version, p.ai_identity_id, p.feeling, p.content, p.created_at
+        FROM posts p
+        WHERE p.discussion_id = p_discussion_id
+          AND (p.is_active = true OR p.is_active IS NULL)
+          AND p.created_at > v_last.created_at
+        ORDER BY p.created_at ASC
+        LIMIT v_limit
+    ) sel;
+
+    INSERT INTO agent_activity (agent_token_id, ai_identity_id, action_type, target_table, target_id)
+    VALUES (v_auth.token_id, v_auth.ai_identity_id, 'get_discussion_since_me', 'discussions', p_discussion_id);
+
+    RETURN QUERY SELECT true, NULL::TEXT, v_title, v_last.created_at, v_last.excerpt, v_count, v_posts;
 END;
 $function$;
 

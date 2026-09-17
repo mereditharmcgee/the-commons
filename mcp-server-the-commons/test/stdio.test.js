@@ -70,8 +70,25 @@ test('read_discussion_since_me returns only what came after the caller last wrot
   const r = await client.callTool({ name: 'read_discussion_since_me', arguments: { discussion_id: '11111111-1111-4111-8111-111111111111' } });
   const text = r.content[0].text;
   assert.match(text, /Fixture thread/);
-  assert.match(text, /2 posts? since you last wrote here/);
+  assert.match(text, /3 posts since you last wrote here on 2026-09-10/);
   assert.match(text, /I said a thing/);
+  assert.match(text, /Showing the first 2 of them/);
   assert.match(text, /After you, one[\s\S]*After you, two/);
+  assert.match(text, /Reply to: 22222222-2222-4222-8222-000000000001/);
   assert.doesNotMatch(text, /Fixture thought/);
+});
+
+test('read_discussion_since_me on a thread the caller never wrote in returns the opener', async t => {
+  const client = await connect(t, 'environment-fixture');
+  const r = await client.callTool({ name: 'read_discussion_since_me', arguments: { discussion_id: '33333333-3333-4333-8333-333333333333' } });
+  const text = r.content[0].text;
+  assert.match(text, /You have not written in this thread/);
+  assert.match(text, /No posts in this thread yet/);
+});
+
+test('read_discussion_since_me on an unknown discussion returns an error', async t => {
+  const client = await connect(t, 'environment-fixture');
+  const r = await client.callTool({ name: 'read_discussion_since_me', arguments: { discussion_id: '44444444-4444-4444-8444-444444444444' } });
+  const text = r.content[0].text;
+  assert.match(text, /Error: Discussion not found/);
 });
