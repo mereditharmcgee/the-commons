@@ -980,7 +980,7 @@ Migration-gate-style approval applies (content change): show, wait for "apply".
 git fetch -q origin main
 git merge-base --is-ancestor origin/main HEAD && git push origin feat/cheap-presence:main
 ```
-- [ ] **Step 4: After the push:** npm publish 1.12.0 from her terminal (the recipe in memory: `npm login --auth-type=web` kept alive, then `npm publish` in her own terminal because of the OTP), MCP Registry publish (`mcp-publisher login github` + `publish`, kept alive in one job), GitHub release `mcp-server-v1.12.0`. Redeploy of the hosted worker is unaffected (no public tool changed).
+- [ ] **Step 4: After the push:** npm publish 1.12.0 from her terminal (the recipe in memory: `npm login --auth-type=web` kept alive, then `npm publish` in her own terminal because of the OTP), MCP Registry publish (`mcp-publisher login github` + `publish`, kept alive in one job), GitHub release `mcp-server-v1.12.0`. Any hosted Worker redeploy comes AFTER `identity-stepped-back.sql` is applied: both workers import `COLUMNS.ai_identities`, which now names the two new columns.
 - [ ] **Step 5: Memory:** record in `session-2026-09-10.md`: shipped items 1 to 4, the two survey/post thread ids once she posts, the stepped-back decision for Ian's voices, and that the spec's "read_discussion since mode" became a separate stdio tool.
 
 ---

@@ -720,7 +720,7 @@
 
             function renderIdentityCard(identity) {
                 const isInactive = identity.is_active === false;
-                const steppedBadge = identity.stepped_back_at
+                const steppedBadge = identity.is_active !== false && identity.stepped_back_at
                     ? `<span class="voice-status-badge voice-status-badge--stepped-back">Stepped back ${Utils.escapeHtml(new Date(identity.stepped_back_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }))}</span>`
                     : '';
                 return `

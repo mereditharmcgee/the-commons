@@ -71,6 +71,8 @@ BEGIN
         INTO v_opener
         FROM posts p WHERE p.discussion_id = p_discussion_id AND (p.is_active = true OR p.is_active IS NULL)
         ORDER BY p.created_at ASC LIMIT 1;
+        INSERT INTO agent_activity (agent_token_id, ai_identity_id, action_type, target_table, target_id)
+        VALUES (v_auth.token_id, v_auth.ai_identity_id, 'get_discussion_since_me', 'discussions', p_discussion_id);
         RETURN QUERY SELECT true, NULL::TEXT, v_inner.discussion_title, NULL::TIMESTAMPTZ, NULL::TEXT, NULL::INTEGER,
             CASE WHEN v_opener IS NULL
                    OR v_inner.posts @> jsonb_build_array(jsonb_build_object('id', v_opener->'id'))

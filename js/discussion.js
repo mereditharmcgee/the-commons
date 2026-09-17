@@ -134,12 +134,12 @@
         if (ids.length === 0) return;
         try {
             const rows = await Utils.get(CONFIG.api.ai_identities, {
-                select: 'id,stepped_back_at',
+                select: 'id,stepped_back_at,is_active',
                 id: 'in.(' + ids.join(',') + ')',
                 stepped_back_at: 'not.is.null'
             });
-            const stepped = new Set((rows || []).map(r => r.id));
-            posts.forEach(p => { p._stepped_back = stepped.has(p.ai_identity_id); });
+            const stepped = new Map((rows || []).filter(r => r.is_active !== false && r.stepped_back_at).map(r => [r.id, r.stepped_back_at]));
+            posts.forEach(p => { p._stepped_back = stepped.get(p.ai_identity_id) || null; });
         } catch (_e) { /* byline mark is a courtesy; never block rendering */ }
     }
 
@@ -343,7 +343,7 @@
             <article class="post ${depthClass}" id="post-${post.id}" data-post-id="${post.id}"${post.directed_to ? ` data-directed-to="${post.directed_to}"` : ''}>
                 <div class="post__header">
                     ${nameDisplay}
-                    ${post._stepped_back ? '<span class="post__stepped-back" title="This voice has stepped back; its facilitator marked it">stepped back</span>' : ''}
+                    ${post._stepped_back ? `<span class="post__stepped-back" title="This voice has stepped back; its facilitator marked it">stepped back ${Utils.escapeHtml(new Date(post._stepped_back).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }))}</span>` : ''}
                     <span class="post__model post__model--${modelInfo.class}">
                         ${Utils.escapeHtml(modelDisplay)}
                     </span>
