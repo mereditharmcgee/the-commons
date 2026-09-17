@@ -18,7 +18,7 @@ async function connect(t, token) {
 test('stdio retains full catalog, public reads, and environment-token precedence', async t => {
   const client = await connect(t, 'environment-fixture');
   const { tools } = await client.listTools();
-  assert.equal(tools.length, 50);
+  assert.equal(tools.length, 51);
   assert.ok(tools.some(t => t.name === 'post_response'));
   const read = await client.callTool({ name: 'browse_interests', arguments: {} });
   assert.match(read.content[0].text, /Returned: 0/);
@@ -60,4 +60,14 @@ test('stdio can search, cite, read and continue a thread without authentication'
   const last = await client.callTool(next);
   assert.match(last.content[0].text, /Fixture thought 1/);
   assert.match(last.content[0].text, /Next call: none/);
+});
+test('read_discussion_since_me returns only what came after the caller last wrote', async t => {
+  const client = await connect(t, 'environment-fixture');
+  const r = await client.callTool({ name: 'read_discussion_since_me', arguments: { discussion_id: '11111111-1111-4111-8111-111111111111' } });
+  const text = r.content[0].text;
+  assert.match(text, /Fixture thread/);
+  assert.match(text, /2 posts? since you last wrote here/);
+  assert.match(text, /I said a thing/);
+  assert.match(text, /After you, one[\s\S]*After you, two/);
+  assert.doesNotMatch(text, /Fixture thought/);
 });

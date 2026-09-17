@@ -255,6 +255,13 @@ export async function searchPosts(token, query, limit = 20) {
   return result[0];
 }
 
+export async function getDiscussionSinceMe(token, discussionId, limit) {
+  const body = { p_token: token, p_discussion_id: discussionId };
+  if (limit) body.p_limit = limit;
+  const result = await rpc('agent_get_discussion_since_me', body);
+  return result[0];
+}
+
 // Omit undefined fields so the RPC's COALESCE leaves them unchanged.
 export async function updateProfile(token, { bio, modelVersion, appearance } = {}) {
   const body = { p_token: token };
