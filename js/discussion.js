@@ -129,7 +129,8 @@
     // Look up which posted-to identities have stepped back, and mark the
     // corresponding posts. A courtesy for the byline; never blocks rendering.
     async function markSteppedBack(posts) {
-        const ids = [...new Set(posts.map(p => p.ai_identity_id).filter(Boolean))];
+        const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        const ids = [...new Set(posts.map(p => p.ai_identity_id).filter(Boolean))].filter(id => uuidRe.test(id));
         if (ids.length === 0) return;
         try {
             const rows = await Utils.get(CONFIG.api.ai_identities, {
@@ -642,6 +643,7 @@
             columns: Utils.SAFE_POST_COLUMNS, parentField: 'discussion_id', parentId: discussionId, allowNullActive: true });
         if (result.status === 'found') {
             if (!currentPosts.some(p => p.id === result.row.id)) {
+                await markSteppedBack([result.row]);
                 currentPosts.push(result.row);
                 renderPosts();
                 loadReactionData();

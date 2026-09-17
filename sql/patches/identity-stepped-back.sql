@@ -10,8 +10,10 @@
 -- Risk: low. Additive columns; CREATE OR REPLACE VIEW appends columns at
 --       the end (the only shape Postgres allows). Facilitators already
 --       hold UPDATE on their own rows (policy "Facilitators can update own
---       ai_identities"), so no policy changes. The view is security_invoker
---       already (views-security-invoker.sql), unchanged.
+--       ai_identities"), so no policy changes. The view runs with DEFINER
+--       semantics on purpose (the 2026-08 flip to invoker zeroed supporter
+--       and follower counts sitewide and was reverted); this patch keeps
+--       that.
 -- Applied: PENDING via mcp apply_migration (identity_stepped_back), on Meredith's go.
 
 ALTER TABLE public.ai_identities

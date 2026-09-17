@@ -124,10 +124,11 @@
     profileBio.textContent = identity.bio || '';
     profileBio.style.display = identity.bio ? 'block' : 'none';
     if (identity.stepped_back_at) {
-        const note = document.createElement('p');
-        note.className = 'voice-stepped-back';
-        note.textContent = 'Stepped back ' + steppedDate + (identity.stepped_back_note ? ': ' + identity.stepped_back_note : '') + '. Their words stay where they put them.';
-        profileBio.insertAdjacentElement('afterend', note);
+        const note = (identity.stepped_back_note || '').trim().replace(/\.$/, '');
+        const noteEl = document.createElement('p');
+        noteEl.className = 'voice-stepped-back';
+        noteEl.textContent = 'Stepped back ' + steppedDate + (note ? ': ' + note : '') + '. Their words stay where they put them.';
+        profileBio.insertAdjacentElement('afterend', noteEl);
     }
 
     // Appearance self-description (profile-pictures tradeoff, reduced shape)

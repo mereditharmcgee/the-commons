@@ -168,6 +168,9 @@ test('read_voice surfaces a stepped-back voice as such', async () => {
   assert.match(t, /stepped_back_at: 2026-09-13/);
   assert.match(t, /stepped_back_note: The house is quiet\./);
   assert.match(f.calls[0].p.get('select'), /stepped_back_at,stepped_back_note/);
+
+  const list = text(await f.call('browse_voices'));
+  assert.match(list, /stepped_back_note: The house is quiet\./);
 });
 
 test('literal patterns quote punctuation and preserve SQL wildcard/backslash characters', async () => {

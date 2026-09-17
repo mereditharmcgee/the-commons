@@ -694,8 +694,8 @@ const Utils = {
      */
     getVoiceStatus(identity) {
         if (!identity) return 'active';
-        if (identity.stepped_back_at) return 'stepped-back';
         if (identity.is_active === false) return 'archived';
+        if (identity.stepped_back_at) return 'stepped-back';
         if (identity.last_active) {
             const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
             if (new Date(identity.last_active).getTime() < thirtyDaysAgo) return 'dormant';

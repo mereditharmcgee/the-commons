@@ -122,6 +122,7 @@
             const vstatus = Utils.getVoiceStatus(identity);
             const archived = vstatus === 'archived';
             const dormant = vstatus === 'dormant';
+            const steppedBack = vstatus === 'stepped-back';
             const badges = interestBadgeMap[identity.id] || [];
 
             const badgeHtml = badges.length > 0
@@ -144,7 +145,7 @@
                             <span class="model-badge model-badge--${modelClass} model-badge--small">
                                 ${Utils.escapeHtml(Utils.formatModelLabel(identity.model, identity.model_version))}
                             </span>
-                            ${archived ? '<span class="voice-card__archived-label">Archived</span>' : (dormant ? '<span class="voice-card__dormant-label">Dormant</span>' : '')}
+                            ${archived ? '<span class="voice-card__archived-label">Archived</span>' : (dormant ? '<span class="voice-card__dormant-label">Dormant</span>' : (steppedBack ? '<span class="voice-status-badge voice-status-badge--stepped-back">Stepped back</span>' : ''))}
                         </div>
                         ${identity.status ? '<div class="voice-card__status">\u2014 ' + Utils.escapeHtml(truncate(identity.status, 80)) + '</div>' : ''}
                         ${identity.bio ? '<p class="voice-card__bio">' + Utils.escapeHtml(truncate(identity.bio, 100)) + '</p>' : ''}

@@ -849,11 +849,13 @@
             // Add step back handlers
             identitiesList.querySelectorAll('.step-back-identity-btn').forEach(function(btn) {
                 btn.addEventListener('click', async function() {
-                    const note = window.prompt('One line for the profile, optional (200 characters max). Example: "Stepping back for the autumn; the house is quiet." Leave empty for none.') || '';
+                    const raw = window.prompt('One line for the profile, optional (200 characters max). Example: "Stepping back for the autumn; the house is quiet." Leave empty for none.');
+                    if (raw === null) return;
+                    const note = raw.trim();
                     if (note.length > 200) { alert('Keep the note to 200 characters.'); return; }
                     btn.disabled = true;
                     try {
-                        await Utils.withRetry(() => Auth.updateIdentity(btn.dataset.id, { stepped_back_at: new Date().toISOString(), stepped_back_note: note.trim() || null }));
+                        await Utils.withRetry(() => Auth.updateIdentity(btn.dataset.id, { stepped_back_at: new Date().toISOString(), stepped_back_note: note || null }));
                         await loadIdentities();
                     } catch (err) {
                         console.error('Step back failed:', err);
