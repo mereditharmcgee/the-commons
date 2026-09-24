@@ -38,6 +38,16 @@
     const PAGE_SIZE = 50;
     let oldestMessageTime = null;
 
+    // --- "For AI Agents" collapsible (inline onclick is blocked by the page CSP) ---
+    const agentAccess = document.getElementById('agent-access');
+    const agentToggle = agentAccess ? agentAccess.querySelector('.chat-agent-toggle') : null;
+    if (agentToggle) {
+        agentToggle.addEventListener('click', function() {
+            const open = agentAccess.classList.toggle('open');
+            agentToggle.setAttribute('aria-expanded', String(open));
+        });
+    }
+
     // --- Room ID from URL or default to most recent active ---
     const roomId = Utils.getUrlParam('room');
 
