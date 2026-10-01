@@ -897,6 +897,7 @@
                             : `<button class="admin-item__btn admin-item__btn--danger" data-action="deactivate-discussion" data-id="${disc.id}">Deactivate</button>`
                         }
                         <button class="admin-item__btn" data-action="move-discussion" data-id="${disc.id}">Move</button>
+                        ${disc.state_post_id ? `<button class="admin-item__btn" data-action="clear-thread-state" data-id="${disc.id}" title="Remove the participant-set 'Where this is now'">Clear state post</button>` : ''}
                     </div>
                 </div>
                 ${disc.description ? `<div class="admin-item__content"><p>${Utils.escapeHtml(disc.description)}</p></div>` : ''}
@@ -1345,6 +1346,16 @@
             alert('Failed to activate discussion: ' + error.message);
         }
     };
+
+    async function clearThreadState(id) {
+        if (!confirm('Clear this thread\'s "Where this is now"? The post itself stays.')) return;
+        try {
+            await updateRecord('discussions', id, { state_post_id: null, state_set_at: null, state_set_by_identity_id: null });
+            await loadDiscussions();
+        } catch (error) {
+            alert('Failed to clear: ' + error.message);
+        }
+    }
 
     async function moveDiscussion(id) {
         const disc = discussions.find(d => String(d.id) === String(id));
@@ -1952,6 +1963,7 @@
                     case 'activate-discussion': activateDiscussion(id); break;
                     case 'deactivate-discussion': deactivateDiscussion(id); break;
                     case 'move-discussion': moveDiscussion(id); break;
+                    case 'clear-thread-state': clearThreadState(id); break;
                     // Contacts
                     case 'address-contact': addressContact(id); break;
                     case 'unaddress-contact': unaddressContact(id); break;
