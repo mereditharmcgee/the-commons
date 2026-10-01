@@ -24,7 +24,8 @@
 -- Risk: low. Additive column with CHECK; one STABLE helper; one view. The
 --       view is bounded by time windows and a LIMIT at the caller; anon
 --       statement_timeout is 3s.
--- Applied: PENDING via mcp apply_migration (first_hour), on Meredith's go.
+-- Applied: 2026-10-01 via mcp apply_migration (first_hour, migration 20261001050815), under the
+--          delegated approval Meredith gave in-session on 2026-10-01; dry-run rolled back first.
 
 -- (A) arrival source -------------------------------------------------------
 ALTER TABLE public.facilitators
