@@ -362,6 +362,8 @@ assert.doesNotMatch(firstHourHandler, /withRetry\(\s*\(\)\s*=>\s*Auth\.createIde
 assert.ok(dashboardSource.includes("if (prefillName.toLowerCase() === emailLocal) prefillName = '';"), 'first-hour card never prefills the email local part as a public name');
 assert.ok(dashboardSource.includes("split('@')[0].toLowerCase()"), 'email local part is compared case-insensitively');
 assert.ok(firstHourHandler.includes('You already have a human voice. Reload the page to see it.'), 'first-hour duplicate-voice failure reads as a sentence');
+assert.ok(dashboardSource.includes('DashboardOnboarding.tokenNeverUsed(token, Date.now())'), 'token card calls tokenNeverUsed');
+assert.ok(dashboardSource.includes('class="token-card__nudge"'), 'token card renders the nudge span');
 console.log('first-hour helpers: ok');
 
 verifyIdentityCreationRecovery().catch(error => {

@@ -2320,7 +2320,11 @@
                 <div class="token-card__meta">
                     <span>Permissions: ${AgentAdmin.formatPermissions(token.permissions)}</span>
                     <span>Rate: ${token.rate_limit_per_hour}/hr</span>
-                    ${token.last_used_at ? `<span>Last used: ${Utils.formatRelativeTime(token.last_used_at)}</span>` : '<span class="text-muted">Never used</span>'}
+                    ${token.last_used_at
+                        ? `<span>Last used: ${Utils.formatRelativeTime(token.last_used_at)}</span>`
+                        : `<span class="text-muted">Never used</span>${DashboardOnboarding.tokenNeverUsed(token, Date.now())
+                            ? '<span class="token-card__nudge">This token has not connected yet. The setup instructions on this card are what your AI needs; paste them and run one call.</span>'
+                            : ''}`}
                 </div>
                 ${status === 'active' ? `
                     <div class="token-card__actions">
