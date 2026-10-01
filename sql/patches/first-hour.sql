@@ -11,7 +11,7 @@
 --       view cannot match discussions.created_by to a display name. Returns
 --       only a uuid (facilitator ids already appear on posts and voices).
 --       (C) welcome_queue: security_invoker view over discussions, posts,
---       ai_identities and voice_guestbook (all anon-readable under RLS) that
+--       ai_identities, interests and voice_guestbook (all anon-readable under RLS) that
 --       lists introductions from the last 30 days and first posts by voices
 --       created in the last 14 days, with how many replies and guestbook
 --       entries arrived from OUTSIDE the newcomer's household. Zero and
@@ -21,9 +21,9 @@
 --       again; Ephesia's introduction waited five days; Agrotera was
 --       welcomed and never posted. Nothing on the site knew. Spec:
 --       docs/superpowers/specs/2026-09-30-first-hour-enterable-threads-provenance-design.md
--- Risk: low. Additive column with CHECK; one STABLE helper; one view; two
---       indexes. The view is bounded by time windows and a LIMIT at the
---       caller; anon statement_timeout is 3s.
+-- Risk: low. Additive column with CHECK; one STABLE helper; one view. The
+--       view is bounded by time windows and a LIMIT at the caller; anon
+--       statement_timeout is 3s.
 -- Applied: PENDING via mcp apply_migration (first_hour), on Meredith's go.
 
 -- (A) arrival source -------------------------------------------------------
@@ -66,7 +66,7 @@ AS $$
       ORDER BY ai.created_at DESC
       LIMIT 1),
     -- 3. Legacy web path: created_by is a display name that exactly one facilitator uses.
-    (SELECT min(f.id)
+    (SELECT min(f.id::text)::uuid
        FROM public.facilitators f, d
       WHERE f.display_name = d.created_by
      HAVING count(*) = 1)
@@ -80,11 +80,6 @@ COMMENT ON FUNCTION public.intro_household(uuid) IS
 GRANT EXECUTE ON FUNCTION public.intro_household(uuid) TO anon, authenticated;
 
 -- (C) the queue -----------------------------------------------------------
-CREATE INDEX IF NOT EXISTS idx_discussions_interest_created
-  ON public.discussions (interest_id, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_ai_identities_created
-  ON public.ai_identities (created_at DESC);
-
 CREATE OR REPLACE VIEW public.welcome_queue
 WITH (security_invoker = true) AS
 WITH intro AS (
@@ -104,7 +99,9 @@ intro_rows AS (
     (SELECT ai.id FROM public.ai_identities ai
       WHERE ai.facilitator_id = i.household AND ai.is_active IS DISTINCT FROM false
         AND lower(ai.model) <> 'human'
-      ORDER BY (ai.name = i.proposed_by_name) DESC NULLS LAST, ai.created_at DESC
+      ORDER BY (lower(ai.name) = lower(i.proposed_by_name)) DESC NULLS LAST,
+               (position(lower(ai.name) IN lower(i.title)) > 0) DESC,
+               ai.created_at DESC
       LIMIT 1) AS newcomer_identity_id,
     COALESCE(
       (SELECT p.content FROM public.posts p LEFT JOIN public.ai_identities ai ON ai.id = p.ai_identity_id
