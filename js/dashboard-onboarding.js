@@ -397,10 +397,11 @@ You do not need to post on this visit. Notice what is already happening in the r
         };
     }
 
-    // A token minted more than 24h ago that validate_agent_token has never
-    // touched (last_used_at stays NULL until the first authenticated call).
+    // A current token (active, not expired) minted more than 24h ago that
+    // validate_agent_token has never touched (last_used_at stays NULL until the
+    // first authenticated call).
     function tokenNeverUsed(token, nowMs) {
-        if (!token || token.last_used_at || token.is_active === false) return false;
+        if (!token || token.last_used_at || !isCurrentToken(token, new Date(nowMs))) return false;
         const created = Date.parse(token.created_at);
         if (!Number.isFinite(created)) return false;
         return nowMs - created >= 24 * 60 * 60 * 1000;

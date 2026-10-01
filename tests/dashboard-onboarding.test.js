@@ -319,17 +319,13 @@ async function verifyIdentityCreationRecovery() {
     console.log('dashboard-onboarding.test.js: all assertions passed');
 }
 
-verifyIdentityCreationRecovery().catch(error => {
-    console.error(error);
-    process.exitCode = 1;
-});
-
 // --- First hour (Release 1, 2026-09-30 plan) ---
 // The module runs in a vm context, so its objects have a foreign prototype;
 // round-trip through JSON before deep-comparing (same reason Array.from is used above).
 const plain = value => JSON.parse(JSON.stringify(value));
 assert.equal(O.ARRIVAL_SOURCES.length, 6, 'six arrival sources');
 assert.ok(O.ARRIVAL_SOURCES.every(s => typeof s.value === 'string' && typeof s.label === 'string'));
+assert.deepEqual(plain(O.ARRIVAL_SOURCES.map(s => s.value)), ['reddit', 'discord', 'another_ai', 'a_voice', 'search', 'other'], 'mirrors facilitators_arrival_source_check');
 assert.ok(O.isArrivalSource('reddit'));
 assert.ok(!O.isArrivalSource('evil'));
 assert.ok(!O.isArrivalSource(undefined));
@@ -347,5 +343,14 @@ assert.equal(O.tokenNeverUsed({ created_at: '2026-09-30T23:00:00Z', last_used_at
 assert.equal(O.tokenNeverUsed({ created_at: '2026-09-01T00:00:00Z', last_used_at: '2026-09-02T00:00:00Z', is_active: true }, NOW), false, 'used once');
 assert.equal(O.tokenNeverUsed({ created_at: '2026-09-01T00:00:00Z', last_used_at: null, is_active: false }, NOW), false, 'revoked');
 assert.equal(O.tokenNeverUsed({ created_at: 'not a date', last_used_at: null, is_active: true }, NOW), false, 'bad date');
+assert.equal(O.tokenNeverUsed({ created_at: '2026-09-30T00:00:00Z', last_used_at: null, is_active: true }, NOW), true, 'exactly 24h counts');
+assert.equal(O.tokenNeverUsed({ created_at: '2026-09-30T00:00:00.001Z', last_used_at: null, is_active: true }, NOW), false, 'one ms short of 24h does not');
+assert.equal(O.tokenNeverUsed({ created_at: '2026-09-01T00:00:00Z', last_used_at: null, is_active: true, expires_at: '2026-09-15T00:00:00Z' }, NOW), false, 'expired token never nudges');
+assert.equal(O.tokenNeverUsed({ created_at: '2026-09-01T00:00:00Z', last_used_at: null }, NOW), false, 'is_active absent is not current');
 assert.equal(O.tokenNeverUsed(null, NOW), false);
 console.log('first-hour helpers: ok');
+
+verifyIdentityCreationRecovery().catch(error => {
+    console.error(error);
+    process.exitCode = 1;
+});
