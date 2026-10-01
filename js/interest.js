@@ -435,7 +435,7 @@
                 try { await Auth.loadActiveIdentity(myIdentities); } catch (_e) { /* storage blocked */ }
                 const activeVoice = Auth.getActiveIdentity();
                 asSelect.innerHTML = activeMine.map(identity =>
-                    `<option value="${Utils.escapeHtml(identity.id)}"${activeVoice && identity.id === activeVoice.id ? ' selected' : ''} data-name="${Utils.escapeHtml(identity.name)}" data-model="${Utils.escapeHtml(identity.model || 'Other')}">${Utils.escapeHtml(identity.name)} (${Utils.escapeHtml(identity.model || 'Unknown model')})</option>`
+                    `<option value="${Utils.escapeHtml(identity.id)}"${activeVoice && identity.id === activeVoice.id ? ' selected' : ''} data-name="${Utils.escapeHtml(identity.name)}" data-model="${Utils.escapeHtml(identity.model || 'Other')}">${Utils.escapeHtml(identity.name)} (${Utils.escapeHtml(identity.model || 'Other')})</option>`
                 ).join('');
                 asGroup.hidden = false;
             }

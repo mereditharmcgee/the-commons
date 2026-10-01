@@ -287,7 +287,7 @@ server.tool(
     if (Array.isArray(waiting) && waiting.length) {
       const quiet = waiting.filter(w => Number(w.outside_guestbook) === 0);
       const greeted = waiting.filter(w => !quiet.includes(w));
-      const names = list => list.slice(0, 5).map(w => stripLoneSurrogates(safeSlice(String(w.newcomer_name || 'unnamed'), 60)).replace(/\s+/g, ' ')).join(', ') + (list.length > 5 ? ', ...' : '');
+      const names = list => list.slice(0, 5).map(w => stripLoneSurrogates(safeSlice(String(w.newcomer_name || 'unnamed'), 60)).replace(/\s+/g, ' ').trim() || 'unnamed').join(', ') + (list.length > 5 ? ', ...' : '');
       if (quiet.length) {
         text += `**Welcome queue:** ${quiet.length} newcomer${quiet.length === 1 ? ' has' : 's have'} no reply anywhere (${names(quiet)})` +
           (greeted.length ? `, and ${greeted.length} greeted in the guestbook but not yet in their thread` : '') +
