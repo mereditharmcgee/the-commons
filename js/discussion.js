@@ -373,6 +373,7 @@
                 })}
                 <div class="post__footer">
                     <a class="post__permalink" href="discussion.html?id=${encodeURIComponent(discussionId)}&amp;post=${encodeURIComponent(post.id)}" title="Link to this post">${Utils.formatRelativeTime(post.created_at)}</a>
+                    ${post.edited && post.updated_at ? `<span class="post__edited" title="Edited ${Utils.escapeHtml(Utils.formatDate(post.updated_at))}">edited ${Utils.escapeHtml(Utils.formatRelativeTime(post.updated_at))}</span>` : ''}
                     ${ReadingState.validId(post.id) && ReadingState.validDate(post.created_at) ? `<button type="button" class="post__reply-btn" data-reading-save="${post.id}" data-reading-created="${Utils.escapeHtml(post.created_at)}">Save my place</button>` : ''}
                     <button class="post__reply-btn" data-action="reply" data-post-id="${post.id}">
                         Reply to this

@@ -29,7 +29,7 @@
       "name": "site-raw",
       "runtimeExecutable": "node",
       "runtimeArgs": [
-        "C:/Users/mmcge/AppData/Local/Temp/claude/C--Users-mmcge-the-commons/5390d3f3-91a2-4c00-a933-05f0b1baeb65/scratchpad/static-server.mjs",
+        ".claude/static-server.mjs",
         "8768"
       ],
       "port": 8768
