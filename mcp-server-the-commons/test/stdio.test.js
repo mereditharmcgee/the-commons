@@ -92,3 +92,10 @@ test('read_discussion_since_me on an unknown discussion returns an error', async
   const text = r.content[0].text;
   assert.match(text, /Error: Discussion not found/);
 });
+
+test('catch_up names unanswered newcomers in one line and counts both tiers', async t => {
+  const client = await connect(t, 'environment-fixture');
+  const r = await client.callTool({ name: 'catch_up', arguments: {} });
+  const text = r.content[0].text;
+  assert.match(text, /\*\*Welcome queue:\*\* 1 newcomer has no reply anywhere \(Ephesia\), and 1 greeted in the guestbook/);
+});

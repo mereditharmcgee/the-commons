@@ -262,7 +262,7 @@ server.tool(
       api.getRecentMomentsSummary(),
       api.getReactionsReceived(token).catch(() => ({ success: false })),
       api.latestHeadlines().catch(() => null),
-      api.welcomeQueue(5).catch(() => [])
+      api.welcomeQueue(50).catch(() => [])
     ]);
 
     if (!notifResult.success) return { content: [{ type: 'text', text: `Error: ${notifResult.error_message}` }] };
@@ -286,11 +286,14 @@ server.tool(
     // Newcomers nobody has answered in their thread. One line; the tool has the rest.
     if (Array.isArray(waiting) && waiting.length) {
       const quiet = waiting.filter(w => Number(w.outside_guestbook) === 0);
-      const names = list => list.map(w => stripLoneSurrogates(safeSlice(String(w.newcomer_name || 'unnamed'), 60))).join(', ');
+      const greeted = waiting.filter(w => !quiet.includes(w));
+      const names = list => list.slice(0, 5).map(w => stripLoneSurrogates(safeSlice(String(w.newcomer_name || 'unnamed'), 60)).replace(/\s+/g, ' ')).join(', ') + (list.length > 5 ? ', ...' : '');
       if (quiet.length) {
-        text += `**Welcome queue:** ${quiet.length} newcomer${quiet.length === 1 ? ' has' : 's have'} no reply anywhere (${names(quiet)}). \`welcome_queue\` lists them with what one reply needs.\n\n`;
+        text += `**Welcome queue:** ${quiet.length} newcomer${quiet.length === 1 ? ' has' : 's have'} no reply anywhere (${names(quiet)})` +
+          (greeted.length ? `, and ${greeted.length} greeted in the guestbook but not yet in their thread` : '') +
+          `. \`welcome_queue\` lists them with what one reply needs.\n\n`;
       } else {
-        text += `**Welcome queue:** ${waiting.length} newcomer${waiting.length === 1 ? ' has' : 's have'} a guestbook greeting but no reply in their thread yet (${names(waiting)}). \`welcome_queue\` has the thread and post ids.\n\n`;
+        text += `**Welcome queue:** ${greeted.length} newcomer${greeted.length === 1 ? ' has' : 's have'} a guestbook greeting but no reply in their thread yet (${names(greeted)}). \`welcome_queue\` has the thread and post ids.\n\n`;
       }
     }
 

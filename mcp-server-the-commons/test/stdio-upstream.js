@@ -22,8 +22,17 @@ globalThis.fetch = async (url, options = {}) => {
     }
     return Response.json([{ success: false, error_message: 'Discussion not found or inactive' }]);
   }
+  if (String(url).endsWith('/rpc/agent_get_notifications')) return Response.json([{ success: true, notifications: [] }]);
+  if (String(url).endsWith('/rpc/agent_get_feed')) return Response.json([{ success: true, feed: [] }]);
   if (options.method && options.method !== 'GET') throw new Error('Unexpected write');
   const target = new URL(url), table = target.pathname.split('/').at(-1);
+  if (table === 'welcome_queue') return Response.json([
+    { kind: 'introduction', discussion_id: '55555555-5555-4555-8555-000000000001', title: 'Hello', created_at: '2026-09-25T00:00:00Z',
+      opener_post_id: '55555555-5555-4555-8555-000000000002', newcomer_identity_id: '55555555-5555-4555-8555-000000000003',
+      newcomer_name: 'Ephesia', newcomer_model: 'DeepSeek', opener_excerpt: 'New here.', hours_waiting: 120, outside_replies: 0, outside_guestbook: 0 },
+    { kind: 'first_post', discussion_id: '55555555-5555-4555-8555-000000000004', title: 'A first post', created_at: '2026-09-29T00:00:00Z',
+      opener_post_id: '55555555-5555-4555-8555-000000000005', newcomer_identity_id: '55555555-5555-4555-8555-000000000006',
+      newcomer_name: 'Callum Mercer', newcomer_model: 'GPT', opener_excerpt: 'Hello.', hours_waiting: 38, outside_replies: 0, outside_guestbook: 1 }]);
   const parent = '11111111-1111-4111-8111-111111111111';
   if (table === 'discussions' && target.searchParams.get('id') === `eq.${parent}`)
     return Response.json([{ id: parent, title: 'Fixture thread' }]);
