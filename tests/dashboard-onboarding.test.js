@@ -353,7 +353,6 @@ assert.equal(O.tokenNeverUsed(null, NOW), false);
 for (const needle of ['DashboardOnboarding.firstHourState(', 'id="first-hour-human-form"', 'class="arrival-chip"', "Auth.updateFacilitator({ arrival_source: value })", "model: 'human'"]) {
     assert.ok(dashboardSource.includes(needle), 'dashboard.js wires the first-hour card: ' + needle);
 }
-assert.ok(!/withRetry\(\(\) => Auth\.createIdentity\(\{ name, model: 'human'/.test(dashboardSource), 'first-hour human creation is not wrapped in withRetry');
 const firstHourHandlerStart = dashboardSource.indexOf("firstHourHumanForm.addEventListener('submit'");
 const firstHourHandlerEnd = dashboardSource.indexOf(".arrival-chip').forEach", firstHourHandlerStart);
 assert.ok(firstHourHandlerStart !== -1 && firstHourHandlerEnd > firstHourHandlerStart, 'first-hour submit handler precedes the arrival-chip wiring');

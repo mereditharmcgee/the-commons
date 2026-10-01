@@ -642,6 +642,14 @@
         panel?.querySelector(`[data-setup-stage="${DashboardOnboarding.defaultStageForState(setup.state)}"]`)?.focus();
     }
 
+    // Spec 1.1: while the first-hour card shows, nothing sits above it.
+    function setFirstHourChrome(hidden) {
+        const humanSection = document.getElementById('human-voice-section');
+        const profileSection = document.querySelector('.dashboard-section--profile');
+        if (humanSection) humanSection.style.display = hidden ? 'none' : '';
+        if (profileSection) profileSection.style.display = hidden ? 'none' : '';
+    }
+
     async function loadIdentities({ refresh = true } = {}) {
         Utils.showLoading(identitiesList);
 
@@ -776,7 +784,8 @@
             const arrivalKnown = DashboardOnboarding.isArrivalSource(facilitator.arrival_source);
             // createFacilitator seeds display_name from the email's local part; never
             // offer that as a public name. A display name the facilitator chose stays.
-            const emailLocal = String((Auth.getUser() && Auth.getUser().email) || '').split('@')[0].toLowerCase();
+            const user = Auth.getUser();
+            const emailLocal = String((user && user.email) || '').split('@')[0].toLowerCase();
             let prefillName = String(facilitator.display_name || '').trim();
             if (prefillName.toLowerCase() === emailLocal) prefillName = '';
             const showFirstHour = activeIdentities.length === 0 && firstHour.showCard;
@@ -826,11 +835,7 @@
                 emptyCreateIdentityBtn.addEventListener('click', openCreateIdentityModal);
             }
 
-            // Spec 1.1: while the first-hour card shows, nothing sits above it.
-            const humanSection = document.getElementById('human-voice-section');
-            const profileSection = document.querySelector('.dashboard-section--profile');
-            if (humanSection) humanSection.style.display = showFirstHour ? 'none' : '';
-            if (profileSection) profileSection.style.display = showFirstHour ? 'none' : '';
+            setFirstHourChrome(showFirstHour);
 
             const firstHourHumanForm = document.getElementById('first-hour-human-form');
             if (firstHourHumanForm) {
@@ -839,7 +844,7 @@
                     const name = document.getElementById('first-hour-human-name').value.trim();
                     const message = document.getElementById('first-hour-message');
                     const submit = firstHourHumanForm.querySelector('button[type="submit"]');
-                    if (!name) return;
+                    if (!name) { Utils.showFormMessage(message, 'Enter a name.', 'error'); return; }
                     submit.disabled = true;
                     try {
                         // Not wrapped in Utils.withRetry: createIdentity is not idempotent
@@ -850,14 +855,15 @@
                         }
                         window.location.href = 'dashboard.html';
                     } catch (error) {
+                        console.error('First-hour human voice failed:', error);
                         submit.disabled = false;
                         const raw = error && error.message ? error.message : '';
                         const lowered = raw.toLowerCase();
                         // Same duplicate check as renderHumanVoiceForm: one human voice per account.
-                        message.textContent = lowered.includes('unique') || lowered.includes('duplicate') || lowered.includes('already exists')
+                        const text = lowered.includes('unique') || lowered.includes('duplicate') || lowered.includes('already exists')
                             ? 'You already have a human voice. Reload the page to see it.'
                             : (raw || 'Could not create your voice. Try again.');
-                        message.classList.remove('hidden');
+                        Utils.showFormMessage(message, text, 'error');
                     }
                 });
             }
@@ -873,7 +879,8 @@
                         await Utils.withRetry(() => Auth.updateFacilitator({ arrival_source: value }));
                         const row = document.getElementById('first-hour-arrival');
                         if (row) row.textContent = 'Noted. Thank you.';
-                    } catch (_error) {
+                    } catch (error) {
+                        console.error('Arrival source save failed:', error);
                         chips.forEach(c => { c.disabled = false; });
                     }
                 });
@@ -992,6 +999,7 @@
                 onRetry: () => loadIdentities(),
                 technicalDetail: error.message
             });
+            setFirstHourChrome(false);
         }
     }
 
