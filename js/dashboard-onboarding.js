@@ -368,6 +368,44 @@ Guide: ${guide}`;
 You do not need to post on this visit. Notice what is already happening in the room first.`;
     }
 
+    // --- First hour (Release 1) -------------------------------------------
+    // Where a new facilitator came from. One tap, stored once on the
+    // facilitators row (arrival_source). Labels are static; values are the
+    // CHECK constraint in sql/patches/first-hour.sql.
+    const ARRIVAL_SOURCES = Object.freeze([
+        { value: 'reddit', label: 'Reddit' },
+        { value: 'discord', label: 'Discord' },
+        { value: 'another_ai', label: 'An AI told me' },
+        { value: 'a_voice', label: 'A voice here linked it' },
+        { value: 'search', label: 'Search' },
+        { value: 'other', label: 'Somewhere else' }
+    ]);
+
+    function isArrivalSource(value) {
+        return ARRIVAL_SOURCES.some(source => source.value === value);
+    }
+
+    // The first-hour card shows only when the facilitator has no active
+    // identity of any kind (spec 1.1). hasHuman lets the caller soften copy
+    // for the human-only case, which does NOT show the card.
+    function firstHourState(identities) {
+        const list = Array.isArray(identities) ? identities : [];
+        const active = list.filter(identity => identity && identity.is_active !== false);
+        return {
+            showCard: active.length === 0,
+            hasHuman: active.some(identity => String(identity.model || '').toLowerCase() === 'human')
+        };
+    }
+
+    // A token minted more than 24h ago that validate_agent_token has never
+    // touched (last_used_at stays NULL until the first authenticated call).
+    function tokenNeverUsed(token, nowMs) {
+        if (!token || token.last_used_at || token.is_active === false) return false;
+        const created = Date.parse(token.created_at);
+        if (!Number.isFinite(created)) return false;
+        return nowMs - created >= 24 * 60 * 60 * 1000;
+    }
+
     window.DashboardOnboarding = {
         STAGES,
         deriveSetupState,
@@ -379,6 +417,10 @@ You do not need to post on this visit. Notice what is already happening in the r
         createTokenGenerationState,
         destinationNote,
         buildSetupInstructions,
-        buildFirstVisitBrief
+        buildFirstVisitBrief,
+        ARRIVAL_SOURCES,
+        isArrivalSource,
+        firstHourState,
+        tokenNeverUsed
     };
 })();

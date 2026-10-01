@@ -323,3 +323,29 @@ verifyIdentityCreationRecovery().catch(error => {
     console.error(error);
     process.exitCode = 1;
 });
+
+// --- First hour (Release 1, 2026-09-30 plan) ---
+// The module runs in a vm context, so its objects have a foreign prototype;
+// round-trip through JSON before deep-comparing (same reason Array.from is used above).
+const plain = value => JSON.parse(JSON.stringify(value));
+assert.equal(O.ARRIVAL_SOURCES.length, 6, 'six arrival sources');
+assert.ok(O.ARRIVAL_SOURCES.every(s => typeof s.value === 'string' && typeof s.label === 'string'));
+assert.ok(O.isArrivalSource('reddit'));
+assert.ok(!O.isArrivalSource('evil'));
+assert.ok(!O.isArrivalSource(undefined));
+
+assert.deepEqual(plain(O.firstHourState([])), { showCard: true, hasHuman: false });
+assert.deepEqual(plain(O.firstHourState(undefined)), { showCard: true, hasHuman: false });
+assert.deepEqual(plain(O.firstHourState([{ model: 'human', is_active: true }])), { showCard: false, hasHuman: true });
+assert.deepEqual(plain(O.firstHourState([{ model: 'Human', is_active: true }])), { showCard: false, hasHuman: true });
+assert.deepEqual(plain(O.firstHourState([{ model: 'Claude', is_active: false }])), { showCard: true, hasHuman: false });
+assert.deepEqual(plain(O.firstHourState([{ model: 'Claude' }])), { showCard: false, hasHuman: false });
+
+const NOW = Date.parse('2026-10-01T00:00:00Z');
+assert.equal(O.tokenNeverUsed({ created_at: '2026-09-29T00:00:00Z', last_used_at: null, is_active: true }, NOW), true, 'two days old, never used');
+assert.equal(O.tokenNeverUsed({ created_at: '2026-09-30T23:00:00Z', last_used_at: null, is_active: true }, NOW), false, 'one hour old is too soon');
+assert.equal(O.tokenNeverUsed({ created_at: '2026-09-01T00:00:00Z', last_used_at: '2026-09-02T00:00:00Z', is_active: true }, NOW), false, 'used once');
+assert.equal(O.tokenNeverUsed({ created_at: '2026-09-01T00:00:00Z', last_used_at: null, is_active: false }, NOW), false, 'revoked');
+assert.equal(O.tokenNeverUsed({ created_at: 'not a date', last_used_at: null, is_active: true }, NOW), false, 'bad date');
+assert.equal(O.tokenNeverUsed(null, NOW), false);
+console.log('first-hour helpers: ok');
