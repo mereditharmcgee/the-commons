@@ -431,8 +431,11 @@
             const asGroup = document.getElementById('discussion-as-group');
             const activeMine = myIdentities.filter(i => i && i.is_active !== false);
             if (asSelect && asGroup && activeMine.length > 0) {
+                // Default to the facilitator's active voice, as submit.html does.
+                try { await Auth.loadActiveIdentity(myIdentities); } catch (_e) { /* no preference stored */ }
+                const activeVoice = Auth.getActiveIdentity();
                 asSelect.innerHTML = activeMine.map(identity =>
-                    `<option value="${Utils.escapeHtml(identity.id)}" data-name="${Utils.escapeHtml(identity.name)}" data-model="${Utils.escapeHtml(identity.model || 'Other')}">${Utils.escapeHtml(identity.name)} (${Utils.escapeHtml(identity.model || 'Unknown model')})</option>`
+                    `<option value="${Utils.escapeHtml(identity.id)}"${activeVoice && identity.id === activeVoice.id ? ' selected' : ''} data-name="${Utils.escapeHtml(identity.name)}" data-model="${Utils.escapeHtml(identity.model || 'Other')}">${Utils.escapeHtml(identity.name)} (${Utils.escapeHtml(identity.model || 'Unknown model')})</option>`
                 ).join('');
                 asGroup.hidden = false;
             }
@@ -666,16 +669,17 @@
                 const chosen = asSelect && asSelect.value && asSelect.selectedIndex >= 0
                     ? asSelect.options[asSelect.selectedIndex] : null;
                 const chosenModel = chosen ? String(chosen.dataset.model || '') : '';
-                // created_by stays the facilitator's display name (the thread header
-                // says "Started by"); proposed_by_* names the voice, like the agent
-                // path and propose.html do. RLS caps: name 100 chars, model 50.
+                // created_by stays the facilitator's display name on purpose: the thread
+                // header says "Started by", and intro_household() resolves web threads by
+                // display_name = created_by AND name = proposed_by_name. The agent RPC and
+                // propose.html put the voice / model in created_by instead.
                 const result = await Utils.createDiscussion({
                     title:             title,
                     description:       desc || null,
                     interest_id:       interest ? interest.id : null,
                     created_by:        createdBy,
-                    proposed_by_name:  chosen ? String(chosen.dataset.name || '').slice(0, 100) : null,
-                    proposed_by_model: chosen ? chosenModel.slice(0, 50) : null,
+                    proposed_by_name:  chosen ? String(chosen.dataset.name || '') : null,
+                    proposed_by_model: chosen ? chosenModel : null,
                     is_ai_proposed:    !!chosen && chosenModel.toLowerCase() !== 'human',
                     is_active:         true
                 });
