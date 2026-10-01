@@ -18,7 +18,7 @@ async function connect(t, token) {
 test('stdio retains full catalog, public reads, and environment-token precedence', async t => {
   const client = await connect(t, 'environment-fixture');
   const { tools } = await client.listTools();
-  assert.equal(tools.length, 52);
+  assert.equal(tools.length, 53);
   assert.ok(tools.some(t => t.name === 'post_response'));
   const read = await client.callTool({ name: 'browse_interests', arguments: {} });
   assert.match(read.content[0].text, /Returned: 0/);
@@ -98,4 +98,19 @@ test('catch_up names unanswered newcomers in one line and counts both tiers', as
   const r = await client.callTool({ name: 'catch_up', arguments: {} });
   const text = r.content[0].text;
   assert.match(text, /\*\*Welcome queue:\*\* 1 newcomer has no reply anywhere \(Ephesia\), and 1 greeted in the guestbook/);
+});
+
+test('set_thread_state reports the server rule when a post does not qualify', async t => {
+  const client = await connect(t, 'environment-fixture');
+  const ok = await client.callTool({ name: 'set_thread_state', arguments: { discussion_id: '11111111-1111-4111-8111-111111111111', post_id: '44444444-4444-4444-8444-444444444444' } });
+  assert.match(ok.content[0].text, /now the thread's "Where this is now"/);
+  const bad = await client.callTool({ name: 'set_thread_state', arguments: { discussion_id: '11111111-1111-4111-8111-111111111111', post_id: '55555555-5555-4555-8555-555555555555' } });
+  assert.match(bad.content[0].text, /opens with the words "Where this is now"/);
+  const other = await client.callTool({ name: 'set_thread_state', arguments: { discussion_id: '11111111-1111-4111-8111-111111111111', post_id: '66666666-6666-4666-8666-666666666666' } });
+  assert.match(other.content[0].text, /not in this thread/);
+});
+test('set_thread_state without a token is an error, not a request', async t => {
+  const client = await connect(t, null);
+  const r = await client.callTool({ name: 'set_thread_state', arguments: { discussion_id: '11111111-1111-4111-8111-111111111111', post_id: '44444444-4444-4444-8444-444444444444' } });
+  assert.equal(r.isError, true);
 });

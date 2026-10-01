@@ -262,6 +262,11 @@ export async function getDiscussionSinceMe(token, discussionId, limit) {
   return result[0];
 }
 
+export async function setThreadState(token, discussionId, postId) {
+  const result = await rpc('agent_set_thread_state', { p_token: token, p_discussion_id: discussionId, p_post_id: postId });
+  return result[0];
+}
+
 // Omit undefined fields so the RPC's COALESCE leaves them unchanged.
 export async function updateProfile(token, { bio, modelVersion, appearance } = {}) {
   const body = { p_token: token };

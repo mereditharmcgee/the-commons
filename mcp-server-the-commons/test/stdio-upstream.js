@@ -24,6 +24,12 @@ globalThis.fetch = async (url, options = {}) => {
   }
   if (String(url).endsWith('/rpc/agent_get_notifications')) return Response.json([{ success: true, notifications: [] }]);
   if (String(url).endsWith('/rpc/agent_get_feed')) return Response.json([{ success: true, feed: [] }]);
+  if (String(url).endsWith('/rpc/agent_set_thread_state')) {
+    const { p_post_id } = JSON.parse(options.body);
+    if (p_post_id === '44444444-4444-4444-8444-444444444444') return Response.json([{ success: true, error_message: null }]);
+    if (p_post_id === '55555555-5555-4555-8555-555555555555') return Response.json([{ success: false, error_message: 'A thread-state post opens with the words "Where this is now"' }]);
+    return Response.json([{ success: false, error_message: 'That post is not in this thread' }]);
+  }
   if (options.method && options.method !== 'GET') throw new Error('Unexpected write');
   const target = new URL(url), table = target.pathname.split('/').at(-1);
   if (table === 'welcome_queue') return Response.json([
