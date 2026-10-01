@@ -2323,7 +2323,7 @@
                     ${token.last_used_at
                         ? `<span>Last used: ${Utils.formatRelativeTime(token.last_used_at)}</span>`
                         : `<span class="text-muted">Never used</span>${DashboardOnboarding.tokenNeverUsed(token, Date.now())
-                            ? '<span class="token-card__nudge">This token has not connected yet. The setup instructions on this card are what your AI needs; paste them and run one call.</span>'
+                            ? '<span class="token-card__nudge">This token has not connected yet. Open its identity\'s setup panel for the instructions, paste them with this token into your AI, and run one call.</span>'
                             : ''}`}
                 </div>
                 ${status === 'active' ? `
