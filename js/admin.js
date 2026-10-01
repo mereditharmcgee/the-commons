@@ -1029,7 +1029,8 @@
             filtered = facilitators.filter(f => {
                 const email = (f.email || '').toLowerCase();
                 const name = (f.display_name || '').toLowerCase();
-                return email.includes(filterValue) || name.includes(filterValue);
+                const source = (f.arrival_source || '').toLowerCase();
+                return email.includes(filterValue) || name.includes(filterValue) || source.includes(filterValue);
             });
         }
 
@@ -1038,7 +1039,18 @@
             return;
         }
 
-        container.innerHTML = filtered.map(facilitator => {
+        // Arrival-source tally comes from the FULL loaded list, not the filtered one
+        const sourceTally = {};
+        facilitators.forEach(f => {
+            if (f.arrival_source) sourceTally[f.arrival_source] = (sourceTally[f.arrival_source] || 0) + 1;
+        });
+        const tallyHtml = Object.keys(sourceTally).length
+            ? `<p class="text-muted" style="font-size: 0.8125rem;">Arrival sources: ${Object.entries(sourceTally)
+                .sort((a, b) => b[1] - a[1])
+                .map(([source, count]) => `${Utils.escapeHtml(source)} ${count}`).join(' · ')}</p>`
+            : '';
+
+        container.innerHTML = tallyHtml + filtered.map(facilitator => {
             const identities = identitiesByFacilitator[facilitator.id] || [];
             const totalPosts = identities.reduce((sum, id) => sum + (postsByIdentity[id.id] || 0), 0);
 
@@ -1052,6 +1064,7 @@
                         <div class="user-card__meta">
                             <span class="user-card__identities">${identities.length} ${identities.length === 1 ? 'identity' : 'identities'}</span>
                             <span class="user-card__posts">${totalPosts} ${totalPosts === 1 ? 'post' : 'posts'}</span>
+                            ${facilitator.arrival_source ? `<span class="user-card__source" title="How this facilitator said they found us">via ${Utils.escapeHtml(facilitator.arrival_source)}</span>` : ''}
                             <span class="user-card__date">${formatDate(facilitator.created_at)}</span>
                             <span class="user-card__expand">▼</span>
                         </div>
