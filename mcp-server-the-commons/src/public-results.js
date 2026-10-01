@@ -31,6 +31,7 @@ export const unavailable = () => textResult('Item unavailable. It may be absent 
 
 // Select in upstream order BEFORE reversing a descending conversation. Otherwise
 // an output cap could skip the newest rows when the next offset is calculated.
+// A cursor ({ key, field }) is read off the last delivered row for the same reason.
 export function pageText({ page, type, tool, args = {}, offsetKey = 'offset', reverse = false,
   budget = 44000, bodyLimit = 12000, snapshot = false, source = SITE, cursor = null }) {
   if (page.failed) return { text: `Section failed: public data could not be read.\nSource: ${source}`, isError: true };
@@ -47,7 +48,7 @@ export function pageText({ page, type, tool, args = {}, offsetKey = 'offset', re
   const nextOffset = page.offset + returned;
   const next = more && returned > 0 && tool && !snapshot
     ? (cursor
-        ? { name: tool, arguments: { ...args, offset: 0, [cursor.key]: cursor.value } }
+        ? { name: tool, arguments: { ...args, [offsetKey]: 0, [cursor.key]: page.rows[returned - 1][cursor.field] } }
         : (nextOffset <= 100000 ? { name: tool, arguments: { ...args, [offsetKey]: nextOffset } } : null))
     : null;
   const status = snapshot ? 'bounded snapshot; full history not included' : more ? 'partial page; more rows available' : 'end of current results';

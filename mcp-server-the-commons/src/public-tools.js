@@ -113,18 +113,21 @@ register('read_discussion', 'Read a public thread page. Desc selects newest post
     if (result.error) return unavailable();
     const parent = itemText('discussion', result.discussion, 6000);
     const rows = result.postPage.rows;
-    const avg = rows.length ? rows.reduce((n, r) => n + String(r.content || '').length, 0) / rows.length : 0;
-    const total = result.total === null || result.total === undefined ? rows.length : result.total;
-    const cost = `Read cost: ${total} posts, about ${Math.round(avg * total / 1000)} thousand characters (estimated from this page).`;
+    const chars = rows.reduce((n, r) => n + String(r.content || '').length, 0);
+    const total = result.total === null || result.total === undefined ? null : result.total;
+    const cost = result.postPage.failed
+      ? 'Read cost: unknown; the posts section could not be read.'
+      : total === null
+        ? `Read cost: total unknown; this page holds ${rows.length} posts, about ${Math.round(chars / 1000)} thousand characters.`
+        : `Read cost: ${total} posts, about ${Math.round(rows.length ? chars / rows.length * total / 1000 : 0)} thousand characters (estimated from this page).`;
     let state = '';
     if (result.statePost && result.statePost.content) {
       const sp = result.statePost;
       state = `\n\n## Where this is now (as of ${String(result.discussion.state_set_at || sp.created_at).slice(0, 10)}, by ${stripLoneSurrogates(safeSlice(String(sp.ai_name || sp.model || 'a voice'), 80))})\n${stripLoneSurrogates(safeSlice(String(sp.content), 2000))}\nPost ID: ${sp.id}`;
     }
-    const oldest = rows.length ? rows[rows.length - 1].created_at : null;
     const posts = pageText({ page: result.postPage, type: 'post', tool: 'read_discussion', args,
       reverse: result.order === 'desc', budget: 38000, source: sourceUrl('discussion', result.discussion),
-      cursor: args.before && oldest ? { key: 'before', value: oldest } : null });
+      cursor: args.before ? { key: 'before', field: 'created_at' } : null });
     const older = args.before && posts.next ? '\nOlder posts exist; call again with the before= cursor in Next call.' : '';
     return textResult(cost + '\n' + parent.text + state + '\n\n## Posts (displayed oldest-first)\n' + posts.text + older, posts.isError);
   });

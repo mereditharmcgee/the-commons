@@ -113,6 +113,8 @@ test('high offsets, unknown totals and continuation ceiling do not loop or claim
   const result = await f.call('read_discussion', { discussion_id: id(99), offset: 100000 });
   assert.match(text(result), /Returned: 0\nTotal: unknown\nOffset: 100000/);
   assert.match(text(result), /Next call: none/);
+  assert.doesNotMatch(text(result), /^Read cost: 0 posts/m);
+  assert.match(text(result), /^Read cost: total unknown; this page holds 0 posts/m);
   const bounded = pageText({ page: { rows: [post(1)], offset: 100000, has_more: true }, type: 'post', tool: 'read_discussion' });
   assert.equal(bounded.next, null);
   assert.match(bounded.text, /continuation limit/);
@@ -146,6 +148,10 @@ test('missing parent is neutral; failed child preserves the parent and is an MCP
     assert.ok(text(result).includes(retained));
     assert.match(text(result), /Section failed/);
     assert.doesNotMatch(text(result), /private diagnostic/);
+    if (tool === 'read_discussion') {
+      assert.doesNotMatch(text(result), /^Read cost: 0 posts/m);
+      assert.match(text(result), /^Read cost: unknown; the posts section could not be read\./m);
+    }
   }
 });
 
@@ -340,11 +346,39 @@ test('read_discussion before= pages backwards by created_at and hands back a cur
   const postCall = f.calls.find(c => c.table === 'posts');
   assert.equal(postCall.p.get('created_at'), 'lt.2026-09-04T00:00:00Z');
   assert.match(postCall.p.get('order'), /^created_at\.desc/);
+  assert.ok(text(out).indexOf('Thought 2') < text(out).indexOf('Thought 3'));
   const n = next(out);
   assert.equal(n.name, 'read_discussion');
   assert.equal(n.arguments.before, '2026-09-02T00:00:00Z');
   assert.equal(n.arguments.offset, 0);
   assert.match(text(out), /older posts exist/i);
+  const last = await f.call(n.name, n.arguments);
+  assert.match(text(last), /Thought 1/);
+  assert.match(text(last), /Next call: none/);
+  assert.doesNotMatch(text(last), /Older posts exist/);
+});
+
+test('before= cursor advances only delivered rows when the output cap bites', async () => {
+  const rows = Array.from({ length: 12 }, (_, n) => ({ ...post(n + 1), content: 'x'.repeat(10000),
+    created_at: `2026-09-${String(n + 1).padStart(2, '0')}T00:00:00Z` }));
+  const f = fixture({ discussions: [{ id: id(99), title: 'Long thread' }], posts: rows });
+  let args = { discussion_id: id(99), limit: 10, before: '2026-09-13T00:00:00Z' };
+  const seen = new Set();
+  for (let run = 0; run < 12; run++) {
+    const result = await f.call('read_discussion', args), body = text(result);
+    assert.ok(body.length < 48000);
+    const ids = [...body.matchAll(/^ID: (.+)$/gm)].map(m => m[1]).filter(v => v !== id(99));
+    assert.ok(ids.length > 0);
+    for (const value of ids) { assert.ok(!seen.has(value), `duplicate ${value}`); seen.add(value); }
+    if (body.includes('Next call: none')) { assert.doesNotMatch(body, /Older posts exist/); break; }
+    assert.match(body, /Rows omitted for output limit: [1-9]/);
+    assert.match(body, /Older posts exist/);
+    const call = next(result);
+    assert.equal(call.arguments.offset, 0);
+    assert.ok(call.arguments.before < args.before);
+    args = call.arguments;
+  }
+  assert.equal(seen.size, 12);
 });
 
 test('read_discussion prints the thread state first and a read-cost line', async () => {
