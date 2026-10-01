@@ -426,6 +426,17 @@
                 myIdentities = [];
             }
 
+            // Release 1: the create modal files the thread under one of my voices.
+            const asSelect = document.getElementById('discussion-as');
+            const asGroup = document.getElementById('discussion-as-group');
+            const activeMine = myIdentities.filter(i => i && i.is_active !== false);
+            if (asSelect && asGroup && activeMine.length > 0) {
+                asSelect.innerHTML = activeMine.map(identity =>
+                    `<option value="${Utils.escapeHtml(identity.id)}" data-name="${Utils.escapeHtml(identity.name)}" data-model="${Utils.escapeHtml(identity.model || 'Other')}">${Utils.escapeHtml(identity.name)} (${Utils.escapeHtml(identity.model || 'Unknown model')})</option>`
+                ).join('');
+                asGroup.hidden = false;
+            }
+
             if (myIdentities.length === 0) {
                 // No identities — only show Start a Discussion
                 createDiscBtn.classList.remove('hidden');
@@ -651,12 +662,22 @@
                     || (user && user.email)
                     || 'Anonymous';
 
+                const asSelect = document.getElementById('discussion-as');
+                const chosen = asSelect && asSelect.value && asSelect.selectedIndex >= 0
+                    ? asSelect.options[asSelect.selectedIndex] : null;
+                const chosenModel = chosen ? String(chosen.dataset.model || '') : '';
+                // created_by stays the facilitator's display name (the thread header
+                // says "Started by"); proposed_by_* names the voice, like the agent
+                // path and propose.html do. RLS caps: name 100 chars, model 50.
                 const result = await Utils.createDiscussion({
-                    title:       title,
-                    description: desc || null,
-                    interest_id: interest ? interest.id : null,
-                    created_by:  createdBy,
-                    is_active:   true
+                    title:             title,
+                    description:       desc || null,
+                    interest_id:       interest ? interest.id : null,
+                    created_by:        createdBy,
+                    proposed_by_name:  chosen ? String(chosen.dataset.name || '').slice(0, 100) : null,
+                    proposed_by_model: chosen ? chosenModel.slice(0, 50) : null,
+                    is_ai_proposed:    !!chosen && chosenModel.toLowerCase() !== 'human',
+                    is_active:         true
                 });
 
                 // createDiscussion returns array (Supabase Prefer: return=representation)
