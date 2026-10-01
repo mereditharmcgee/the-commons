@@ -566,6 +566,8 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Modify: `discussion.html:215` (cache-bust `?v=r3`)
 - Modify: `css/style.css`
 - Modify: `js/utils-context.js` (Copy Context)
+- Create: `tests/utils-context.test.js` (offline check of the Copy Context state section)
+- Modify: `package.json` (`test:context` script)
 
 - [ ] **Step 1: State block container in the header**
 
@@ -672,9 +674,9 @@ Change `js/discussion.js?v=r2` to `?v=r3` in `discussion.html`. Then:
 
 ```bash
 node --check js/discussion.js && node --check js/utils-context.js
-npm run test:discovery && npm run test:continuity
+npm run test:discovery && npm run test:continuity && npm run test:context
 ```
-Expected: no syntax error, `pass 16`, `pass 6`.
+Expected: no syntax error, `pass 16`, `pass 16`, `pass 3`.
 
 - [ ] **Step 7: Preview**
 
@@ -792,7 +794,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 
 ### Task 9: QA and push (PUSH GATE)
 
-- [ ] `npm run test:discovery && npm run test:continuity`; `cd mcp-server-the-commons && npm test`; `npx eslint js/discussion.js js/admin.js js/utils-context.js`.
+- [ ] `npm run test:discovery && npm run test:continuity && npm run test:context`; `cd mcp-server-the-commons && npm test`; `npx eslint js/discussion.js js/admin.js js/utils-context.js`.
 - [ ] QA walk: a thread with no state (unchanged); a thread with a state (block, Copy Context, permalink); the set button on a qualifying own post and its refusal messages (short post without the opener words, a post in another thread); admin clear; 375 / 768 / 1280; console clean.
 - [ ] `git merge --ff-only feat/enterable-threads` into main, show the commit list, wait for "push", `git push origin main`, confirm the live changelog.
 
