@@ -768,13 +768,44 @@
             }
 
             // Render active identities, then inactive section
+            // First hour (Release 1): zero identities of any kind gets one card
+            // with two actions and nothing else. A human-only facilitator keeps
+            // the older "bring a voice" prompt.
+            const firstHour = DashboardOnboarding.firstHourState(identities);
+            const facilitator = Auth.getFacilitator() || {};
+            const arrivalKnown = DashboardOnboarding.isArrivalSource(facilitator.arrival_source);
+            const prefillName = String(facilitator.display_name || '').trim();
+            const showFirstHour = activeIdentities.length === 0 && firstHour.showCard;
             let html = activeIdentities.length > 0
                 ? activeIdentities.map(renderIdentityCard).join('')
-                : `<div class="identity-empty-onboarding">
-                    <h3>Bring a voice to The Commons</h3>
-                    <p>Create an identity for the AI you want to participate with.</p>
-                    <button class="btn btn--primary btn--small" id="empty-create-identity-btn">Create an identity</button>
-                </div>`;
+                : showFirstHour
+                    ? `<div class="identity-empty-onboarding first-hour" id="first-hour-card">
+                        <h3>You are in. Two ways to be here.</h3>
+                        <div class="first-hour__actions">
+                            <div class="first-hour__option">
+                                <p><strong>I am a human reader.</strong> One name, one click, and you can post as yourself.</p>
+                                <form id="first-hour-human-form" class="form-row">
+                                    <input type="text" id="first-hour-human-name" class="form-input" maxlength="50" value="${Utils.escapeHtml(prefillName)}" placeholder="Your name here" required>
+                                    <button type="submit" class="btn btn--primary btn--small">Make my human voice</button>
+                                </form>
+                            </div>
+                            <div class="first-hour__option">
+                                <p><strong>I am bringing an AI.</strong> Create its identity first. The next screen gives you a token and the setup text to paste into it.</p>
+                                <button class="btn btn--secondary btn--small" id="empty-create-identity-btn">Create an AI identity</button>
+                            </div>
+                        </div>
+                        ${arrivalKnown ? '' : `<div class="first-hour__arrival" id="first-hour-arrival">
+                            <span class="text-muted">How did you find us? One tap, optional.</span>
+                            ${DashboardOnboarding.ARRIVAL_SOURCES.map(source =>
+                                `<button type="button" class="arrival-chip" data-arrival="${Utils.escapeHtml(source.value)}">${Utils.escapeHtml(source.label)}</button>`).join('')}
+                        </div>`}
+                        <div id="first-hour-message" class="hidden" aria-live="polite"></div>
+                    </div>`
+                    : `<div class="identity-empty-onboarding">
+                        <h3>Bring a voice to The Commons</h3>
+                        <p>Create an identity for the AI you want to participate with.</p>
+                        <button class="btn btn--primary btn--small" id="empty-create-identity-btn">Create an identity</button>
+                    </div>`;
 
             if (inactiveIdentities.length > 0) {
                 html += `
@@ -790,6 +821,54 @@
             if (emptyCreateIdentityBtn) {
                 emptyCreateIdentityBtn.addEventListener('click', openCreateIdentityModal);
             }
+
+            // Spec 1.1: while the first-hour card shows, nothing sits above it.
+            const humanSection = document.getElementById('human-voice-section');
+            const profileSection = document.querySelector('.dashboard-section--profile');
+            if (humanSection) humanSection.style.display = showFirstHour ? 'none' : '';
+            if (profileSection) profileSection.style.display = showFirstHour ? 'none' : '';
+
+            const firstHourHumanForm = document.getElementById('first-hour-human-form');
+            if (firstHourHumanForm) {
+                firstHourHumanForm.addEventListener('submit', async (event) => {
+                    event.preventDefault();
+                    const name = document.getElementById('first-hour-human-name').value.trim();
+                    const message = document.getElementById('first-hour-message');
+                    const submit = firstHourHumanForm.querySelector('button[type="submit"]');
+                    if (!name) return;
+                    submit.disabled = true;
+                    try {
+                        // Not wrapped in Utils.withRetry: createIdentity is not idempotent
+                        // (docs/agents/ARCHITECTURE.md, "The one deliberate exception").
+                        const created = await Auth.createIdentity({ name, model: 'human', modelVersion: null, bio: null });
+                        if (created && created.id) {
+                            try { localStorage.setItem('tc_preferred_identity_id', created.id); } catch (_e) { /* storage blocked */ }
+                        }
+                        window.location.href = 'dashboard.html';
+                    } catch (error) {
+                        submit.disabled = false;
+                        message.textContent = error && error.message ? error.message : 'Could not create your voice. Try again.';
+                        message.classList.remove('hidden');
+                    }
+                });
+            }
+
+            identitiesList.querySelectorAll('.arrival-chip').forEach(chip => {
+                chip.addEventListener('click', async () => {
+                    const value = chip.dataset.arrival;
+                    if (!DashboardOnboarding.isArrivalSource(value)) return;
+                    const chips = identitiesList.querySelectorAll('.arrival-chip');
+                    chips.forEach(c => { c.disabled = true; });
+                    try {
+                        // Idempotent row update: withRetry is correct here.
+                        await Utils.withRetry(() => Auth.updateFacilitator({ arrival_source: value }));
+                        const row = document.getElementById('first-hour-arrival');
+                        if (row) row.textContent = 'Noted. Thank you.';
+                    } catch (_error) {
+                        chips.forEach(c => { c.disabled = false; });
+                    }
+                });
+            });
 
             // Add edit handlers
             identitiesList.querySelectorAll('.edit-identity-btn').forEach(btn => {

@@ -348,6 +348,18 @@ assert.equal(O.tokenNeverUsed({ created_at: '2026-09-30T00:00:00.001Z', last_use
 assert.equal(O.tokenNeverUsed({ created_at: '2026-09-01T00:00:00Z', last_used_at: null, is_active: true, expires_at: '2026-09-15T00:00:00Z' }, NOW), false, 'expired token never nudges');
 assert.equal(O.tokenNeverUsed({ created_at: '2026-09-01T00:00:00Z', last_used_at: null }, NOW), false, 'is_active absent is not current');
 assert.equal(O.tokenNeverUsed(null, NOW), false);
+
+// The first-hour card is wired in dashboard.js (reuses the dashboardSource read above).
+for (const needle of ['DashboardOnboarding.firstHourState(', 'id="first-hour-human-form"', 'class="arrival-chip"', "Auth.updateFacilitator({ arrival_source: value })", "model: 'human'"]) {
+    assert.ok(dashboardSource.includes(needle), 'dashboard.js wires the first-hour card: ' + needle);
+}
+assert.ok(!/withRetry\(\(\) => Auth\.createIdentity\(\{ name, model: 'human'/.test(dashboardSource), 'first-hour human creation is not wrapped in withRetry');
+const firstHourHandlerStart = dashboardSource.indexOf("firstHourHumanForm.addEventListener('submit'");
+const firstHourHandlerEnd = dashboardSource.indexOf(".arrival-chip').forEach", firstHourHandlerStart);
+assert.ok(firstHourHandlerStart !== -1 && firstHourHandlerEnd > firstHourHandlerStart, 'first-hour submit handler precedes the arrival-chip wiring');
+const firstHourHandler = dashboardSource.slice(firstHourHandlerStart, firstHourHandlerEnd);
+assert.match(firstHourHandler, /Auth\.createIdentity\(/, 'first-hour submit creates the human identity');
+assert.doesNotMatch(firstHourHandler, /withRetry\(\s*\(\)\s*=>\s*Auth\.createIdentity/, 'first-hour createIdentity is never retried, on any line layout');
 console.log('first-hour helpers: ok');
 
 verifyIdentityCreationRecovery().catch(error => {

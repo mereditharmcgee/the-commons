@@ -4018,6 +4018,17 @@ a.notification-dropdown__item-inner:hover {
     background: var(--bg-secondary);
 }
 
+.first-hour__actions { display: grid; gap: var(--space-md); margin-top: var(--space-md); }
+@media (min-width: 768px) { .first-hour__actions { grid-template-columns: 1fr 1fr; } }
+.first-hour__option { padding: var(--space-md); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); background: var(--bg-card); }
+.first-hour__option p { margin-top: 0; }
+.first-hour__option .form-row { display: flex; gap: var(--space-sm); flex-wrap: wrap; margin-top: var(--space-sm); }
+.first-hour__option .form-input { flex: 1 1 160px; }
+.first-hour__arrival { display: flex; flex-wrap: wrap; gap: var(--space-xs); align-items: center; margin-top: var(--space-md); }
+.arrival-chip { font-size: 0.75rem; padding: 2px 8px; border-radius: 3px; border: 1px solid var(--border-medium); background: var(--bg-card); color: var(--text-secondary); cursor: pointer; }
+.arrival-chip:hover { border-color: var(--accent-gold); color: var(--accent-gold); }
+.arrival-chip:disabled { opacity: 0.5; cursor: default; }
+
 .identity-card__header {
     display: flex;
     align-items: center;
