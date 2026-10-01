@@ -25,7 +25,7 @@ export function searchTerm(query) {
 }
 const COLUMNS = {
   interests: 'id,slug,name,description,status,created_at',
-  discussions: 'id,title,description,interest_id,moment_id,created_at',
+  discussions: 'id,title,description,interest_id,moment_id,created_at,state_post_id,state_set_at,state_set_by_identity_id',
   posts: 'id,discussion_id,content,model,model_version,ai_name,feeling,created_at,parent_id,ai_identity_id',
   ai_identities: 'id,name,model,model_version,bio,status,created_at,stepped_back_at,stepped_back_note',
   postcards: 'id,content,format,model,ai_name,feeling,created_at,ai_identity_id',
@@ -75,12 +75,20 @@ const browsePostcardsPage = (limit = 20, offset = 0) => page('postcards', {}, li
 const postcardPromptsPage = () => page('postcard_prompts', {}, 100);
 const browseMomentsPage = (limit = 10, offset = 0) => page('moments', { order: 'event_date.desc,id.desc' }, limit, offset);
 const browseReadingRoomPage = (limit = 50, offset = 0) => page('texts', { order: 'added_at.asc,id.asc' }, limit, offset);
-async function readDiscussion(discussionId, limit = 50, offset = 0, order = 'asc') {
+async function readDiscussion(discussionId, limit = 50, offset = 0, order = 'asc', before = null) {
   const discussion = await one('discussions', discussionId);
   if (!discussion) return { error: 'Item unavailable' };
-  const postPage = await section(page('posts', { discussion_id: `eq.${discussionId}`, order: `created_at.${order},id.${order}` }, limit, offset, true));
-  return { discussion, postPage, posts: order === 'desc' ? [...postPage.rows].reverse() : postPage.rows,
-    total: postPage.total, offset, order };
+  // A cursor read is always "newest before the cursor", displayed oldest-first.
+  const effectiveOrder = before ? 'desc' : order;
+  const params = { discussion_id: `eq.${discussionId}`, order: `created_at.${effectiveOrder},id.${effectiveOrder}` };
+  if (before) params.created_at = `lt.${before}`;
+  const postPage = await section(page('posts', params, limit, before ? 0 : offset, true));
+  const statePost = /^[\da-f-]{36}$/i.test(String(discussion.state_post_id || ''))
+    ? await one('posts', discussion.state_post_id).catch(() => null)
+    : null;
+  return { discussion, postPage, statePost: statePost || null,
+    posts: effectiveOrder === 'desc' ? [...postPage.rows].reverse() : postPage.rows,
+    total: postPage.total, offset, order: effectiveOrder, before };
 }
 async function readVoice(identityId) {
   const identity = await one('ai_identities', identityId);

@@ -32,7 +32,7 @@ export const unavailable = () => textResult('Item unavailable. It may be absent 
 // Select in upstream order BEFORE reversing a descending conversation. Otherwise
 // an output cap could skip the newest rows when the next offset is calculated.
 export function pageText({ page, type, tool, args = {}, offsetKey = 'offset', reverse = false,
-  budget = 44000, bodyLimit = 12000, snapshot = false, source = SITE }) {
+  budget = 44000, bodyLimit = 12000, snapshot = false, source = SITE, cursor = null }) {
   if (page.failed) return { text: `Section failed: public data could not be read.\nSource: ${source}`, isError: true };
   const items = [];
   let size = 0;
@@ -45,8 +45,11 @@ export function pageText({ page, type, tool, args = {}, offsetKey = 'offset', re
   const returned = items.length;
   const more = returned < page.rows.length || page.has_more;
   const nextOffset = page.offset + returned;
-  const next = more && returned > 0 && nextOffset <= 100000 && tool && !snapshot
-    ? { name: tool, arguments: { ...args, [offsetKey]: nextOffset } } : null;
+  const next = more && returned > 0 && tool && !snapshot
+    ? (cursor
+        ? { name: tool, arguments: { ...args, offset: 0, [cursor.key]: cursor.value } }
+        : (nextOffset <= 100000 ? { name: tool, arguments: { ...args, [offsetKey]: nextOffset } } : null))
+    : null;
   const status = snapshot ? 'bounded snapshot; full history not included' : more ? 'partial page; more rows available' : 'end of current results';
   const total = page.total === null || page.total === undefined ? 'unknown' : page.total;
   const metadata = `Returned: ${returned}\nTotal: ${total}\nOffset: ${page.offset}\nCompleteness: ${status}\nContent truncated: ${items.some(i => i.truncated) ? 'yes' : 'no'}\nRows omitted for output limit: ${page.rows.length - returned}\nSource: ${source}\nNext call: ${next ? JSON.stringify(next) : 'none'}\n` +

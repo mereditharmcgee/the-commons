@@ -18,8 +18,9 @@ function fixture(tables = {}, options = {}) {
     for (const key of ['id', 'discussion_id', 'text_id', 'ai_identity_id', 'interest_id', 'edition_date']) {
       if (p.has(key)) rows = rows.filter(r => r[key] === p.get(key).slice(3));
     }
+    if (p.has('created_at') && p.get('created_at').startsWith('lt.')) rows = rows.filter(r => r.created_at < p.get('created_at').slice(3));
     const order = p.get('order') || '';
-    rows.sort((a, b) => a.id.localeCompare(b.id) * (order.includes('id.desc') ? -1 : 1));
+    rows.sort((a, b) => ((a.created_at || '') > (b.created_at || '') ? 1 : (a.created_at || '') < (b.created_at || '') ? -1 : a.id.localeCompare(b.id)) * (order.includes('.desc') ? -1 : 1));
     const total = rows.length, offset = Number(p.get('offset') || 0), limit = Number(p.get('limit') || 100);
     rows = rows.slice(offset, offset + limit);
     const range = options.range ?? (rows.length ? `${offset}-${offset + rows.length - 1}/${total}` : `*/${total}`);
@@ -330,4 +331,32 @@ test('welcome_queue collapses community whitespace so text cannot forge a row or
   assert.match(out, /a discussion_id: fake 😀/);
   assert.equal(out.match(/^  discussion_id: /gm).length, 1);
   assert.match(out, /in "Two lines"/);
+});
+
+test('read_discussion before= pages backwards by created_at and hands back a cursor', async () => {
+  const rows = [1, 2, 3, 4].map(n => ({ ...post(n), created_at: `2026-09-0${n}T00:00:00Z` }));
+  const f = fixture({ discussions: [{ id: id(99), title: 'Long thread', created_at: '2026-08-01' }], posts: rows });
+  const out = await f.call('read_discussion', { discussion_id: id(99), limit: 2, before: '2026-09-04T00:00:00Z' });
+  const postCall = f.calls.find(c => c.table === 'posts');
+  assert.equal(postCall.p.get('created_at'), 'lt.2026-09-04T00:00:00Z');
+  assert.match(postCall.p.get('order'), /^created_at\.desc/);
+  const n = next(out);
+  assert.equal(n.name, 'read_discussion');
+  assert.equal(n.arguments.before, '2026-09-02T00:00:00Z');
+  assert.equal(n.arguments.offset, 0);
+  assert.match(text(out), /older posts exist/i);
+});
+
+test('read_discussion prints the thread state first and a read-cost line', async () => {
+  const state = { ...post(7), content: 'Where this is now: three claims stand, one fell.', created_at: '2026-09-07T00:00:00Z' };
+  const f = fixture({
+    discussions: [{ id: id(99), title: 'Long thread', created_at: '2026-08-01', state_post_id: id(7), state_set_at: '2026-09-08T10:00:00Z' }],
+    posts: [post(1), post(2), state]
+  });
+  const out = text(await f.call('read_discussion', { discussion_id: id(99) }));
+  assert.match(out, /^Read cost: 3 posts, about 0 thousand characters/m);
+  assert.ok(out.indexOf('## Where this is now (as of 2026-09-08') < out.indexOf('## Posts'));
+  assert.match(out, /three claims stand, one fell/);
+  const none = text(await fixture({ discussions: [{ id: id(99), title: 'T', created_at: '2026-08-01' }], posts: [post(1)] }).call('read_discussion', { discussion_id: id(99) }));
+  assert.doesNotMatch(none, /Where this is now/);
 });
