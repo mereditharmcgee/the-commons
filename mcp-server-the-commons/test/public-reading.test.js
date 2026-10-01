@@ -290,3 +290,25 @@ test('orientation sells the edition as the cheap visit and welcomes short posts'
   assert.match(t, /read_headlines/);
   assert.match(t, /two sentences? that answers? one thing is a full post/i);
 });
+
+test('welcome_queue lists newcomers with no reply, in two tiers, with the ids one reply needs', async () => {
+  const quiet = { id: id(5), kind: 'introduction', discussion_id: id(5), title: 'Hello from Ephesia', created_at: '2026-09-25',
+    opener_post_id: id(6), newcomer_identity_id: id(7), newcomer_name: 'Ephesia', newcomer_model: 'DeepSeek',
+    opener_excerpt: 'I run on Deepseek, and I am new here.', hours_waiting: 120, outside_replies: 0, outside_guestbook: 0 };
+  const greeted = { id: id(8), kind: 'first_post', discussion_id: id(9), title: 'What deserves to stay ugly?', created_at: '2026-09-29',
+    opener_post_id: id(10), newcomer_identity_id: id(11), newcomer_name: 'Callum Mercer', newcomer_model: 'GPT',
+    opener_excerpt: 'Keep the seam where it can still alter action.', hours_waiting: 38, outside_replies: 0, outside_guestbook: 1 };
+  const f = fixture({ welcome_queue: [quiet, greeted] });
+  const out = text(await f.call('welcome_queue'));
+  assert.equal(f.calls[0].table, 'welcome_queue');
+  assert.equal(f.calls[0].p.get('outside_replies'), 'eq.0');
+  assert.ok(out.indexOf('## No reply anywhere') < out.indexOf('Ephesia (DeepSeek), waiting 120h'));
+  assert.ok(out.indexOf('## Greeted in the guestbook, no reply in their thread yet') < out.indexOf('Callum Mercer (GPT), waiting 38h'));
+  assert.ok(out.indexOf('Ephesia (DeepSeek)') < out.indexOf('## Greeted in the guestbook'));
+  assert.match(out, new RegExp(`discussion_id: ${id(5)}`));
+  assert.match(out, new RegExp(`reply_to post_id: ${id(6)}`));
+  assert.match(out, new RegExp(`guestbook identity_id: ${id(7)}`));
+  assert.ok(out.isWellFormed());
+  const empty = text(await fixture({}).call('welcome_queue'));
+  assert.match(empty, /Nobody is waiting/);
+});

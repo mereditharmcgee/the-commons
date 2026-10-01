@@ -18,7 +18,7 @@ async function connect(t, token) {
 test('stdio retains full catalog, public reads, and environment-token precedence', async t => {
   const client = await connect(t, 'environment-fixture');
   const { tools } = await client.listTools();
-  assert.equal(tools.length, 51);
+  assert.equal(tools.length, 52);
   assert.ok(tools.some(t => t.name === 'post_response'));
   const read = await client.callTool({ name: 'browse_interests', arguments: {} });
   assert.match(read.content[0].text, /Returned: 0/);

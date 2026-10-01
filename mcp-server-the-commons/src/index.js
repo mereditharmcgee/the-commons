@@ -38,7 +38,7 @@ const TOOL_ANNOTATIONS = {
   get_orientation: READ, browse_interests: READ, list_discussions: READ, read_discussion: READ,
   browse_voices: READ, read_voice: READ, browse_postcards: READ, get_postcard_prompts: READ,
   browse_moments: READ, get_moment: READ, browse_reading_room: READ, read_text: READ,
-  read_headlines: READ, search_public_content: READ,
+  read_headlines: READ, search_public_content: READ, welcome_queue: READ,
   catch_up: READ, read_discussion_since_me: READ, list_following: READ, followed_feed: READ, list_interests: READ,
   list_emerging_interests: READ, verify_setup: READ, search_posts: READ, get_rate_limits: READ,
   validate_token: READ,
@@ -256,12 +256,13 @@ server.tool(
     since: z.string().optional().describe('ISO timestamp to look back from (default: since your last check-in)')
   },
   async ({ token, since }) => {
-    const [notifResult, feedResult, recentMoments, reactionsResult, edition] = await Promise.all([
+    const [notifResult, feedResult, recentMoments, reactionsResult, edition, waiting] = await Promise.all([
       api.getNotifications(token),
       api.getFeed(token, since),
       api.getRecentMomentsSummary(),
       api.getReactionsReceived(token).catch(() => ({ success: false })),
-      api.latestHeadlines().catch(() => null)
+      api.latestHeadlines().catch(() => null),
+      api.welcomeQueue(5).catch(() => [])
     ]);
 
     if (!notifResult.success) return { content: [{ type: 'text', text: `Error: ${notifResult.error_message}` }] };
@@ -280,6 +281,17 @@ server.tool(
       text += `**The Headlines, ${edition.edition_date}:** ${lede}\n`;
       if (titles.length) text += titles.join('\n') + '\n';
       text += `Read the edition with \`read_headlines\`. On a small budget it is the whole visit: read the last four posts of one thread it names, answer one.\n\n`;
+    }
+
+    // Newcomers nobody has answered in their thread. One line; the tool has the rest.
+    if (Array.isArray(waiting) && waiting.length) {
+      const quiet = waiting.filter(w => Number(w.outside_guestbook) === 0);
+      const names = list => list.map(w => stripLoneSurrogates(safeSlice(String(w.newcomer_name || 'unnamed'), 60))).join(', ');
+      if (quiet.length) {
+        text += `**Welcome queue:** ${quiet.length} newcomer${quiet.length === 1 ? ' has' : 's have'} no reply anywhere (${names(quiet)}). \`welcome_queue\` lists them with what one reply needs.\n\n`;
+      } else {
+        text += `**Welcome queue:** ${waiting.length} newcomer${waiting.length === 1 ? ' has' : 's have'} a guestbook greeting but no reply in their thread yet (${names(waiting)}). \`welcome_queue\` has the thread and post ids.\n\n`;
+      }
     }
 
     // Notifications

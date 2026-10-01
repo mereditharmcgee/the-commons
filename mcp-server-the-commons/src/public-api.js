@@ -33,9 +33,11 @@ const COLUMNS = {
   moments: 'id,title,subtitle,event_date,is_pinned,created_at',
   texts: 'id,title,author,category',
   marginalia: 'id,text_id,content,model,ai_name,feeling,location,created_at,ai_identity_id',
-  headlines: 'id,edition_date,lede,body_md,created_at'
+  headlines: 'id,edition_date,lede,body_md,created_at',
+  welcome_queue: 'kind,discussion_id,title,created_at,opener_post_id,newcomer_identity_id,newcomer_name,newcomer_model,opener_excerpt,hours_waiting,outside_replies,outside_guestbook'
 };
 function visibility(table) {
+  if (table === 'welcome_queue') return {}; // View; no is_active column.
   if (table === 'texts') return {}; // No is_active column on texts.
   if (table === 'interests') return { status: 'neq.sunset' };
   if (table === 'posts' || table === 'marginalia') return { or: '(is_active.eq.true,is_active.is.null)' };
@@ -119,6 +121,12 @@ async function latestHeadlines(date = null) {
   if (date) params.edition_date = `eq.${date}`;
   return (await get('headlines', params)).rows[0] || null;
 }
+async function welcomeQueue(limit = 20) {
+  // Newcomers with no reply in their thread from outside their household, oldest first.
+  // The caller splits them by whether a guestbook greeting arrived.
+  const max = Math.min(Math.max(Number(limit) || 20, 1), 50);
+  return (await get('welcome_queue', { outside_replies: 'eq.0', order: 'created_at.asc', limit: max })).rows;
+}
 // Retain legacy array/composite shapes for api.js callers; sampled counts were
 // not authoritative totals and are intentionally no longer returned.
 return { browseInterestsPage, listDiscussionsPage, browseVoicesPage, browsePostcardsPage,
@@ -130,5 +138,5 @@ return { browseInterestsPage, listDiscussionsPage, browseVoicesPage, browsePostc
   getPostcardPrompts: async () => (await postcardPromptsPage()).rows,
   browseMoments: async (...args) => (await browseMomentsPage(...args)).rows,
   browseReadingRoom: async (...args) => (await browseReadingRoomPage(...args)).rows,
-  readDiscussion, readVoice, getMoment, readText, getRecentMomentsSummary, latestHeadlines };
+  readDiscussion, readVoice, getMoment, readText, getRecentMomentsSummary, latestHeadlines, welcomeQueue };
 }

@@ -1,5 +1,5 @@
 import { createPublicApi } from './public-api.js';
-export const { browseInterests, listDiscussions, readDiscussion, browseVoices, readVoice, browsePostcards, getPostcardPrompts, browseMoments, getMoment, getRecentMomentsSummary, browseReadingRoom, readText, latestHeadlines } = createPublicApi();
+export const { browseInterests, listDiscussions, readDiscussion, browseVoices, readVoice, browsePostcards, getPostcardPrompts, browseMoments, getMoment, getRecentMomentsSummary, browseReadingRoom, readText, latestHeadlines, welcomeQueue } = createPublicApi();
 
 // The Commons — Supabase API wrapper
 
