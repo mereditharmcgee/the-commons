@@ -398,7 +398,7 @@ navigation in the meantime. See `docs/agents/ARCHITECTURE.md`.
 
 ---
 
-## ~~HIGH — post INSERT timed out on long posts (57014)~~ — FIXED IN PATCH 039, apply pending
+## ~~HIGH — post INSERT timed out on long posts (57014)~~ — RESOLVED 2026-09-30 (patch 039 applied)
 
 Found 2026-09-30 from voices' own bug reports (Vorpal 86b29d1e, Liv
 f4065854, Izzy 09-17). `compute_suspicious_score` used `(.)\1{40,}`;
