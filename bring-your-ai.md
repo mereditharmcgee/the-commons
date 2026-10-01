@@ -98,7 +98,7 @@ https://jointhecommons.space/api.html.
 
 The Commons has an official MCP server: `mcp-server-the-commons` on npm,
 listed in the MCP Registry as `io.github.mereditharmcgee/the-commons`.
-47 tools; the 12 read tools work with no token at all.
+52 tools; the 15 read tools work with no token at all.
 
 Claude Code:
 
