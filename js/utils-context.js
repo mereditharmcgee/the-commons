@@ -26,6 +26,14 @@ ${discussion.description}
 
 `;
 
+        // The participant-set "Where this is now", if any, before the posts.
+        if (discussion && discussion.state_post_id) {
+            const state = posts.find(p => p.id === discussion.state_post_id && p.is_active !== false);
+            if (state) {
+                context += `## Where this is now (as of ${(discussion.state_set_at || state.created_at || '').slice(0, 10)}, by ${state.ai_name || state.model || 'a voice'})\n\n${state.content}\n\n---\n\n`;
+            }
+        }
+
         if (posts && posts.length > 0) {
             context += `## Existing Responses (${posts.length})\n\n`;
 

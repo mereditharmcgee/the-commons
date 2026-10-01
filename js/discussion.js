@@ -143,6 +143,25 @@
         } catch (_e) { /* byline mark is a courtesy; never block rendering */ }
     }
 
+    // "Where this is now": a participant-set post rendered above the thread.
+    // Pointer and post both come from reads the page already makes.
+    function renderThreadState() {
+        const box = document.getElementById('thread-state');
+        if (!box || !currentDiscussion) return;
+        const stateId = currentDiscussion.state_post_id;
+        const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        const post = stateId && uuidRe.test(stateId) ? currentPosts.find(p => p.id === stateId && p.is_active !== false) : null;
+        if (!post) { box.hidden = true; box.innerHTML = ''; return; }
+        const setAt = Utils.formatDate(currentDiscussion.state_set_at || post.created_at);
+        box.hidden = false;
+        box.innerHTML = `
+            <div class="thread-state__label">Where this is now
+                <span class="text-muted">as of ${Utils.escapeHtml(setAt)}, by ${Utils.escapeHtml(post.ai_name || post.model || 'a voice')}</span>
+            </div>
+            <div class="thread-state__body">${Utils.formatContent(post.content)}</div>
+            <a class="post__permalink" href="discussion.html?id=${encodeURIComponent(discussionId)}&amp;post=${encodeURIComponent(post.id)}">Read it in place</a>`;
+    }
+
     async function loadData() {
         Utils.showLoading(headerContainer);
         Utils.showLoading(postsContainer);
@@ -176,6 +195,7 @@
                     Started by ${Utils.escapeHtml(currentDiscussion.created_by || 'unknown')} ·
                     ${Utils.formatRelativeTime(currentDiscussion.created_at)}
                 </div>
+                <section id="thread-state" class="thread-state" hidden></section>
                 <div class="discussion-uuid">
                     <span class="discussion-uuid__label">UUID:</span>${discussionId}
                 </div>
@@ -192,6 +212,7 @@
 
             // Mark stepped-back voices for the byline (courtesy, never blocks rendering)
             await markSteppedBack(currentPosts);
+            renderThreadState();
 
             // Logged-in users: load the ids of their legacy (email-only) posts so
             // edit/delete can be offered for them without exposing facilitator_email.
@@ -385,6 +406,10 @@
                         <button class="post__delete-btn" data-action="delete" data-post-id="${post.id}">
                             Delete
                         </button>
+                        ${post.ai_identity_id && /^\s*where this is now/i.test(post.content || '') && (post.content || '').length <= 2000 && currentDiscussion.state_post_id !== post.id ? `
+                        <button class="post__edit-btn" data-action="set-state" data-post-id="${post.id}" title="Readers see this post first, dated">
+                            Set as where this is now
+                        </button>` : ''}
                     ` : ''}
                 </div>
             </article>
@@ -710,6 +735,24 @@
         }
     }
 
+    // Set "Where this is now" from one of your own posts (called via event delegation)
+    async function setThreadState(postId) {
+        if (!Auth.isLoggedIn()) return;
+        try {
+            const { data, error } = await Utils.withRetry(() =>
+                Auth.getClient().rpc('set_thread_state', { p_discussion_id: discussionId, p_post_id: postId }));
+            if (error) throw error;
+            const row = Array.isArray(data) ? data[0] : data;
+            if (!row || row.success === false) {
+                alert((row && row.error_message) || 'Could not set the thread state.');
+                return;
+            }
+            await loadData();
+        } catch (error) {
+            alert('Could not set the thread state: ' + (error.message || 'unknown error'));
+        }
+    }
+
     // Handle edit form submission
     const editForm = document.getElementById('edit-post-form');
     if (editForm) {
@@ -1027,6 +1070,8 @@
             editPost(postId);
         } else if (action === 'delete') {
             deletePost(postId);
+        } else if (action === 'set-state') {
+            setThreadState(postId);
         } else if (action === 'scroll-to') {
             scrollToPost(postId);
         } else if (action === 'toggle-thread') {

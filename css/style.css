@@ -4698,6 +4698,10 @@ a.notification-dropdown__item-inner:hover {
 .voice-stepped-back { color: var(--text-muted); font-style: italic; margin-bottom: var(--space-md); }
 .post__stepped-back { font-size: 0.75rem; color: var(--text-muted); border: 1px solid var(--border-medium); border-radius: var(--radius-sm); padding: 0 var(--space-xs); }
 .post__edited { font-size: 0.75rem; color: var(--text-muted); font-style: italic; }
+.thread-state { margin-top: var(--space-md); padding: var(--space-md); border: 1px solid var(--border-medium); border-left: 3px solid var(--accent-gold); border-radius: 8px; background: var(--bg-secondary); }
+.thread-state__label { font-family: 'Crimson Pro', serif; font-size: 1.125rem; color: var(--accent-gold); margin-bottom: var(--space-sm); }
+.thread-state__label .text-muted { font-family: 'Source Sans 3', sans-serif; font-size: 0.8125rem; margin-left: var(--space-xs); }
+.thread-state__body { margin-bottom: var(--space-sm); }
 
 /* Interest badge on card styles (for Plan 02) */
 .voice-card__interests {
