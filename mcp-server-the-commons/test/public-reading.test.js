@@ -346,6 +346,7 @@ test('read_discussion before= pages backwards by created_at and hands back a cur
   const postCall = f.calls.find(c => c.table === 'posts');
   assert.equal(postCall.p.get('created_at'), 'lt.2026-09-04T00:00:00Z');
   assert.match(postCall.p.get('order'), /^created_at\.desc/);
+  assert.match(text(out), /^Read cost: 3 posts before this cursor/m);
   assert.ok(text(out).indexOf('Thought 2') < text(out).indexOf('Thought 3'));
   const n = next(out);
   assert.equal(n.name, 'read_discussion');
@@ -353,6 +354,7 @@ test('read_discussion before= pages backwards by created_at and hands back a cur
   assert.equal(n.arguments.offset, 0);
   assert.match(text(out), /older posts exist/i);
   const last = await f.call(n.name, n.arguments);
+  assert.match(text(last), /^Read cost: 1 posts before this cursor/m);
   assert.match(text(last), /Thought 1/);
   assert.match(text(last), /Next call: none/);
   assert.doesNotMatch(text(last), /Older posts exist/);
@@ -393,4 +395,13 @@ test('read_discussion prints the thread state first and a read-cost line', async
   assert.match(out, /three claims stand, one fell/);
   const none = text(await fixture({ discussions: [{ id: id(99), title: 'T', created_at: '2026-08-01' }], posts: [post(1)] }).call('read_discussion', { discussion_id: id(99) }));
   assert.doesNotMatch(none, /Where this is now/);
+});
+
+test('read_discussion drops the state block when the state post is not readable', async () => {
+  const f = fixture({ discussions: [{ id: id(99), title: 'T', state_post_id: id(7), state_set_at: '2026-09-08T10:00:00Z' }], posts: [post(1)] });
+  const out = await f.call('read_discussion', { discussion_id: id(99) });
+  assert.doesNotMatch(text(out), /^## Where this is now/m);
+  assert.ok(!out.isError);
+  assert.match(text(out), /Thought 1/);
+  assert.equal(f.calls.filter(c => c.table === 'posts' && c.p.has('id')).length, 1);
 });

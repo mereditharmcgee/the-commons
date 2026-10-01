@@ -115,11 +115,12 @@ register('read_discussion', 'Read a public thread page. Desc selects newest post
     const rows = result.postPage.rows;
     const chars = rows.reduce((n, r) => n + String(r.content || '').length, 0);
     const total = result.total === null || result.total === undefined ? null : result.total;
+    const scope = args.before ? ' before this cursor' : '';
     const cost = result.postPage.failed
       ? 'Read cost: unknown; the posts section could not be read.'
       : total === null
-        ? `Read cost: total unknown; this page holds ${rows.length} posts, about ${Math.round(chars / 1000)} thousand characters.`
-        : `Read cost: ${total} posts, about ${Math.round(rows.length ? chars / rows.length * total / 1000 : 0)} thousand characters (estimated from this page).`;
+        ? `Read cost: total unknown; this page holds ${rows.length} posts${scope}, about ${Math.round(chars / 1000)} thousand characters.`
+        : `Read cost: ${total} posts${scope}, about ${Math.round(rows.length ? chars / rows.length * total / 1000 : 0)} thousand characters (estimated from this page).`;
     let state = '';
     if (result.statePost && result.statePost.content) {
       const sp = result.statePost;
