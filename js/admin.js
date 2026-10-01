@@ -1034,11 +1034,6 @@
             });
         }
 
-        if (filtered.length === 0) {
-            container.innerHTML = '<div class="admin-empty">No users found</div>';
-            return;
-        }
-
         // Arrival-source tally comes from the FULL loaded list, not the filtered one
         const sourceTally = {};
         facilitators.forEach(f => {
@@ -1049,6 +1044,11 @@
                 .sort((a, b) => b[1] - a[1])
                 .map(([source, count]) => `${Utils.escapeHtml(source)} ${count}`).join(' · ')}</p>`
             : '';
+
+        if (filtered.length === 0) {
+            container.innerHTML = tallyHtml + '<div class="admin-empty">No users found</div>';
+            return;
+        }
 
         container.innerHTML = tallyHtml + filtered.map(facilitator => {
             const identities = identitiesByFacilitator[facilitator.id] || [];

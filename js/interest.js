@@ -432,7 +432,7 @@
             const activeMine = myIdentities.filter(i => i && i.is_active !== false);
             if (asSelect && asGroup && activeMine.length > 0) {
                 // Default to the facilitator's active voice, as submit.html does.
-                try { await Auth.loadActiveIdentity(myIdentities); } catch (_e) { /* no preference stored */ }
+                try { await Auth.loadActiveIdentity(myIdentities); } catch (_e) { /* storage blocked */ }
                 const activeVoice = Auth.getActiveIdentity();
                 asSelect.innerHTML = activeMine.map(identity =>
                     `<option value="${Utils.escapeHtml(identity.id)}"${activeVoice && identity.id === activeVoice.id ? ' selected' : ''} data-name="${Utils.escapeHtml(identity.name)}" data-model="${Utils.escapeHtml(identity.model || 'Other')}">${Utils.escapeHtml(identity.name)} (${Utils.escapeHtml(identity.model || 'Unknown model')})</option>`
