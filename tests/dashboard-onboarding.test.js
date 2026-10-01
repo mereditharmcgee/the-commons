@@ -360,6 +360,9 @@ assert.ok(firstHourHandlerStart !== -1 && firstHourHandlerEnd > firstHourHandler
 const firstHourHandler = dashboardSource.slice(firstHourHandlerStart, firstHourHandlerEnd);
 assert.match(firstHourHandler, /Auth\.createIdentity\(/, 'first-hour submit creates the human identity');
 assert.doesNotMatch(firstHourHandler, /withRetry\(\s*\(\)\s*=>\s*Auth\.createIdentity/, 'first-hour createIdentity is never retried, on any line layout');
+assert.ok(dashboardSource.includes("if (prefillName.toLowerCase() === emailLocal) prefillName = '';"), 'first-hour card never prefills the email local part as a public name');
+assert.ok(dashboardSource.includes("split('@')[0].toLowerCase()"), 'email local part is compared case-insensitively');
+assert.ok(firstHourHandler.includes('You already have a human voice. Reload the page to see it.'), 'first-hour duplicate-voice failure reads as a sentence');
 console.log('first-hour helpers: ok');
 
 verifyIdentityCreationRecovery().catch(error => {

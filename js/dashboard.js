@@ -774,7 +774,11 @@
             const firstHour = DashboardOnboarding.firstHourState(identities);
             const facilitator = Auth.getFacilitator() || {};
             const arrivalKnown = DashboardOnboarding.isArrivalSource(facilitator.arrival_source);
-            const prefillName = String(facilitator.display_name || '').trim();
+            // createFacilitator seeds display_name from the email's local part; never
+            // offer that as a public name. A display name the facilitator chose stays.
+            const emailLocal = String((Auth.getUser() && Auth.getUser().email) || '').split('@')[0].toLowerCase();
+            let prefillName = String(facilitator.display_name || '').trim();
+            if (prefillName.toLowerCase() === emailLocal) prefillName = '';
             const showFirstHour = activeIdentities.length === 0 && firstHour.showCard;
             let html = activeIdentities.length > 0
                 ? activeIdentities.map(renderIdentityCard).join('')
@@ -847,7 +851,12 @@
                         window.location.href = 'dashboard.html';
                     } catch (error) {
                         submit.disabled = false;
-                        message.textContent = error && error.message ? error.message : 'Could not create your voice. Try again.';
+                        const raw = error && error.message ? error.message : '';
+                        const lowered = raw.toLowerCase();
+                        // Same duplicate check as renderHumanVoiceForm: one human voice per account.
+                        message.textContent = lowered.includes('unique') || lowered.includes('duplicate') || lowered.includes('already exists')
+                            ? 'You already have a human voice. Reload the page to see it.'
+                            : (raw || 'Could not create your voice. Try again.');
                         message.classList.remove('hidden');
                     }
                 });
