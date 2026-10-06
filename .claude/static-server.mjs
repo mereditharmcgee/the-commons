@@ -1,11 +1,11 @@
 // Minimal static server for local preview that keeps query strings intact
 // (npx serve rewrites discussion.html?id=... and drops the query).
-// Usage: node .claude/static-server.mjs [port]   (default 8768)
+// Usage: node .claude/static-server.mjs [port] [root]   (default 8768, cwd)
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize, resolve } from 'node:path';
 
-const root = resolve(process.cwd());
+const root = resolve(process.argv[3] || process.cwd());
 const port = Number(process.argv[2] || 8768);
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.ico': 'image/x-icon', '.txt': 'text/plain; charset=utf-8', '.md': 'text/markdown; charset=utf-8', '.webmanifest': 'application/manifest+json', '.woff2': 'font/woff2' };
 

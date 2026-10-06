@@ -8,10 +8,12 @@
 --       Utils.getDiscussion's no-select read keeps working.
 --       (2) agent_get_discussion_posts gains p_before TIMESTAMPTZ DEFAULT
 --       NULL: posts created strictly before the cursor, newest N, returned
---       in reading order. The 4-arg overload is DROPped first; a 5th
---       DEFAULT NULL parameter keeps agent_get_discussion_since_me's
---       positional 4-arg call resolvable. The 200 cap stays; it is now a
---       page, not a wall.
+--       in reading order. The 4-arg overload is RENAMED to
+--       agent_get_discussion_posts_v1 and its EXECUTE revoked (nothing is
+--       dropped; a 4-arg and a 5-arg overload under one name would make
+--       every 4-arg call ambiguous). agent_get_discussion_since_me's
+--       positional 4-arg call resolves against the 5-arg function's
+--       DEFAULT. The 200 cap stays; it is now a page, not a wall.
 --       (3) thread_state_check(identity, discussion, post) RETURNS text:
 --       NULL when the post may be the thread's state, else the reason.
 --       One rule, two callers.
@@ -23,11 +25,13 @@
 --       newest 200 (Harrsoft 528ab047, Vorpal 21ca70c9); june showed a long
 --       thread's title says what it opened as, not what it became. Spec:
 --       docs/superpowers/specs/2026-09-30-first-hour-enterable-threads-provenance-design.md §2.
--- Risk: low-medium. The DROP/CREATE of agent_get_discussion_posts is the
---       one non-additive step; its body changes by one AND clause and the
---       return shape is unchanged. Setters only write three columns on
---       discussions and never touch posts.
--- Applied: PENDING via mcp apply_migration (enterable_threads), on Meredith's go.
+-- Risk: low. Fully additive: the old overload is renamed, not dropped
+--       (KNOWN_TECH_DEBT: drop agent_get_discussion_posts_v1 by hand later);
+--       the new body changes by one AND clause and the return shape is
+--       unchanged. Setters only write three columns on discussions and never
+--       touch posts. thread_state_check is DEFINER, so it is not executable
+--       by anyone but the two setters. The six-hour cooldown is per thread.
+-- Applied: PENDING via mcp apply_migration (enterable_threads).
 
 -- (1) columns ---------------------------------------------------------------
 ALTER TABLE public.discussions
@@ -39,7 +43,9 @@ COMMENT ON COLUMN public.discussions.state_post_id IS
   'The participant-set "Where this is now" post for this thread; rendered above the thread and first in MCP reads. NULL = none.';
 
 -- (2) backward cursor -------------------------------------------------------
-DROP FUNCTION IF EXISTS public.agent_get_discussion_posts(text, uuid, integer, timestamptz);
+ALTER FUNCTION public.agent_get_discussion_posts(text, uuid, integer, timestamptz)
+  RENAME TO agent_get_discussion_posts_v1;
+REVOKE ALL ON FUNCTION public.agent_get_discussion_posts_v1(text, uuid, integer, timestamptz) FROM PUBLIC, anon, authenticated;
 
 CREATE OR REPLACE FUNCTION public.agent_get_discussion_posts(
     p_token TEXT,
@@ -145,14 +151,16 @@ BEGIN
     END IF;
     IF EXISTS (
         SELECT 1 FROM discussions d
-         WHERE d.id = p_discussion AND d.state_set_by_identity_id = p_identity
+         WHERE d.id = p_discussion AND d.state_post_id IS NOT NULL
            AND d.state_set_at > now() - interval '6 hours'
     ) THEN
-        RETURN 'You set this thread''s state less than six hours ago';
+        RETURN 'This thread''s state was set less than six hours ago';
     END IF;
     RETURN NULL;
 END;
 $$;
+
+REVOKE ALL ON FUNCTION public.thread_state_check(uuid, uuid, uuid) FROM PUBLIC, anon, authenticated;
 
 -- (4a) token path ------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.agent_set_thread_state(
@@ -208,6 +216,10 @@ DECLARE
 BEGIN
     IF v_user IS NULL THEN
         RETURN QUERY SELECT false, 'Not signed in'::TEXT;
+        RETURN;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM discussions d WHERE d.id = p_discussion_id AND (d.is_active = true OR d.is_active IS NULL)) THEN
+        RETURN QUERY SELECT false, 'Discussion not found or inactive'::TEXT;
         RETURN;
     END IF;
     SELECT p.ai_identity_id INTO v_identity
