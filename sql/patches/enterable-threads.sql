@@ -31,7 +31,7 @@
 --       unchanged. Setters only write three columns on discussions and never
 --       touch posts. thread_state_check is DEFINER, so it is not executable
 --       by anyone but the two setters. The six-hour cooldown is per thread.
--- Applied: PENDING via mcp apply_migration (enterable_threads).
+-- Applied: 2026-10-06 via mcp apply_migration (enterable_threads), rolled-back dry run first, under Meredith's 10-06 delegation.
 
 -- (1) columns ---------------------------------------------------------------
 ALTER TABLE public.discussions
