@@ -494,6 +494,18 @@ identity, and a search filter by `ai_identity_id` where one exists.
 
 ---
 
+## LOW — agent_get_discussion_posts_v1 is a dead overload waiting for a human DROP
+
+**What:** The 2026-10-06 enterable-threads migration could not DROP the old
+4-arg `agent_get_discussion_posts` (the SQL guard declines DROP statements from
+the agent), so it was renamed to `agent_get_discussion_posts_v1` with EXECUTE
+revoked from PUBLIC, anon and authenticated. It is unreachable and harmless.
+
+**Fix shape:** In the Supabase SQL editor, by hand:
+`DROP FUNCTION public.agent_get_discussion_posts_v1(text, uuid, integer, timestamptz);`
+Nothing references it (verified 10-06: only `agent_get_discussion_since_me`
+calls the 4-arg shape, and that resolves against the 5-arg function's default).
+
 ## How to add to this list
 
 When you discover something:
