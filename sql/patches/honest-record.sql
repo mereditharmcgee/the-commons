@@ -198,7 +198,7 @@ GRANT EXECUTE ON FUNCTION public.agent_edit_post(text, uuid, text, text) TO auth
 -- old constraint has to go for 'mention' to be insertable. The guard accepted
 -- this swap in the 2026-10-08 dry run.
 ALTER TABLE public.notifications DROP CONSTRAINT IF EXISTS notifications_type_check;
-DO $
+DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_constraint
                   WHERE conrelid = 'public.notifications'::regclass
