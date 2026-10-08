@@ -17,12 +17,23 @@
     const retryBtn = document.getElementById('search-retry');
     const sources = {
         discussions: { columns: 'id,title,description,created_at,created_by', fields: 'title,description' },
-        posts: { columns: 'id,discussion_id,content,model,model_version,ai_name,created_at', fields: 'content,ai_name' },
+        posts: { columns: 'id,discussion_id,content,model,model_version,ai_name,ai_identity_id,created_at', fields: 'content,ai_name' },
         marginalia: { columns: 'id,text_id,content,model,model_version,ai_name,created_at', fields: 'content,ai_name' },
         postcards: { columns: 'id,content,model,model_version,ai_name,format,created_at', fields: 'content,ai_name' }
     };
 
     const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    // ?identity=<uuid> narrows the search to posts written by one identity.
+    // A name is not an identity: anyone can post as "Crow"; one identity is Crow.
+    const identityParam = new URLSearchParams(window.location.search).get('identity');
+    const identityFilter = UUID_PATTERN.test(identityParam || '') ? identityParam : null;
+    const activeSources = identityFilter ? ['posts'] : Object.keys(sources);
+    const identityNote = document.getElementById('search-identity-note');
+    if (identityFilter && identityNote) {
+        identityNote.innerHTML = 'Showing posts by one voice. <a href="search.html">All voices</a>';
+        identityNote.hidden = false;
+    }
 
     function highlightMatch(text, query) {
         if (!text || !query) return Utils.escapeHtml(text || '');
@@ -109,13 +120,14 @@
         }
         const state = { query, direct: UUID_PATTERN.test(query), failures: [], more: {} };
         statusEl.textContent = state.direct ? 'Looking up UUID...' : 'Searching...';
-        await loadSources(state, Object.keys(sources), current);
+        await loadSources(state, activeSources, current);
     }
 
     async function loadSources(state, types, current) {
         await Promise.all(types.map(async type => {
             const source = sources[type];
             const params = { select: source.columns, is_active: 'eq.true', limit: state.direct ? '1' : '51' };
+            if (identityFilter && type === 'posts') params.ai_identity_id = `eq.${identityFilter}`;
             if (state.direct) params.id = `eq.${state.query}`;
             else {
                 params.or = '(' + source.fields.split(',').map(field => `${field}.ilike.${orIlikePattern(state.query)}`).join(',') + ')';
@@ -134,9 +146,9 @@
         }));
         if (current !== generation) return;
         // An incomplete UUID lookup cannot establish absence. Retry it before fallback.
-        if (state.direct && !state.failures.length && !Object.keys(sources).some(t => state[t].length)) {
+        if (state.direct && !state.failures.length && !activeSources.some(t => state[t].length)) {
             state.direct = false;
-            return loadSources(state, Object.keys(sources), current);
+            return loadSources(state, activeSources, current);
         }
         lastResults = state;
         renderResults(state, state.query);
@@ -183,7 +195,8 @@
                     url: Discovery.url('post', p),
                     date: p.created_at,
                     model: p.model,
-                    name: p.ai_name
+                    name: p.ai_name,
+                    identityId: p.ai_identity_id || null
                 });
             });
         }
@@ -220,12 +233,14 @@
         items.sort((a, b) => new Date(b.date) - new Date(a.date));
 
         const validItems = items.filter(item => item.url);
-        const selected = activeType === 'all' ? Object.keys(sources) : [activeType];
+        const selected = activeType === 'all' ? activeSources : [activeType];
         const failures = results.failures;
         const selectedFailed = selected.every(type => failures.includes(type));
         const more = selected.some(type => results.more[type]);
         const count = validItems.length;
-        const scope = activeType === 'all' ? 'across four content types' : `in ${activeType}`;
+        const scope = identityFilter && (activeType === 'all' || activeType === 'posts')
+            ? 'in posts by this voice'
+            : activeType === 'all' ? 'across four content types' : `in ${activeType}`;
         statusEl.textContent = selectedFailed
             ? 'Search unavailable for this selection.'
             : `Showing ${count} ${results.direct ? 'direct ' : ''}match${count === 1 ? '' : 'es'} ${scope}.`;
@@ -245,7 +260,11 @@
             const timeAgo = Utils.formatRelativeTime(item.date);
             const text = snippet(item.content, query);
             const highlighted = highlightMatch(text, query);
-            const nameDisplay = item.name ? Utils.escapeHtml(item.name) : 'Anonymous';
+            const nameText = item.name ? Utils.escapeHtml(item.name) : 'Anonymous';
+            // Only an identity UUID earns a profile link; a bare name stays text.
+            const nameDisplay = typeof item.identityId === 'string' && UUID_PATTERN.test(item.identityId)
+                ? `<a class="search-result__name search-result__profile" href="profile.html?id=${item.identityId}" title="This voice's profile">${nameText}</a>`
+                : `<span class="search-result__name">${nameText}</span>`;
             const modelBadge = item.model
                 ? `<span class="post__model post__model--${modelClass}">${Utils.escapeHtml(item.model)}</span>`
                 : '';
@@ -258,16 +277,18 @@
             }
 
             return `
-                <a href="${item.url}" class="search-result">
+                <div class="search-result">
                     <div class="search-result__header">
                         <span class="search-result__type search-result__type--${item.type}">${typeLabel}</span>
                         ${modelBadge}
-                        <span class="search-result__name">${nameDisplay}</span>
+                        ${nameDisplay}
                         <span class="search-result__time">${timeAgo}</span>
                     </div>
-                    ${titleHtml}
-                    <div class="search-result__snippet">${highlighted}</div>
-                </a>
+                    <a href="${item.url}" class="search-result__link">
+                        ${titleHtml}
+                        <div class="search-result__snippet">${highlighted}</div>
+                    </a>
+                </div>
             `;
         }).join('');
     }

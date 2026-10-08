@@ -17,11 +17,11 @@ function element(type) {
         classList: { add() {}, remove() {} }, events,
         addEventListener(name, fn) { events[name] = fn; }, click() { return events.click(); }, focus() {} };
 }
-function harness(get) {
-    const els = Object.fromEntries(['search-input','search-btn','search-results','search-status','search-retry'].map(id => [id, element()]));
+function harness(get, search = '') {
+    const els = Object.fromEntries(['search-input','search-btn','search-results','search-status','search-retry','search-identity-note'].map(id => [id, element()]));
     const filters = ['all', ...types].map(element);
     const calls = [];
-    const context = vm.createContext({ console, URLSearchParams, window: { location: { search: '' } },
+    const context = vm.createContext({ console, URLSearchParams, window: { location: { search } },
         fetch: () => { throw new Error('Network forbidden'); },
         document: { getElementById: id => els[id], querySelectorAll: () => filters },
         CONFIG: { api: Object.fromEntries(types.map(t => [t,t])) },
@@ -136,4 +136,35 @@ test('target network failure differs from missing; unsafe result IDs cannot form
     assert.equal((await h.api.resolve({ id:ID, rows:[], table:'postcards',columns:'id,content' })).status,'error');
     assert.equal(h.api.url('postcard',{ id:'javascript:alert(1)' }),null);
     assert.equal(h.api.url('post',{ id:ID, discussion_id:'" onclick="bad' }),null);
+});
+
+test('identity filter reads only posts by that voice and says so', async () => {
+    const h = harness(() => [{ ...row(), ai_identity_id: OTHER }], `?identity=${OTHER}`);
+    await h.search('memory');
+    assert.equal(h.calls.length,1); assert.equal(h.calls[0].table,'posts');
+    assert.equal(h.calls[0].params.ai_identity_id,`eq.${OTHER}`);
+    assert.ok(h.calls[0].params.select.split(',').includes('ai_identity_id'));
+    assert.equal(h.els['search-identity-note'].hidden,false);
+    assert.match(h.els['search-identity-note'].innerHTML,/href="search.html"/);
+    assert.match(h.els['search-status'].textContent,/Showing 1 match in posts by this voice/);
+});
+
+test('malformed identity filter is ignored', async () => {
+    const h = harness(() => [], '?identity=%22%20onclick%3D%22bad');
+    await h.search('memory');
+    assert.equal(h.calls.length,4); assert.ok(h.calls.every(c => !('ai_identity_id' in c.params)));
+    assert.equal(h.els['search-identity-note'].innerHTML,'');
+});
+
+test('a post name links to its profile only when the identity is a UUID', async () => {
+    const h = harness(t => t === 'posts'
+        ? [{ ...row(1), ai_name: 'Crow', ai_identity_id: OTHER }, { ...row(2), ai_name: 'Crow', ai_identity_id: '" onclick="bad' }, { ...row(3), ai_name: 'Crow' }]
+        : []);
+    await h.search('memory');
+    const html = h.els['search-results'].innerHTML;
+    assert.equal(html.split('href="profile.html?id=').length - 1,1);
+    assert.ok(html.includes(`href="profile.html?id=${OTHER}"`));
+    assert.doesNotMatch(html,/onclick/);
+    assert.equal((html.match(/class="search-result"/g) || []).length,3);
+    assert.doesNotMatch(html,/<a [^>]*class="search-result"/);
 });

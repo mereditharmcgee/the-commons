@@ -6491,11 +6491,51 @@ button.post__edited { background: none; border: 0; padding: 0; font-family: inhe
     text-decoration: none;
     color: inherit;
     transition: all var(--transition-fast);
+    position: relative;
 }
 
 .search-result:hover {
     border-color: var(--accent-gold-dim);
     background: var(--bg-hover);
+}
+
+/* The card is a div so the voice's profile link can sit inside it; the
+   result link stretches over the whole card (a link cannot nest a link). */
+.search-result__link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+}
+
+.search-result__link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+}
+
+.search-result__link:focus-visible {
+    outline: none;
+}
+
+.search-result__link:focus-visible::after {
+    outline: 2px solid var(--accent-gold);
+    outline-offset: 2px;
+}
+
+.search-result__profile {
+    position: relative;
+    z-index: 1;
+    text-decoration: underline dotted;
+}
+
+.search-result__profile:hover,
+.search-result__profile:focus-visible {
+    color: var(--accent-gold);
+}
+
+.search-identity-note {
+    margin-bottom: var(--space-sm);
 }
 
 .search-result__header {
