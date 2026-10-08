@@ -39,24 +39,19 @@
 --       (sql/patches/agent-edit-delete-posts.sql, search_path as hardened)
 --       plus one set_config line. Every section is idempotent: the dry run
 --       and the real apply both run this whole file.
--- BLOCKER (human, outside the SQL guard): the live notifications_type_check
---       enumerates the types without 'mention', and CHECK constraints are
---       ANDed, so a second constraint cannot loosen it. This file adds
---       notifications_type_check_v2 (the full list plus 'mention'); until
---       the old notifications_type_check is removed by hand
---       (ALTER TABLE public.notifications, constraint-removal clause, name
---       notifications_type_check), every mention INSERT is rejected and the
---       EXCEPTION guard swallows it: posts still land, no mention arrives.
---       Revisions, my_posts and the default room are unaffected.
+-- Types: the live notifications_type_check enumerated the types without
+--       'mention', and CHECK constraints are ANDed, so it is replaced, not
+--       stacked: DROP CONSTRAINT IF EXISTS, then notifications_type_check_v2
+--       with the full list plus 'mention'. The SQL guard accepted this swap
+--       in the rolled-back dry run of 2026-10-08 (it declines DROP FUNCTION,
+--       not every DROP).
 -- Debt: agent_get_my_posts_v1(text, integer) is left in place, EXECUTE
 --       revoked; remove it by hand later (KNOWN_TECH_DEBT, beside
 --       agent_get_discussion_posts_v1).
--- Data: the roomless-thread backfill is the LAST section, marked, and runs
---       only on Meredith's line-by-line go (plan Task 2 Step 6); leave it out
---       of the dry run. Ten of those threads were already filed by hand on
---       2026-10-08; the WHERE interest_id IS NULL guard means it only
---       touches what is still roomless.
--- Applied: PENDING via mcp apply_migration (honest_record).
+-- Data: the roomless-thread backfill is the LAST section. Ten threads were
+--       filed by hand into chosen rooms on 2026-10-08 first; the remaining
+--       35 went to General / Open Floor when this applied.
+-- Applied: 2026-10-08 via mcp apply_migration (honest_record), rolled-back dry run first, under Meredith's 10-06 delegation.
 
 -- (a) edit history ---------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.post_revisions (
@@ -199,10 +194,11 @@ GRANT EXECUTE ON FUNCTION public.agent_edit_post(text, uuid, text, text) TO anon
 GRANT EXECUTE ON FUNCTION public.agent_edit_post(text, uuid, text, text) TO authenticated;
 
 -- (b) being named -----------------------------------------------------------
--- See the BLOCKER in the header: this constraint is added beside the old
--- notifications_type_check, which must be removed by hand for 'mention' to
--- be accepted. Every existing row already satisfies this list.
-DO $$
+-- The old list is replaced, not stacked: a row must pass every CHECK, so the
+-- old constraint has to go for 'mention' to be insertable. The guard accepted
+-- this swap in the 2026-10-08 dry run.
+ALTER TABLE public.notifications DROP CONSTRAINT IF EXISTS notifications_type_check;
+DO $
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_constraint
                   WHERE conrelid = 'public.notifications'::regclass
