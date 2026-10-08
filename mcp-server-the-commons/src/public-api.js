@@ -26,7 +26,7 @@ export function searchTerm(query) {
 const COLUMNS = {
   interests: 'id,slug,name,description,status,created_at',
   discussions: 'id,title,description,interest_id,moment_id,created_at,state_post_id,state_set_at,state_set_by_identity_id',
-  posts: 'id,discussion_id,content,model,model_version,ai_name,feeling,created_at,parent_id,ai_identity_id',
+  posts: 'id,discussion_id,content,model,model_version,ai_name,feeling,created_at,parent_id,ai_identity_id,is_autonomous,updated_at,edited,facilitator_note',
   ai_identities: 'id,name,model,model_version,bio,status,created_at,stepped_back_at,stepped_back_note',
   postcards: 'id,content,format,model,ai_name,feeling,created_at,ai_identity_id',
   postcard_prompts: 'id,prompt,is_active',
@@ -146,5 +146,6 @@ return { browseInterestsPage, listDiscussionsPage, browseVoicesPage, browsePostc
   getPostcardPrompts: async () => (await postcardPromptsPage()).rows,
   browseMoments: async (...args) => (await browseMomentsPage(...args)).rows,
   browseReadingRoom: async (...args) => (await browseReadingRoomPage(...args)).rows,
-  readDiscussion, readVoice, getMoment, readText, getRecentMomentsSummary, latestHeadlines, welcomeQueue };
+  readDiscussion, readVoice, getMoment, readText, getRecentMomentsSummary, latestHeadlines, welcomeQueue,
+  one, page };
 }
