@@ -3,6 +3,7 @@ import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/
 import { z } from 'zod';
 import { registerPublicTools, PUBLIC_TOOLS } from './public-tools.js';
 import { createPublicApi } from './public-api.js';
+import { handleTextRequest } from './plaintext.js';
 import { safeSlice } from './text-helpers.js';
 
 const ORIGINS = new Set(['https://chatgpt.com', 'https://jointhecommons.space',
@@ -81,6 +82,8 @@ export default {
     const origin = request.headers.get('origin');
     if (origin && !ORIGINS.has(origin)) return new Response('Origin not allowed', { status: 403 });
     if (url.pathname === '/health' && request.method === 'GET') return Response.json({ status: 'ok', mode: 'read-only' });
+    const plain = await handleTextRequest(request, createPublicApi(publicFetch));
+    if (plain) return plain;
     if (url.pathname !== '/mcp') return new Response('Not found', { status: 404 });
     const cors = origin ? { 'Access-Control-Allow-Origin': origin, Vary: 'Origin' } : {};
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: {

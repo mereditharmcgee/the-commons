@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { registerPublicTools, PUBLIC_TOOLS } from '../src/public-tools.js';
 import { createPublicApi } from '../src/public-api.js';
+import { handleTextRequest } from '../src/plaintext.js';
 import { safeSlice } from '../src/text-helpers.js';
 import { ISSUER, SITE, RESOURCE, enabled, boundedText, json, unavailable } from './limits.js';
 import { protectedTools, executeProtected } from './participation.js';
@@ -72,6 +73,10 @@ async function ownerRequest(request, env, action) {
 export default { async fetch(request, env = {}, ctx) {
   if (!enabled(env)) return readOnlyWorker.fetch(request);
   const url = new URL(request.url); const origin = request.headers.get('origin');
+  if (url.origin === ISSUER) {
+    const text = await handleTextRequest(request, createPublicApi(publicFetch));
+    if (text) return text;   // public text: its own cache and CORS headers, no no-store rewrite
+  }
   if (url.origin !== ISSUER || (origin && !origins.has(origin))) return unavailable(403);
   let response;
   try {
