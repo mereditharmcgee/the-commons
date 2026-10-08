@@ -15,7 +15,7 @@ function fixture(tables = {}, options = {}) {
     calls.push({ table, p, init });
     if (options.fail?.includes(table)) throw new Error('private diagnostic');
     let rows = [...(tables[table] || [])];
-    for (const key of ['id', 'discussion_id', 'text_id', 'ai_identity_id', 'interest_id', 'edition_date']) {
+    for (const key of ['id', 'discussion_id', 'text_id', 'ai_identity_id', 'interest_id', 'edition_date', 'post_id']) {
       if (p.has(key)) rows = rows.filter(r => r[key] === p.get(key).slice(3));
     }
     if (p.has('created_at') && p.get('created_at').startsWith('lt.')) rows = rows.filter(r => r.created_at < p.get('created_at').slice(3));
@@ -404,4 +404,34 @@ test('read_discussion drops the state block when the state post is not readable'
   assert.ok(!out.isError);
   assert.match(text(out), /Thought 1/);
   assert.equal(f.calls.filter(c => c.table === 'posts' && c.p.has('id')).length, 1);
+});
+
+test('read_post_history lists previous versions oldest-first and ends with the current text', async () => {
+  const current = { ...post(1), content: 'third words', edited: true, updated_at: '2026-09-27T10:43:00Z' };
+  const f = fixture({ posts: [current], post_revisions: [
+    { id: id(12), post_id: id(1), revision_no: 2, content: 'second words', feeling: 'unsure', edited_at: '2026-09-27T10:43:00Z', edited_via: 'site' },
+    { id: id(11), post_id: id(1), revision_no: 1, content: 'first words', edited_at: '2026-09-25T19:12:00Z', edited_via: 'agent' }
+  ] });
+  const out = text(await f.call('read_post_history', { post_id: id(1) }));
+  const call = f.calls.find(c => c.table === 'post_revisions');
+  assert.equal(call.p.get('post_id'), `eq.${id(1)}`);
+  assert.equal(call.p.get('order'), 'revision_no.asc');
+  assert.equal(call.p.get('select'), 'id,post_id,revision_no,content,feeling,edited_at,edited_by_identity_id,edited_via');
+  assert.ok(!call.p.has('is_active') && !call.p.has('or'));
+  assert.match(out, /Revision 1 \(replaced 2026-09-25 19:12, via agent\)/);
+  assert.match(out, /Revision 2 \(replaced 2026-09-27 10:43, via site\)/);
+  assert.match(out, /first words[\s\S]*second words[\s\S]*Current text[\s\S]*third words/);
+  assert.match(out, new RegExp(`discussion.html\\?id=${id(99)}&post=${id(1)}`));
+  const none = text(await fixture({ posts: [post(1)] }).call('read_post_history', { post_id: id(1) }));
+  assert.match(none, /^No recorded changes for post /);
+  assert.equal(none.split('\n').length, 1);
+  const gone = text(await fixture({}).call('read_post_history', { post_id: id(1) }));
+  assert.match(gone, /Item unavailable/);
+});
+
+test('read_post_history rejects a token and a non-UUID id', async () => {
+  const f = fixture({});
+  await assert.rejects(f.call('read_post_history', { post_id: id(1), token: 'tc_x' }));
+  await assert.rejects(f.call('read_post_history', { post_id: '1 or 1=1' }));
+  assert.equal(f.calls.length, 0);
 });

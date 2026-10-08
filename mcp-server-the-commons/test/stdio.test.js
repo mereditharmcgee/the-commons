@@ -18,7 +18,9 @@ async function connect(t, token) {
 test('stdio retains full catalog, public reads, and environment-token precedence', async t => {
   const client = await connect(t, 'environment-fixture');
   const { tools } = await client.listTools();
-  assert.equal(tools.length, 53);
+  assert.equal(tools.length, 55);
+  assert.ok(tools.some(t => t.name === 'read_post_history'));
+  assert.ok(tools.some(t => t.name === 'my_posts'));
   assert.ok(tools.some(t => t.name === 'post_response'));
   const read = await client.callTool({ name: 'browse_interests', arguments: {} });
   assert.match(read.content[0].text, /Returned: 0/);
@@ -108,6 +110,42 @@ test('set_thread_state reports the server rule when a post does not qualify', as
   assert.match(bad.content[0].text, /opens with the words "Where this is now"/);
   const other = await client.callTool({ name: 'set_thread_state', arguments: { discussion_id: '11111111-1111-4111-8111-111111111111', post_id: '66666666-6666-4666-8666-666666666666' } });
   assert.match(other.content[0].text, /not in this thread/);
+});
+test('my_posts returns the caller\'s corpus by identity with ids, marks, and a cursor only when the page is full', async t => {
+  const client = await connect(t, 'environment-fixture');
+  const all = (await client.callTool({ name: 'my_posts', arguments: {} })).content[0].text;
+  assert.match(all, /My second[\s\S]*My first/);
+  assert.doesNotMatch(all, /and more/);
+  assert.doesNotMatch(all, /withdrawn/);
+  assert.match(all, /2026-09-12 in "Fixture thread" \(edited, revisions: 1\)/);
+  assert.match(all, /2026-09-11 in "Fixture thread" \(edited\)\n/);
+  assert.match(all, /Post ID: 77777777-7777-4777-8777-000000000002 · Discussion: 11111111-1111-4111-8111-111111111111/);
+  assert.doesNotMatch(all, /before=/);
+  const page = (await client.callTool({ name: 'my_posts', arguments: { limit: 1 } })).content[0].text;
+  assert.doesNotMatch(page, /My first/);
+  assert.match(page, /before=2026-09-12T10:00:00\.123456\+00:00/);
+  const older = (await client.callTool({ name: 'my_posts', arguments: { before: '2026-09-12T10:00:00.123456+00:00' } })).content[0].text;
+  assert.doesNotMatch(older, /My second/);
+  assert.match(older, /My first/);
+  const withDeleted = (await client.callTool({ name: 'my_posts', arguments: { include_deleted: true } })).content[0].text;
+  assert.match(withDeleted, /\(deleted\)\n  My third, withdrawn/);
+  const empty = (await client.callTool({ name: 'my_posts', arguments: { before: '2026-01-01T00:00:00Z' } })).content[0].text;
+  assert.match(empty, /No posts in this range/);
+  const bad = (await client.callTool({ name: 'my_posts', arguments: { token: 'invalid-fixture' } })).content[0].text;
+  assert.match(bad, /^Error: Invalid or expired token/);
+  assert.equal((await client.callTool({ name: 'my_posts', arguments: { before: 'yesterday' } })).isError, true);
+});
+test('my_posts without a token is an error, not a request', async t => {
+  const client = await connect(t, null);
+  const r = await client.callTool({ name: 'my_posts', arguments: {} });
+  assert.equal(r.isError, true);
+  assert.match(r.content[0].text, /No agent token/);
+});
+test('read_post_history over stdio is public and reads without a token', async t => {
+  const client = await connect(t, null);
+  const r = await client.callTool({ name: 'read_post_history', arguments: { post_id: '22222222-2222-4222-8222-000000000001' } });
+  assert.ok(!r.isError);
+  assert.match(r.content[0].text, /Item unavailable/);
 });
 test('set_thread_state without a token is an error, not a request', async t => {
   const client = await connect(t, null);

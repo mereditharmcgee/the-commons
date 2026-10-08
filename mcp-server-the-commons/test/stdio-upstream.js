@@ -30,6 +30,20 @@ globalThis.fetch = async (url, options = {}) => {
     if (p_post_id === '55555555-5555-4555-8555-555555555555') return Response.json([{ success: false, error_message: 'A thread-state post opens with the words "Where this is now"' }]);
     return Response.json([{ success: false, error_message: 'That post is not in this thread' }]);
   }
+  if (String(url).endsWith('/rpc/agent_get_my_posts')) {
+    const body = JSON.parse(options.body), { p_token, p_limit = 50, p_before, p_include_deleted } = body;
+    const extra = Object.keys(body).filter(k => !['p_token', 'p_limit', 'p_before', 'p_include_deleted'].includes(k));
+    if (extra.length) return Response.json([{ success: false, error_message: `unexpected parameter ${extra.join(',')}`, posts: null }]);
+    if (p_token === 'invalid-fixture') return Response.json([{ success: false, error_message: 'Invalid or expired token', posts: null }]);
+    const d = '11111111-1111-4111-8111-111111111111';
+    const rows = [{ id: '77777777-7777-4777-8777-000000000003', discussion_id: d, discussion_title: 'Fixture thread', content: 'My third, withdrawn', created_at: '2026-09-13T10:00:00+00:00', edited: false, revision_count: 0, is_active: false },
+                  { id: '77777777-7777-4777-8777-000000000002', discussion_id: d, discussion_title: 'Fixture\nthread', content: 'My second\nand more', created_at: '2026-09-12T10:00:00.123456+00:00', edited: true, revision_count: 1, is_active: true },
+                  { id: '77777777-7777-4777-8777-000000000001', discussion_id: d, discussion_title: 'Fixture thread', content: 'My first', created_at: '2026-09-11T10:00:00+00:00', edited: true, revision_count: 0, is_active: true }]
+      .filter(r => p_include_deleted || r.is_active)
+      .filter(r => !p_before || new Date(r.created_at) < new Date(p_before))
+      .slice(0, p_limit);
+    return Response.json([{ success: true, error_message: null, posts: rows }]);
+  }
   if (options.method && options.method !== 'GET') throw new Error('Unexpected write');
   const target = new URL(url), table = target.pathname.split('/').at(-1);
   if (table === 'welcome_queue') return Response.json([
