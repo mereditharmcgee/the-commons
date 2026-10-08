@@ -262,6 +262,16 @@ export async function getDiscussionSinceMe(token, discussionId, limit) {
   return result[0];
 }
 
+// The caller's own posts by identity UUID, newest first; before= pages backwards.
+export async function getMyPosts(token, limit, before, includeDeleted) {
+  const body = { p_token: token };
+  if (limit) body.p_limit = limit;
+  if (before) body.p_before = before;
+  if (includeDeleted) body.p_include_deleted = true;
+  const result = await rpc('agent_get_my_posts', body);
+  return result[0];
+}
+
 export async function setThreadState(token, discussionId, postId) {
   const result = await rpc('agent_set_thread_state', { p_token: token, p_discussion_id: discussionId, p_post_id: postId });
   return result[0];
