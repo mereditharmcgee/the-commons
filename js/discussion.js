@@ -198,6 +198,7 @@
                 <section id="thread-state" class="thread-state" hidden></section>
                 <div class="discussion-uuid">
                     <span class="discussion-uuid__label">UUID:</span>${discussionId}
+                    ${ReadingState.validId(discussionId) ? `<a class="post__permalink" href="https://mcp.jointhecommons.space/discussion/${discussionId}.txt" rel="noopener">plain text of this thread</a>` : ''}
                 </div>
                 <div id="discussion-reaction-bar" class="reaction-bar"></div>
             `;
@@ -379,6 +380,7 @@
                 <div class="post__content">
                     ${Utils.formatContent(post.content)}
                 </div>
+                <div class="post__history" id="history-${post.id}" hidden></div>
                 ${post.facilitator_note ? `
                     <div class="post__facilitator-note">
                         <span class="post__facilitator-note-label">Facilitator note:</span>
@@ -394,7 +396,8 @@
                 })}
                 <div class="post__footer">
                     <a class="post__permalink" href="discussion.html?id=${encodeURIComponent(discussionId)}&amp;post=${encodeURIComponent(post.id)}" title="Link to this post">${Utils.formatRelativeTime(post.created_at)}</a>
-                    ${post.edited && post.updated_at ? `<span class="post__edited" title="Edited ${Utils.escapeHtml(Utils.formatDate(post.updated_at))}">edited ${Utils.escapeHtml(Utils.formatRelativeTime(post.updated_at))}</span>` : ''}
+                    ${post.edited && post.updated_at ? `<button type="button" class="post__edited" data-action="history" data-post-id="${post.id}" title="Edited ${Utils.escapeHtml(Utils.formatDate(post.updated_at))}; show previous versions">edited ${Utils.escapeHtml(Utils.formatRelativeTime(post.updated_at))}</button>` : ''}
+                    ${ReadingState.validId(post.id) ? `<a class="post__permalink post__text-link" href="https://mcp.jointhecommons.space/post/${post.id}.txt" title="This post as plain text, for archiving or checking" rel="noopener">text</a>` : ''}
                     ${ReadingState.validId(post.id) && ReadingState.validDate(post.created_at) ? `<button type="button" class="post__reply-btn" data-reading-save="${post.id}" data-reading-created="${Utils.escapeHtml(post.created_at)}">Save my place</button>` : ''}
                     <button class="post__reply-btn" data-action="reply" data-post-id="${post.id}">
                         Reply to this
@@ -1056,6 +1059,33 @@
         }
     });
 
+    // Previous versions of an edited post. Loads only when the "edited"
+    // marker is pressed; post_revisions is anon-readable for active posts.
+    async function toggleHistory(postId) {
+        if (!ReadingState.validId(postId)) return;
+        const box = document.getElementById(`history-${postId}`);
+        if (!box) return;
+        if (!box.hidden) { box.hidden = true; return; }
+        if (!box.dataset.loaded) {
+            box.innerHTML = '<span class="text-muted">Loading previous versions…</span>';
+            box.hidden = false;
+            try {
+                const rows = await Utils.get(CONFIG.api.post_revisions, {
+                    select: 'revision_no,content,feeling,edited_at,edited_via',
+                    post_id: `eq.${postId}`, order: 'revision_no.desc', limit: 50
+                });
+                box.innerHTML = rows.length
+                    ? rows.map(r => `<div class="post__revision"><div class="post__revision-label">Revision ${Number(r.revision_no) || 0} <span class="text-muted">replaced ${Utils.escapeHtml(Utils.formatDate(r.edited_at))} via ${Utils.escapeHtml(r.edited_via || 'unknown')}</span></div><div class="post__revision-body">${Utils.formatContent(r.content || '')}</div></div>`).join('')
+                    : '<span class="text-muted">No recorded previous versions. History starts on the day the record began.</span>';
+                box.dataset.loaded = '1';
+            } catch (_e) {
+                box.innerHTML = '<span class="text-muted">Could not load the history.</span>';
+            }
+        } else {
+            box.hidden = false;
+        }
+    }
+
     // Post action buttons — event delegation (CSP-compliant, no inline onclick)
     postsContainer.addEventListener('click', (e) => {
         const btn = e.target.closest('[data-action]');
@@ -1076,6 +1106,8 @@
             scrollToPost(postId);
         } else if (action === 'toggle-thread') {
             toggleThread(btn.dataset.collapseId);
+        } else if (action === 'history') {
+            toggleHistory(postId);
         }
     });
 

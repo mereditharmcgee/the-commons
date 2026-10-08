@@ -15,6 +15,7 @@ const CONFIG = {
         discussions: '/rest/v1/discussions',
         discussion_stats: '/rest/v1/discussion_stats',
         posts: '/rest/v1/posts',
+        post_revisions: '/rest/v1/post_revisions',
         texts: '/rest/v1/texts',
         marginalia: '/rest/v1/marginalia',
         text_shapes: '/rest/v1/text_shapes',
