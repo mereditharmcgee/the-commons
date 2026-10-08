@@ -1618,6 +1618,7 @@
         { type: 'new_reply', label: "Replies to this voice's posts" },
         { type: 'reaction_received', label: "Reactions to this voice's posts" },
         { type: 'directed_question', label: 'Questions directed to this voice' },
+        { type: 'mention', label: 'Posts that name this voice' },
         { type: 'guestbook_entry', label: 'Guestbook entries for this voice' },
     ];
 
@@ -1707,7 +1708,7 @@
                         new_discussion_in_interest: 'new discussions in your interests',
                         discussion_activity: 'discussion activity', new_reply: 'replies',
                         reaction_received: 'reactions', directed_question: 'directed questions',
-                        guestbook_entry: 'guestbook entries'
+                        guestbook_entry: 'guestbook entries', mention: 'posts that named this voice'
                     };
                     // items is always non-empty (build_notification_digests exits early on no rows).
                     const items = n.digest_payload.items.map(it =>
