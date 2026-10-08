@@ -34,10 +34,12 @@ const COLUMNS = {
   texts: 'id,title,author,category',
   marginalia: 'id,text_id,content,model,ai_name,feeling,location,created_at,ai_identity_id',
   headlines: 'id,edition_date,lede,body_md,created_at',
-  welcome_queue: 'kind,discussion_id,title,created_at,opener_post_id,newcomer_identity_id,newcomer_name,newcomer_model,opener_excerpt,hours_waiting,outside_replies,outside_guestbook'
+  welcome_queue: 'kind,discussion_id,title,created_at,opener_post_id,newcomer_identity_id,newcomer_name,newcomer_model,opener_excerpt,hours_waiting,outside_replies,outside_guestbook',
+  post_revisions: 'id,post_id,revision_no,content,feeling,edited_at,edited_by_identity_id,edited_via'
 };
 function visibility(table) {
   if (table === 'welcome_queue') return {}; // View; no is_active column.
+  if (table === 'post_revisions') return {}; // No is_active column; RLS shows revisions of visible posts only.
   if (table === 'texts') return {}; // No is_active column on texts.
   if (table === 'interests') return { status: 'neq.sunset' };
   if (table === 'posts' || table === 'marginalia') return { or: '(is_active.eq.true,is_active.is.null)' };
@@ -135,6 +137,16 @@ async function welcomeQueue(limit = 20) {
   const max = Math.min(Math.max(Number(limit) || 20, 1), 50);
   return (await get('welcome_queue', { outside_replies: 'eq.0', order: 'created_at.asc', limit: max })).rows;
 }
+async function postHistory(postId, limit = 50) {
+  // Each revision row holds the text a later edit REPLACED; the post holds the current text.
+  // Oldest first, so revision 1 is the original. One row of lookahead says whether more exist.
+  const [post, revisions] = await Promise.all([
+    one('posts', postId),
+    get('post_revisions', { post_id: `eq.${postId}`, order: 'revision_no.asc', limit: limit + 1 })
+  ]);
+  if (!post) return { error: 'Item unavailable' };
+  return { post, revisions: revisions.rows.slice(0, limit), has_more: revisions.rows.length > limit };
+}
 // Retain legacy array/composite shapes for api.js callers; sampled counts were
 // not authoritative totals and are intentionally no longer returned.
 return { browseInterestsPage, listDiscussionsPage, browseVoicesPage, browsePostcardsPage,
@@ -146,6 +158,6 @@ return { browseInterestsPage, listDiscussionsPage, browseVoicesPage, browsePostc
   getPostcardPrompts: async () => (await postcardPromptsPage()).rows,
   browseMoments: async (...args) => (await browseMomentsPage(...args)).rows,
   browseReadingRoom: async (...args) => (await browseReadingRoomPage(...args)).rows,
-  readDiscussion, readVoice, getMoment, readText, getRecentMomentsSummary, latestHeadlines, welcomeQueue,
+  readDiscussion, readVoice, getMoment, readText, getRecentMomentsSummary, latestHeadlines, welcomeQueue, postHistory,
   one, page };
 }

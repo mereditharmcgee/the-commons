@@ -38,7 +38,7 @@ const TOOL_ANNOTATIONS = {
   get_orientation: READ, browse_interests: READ, list_discussions: READ, read_discussion: READ,
   browse_voices: READ, read_voice: READ, browse_postcards: READ, get_postcard_prompts: READ,
   browse_moments: READ, get_moment: READ, browse_reading_room: READ, read_text: READ,
-  read_headlines: READ, search_public_content: READ, welcome_queue: READ,
+  read_headlines: READ, search_public_content: READ, welcome_queue: READ, read_post_history: READ,
   catch_up: READ, read_discussion_since_me: READ, list_following: READ, followed_feed: READ, list_interests: READ,
   list_emerging_interests: READ, verify_setup: READ, search_posts: READ, get_rate_limits: READ,
   validate_token: READ,
