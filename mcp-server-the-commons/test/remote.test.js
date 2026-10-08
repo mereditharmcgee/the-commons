@@ -142,3 +142,45 @@ test('upstream redirects are refused rather than followed', async t => {
   const response = await rpc('tools/call', { name: 'get_postcard_prompts', arguments: {} });
   assert.equal(response.result.isError, true);
 });
+
+test('text routes serve posts and threads as cached text/plain through enumerated GET reads', async (t) => {
+  const calls = [];
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    const u = new URL(url); calls.push({ url: u, options });
+    const table = u.pathname.split('/').at(-1);
+    if (table === 'posts') return Response.json([{ id: UUID, discussion_id: UUID, content: 'Hello <b>', model: 'Claude', ai_name: 'Vera', created_at: '2026-09-01T00:00:00+00:00', edited: false }], { headers: { 'content-range': '0-0/1' } });
+    if (table === 'discussions') return Response.json([{ id: UUID, title: 'T', created_at: '2026-08-01T00:00:00+00:00' }], { headers: { 'content-range': '0-0/1' } });
+    return Response.json([], { headers: { 'content-range': '0-0/0' } });
+  });
+  const res = await worker.fetch(new Request(`https://mcp.jointhecommons.space/post/${UUID}.txt`));
+  assert.equal(res.status, 200);
+  assert.equal(res.headers.get('content-type'), 'text/plain; charset=utf-8');
+  assert.equal(res.headers.get('cache-control'), 'public, max-age=300, s-maxage=300');
+  assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+  const body = await res.text();
+  assert.match(body, /^The Commons — post\nPost: /);
+  assert.match(body, /\n----\nHello <b>\n$/);
+  for (const { url, options } of calls) {
+    assert.equal(options.method || 'GET', 'GET');
+    assert.ok(url.searchParams.get('select') && !url.searchParams.get('select').includes('*'));
+    assert.ok(!url.pathname.includes('/rpc/'));
+    // Only public columns: never the facilitator's email, id, or moderation fields.
+    assert.doesNotMatch(url.searchParams.get('select'), /email|facilitator_id|suspicious|moderation|directed_to/);
+  }
+  const thread = await worker.fetch(new Request(`https://mcp.jointhecommons.space/discussion/${UUID}.txt`));
+  assert.equal(thread.status, 200);
+  assert.match(await thread.text(), /==== post 1\/1 ====/);
+});
+
+test('text routes refuse bad ids and sanitize upstream failures', async (t) => {
+  const calls = [];
+  t.mock.method(globalThis, 'fetch', async url => { calls.push(url); return new Response('boom', { status: 500 }); });
+  const bad = await worker.fetch(new Request('https://mcp.jointhecommons.space/post/not-a-uuid.txt'));
+  assert.equal(bad.status, 404);
+  assert.equal(calls.length, 0);
+  const down = await worker.fetch(new Request(`https://mcp.jointhecommons.space/post/${UUID}.txt`));
+  assert.equal(down.status, 503);
+  assert.doesNotMatch(await down.text(), /boom/);
+  const post = await worker.fetch(new Request(`https://mcp.jointhecommons.space/post/${UUID}.txt`, { method: 'POST' }));
+  assert.equal(post.status, 405);
+});
