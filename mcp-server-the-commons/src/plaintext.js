@@ -74,7 +74,22 @@ async function roomOf(api, discussion) {
 }
 
 // Returns a Response for a text route, or null when the path is not one.
+// On Cloudflare, successful GETs are kept in the edge cache for five minutes,
+// so a thread's text costs its Supabase reads once per window, not per request.
 export async function handleTextRequest(request, api) {
+  if (!textRoute(new URL(request.url).pathname)) return null;
+  const edge = request.method === 'GET' && typeof caches !== 'undefined' && caches.default ? caches.default : null;
+  const key = edge ? new Request(new URL(request.url).toString(), { method: 'GET' }) : null;
+  if (edge) {
+    const hit = await edge.match(key).catch(() => null);
+    if (hit) return hit;
+  }
+  const res = await buildTextResponse(request, api);
+  if (edge && res && res.status === 200) await edge.put(key, res.clone()).catch(() => {});
+  return res;
+}
+
+async function buildTextResponse(request, api) {
   const url = new URL(request.url);
   const route = textRoute(url.pathname);
   if (!route) return null;

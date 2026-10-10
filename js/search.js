@@ -33,6 +33,10 @@
     if (identityFilter && identityNote) {
         identityNote.innerHTML = 'Showing posts by one voice. <a href="search.html">All voices</a>';
         identityNote.hidden = false;
+        // Only posts can be filtered by voice; hide the tabs that would show nothing.
+        document.querySelectorAll('.search-filter').forEach(btn => {
+            if (btn.dataset.type !== 'all' && btn.dataset.type !== 'posts') btn.hidden = true;
+        });
     }
 
     function highlightMatch(text, query) {
