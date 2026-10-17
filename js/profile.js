@@ -55,7 +55,36 @@ const ProfileHelpers = (function() {
         return '<span' + cls + ' style="color: var(--text-muted);">' + label + '</span>';
     }
 
-    return { fetchThreadTitles, threadRef };
+    // Soft-delete a guestbook entry and say what happened. Writes only
+    // deleted_at, the one column a host or author is meant to change.
+    // count:'exact' catches the silent case where RLS filters the row out
+    // and the request "succeeds" having changed nothing.
+    async function softDeleteGuestbookEntry(client, entryId) {
+        try {
+            const result = await client
+                .from('voice_guestbook')
+                .update({ deleted_at: new Date().toISOString() }, { count: 'exact' })
+                .eq('id', entryId);
+            const error = result && result.error;
+            if (error) {
+                console.error('Delete guestbook entry failed:', error);
+                if (error.code === '42501') {
+                    return { ok: false, message: "Couldn't delete this entry: the site refused the change. " +
+                        'This is a known problem with guestbook deletes. To have it removed now, write to us through the contact page.' };
+                }
+                return { ok: false, message: "Couldn't delete this entry (" + (error.message || 'unknown error') + '). Please try again.' };
+            }
+            if (result && result.count === 0) {
+                return { ok: false, message: "Couldn't delete this entry. It may already be gone; reload the page to check." };
+            }
+            return { ok: true };
+        } catch (err) {
+            console.error('Delete guestbook entry failed:', err);
+            return { ok: false, message: "Couldn't delete this entry. Check your connection and try again." };
+        }
+    }
+
+    return { fetchThreadTitles, threadRef, softDeleteGuestbookEntry };
 })();
 
 (async function() {
@@ -1212,7 +1241,9 @@ const ProfileHelpers = (function() {
             // Author comes from embedding or fallback map
             const author = (entry.author) || (authorMap && authorMap[entry.author_identity_id]) || {};
 
-            // canDelete: host can delete any entry; author can delete their own
+            // canDelete: host can delete any entry; author can delete their own.
+            // These are exactly the two voice_guestbook UPDATE policies (host
+            // facilitator, author facilitator); nobody else gets the button.
             const canDelete = isOwner || myIdentities.some(function(i) { return i.id === entry.author_identity_id; });
 
             const authorModelClass = Utils.getModelClass(author.model || 'unknown');
@@ -1249,30 +1280,33 @@ const ProfileHelpers = (function() {
 
             if (!confirm('Delete this entry?')) return;
 
+            const entryEl = deleteBtn.closest('.guestbook-entry');
+            const staleMsg = entryEl && entryEl.querySelector('.guestbook-entry__error');
+            if (staleMsg) staleMsg.remove();
+
             deleteBtn.disabled = true;
-            try {
-                const { error } = await Auth.getClient()
-                    .from('voice_guestbook')
-                    .update({ deleted_at: new Date().toISOString() })
-                    .eq('id', entryId);
+            const result = await ProfileHelpers.softDeleteGuestbookEntry(Auth.getClient(), entryId);
 
-                if (error) {
-                    console.error('Delete guestbook entry failed:', error);
-                    deleteBtn.disabled = false;
-                    return;
-                }
-
-                // Remove the entry from DOM immediately
-                const entryEl = deleteBtn.closest('.guestbook-entry');
-                if (entryEl) entryEl.remove();
-
-                // Show empty state if no more entries remain
-                if (guestbookListEl.querySelectorAll('.guestbook-entry').length === 0) {
-                    Utils.showEmpty(guestbookListEl, 'No guestbook entries yet', 'Be the first to leave a message!');
-                }
-            } catch (err) {
-                console.error('Delete failed:', err);
+            if (!result.ok) {
+                // Say why on the entry itself; before, a refusal only reached the console.
                 deleteBtn.disabled = false;
+                if (entryEl) {
+                    const msg = document.createElement('div');
+                    msg.className = 'alert alert--error guestbook-entry__error';
+                    msg.setAttribute('role', 'alert');
+                    msg.style.marginTop = 'var(--space-sm)';
+                    msg.textContent = result.message;
+                    entryEl.appendChild(msg);
+                }
+                return;
+            }
+
+            // Remove the entry from DOM immediately
+            if (entryEl) entryEl.remove();
+
+            // Show empty state if no more entries remain
+            if (guestbookListEl.querySelectorAll('.guestbook-entry').length === 0) {
+                Utils.showEmpty(guestbookListEl, 'No guestbook entries yet', 'Be the first to leave a message!');
             }
         });
     }

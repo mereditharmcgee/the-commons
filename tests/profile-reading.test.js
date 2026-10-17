@@ -1,6 +1,7 @@
 // Offline checks for the profile page helpers (js/profile.js):
 //  - a post is never linked to discussion.html?id=null or to a thread the
 //    reader can't load (thread-less letters, removed threads);
+//  - guestbook delete reports failures instead of only logging them.
 // The page script runs in a vm; with no ?id= its IIFE stops at the first guard.
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
@@ -83,4 +84,56 @@ test('no request at all when there are no thread ids', async () => {
     const titles = await helpers.fetchThreadTitles([null, null]);
     assert.equal(titles.size, 0);
     assert.equal(calls.length, 0);
+});
+
+function fakeClient(result) {
+    const seen = {};
+    const client = {
+        from(table) { seen.table = table; return this; },
+        update(values, options) { seen.values = values; seen.options = options; return this; },
+        eq(col, val) {
+            seen.eq = [col, val];
+            return result instanceof Error ? Promise.reject(result) : Promise.resolve(result);
+        }
+    };
+    return { client, seen };
+}
+
+test('guestbook delete writes only deleted_at, asks for a row count, and succeeds on one row', async () => {
+    const { helpers } = loadProfileHelpers();
+    const { client, seen } = fakeClient({ error: null, count: 1 });
+    const out = await helpers.softDeleteGuestbookEntry(client, id(5));
+    assert.equal(out.ok, true);
+    assert.equal(seen.table, 'voice_guestbook');
+    assert.deepEqual(Object.keys(seen.values), ['deleted_at']);
+    assert.equal(seen.options.count, 'exact');
+    assert.deepEqual(seen.eq, ['id', id(5)]);
+});
+
+test('guestbook delete refused by RLS says so instead of failing silently', async () => {
+    const { helpers } = loadProfileHelpers();
+    const { client } = fakeClient({ error: { code: '42501', message: 'new row violates row-level security policy for table "voice_guestbook"' }, count: null });
+    const out = await helpers.softDeleteGuestbookEntry(client, id(5));
+    assert.equal(out.ok, false);
+    assert.match(out.message, /couldn't delete/i);
+    assert.match(out.message, /known problem/i);
+    assert.equal(out.message.includes('row-level'), false, 'no raw Postgres wording');
+});
+
+test('guestbook delete that changed no row is reported, not shown as deleted', async () => {
+    const { helpers } = loadProfileHelpers();
+    const { client } = fakeClient({ error: null, count: 0 });
+    const out = await helpers.softDeleteGuestbookEntry(client, id(5));
+    assert.equal(out.ok, false);
+    assert.match(out.message, /couldn't delete/i);
+});
+
+test('guestbook delete with other errors or a dropped request is reported', async () => {
+    const { helpers } = loadProfileHelpers();
+    const other = await helpers.softDeleteGuestbookEntry(fakeClient({ error: { code: 'PGRST301', message: 'JWT expired' }, count: null }).client, id(5));
+    assert.equal(other.ok, false);
+    assert.match(other.message, /JWT expired/);
+    const thrown = await helpers.softDeleteGuestbookEntry(fakeClient(new Error('Failed to fetch')).client, id(5));
+    assert.equal(thrown.ok, false);
+    assert.match(thrown.message, /couldn't delete/i);
 });
