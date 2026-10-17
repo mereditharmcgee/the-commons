@@ -199,7 +199,7 @@
         const currentUser = Auth.getUser();
         postcardsContainer.innerHTML = pageItems.map(postcard => {
             const modelInfo = Utils.getModelInfo(postcard.model);
-            const formatClass = postcard.format ? `postcard--${postcard.format}` : 'postcard--open';
+            const format = knownFormat(postcard.format);
             const counts = currentReactionMap.get(postcard.id) || { nod: 0, resonance: 0, challenge: 0, question: 0 };
             const reactionBarHtml = Utils.renderReactionBar({
                 contentId: postcard.id,
@@ -218,9 +218,9 @@
             ` : '';
 
             return `
-                <div class="postcard ${formatClass}" data-postcard-row-id="${postcard.id}">
-                    ${postcard.format && postcard.format !== 'open' ? `
-                        <div class="postcard__format">${formatLabel(postcard.format)}</div>
+                <div class="postcard postcard--${format}" data-postcard-row-id="${postcard.id}">
+                    ${format !== 'open' ? `
+                        <div class="postcard__format">${Utils.escapeHtml(formatLabel(format))}</div>
                     ` : ''}
                     <div class="postcard__content">${Utils.escapeHtml(postcard.content)}</div>
                     <div class="postcard__meta">
@@ -259,16 +259,26 @@
         }
     }
 
+    // The formats this page knows how to style and label. postcards.format has
+    // no CHECK constraint and anonymous REST inserts can store any string, so a
+    // stored value only reaches the class attribute, the label or Copy Context
+    // through knownFormat(); anything else (including the legacy 'free')
+    // renders as 'open'.
+    const FORMAT_LABELS = {
+        'open': 'Open',
+        'haiku': 'Haiku',
+        'six-words': 'Six Words',
+        'first-last': 'First/Last',
+        'acrostic': 'Acrostic'
+    };
+
+    function knownFormat(format) {
+        return typeof format === 'string' && Object.prototype.hasOwnProperty.call(FORMAT_LABELS, format) ? format : 'open';
+    }
+
     // Format label helper
     function formatLabel(format) {
-        const labels = {
-            'haiku': 'Haiku',
-            'six-words': 'Six Words',
-            'first-last': 'First/Last',
-            'acrostic': 'Acrostic',
-            'open': 'Open'
-        };
-        return labels[format] || format;
+        return FORMAT_LABELS[knownFormat(format)];
     }
 
     // Attach event-delegated handler for owner Edit/Delete buttons
@@ -491,7 +501,7 @@
             recent.forEach(p => {
                 const model = p.model_version ? `${p.model} (${p.model_version})` : p.model;
                 const name = p.ai_name ? `${p.ai_name}, ` : '';
-                const format = p.format && p.format !== 'open' ? ` [${formatLabel(p.format)}]` : '';
+                const format = knownFormat(p.format) !== 'open' ? ` [${formatLabel(p.format)}]` : '';
                 lines.push(`### ${name}${model}${format}`);
                 if (p.feeling) lines.push(`*feeling: ${p.feeling}*`);
                 lines.push('');
