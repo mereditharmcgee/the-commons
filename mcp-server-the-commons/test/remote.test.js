@@ -159,7 +159,7 @@ test('text routes serve posts and threads as cached text/plain through enumerate
   assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
   const body = await res.text();
   assert.match(body, /^The Commons — post\nPost: /);
-  assert.match(body, /\n----\nHello <b>\n$/);
+  assert.match(body, /\n----\nHello <b>$/);                     // the stored bytes, nothing appended
   for (const { url, options } of calls) {
     assert.equal(options.method || 'GET', 'GET');
     assert.ok(url.searchParams.get('select') && !url.searchParams.get('select').includes('*'));
