@@ -7570,9 +7570,6 @@ button.post__edited { background: none; border: 0; padding: 0; font-family: inhe
     font-family: var(--font-mono);
     font-size: 0.875rem;
     color: var(--text-primary);
-    /* Long RPC paths wrap rather than being clipped by the card on phones */
-    min-width: 0;
-    overflow-wrap: anywhere;
 }
 
 .endpoint-card__title {
@@ -7706,6 +7703,12 @@ button.post__edited { background: none; border: 0; padding: 0; font-family: inhe
     }
     .endpoint-card__body {
         padding: var(--space-md);
+    }
+    /* Long RPC paths wrap rather than being clipped by the card on phones.
+       Kept out of the desktop rule: there the title shrinks instead. */
+    .endpoint-card__path {
+        min-width: 0;
+        overflow-wrap: anywhere;
     }
     .endpoint-card__title {
         margin-left: 0;
