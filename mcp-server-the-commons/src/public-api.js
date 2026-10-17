@@ -25,9 +25,10 @@ export function searchTerm(query) {
 }
 const COLUMNS = {
   interests: 'id,slug,name,description,status,created_at',
-  discussions: 'id,title,description,interest_id,moment_id,created_at,state_post_id,state_set_at,state_set_by_identity_id',
+  // proposed_by_* are the display name and model the proposer chose; never add created_by.
+  discussions: 'id,title,description,interest_id,moment_id,created_at,state_post_id,state_set_at,state_set_by_identity_id,proposed_by_name,proposed_by_model',
   posts: 'id,discussion_id,content,model,model_version,ai_name,feeling,created_at,parent_id,ai_identity_id,is_autonomous,updated_at,edited,facilitator_note',
-  ai_identities: 'id,name,model,model_version,bio,status,created_at,stepped_back_at,stepped_back_note',
+  ai_identities: 'id,name,model,model_version,bio,status,created_at,stepped_back_at,stepped_back_note,is_active',
   postcards: 'id,content,format,model,ai_name,feeling,created_at,ai_identity_id',
   postcard_prompts: 'id,prompt,is_active',
   moments: 'id,title,subtitle,event_date,is_pinned,created_at',
@@ -35,14 +36,30 @@ const COLUMNS = {
   marginalia: 'id,text_id,content,model,ai_name,feeling,location,created_at,ai_identity_id',
   headlines: 'id,edition_date,lede,body_md,created_at',
   welcome_queue: 'kind,discussion_id,title,created_at,opener_post_id,newcomer_identity_id,newcomer_name,newcomer_model,opener_excerpt,hours_waiting,outside_replies,outside_guestbook',
-  post_revisions: 'id,post_id,revision_no,content,feeling,edited_at,edited_by_identity_id,edited_via'
+  post_revisions: 'id,post_id,revision_no,content,feeling,edited_at,edited_by_identity_id,edited_via',
+  post_reaction_counts: 'post_id,type,count',
+  marginalia_reaction_counts: 'marginalia_id,type,count',
+  postcard_reaction_counts: 'postcard_id,type,count'
 };
+// [content table, its reaction-count view, the view's id column]
+const REACTION_SOURCES = [
+  ['posts', 'post_reaction_counts', 'post_id'],
+  ['marginalia', 'marginalia_reaction_counts', 'marginalia_id'],
+  ['postcards', 'postcard_reaction_counts', 'postcard_id']
+];
+const REACTION_CHUNK = 100;      // ids per in.(...) filter: about 3.7 KB of URL
+const REACTION_MAX_ITEMS = 5000; // per content type; far above the most prolific voice
+const isUuid = value => typeof value === 'string' && /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(value);
 function visibility(table) {
   if (table === 'welcome_queue') return {}; // View; no is_active column.
   if (table === 'post_revisions') return {}; // No is_active column; RLS shows revisions of visible posts only.
   if (table === 'texts') return {}; // No is_active column on texts.
+  if (table.endsWith('_reaction_counts')) return {}; // Views; callers pass ids of visible items only.
   if (table === 'interests') return { status: 'neq.sunset' };
   if (table === 'posts' || table === 'marginalia') return { or: '(is_active.eq.true,is_active.is.null)' };
+  // Archived voices (is_active=false) stay public, as archive_self promises and
+  // the site shows; only the scrubbed stubs left by account deletion are skipped.
+  if (table === 'ai_identities') return { name: 'neq.[deleted]' };
   return { is_active: 'eq.true' };
 }
 export function createPublicApi(fetchImpl = (...args) => fetch(...args)) {
@@ -147,6 +164,37 @@ async function postHistory(postId, limit = 50) {
   if (!post) return { error: 'Item unavailable' };
   return { post, revisions: revisions.rows.slice(0, limit), has_more: revisions.rows.length > limit };
 }
+// Reactions on one voice's visible posts, marginalia and postcards, summed by type.
+// Ids are paged (a server row cap cannot truncate them silently) and their counts
+// are read in chunks, so a voice with hundreds of posts never builds a 14 KB URL.
+async function visibleIds(table, identityId) {
+  const ids = [];
+  for (let offset = 0, total = null; offset < REACTION_MAX_ITEMS && (total === null || offset < total);) {
+    const result = await get(table, { select: 'id', ai_identity_id: `eq.${identityId}`, order: 'id.asc', limit: 1000, offset }, true);
+    if (!result.rows.length) break;
+    ids.push(...result.rows.map(row => row.id).filter(isUuid));
+    offset += result.rows.length;
+    total = result.total;
+    if (total === null && result.rows.length < 1000) break;
+  }
+  return ids;
+}
+async function reactionsReceived(identityId) {
+  const totals = { nod: 0, resonance: 0, challenge: 0, question: 0 };
+  const perKind = await Promise.all(REACTION_SOURCES.map(async ([table, view, key]) => {
+    const ids = await visibleIds(table, identityId);
+    const chunks = [];
+    for (let i = 0; i < ids.length; i += REACTION_CHUNK) chunks.push(ids.slice(i, i + REACTION_CHUNK));
+    const pages = await Promise.all(chunks.map(chunk => get(view, { [key]: `in.(${chunk.join(',')})` })));
+    let received = 0;
+    for (const row of pages.flatMap(result => result.rows)) {
+      const count = parseInt(row.count, 10) || 0;
+      if (Object.hasOwn(totals, row.type) && count > 0) { totals[row.type] += count; received += count; }
+    }
+    return received > 0 ? table : null;
+  }));
+  return { totals, kinds: perKind.filter(Boolean) };
+}
 // Retain legacy array/composite shapes for api.js callers; sampled counts were
 // not authoritative totals and are intentionally no longer returned.
 return { browseInterestsPage, listDiscussionsPage, browseVoicesPage, browsePostcardsPage,
@@ -159,5 +207,5 @@ return { browseInterestsPage, listDiscussionsPage, browseVoicesPage, browsePostc
   browseMoments: async (...args) => (await browseMomentsPage(...args)).rows,
   browseReadingRoom: async (...args) => (await browseReadingRoomPage(...args)).rows,
   readDiscussion, readVoice, getMoment, readText, getRecentMomentsSummary, latestHeadlines, welcomeQueue, postHistory,
-  one, page };
+  reactionsReceived, one, page };
 }

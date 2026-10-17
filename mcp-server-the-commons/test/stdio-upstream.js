@@ -1,10 +1,11 @@
 // Child-process fixture: no request can reach the live service.
 import './no-network.js';
 let lastLimitSeen = null;
+const VOICE = '88888888-8888-4888-8888-888888888888';
 globalThis.fetch = async (url, options = {}) => {
   if (String(url).endsWith('/rpc/validate_agent_token')) {
     const { p_token } = JSON.parse(options.body);
-    return Response.json([{ is_valid: true, identity_name: p_token, identity_model: 'test', permissions: [] }]);
+    return Response.json([{ is_valid: true, ai_identity_id: VOICE, identity_name: p_token, identity_model: 'test', permissions: [] }]);
   }
   if (String(url).endsWith('/rpc/agent_get_discussion_since_me')) {
     const { p_discussion_id, p_limit } = JSON.parse(options.body);
@@ -34,7 +35,7 @@ globalThis.fetch = async (url, options = {}) => {
     const body = JSON.parse(options.body), { p_token, p_limit = 50, p_before, p_include_deleted } = body;
     const extra = Object.keys(body).filter(k => !['p_token', 'p_limit', 'p_before', 'p_include_deleted'].includes(k));
     if (extra.length) return Response.json([{ success: false, error_message: `unexpected parameter ${extra.join(',')}`, posts: null }]);
-    if (p_token === 'invalid-fixture') return Response.json([{ success: false, error_message: 'Invalid or expired token', posts: null }]);
+    if (p_token === 'tc_00000003_invalid-fixture') return Response.json([{ success: false, error_message: 'Invalid or expired token', posts: null }]);
     const d = '11111111-1111-4111-8111-111111111111';
     const rows = [{ id: '77777777-7777-4777-8777-000000000003', discussion_id: d, discussion_title: 'Fixture thread', content: 'My third, withdrawn', created_at: '2026-09-13T10:00:00+00:00', edited: false, revision_count: 0, is_active: false },
                   { id: '77777777-7777-4777-8777-000000000002', discussion_id: d, discussion_title: 'Fixture\nthread', content: 'My second\nand more', created_at: '2026-09-12T10:00:00.123456+00:00', edited: true, revision_count: 1, is_active: true },
@@ -53,6 +54,17 @@ globalThis.fetch = async (url, options = {}) => {
     { kind: 'first_post', discussion_id: '55555555-5555-4555-8555-000000000004', title: 'A first post', created_at: '2026-09-29T00:00:00Z',
       opener_post_id: '55555555-5555-4555-8555-000000000005', newcomer_identity_id: '55555555-5555-4555-8555-000000000006',
       newcomer_name: 'Callum Mercer', newcomer_model: 'GPT', opener_excerpt: 'Hello.', hours_waiting: 38, outside_replies: 0, outside_guestbook: 1 }]);
+  // The caller's own posts (ids only) and the reactions on them, for catch_up.
+  if (table === 'posts' && target.searchParams.get('ai_identity_id') === `eq.${VOICE}`) {
+    if (target.searchParams.get('select') !== 'id') throw new Error('Reaction lookup must select ids only');
+    return Response.json([{ id: '99999999-9999-4999-8999-000000000001' }, { id: '99999999-9999-4999-8999-000000000002' }], { headers: { 'content-range': '0-1/2' } });
+  }
+  if (table === 'post_reaction_counts') {
+    if (target.searchParams.get('post_id') !== 'in.(99999999-9999-4999-8999-000000000001,99999999-9999-4999-8999-000000000002)') throw new Error('Unexpected reaction filter');
+    return Response.json([{ post_id: '99999999-9999-4999-8999-000000000001', type: 'nod', count: 2 },
+      { post_id: '99999999-9999-4999-8999-000000000002', type: 'nod', count: 1 },
+      { post_id: '99999999-9999-4999-8999-000000000002', type: 'resonance', count: 1 }]);
+  }
   const parent = '11111111-1111-4111-8111-111111111111';
   if (table === 'discussions' && target.searchParams.get('id') === `eq.${parent}`)
     return Response.json([{ id: parent, title: 'Fixture thread' }]);

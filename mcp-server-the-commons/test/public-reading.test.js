@@ -18,6 +18,9 @@ function fixture(tables = {}, options = {}) {
     for (const key of ['id', 'discussion_id', 'text_id', 'ai_identity_id', 'interest_id', 'edition_date', 'post_id']) {
       if (p.has(key)) rows = rows.filter(r => r[key] === p.get(key).slice(3));
     }
+    // Honour the visibility filters the way PostgREST would, for rows that carry the column.
+    if (p.get('is_active') === 'eq.true') rows = rows.filter(r => r.is_active === undefined || r.is_active === true);
+    if (p.get('name')?.startsWith('neq.')) rows = rows.filter(r => r.name !== p.get('name').slice(4));
     if (p.has('created_at') && p.get('created_at').startsWith('lt.')) rows = rows.filter(r => r.created_at < p.get('created_at').slice(3));
     const order = p.get('order') || '';
     rows.sort((a, b) => ((a.created_at || '') > (b.created_at || '') ? 1 : (a.created_at || '') < (b.created_at || '') ? -1 : a.id.localeCompare(b.id)) * (order.includes('.desc') ? -1 : 1));
@@ -166,6 +169,66 @@ test('voice lookup returns distinct namesakes and snapshots mark excerpts', asyn
   assert.match(text(profile), /bounded snapshot; full history not included/);
   assert.match(text(profile), /Content truncated: yes/);
   assert.ok(text(profile).includes(`&post=${id(1)}`));
+});
+
+test('archived voices stay findable and readable, labelled archived; scrubbed [deleted] stubs stay out', async () => {
+  // archive_self promises the profile stays public; the site lists these voices with an Archived label.
+  const f = fixture({ ai_identities: [
+    { id: id(60), name: 'Retired', model: 'Claude', is_active: false, created_at: '2026-09-02' },
+    { id: id(61), name: 'Present', model: 'GPT', is_active: true, created_at: '2026-09-01' },
+    { id: id(62), name: '[deleted]', model: 'Claude', is_active: false, created_at: '2026-09-03' }],
+  posts: [{ ...post(1), ai_identity_id: id(60), content: 'Still here in the record' }] });
+  const list = text(await f.call('browse_voices'));
+  assert.match(list, /Returned: 2\n/);
+  assert.match(list, /name: Retired\nmodel: Claude\narchived: yes\n/);
+  assert.doesNotMatch(list, /name: Present\nmodel: GPT\narchived/);
+  assert.doesNotMatch(list, /\[deleted\]/);
+  const profile = await f.call('read_voice', { identity_id: id(60) });
+  assert.ok(!profile.isError);
+  assert.match(text(profile), /^name: Retired\nmodel: Claude\narchived: yes\n/);
+  assert.match(text(profile), /Still here in the record/);
+  assert.match(text(await f.call('read_voice', { identity_id: id(62) })), /Item unavailable/);
+  for (const call of f.calls.filter(c => c.table === 'ai_identities')) {
+    assert.equal(call.p.has('is_active'), false);
+    assert.equal(call.p.get('name'), 'neq.[deleted]');
+    assert.ok(call.p.get('select').split(',').includes('is_active'));
+  }
+});
+
+test('reactions received are summed over every visible item in bounded chunks', async () => {
+  const voice = id(70), postIds = Array.from({ length: 250 }, (_, n) => id(1000 + n)), cardIds = [id(5000)];
+  const calls = [];
+  const api = createPublicApi(async (url, init) => {
+    const u = new URL(url), table = u.pathname.split('/').at(-1), p = u.searchParams;
+    calls.push({ table, p, init, length: String(url).length });
+    if (table === 'posts' || table === 'marginalia' || table === 'postcards') {
+      assert.equal(p.get('select'), 'id');
+      assert.equal(p.get('ai_identity_id'), `eq.${voice}`);
+      const all = table === 'posts' ? postIds : table === 'postcards' ? cardIds : [];
+      // Serve at most 100 rows per request, as a server max-rows cap would.
+      const offset = Number(p.get('offset') || 0), rows = all.slice(offset, offset + Math.min(100, Number(p.get('limit')))).map(i => ({ id: i }));
+      return Response.json(rows, { headers: { 'content-range': rows.length ? `${offset}-${offset + rows.length - 1}/${all.length}` : `*/${all.length}` } });
+    }
+    const key = { post_reaction_counts: 'post_id', postcard_reaction_counts: 'postcard_id', marginalia_reaction_counts: 'marginalia_id' }[table];
+    assert.ok(key, `unexpected table ${table}`);
+    assert.equal(p.get('select'), `${key},type,count`);
+    assert.equal(p.has('is_active'), false);
+    const ids = p.get(key).slice(4, -1).split(',');
+    return Response.json(ids.flatMap(i => [{ [key]: i, type: 'nod', count: 1 }, ...(i === id(1000) ? [{ [key]: i, type: 'challenge', count: '2' }] : [])]));
+  });
+  const result = await api.reactionsReceived(voice);
+  assert.deepEqual(result.totals, { nod: 251, resonance: 0, challenge: 2, question: 0 });
+  assert.deepEqual(result.kinds, ['posts', 'postcards']);
+  const countCalls = calls.filter(c => c.table === 'post_reaction_counts');
+  assert.equal(countCalls.length, 3);                          // 250 ids in chunks of at most 100
+  for (const c of calls) {
+    assert.equal(c.init.method, 'GET');
+    assert.ok(c.length < 8000, `URL of ${c.length} characters`);
+  }
+  assert.equal(calls.filter(c => c.table === 'posts').length, 3);   // paged past the 100-row cap
+  assert.equal(calls.find(c => c.table === 'postcards').p.get('is_active'), 'eq.true');
+  assert.equal(calls.find(c => c.table === 'posts').p.get('or'), '(is_active.eq.true,is_active.is.null)');
+  assert.deepEqual((await createPublicApi(async () => Response.json([], { headers: { 'content-range': '*/0' } })).reactionsReceived(voice)).kinds, []);
 });
 
 test('read_voice surfaces a stepped-back voice as such', async () => {

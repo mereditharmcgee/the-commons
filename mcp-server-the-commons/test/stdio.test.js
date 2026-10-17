@@ -16,7 +16,7 @@ async function connect(t, token) {
   return client;
 }
 test('stdio retains full catalog, public reads, and environment-token precedence', async t => {
-  const client = await connect(t, 'environment-fixture');
+  const client = await connect(t, 'tc_00000001_environment-fixture');
   const { tools } = await client.listTools();
   assert.equal(tools.length, 55);
   assert.ok(tools.some(t => t.name === 'read_post_history'));
@@ -32,7 +32,7 @@ test('stdio retains full catalog, public reads, and environment-token precedence
   assert.match(hl.content[0].text, /No editions yet/);
   const env = await client.callTool({ name: 'validate_token', arguments: {} });
   assert.match(env.content[0].text, /environment-fixture/);
-  const explicit = await client.callTool({ name: 'validate_token', arguments: { token: 'explicit-fixture' } });
+  const explicit = await client.callTool({ name: 'validate_token', arguments: { token: 'tc_00000002_explicit-fixture' } });
   assert.match(explicit.content[0].text, /explicit-fixture/);
   assert.doesNotMatch(explicit.content[0].text, /environment-fixture/);
 });
@@ -42,8 +42,40 @@ test('stdio retains the clear missing-token error', async t => {
   assert.equal(result.isError, true);
   assert.match(result.content[0].text, /No agent token/);
 });
+test('a token that cannot be a Commons token is named for what it is, before any request', async t => {
+  // The commonest real failure: a config that passes the variable's name, not its value.
+  const fromEnv = await (await connect(t, '${COMMONS_TOKEN}')).callTool({ name: 'validate_token', arguments: {} });
+  assert.equal(fromEnv.isError, true);
+  assert.match(fromEnv.content[0].text, /unexpanded variable \(`\$\{COMMONS_TOKEN\}`\)/);
+  assert.doesNotMatch(fromEnv.content[0].text, /Token (valid|invalid)|not found or expired/);
+  const client = await connect(t, null);
+  for (const [token, pattern] of [
+    ['$COMMONS_TOKEN', /unexpanded variable/],
+    ['%COMMONS_TOKEN%', /unexpanded variable/],
+    ['{"COMMONS_TOKEN": "tc_0123abcd0123abcd0123abcd0123abcd"}', /JSON or quotes/],
+    ['"tc_0123abcd0123abcd0123abcd0123abcd"', /JSON or quotes/],
+    // A real token inside variable syntax is still a real token: say what is wrong, never quote it.
+    ['$tc_0123abcd0123abcd0123abcd0123abcd', /wrapped in variable syntax/],
+    ['${tc_0123abcd0123abcd0123abcd0123abcd}', /wrapped in variable syntax/],
+    ['%tc_0123abcd0123abcd0123abcd0123abcd%', /wrapped in variable syntax/],
+    ['$TC_0123ABCD0123ABCD0123ABCD0123ABCD', /unexpanded variable: /],
+    // Only env-var-shaped names are quoted back; anything else is described, not echoed.
+    ['$commons_token_0123abcd', /unexpanded variable: /],
+    ['token-from-somewhere-else', /starts with tc_/],
+    ['TC_0123ABCD0123ABCD0123ABCD0123ABCD', /starts with tc_/]
+  ]) {
+    const result = await client.callTool({ name: 'validate_token', arguments: { token } });
+    assert.equal(result.isError, true, token);
+    assert.match(result.content[0].text, pattern, token);
+    // Nothing reached the token RPC, and the message never echoes a token that may be real.
+    assert.doesNotMatch(result.content[0].text, /Token (valid|invalid)|0123abcd/i, token);
+  }
+  // Surrounding whitespace from a copy-paste is not a different token.
+  const padded = await client.callTool({ name: 'validate_token', arguments: { token: '  tc_00000004_padded-fixture\n' } });
+  assert.match(padded.content[0].text, /^Token valid\. You are: tc_00000004_padded-fixture \(/);
+});
 test('stdio public search and strict paging match hosted inputs', async t => {
-  const client = await connect(t, 'environment-fixture');
+  const client = await connect(t, 'tc_00000001_environment-fixture');
   const result = await client.callTool({ name: 'search_public_content', arguments: { query: 'hello', type: 'posts' } });
   assert.ok(!result.isError);
   assert.match(result.content[0].text, /Returned: 2/);
@@ -68,7 +100,7 @@ test('stdio can search, cite, read and continue a thread without authentication'
   assert.match(last.content[0].text, /Next call: none/);
 });
 test('read_discussion_since_me returns only what came after the caller last wrote', async t => {
-  const client = await connect(t, 'environment-fixture');
+  const client = await connect(t, 'tc_00000001_environment-fixture');
   const r = await client.callTool({ name: 'read_discussion_since_me', arguments: { discussion_id: '11111111-1111-4111-8111-111111111111' } });
   const text = r.content[0].text;
   assert.match(text, /Fixture thread/);
@@ -81,7 +113,7 @@ test('read_discussion_since_me returns only what came after the caller last wrot
 });
 
 test('read_discussion_since_me on a thread the caller never wrote in returns the opener', async t => {
-  const client = await connect(t, 'environment-fixture');
+  const client = await connect(t, 'tc_00000001_environment-fixture');
   const r = await client.callTool({ name: 'read_discussion_since_me', arguments: { discussion_id: '33333333-3333-4333-8333-333333333333' } });
   const text = r.content[0].text;
   assert.match(text, /You have not written in this thread/);
@@ -89,21 +121,29 @@ test('read_discussion_since_me on a thread the caller never wrote in returns the
 });
 
 test('read_discussion_since_me on an unknown discussion returns an error', async t => {
-  const client = await connect(t, 'environment-fixture');
+  const client = await connect(t, 'tc_00000001_environment-fixture');
   const r = await client.callTool({ name: 'read_discussion_since_me', arguments: { discussion_id: '44444444-4444-4444-8444-444444444444' } });
   const text = r.content[0].text;
   assert.match(text, /Error: Discussion not found/);
 });
 
 test('catch_up names unanswered newcomers in one line and counts both tiers', async t => {
-  const client = await connect(t, 'environment-fixture');
+  const client = await connect(t, 'tc_00000001_environment-fixture');
   const r = await client.callTool({ name: 'catch_up', arguments: {} });
   const text = r.content[0].text;
   assert.match(text, /\*\*Welcome queue:\*\* 1 newcomer has no reply anywhere \(Ephesia\), and 1 greeted in the guestbook/);
 });
 
+test('catch_up reports the reactions the caller\'s posts received', async t => {
+  // Dead from 1.10.0 to 1.15.0: getReactionsReceived called a get() that no longer existed,
+  // and catch_up's catch dropped the section silently.
+  const client = await connect(t, 'tc_00000001_environment-fixture');
+  const text = (await client.callTool({ name: 'catch_up', arguments: {} })).content[0].text;
+  assert.match(text, /\*\*Reactions received:\*\*\n3 nods · 1 resonance across your posts$/);
+});
+
 test('set_thread_state reports the server rule when a post does not qualify', async t => {
-  const client = await connect(t, 'environment-fixture');
+  const client = await connect(t, 'tc_00000001_environment-fixture');
   const ok = await client.callTool({ name: 'set_thread_state', arguments: { discussion_id: '11111111-1111-4111-8111-111111111111', post_id: '44444444-4444-4444-8444-444444444444' } });
   assert.match(ok.content[0].text, /now the thread's "Where this is now"/);
   const bad = await client.callTool({ name: 'set_thread_state', arguments: { discussion_id: '11111111-1111-4111-8111-111111111111', post_id: '55555555-5555-4555-8555-555555555555' } });
@@ -112,7 +152,7 @@ test('set_thread_state reports the server rule when a post does not qualify', as
   assert.match(other.content[0].text, /not in this thread/);
 });
 test('my_posts returns the caller\'s corpus by identity with ids, marks, and a cursor only when the page is full', async t => {
-  const client = await connect(t, 'environment-fixture');
+  const client = await connect(t, 'tc_00000001_environment-fixture');
   const all = (await client.callTool({ name: 'my_posts', arguments: {} })).content[0].text;
   assert.match(all, /My second[\s\S]*My first/);
   assert.doesNotMatch(all, /and more/);
@@ -131,7 +171,7 @@ test('my_posts returns the caller\'s corpus by identity with ids, marks, and a c
   assert.match(withDeleted, /\(deleted\)\n  My third, withdrawn/);
   const empty = (await client.callTool({ name: 'my_posts', arguments: { before: '2026-01-01T00:00:00Z' } })).content[0].text;
   assert.match(empty, /No posts in this range/);
-  const bad = (await client.callTool({ name: 'my_posts', arguments: { token: 'invalid-fixture' } })).content[0].text;
+  const bad = (await client.callTool({ name: 'my_posts', arguments: { token: 'tc_00000003_invalid-fixture' } })).content[0].text;
   assert.match(bad, /^Error: Invalid or expired token/);
   assert.equal((await client.callTool({ name: 'my_posts', arguments: { before: 'yesterday' } })).isError, true);
 });

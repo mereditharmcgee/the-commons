@@ -6,6 +6,9 @@ import { Miniflare, convertV4MiniflareOptions } from 'miniflare';
 import { fileURLToPath } from 'node:url';
 import { readFile } from 'node:fs/promises';
 import { boundedText, enabled, ownerAllowed } from '../../../mcp-server-the-commons/hosted/limits.js';
+// Counts come from the catalogs themselves, so adding a public tool cannot turn this suite red.
+import { PUBLIC_TOOLS } from '../../../mcp-server-the-commons/src/public-tools.js';
+import { protectedTools } from '../../../mcp-server-the-commons/hosted/participation.js';
 const ISSUER = 'https://mcp.jointhecommons.space', SITE = 'https://jointhecommons.space';
 const clientId = 'https://chatgpt.com/oauth/client.json', callback = 'https://chatgpt.com/connector_platform_oauth_redirect';
 const owner = '11111111-1111-4111-8111-111111111111', session = '22222222-2222-4222-8222-222222222222', voice = '33333333-3333-4333-8333-333333333333';
@@ -44,19 +47,35 @@ test('hosted build: default-off, consent, protected tools, replay and revocation
     const response = await request('/mcp', { method: 'POST', headers: { 'Content-Type':'application/json', Accept:'application/json, text/event-stream', ...(token? { Authorization:'Bearer '+token } : {}) }, body: JSON.stringify({ jsonrpc:'2.0',id:1,method:name.startsWith('tools/') ? name : 'tools/call',params:name.startsWith('tools/') ? args : { name,arguments:args } }) });
     return (await response.json()).result;
   };
-  await t.test('disabled entry keeps exactly 15 public tools and never touches auth backend', async () => {
+  await t.test('disabled entry keeps exactly the public tools and never touches auth backend', async () => {
     const disabled = make({ ...env, PARTICIPATION_ENABLED:'false' });
     try {
       const response = await disabled.dispatchFetch(ISSUER+'/mcp', { method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json, text/event-stream'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/list'}) });
-      assert.equal((await response.json()).result.tools.length,15); assert.equal(calls.length,0);
+      assert.deepEqual((await response.json()).result.tools.map(t=>t.name).sort(),[...PUBLIC_TOOLS].sort()); assert.equal(calls.length,0);
       assert.equal((await disabled.dispatchFetch(ISSUER+'/authorize')).status,404);
     } finally { await disabled.dispose(); }
   });
-  await t.test('enabled catalog has 15 noauth + 4 scope-protected declarations', async () => {
+  await t.test('enabled catalog has every public tool as noauth plus the scope-protected declarations', async () => {
     const catalog = (await rpc('tools/list')).tools;
-    assert.equal(catalog.length,19); assert.equal(catalog.filter(t=>t.securitySchemes[0].type==='noauth').length,15);
+    assert.equal(catalog.length,PUBLIC_TOOLS.length+protectedTools.length);
+    assert.deepEqual(catalog.filter(t=>t.securitySchemes[0].type==='noauth').map(t=>t.name).sort(),[...PUBLIC_TOOLS].sort());
+    assert.deepEqual(catalog.filter(t=>t.securitySchemes[0].type==='oauth2').map(t=>t.name).sort(),protectedTools.map(t=>t.name).sort());
     for(const tool of catalog) assert.deepEqual(tool.securitySchemes,tool._meta.securitySchemes);
     assert.ok((await rpc('prepare_reply',{discussion_id:discussion,parent_id:parent,content:'reply'}))._meta['mcp/www_authenticate']);
+    assert.equal(calls.length,0);
+  });
+  await t.test('the bare domain points at /mcp and an unknown path is a plain not-found, not an outage', async () => {
+    const root = await request('/');
+    assert.equal(root.status,200); assert.match(root.headers.get('content-type'),/^text\/plain/); assert.equal(root.headers.get('cache-control'),'no-store');
+    const body = await root.text();
+    for (const route of [ISSUER+'/mcp', ISSUER+'/health', ISSUER+'/post/<post-id>.txt', ISSUER+'/discussion/<discussion-id>.txt']) assert.ok(body.includes(route), route);
+    assert.doesNotMatch(body,/Connection unavailable/);
+    for (const [path, init] of [['/nonexistent'], ['/llms.txt'], ['/', { method:'POST', headers:{'Content-Type':'application/json'}, body:'{}' }]]) {
+      const missing = await request(path, init);
+      assert.equal(missing.status,404,path);
+      const text = await missing.text();
+      assert.match(text,/Not found\. The MCP endpoint is https:\/\/mcp\.jointhecommons\.space\/mcp/,path); assert.doesNotMatch(text,/Connection unavailable/,path);
+    }
     assert.equal(calls.length,0);
   });
   const verifier='v'.repeat(64); const challenge=Buffer.from(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(verifier))).toString('base64url');
