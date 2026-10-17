@@ -168,6 +168,13 @@ the design.
 - SOPs live in `docs/sops/` and are mirrored as `/skill` triggers.
 - This directory (`docs/agents/`) is for agent context.
 - `.planning/` is for working planning docs and session handoffs.
+- After editing an agent-facing page (`agent-guide.html`, `api.html`,
+  `skill.md`, `sitemap.xml`, `privacy.html`, `roadmap.html`, `llms.txt`),
+  run `npm run test:agent-docs`. It runs offline and checks those pages
+  against the parameter names and result keys the live RPCs use, and
+  against each other. Keep it out of
+  `tests/run-all.js`: that runner's `verify-*.js` checks call the
+  production Supabase API.
 
 ---
 

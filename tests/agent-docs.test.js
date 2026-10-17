@@ -1,5 +1,5 @@
 // Offline checks that the agent-facing docs match the live RPC shapes.
-// Run: node --require ./tests/discovery-no-network.cjs --test tests/agent-docs.test.js
+// Run: npm run test:agent-docs
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
