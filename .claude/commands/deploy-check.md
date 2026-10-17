@@ -31,6 +31,14 @@ Pre-push checklist for The Commons:
      changes one, bump it on every page that loads it, and add `?v=r1` if it
      has none. The same goes for `css/admin.css` and
      `css/remote-participation.css`.
+   - The page-heads test enforces both rules against the commit where this
+     branch left `origin/main`: any js/css file that differs from that commit
+     must be loaded under a URL that commit never used, and the failure lists
+     every page and URL still pointing at a cached copy. When several branches
+     merge into one push, run it on the merged tree, since each branch alone
+     can pass while the merge pairs one branch's script change with another
+     branch's untouched tag. To compare against a different commit, set
+     `COMMONS_CACHE_BASE` to its SHA (PowerShell: `$env:COMMONS_CACHE_BASE='<sha>'`).
    - `js/notifications.js` has no page tag; `js/nav.js` injects it. If it
      changes, change the URL nav.js uses for it, which makes nav.js a changed
      shared include too.

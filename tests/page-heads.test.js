@@ -12,11 +12,16 @@
 // - Pages that load css/style.css allow its data: background image.
 // - Shared js/css includes carry one site-wide ?v= cache-busting token, so a
 //   deploy never pairs new page code with a 4-hour-old cached shared file.
+// - Any js/css file that changed since this branch left origin/main is loaded
+//   under a URL main never used (a bumped or new ?v=), on every page and in
+//   js/nav.js's injected notifications.js. Set COMMONS_CACHE_BASE to compare
+//   against another commit. Skipped when git or origin/main is unavailable.
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
+const { execFileSync } = require('node:child_process');
 
 const root = path.join(__dirname, '..');
 const pages = fs.readdirSync(root).filter(f => f.endsWith('.html')).sort();
@@ -134,4 +139,57 @@ test('local script and stylesheet includes point at files that exist', () => {
             assert.ok(fs.existsSync(path.join(root, file)), `${page}: ${ref} does not exist`);
         }
     }
+});
+
+// Asset references in root pages and js/ files: src/href attributes and the
+// string nav.js uses to inject notifications.js. The same pattern runs over the
+// base commit through git grep (POSIX ERE), so both sides parse alike.
+const ASSET_REF = /["'`]((?:js|css)\/[A-Za-z0-9_./-]+\.(?:js|css)(?:\?v=[A-Za-z0-9_.-]+)?)["'`]/g;
+const ASSET_REF_ERE = "[\"'`](js|css)/[A-Za-z0-9_./-]+[.](js|css)([?]v=[A-Za-z0-9_.-]+)?[\"'`]";
+
+function git(args) {
+    return execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 64 * 1024 * 1024 });
+}
+
+function cacheBase() {
+    const wanted = process.env.COMMONS_CACHE_BASE;
+    if (wanted) return git(['rev-parse', '--verify', `${wanted}^{commit}`]).trim(); // a bad ref fails loudly
+    try {
+        return git(['merge-base', 'HEAD', 'origin/main']).trim();
+    } catch {
+        return null;
+    }
+}
+
+test('a js/css file changed since origin/main is loaded under a URL main never served', (t) => {
+    const base = cacheBase();
+    if (!base) {
+        t.skip('no git checkout or no origin/main to compare against (set COMMONS_CACHE_BASE)');
+        return;
+    }
+    const changed = new Set(git(['diff', '--name-only', base, '--', 'js', 'css']).split('\n').map(s => s.trim()).filter(Boolean));
+    let baseHits = '';
+    try {
+        baseHits = git(['grep', '-h', '-o', '-I', '-E', ASSET_REF_ERE, base, '--', ':(glob)*.html', ':(glob)js/*.js']);
+    } catch (e) {
+        if (e.status !== 1) throw e; // 1 = no matches
+    }
+    const served = new Set(baseHits.split('\n').map(s => s.trim().slice(1, -1)).filter(Boolean));
+    const stale = new Set();
+    const sources = [
+        ...pages.map(p => [p, fs.readFileSync(path.join(root, p), 'utf8').replace(/<!--[\s\S]*?-->/g, '')]),
+        ...fs.readdirSync(path.join(root, 'js')).filter(f => f.endsWith('.js'))
+            .map(f => [`js/${f}`, fs.readFileSync(path.join(root, 'js', f), 'utf8')]),
+    ];
+    for (const [where, text] of sources) {
+        for (const m of text.matchAll(ASSET_REF)) {
+            const ref = m[1];
+            if (changed.has(ref.split('?')[0]) && served.has(ref)) stale.add(`${where}: ${ref}`);
+        }
+    }
+    assert.deepEqual([...stale], [],
+        `changed since ${base.slice(0, 7)} but still loaded under a URL browsers may hold for 4 hours. ` +
+        'Shared includes: set a new site-wide ?v= (see /deploy-check). Page scripts and other css: ' +
+        'bump ?v=rN, or add ?v=r1 if there is none. notifications.js: change the URL in js/nav.js.\n  ' +
+        [...stale].join('\n  '));
 });
