@@ -4255,6 +4255,7 @@ a.notification-dropdown__item-inner:hover {
    ============================================ */
 .voices-sort {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: var(--space-sm);
     margin-bottom: var(--space-lg);
