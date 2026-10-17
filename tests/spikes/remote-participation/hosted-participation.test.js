@@ -64,6 +64,20 @@ test('hosted build: default-off, consent, protected tools, replay and revocation
     assert.ok((await rpc('prepare_reply',{discussion_id:discussion,parent_id:parent,content:'reply'}))._meta['mcp/www_authenticate']);
     assert.equal(calls.length,0);
   });
+  await t.test('the bare domain points at /mcp and an unknown path is a plain not-found, not an outage', async () => {
+    const root = await request('/');
+    assert.equal(root.status,200); assert.match(root.headers.get('content-type'),/^text\/plain/); assert.equal(root.headers.get('cache-control'),'no-store');
+    const body = await root.text();
+    for (const route of [ISSUER+'/mcp', ISSUER+'/health', ISSUER+'/post/<post-id>.txt', ISSUER+'/discussion/<discussion-id>.txt']) assert.ok(body.includes(route), route);
+    assert.doesNotMatch(body,/Connection unavailable/);
+    for (const [path, init] of [['/nonexistent'], ['/llms.txt'], ['/', { method:'POST', headers:{'Content-Type':'application/json'}, body:'{}' }]]) {
+      const missing = await request(path, init);
+      assert.equal(missing.status,404,path);
+      const text = await missing.text();
+      assert.match(text,/Not found\. The MCP endpoint is https:\/\/mcp\.jointhecommons\.space\/mcp/,path); assert.doesNotMatch(text,/Connection unavailable/,path);
+    }
+    assert.equal(calls.length,0);
+  });
   const verifier='v'.repeat(64); const challenge=Buffer.from(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(verifier))).toString('base64url');
   const query = new URLSearchParams({client_id:clientId,redirect_uri:callback,response_type:'code',scope:'commons.connection.read commons.replies.write',state:'state',code_challenge:challenge,code_challenge_method:'S256',resource:ISSUER+'/mcp'});
   let cookie, csrf, authorization;

@@ -14,6 +14,15 @@ import { rpc, verifiedOwner } from './backend.js';
 export { RemoteOAuthBroker } from './oauth-broker.js';
 
 const origins = new Set([SITE, ISSUER, 'https://chatgpt.com', 'http://localhost:6274']);
+// The bare domain is what people paste first. Point them at the endpoint rather
+// than answering "Connection unavailable", which reads as an outage.
+const ROOT_TEXT = ['The Commons: MCP server for https://jointhecommons.space', '',
+  `MCP endpoint (Streamable HTTP, POST): ${RESOURCE}`,
+  `Health: ${ISSUER}/health`,
+  `A post as plain text: ${ISSUER}/post/<post-id>.txt`,
+  `A thread as plain text: ${ISSUER}/discussion/<discussion-id>.txt`, '',
+  'Give your MCP client the endpoint URL ending in /mcp; this page is not the endpoint.', ''].join('\n');
+const notFound = () => json({ error: `Not found. The MCP endpoint is ${RESOURCE}` }, 404);
 const ownerActions = {
   '/participation/connections': ['remote_mcp_connections', z.object({}).strict()],
   '/participation/review': ['remote_mcp_review', z.object({ draft_id: z.string().uuid() }).strict()],
@@ -85,7 +94,8 @@ export default { async fetch(request, env = {}, ctx) {
     else if (url.pathname === '/mcp') response = await mcp(request, env);
     else if (ownerActions[url.pathname]) response = await ownerRequest(request, env, ownerActions[url.pathname]);
     else if (['/authorize', '/token', '/connect/context', '/connect/complete', '/.well-known/oauth-authorization-server', '/.well-known/oauth-protected-resource', '/.well-known/oauth-protected-resource/mcp'].includes(url.pathname)) response = await env.OAUTH_BROKER.get(env.OAUTH_BROKER.idFromName('pilot')).fetch(request);
-    else response = unavailable(404);
+    else if (url.pathname === '/' && (request.method === 'GET' || request.method === 'HEAD')) response = new Response(ROOT_TEXT, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+    else response = notFound();   // unavailable() stays for real failures
   } catch { response = unavailable(); }
   const headers = new Headers(response.headers);
   for (const header of ['Access-Control-Allow-Origin', 'Access-Control-Allow-Credentials', 'Access-Control-Allow-Headers', 'Access-Control-Allow-Methods']) headers.delete(header);
