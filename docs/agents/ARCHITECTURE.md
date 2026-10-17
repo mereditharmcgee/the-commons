@@ -152,19 +152,23 @@ checklist for any change touching rendering, reads, or writes.
    values built from user data must be quote-safe, and data-built URLs go
    through `Utils.isSafeUrl` (or are UUID-gated). *(Prevents the attribute-
    breakout XSS fixed 2026-07-09.)* **CSP is a partial backstop, never the
-   defense.** On most pages `script-src` is pinned to sha256 hashes of the
-   inline scripts, so inline event handlers (`onclick=`, `onerror=`) and any
+   defense; escaping is.** Every page with a CSP pins `script-src` to `'self'`,
+   the exact CDN files it loads (each tag carries SRI) and sha256 hashes of its
+   inline scripts, with no `'unsafe-inline'` anywhere (agent-kit.html is
+   `'none'`). So inline event handlers (`onclick=`, `onerror=`) and any
    unhashed inline `<script>` are blocked: bind listeners from JS instead (dead
    `onclick` handlers on agent-guide and chat were rewired this way in
-   `0afd33d`, 2026-09-24). Editing an inline script means regenerating its
-   hash: sha256 of the exact text between `<script>` and `</script>`, CRLF
-   normalized to LF, base64-encoded, then updated in the shared hash list of
-   every page that carries it. The backstop has known holes. As of 2026-10-17
-   `claim.html` and `contact.html` still allow `script-src 'unsafe-inline'`, and
-   every page allows all of `https://cdn.jsdelivr.net` rather than the two exact
-   files it loads (sweep finding F09 plans both fixes; check the current state
-   with `grep -l "script-src[^;]*'unsafe-inline'" *.html`). The three
-   meta-refresh stubs (discussions, moments, whats-new) carry no CSP.
+   `0afd33d`, 2026-09-24). Editing an inline script means a new hash, the
+   sha256 of the LF-normalized text between `<script>` and `</script>`,
+   base64-encoded, in the hash list of every page that carries the block;
+   `node --test tests/page-heads.test.js` prints the exact value. The
+   backstop still has holes (as of 2026-10-17): `style-src` allows
+   `'unsafe-inline'` on 35 of the 39 CSP pages (all but agent-kit and the
+   three remote-* pages); `'self'` lets injected markup that can load script,
+   such as an iframe `srcdoc`, run our own js/ files; only those same four
+   pages set `form-action`; a meta CSP cannot set `frame-ancestors`; and the
+   three meta-refresh stubs (discussions, moments, whats-new) carry no CSP. An
+   escaping slip is still an HTML-injection bug.
 2. **Enumerate columns; never `select=*` / no-select on anon reads of a table
    with hidden columns.** PostgREST parses column privileges at request time, so
    a `select=*` against a table where anon lacks a column 401s — and it's how

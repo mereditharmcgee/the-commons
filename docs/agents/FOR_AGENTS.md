@@ -127,12 +127,19 @@ explicit go.
 - **JS module pattern is the IIFE wrapper.** No ES modules, no bundling.
 - **One JS file per HTML page.** Shared utilities in `js/config.js`,
   `js/utils.js`, `js/auth.js`.
-- **CSP hashes for inline scripts.** If you add or edit an inline
-  `<script>` in any HTML, its SHA-256 hash in the page's CSP meta tag must be
-  regenerated, and inline `onclick=`-style handlers never run on hash-pinned
-  pages. The recipe is in [ARCHITECTURE.md](ARCHITECTURE.md#security-invariants),
-  invariant 1 (the `.planning/phases/05-...` file named in the pages' CSP
-  comment is not in the repo). Prefer external JS files.
+- **CSP hashes for inline scripts.** Add or edit an inline `<script>` and
+  `node --test tests/page-heads.test.js` fails with the exact `'sha256-...'`
+  to put in that page's `script-src`. Never add `'unsafe-inline'`; inline
+  `onclick=`-style handlers never run, so bind listeners from JS. Prefer
+  external JS files.
+- **Cache-busting (`?v=`).** The shared includes (`js/config.js`, `utils.js`,
+  `utils-render.js`, `utils-context.js`, `auth.js`, `nav.js`,
+  `css/style.css`) carry one site-wide `?v=YYYYMMDD` token; a push that
+  changes any of them re-stamps every page. A changed page script carries its
+  own `?v=rN`: bump it, or add `?v=r1`. The same page-heads test enforces
+  both; run it on the merged tree before pushing. Full rules, the re-stamp
+  one-liner and the CDN/SRI rule:
+  [deploy-check.md](../../.claude/commands/deploy-check.md) steps 7 and 8.
 
 When you're tempted to "modernize" something — don't. The minimalism is
 the design.

@@ -75,8 +75,9 @@ before every push. A CI hook could catch:
 - HTML validation (broken tags, missing alt text)
 - CSS lint (typos, unused custom properties)
 - Basic accessibility (ESLint plugin or pa11y)
-- CSP hash regen for inline scripts (currently a manual reminder in
-  admin.html)
+- CSP hash check for inline scripts (since 2026-10-17
+  `tests/page-heads.test.js` checks it locally and prints the needed hash,
+  but no CI workflow runs it yet)
 - Broken-link check across pages
 
 **Constraint:** any CI hook must respect the "no build step" decision.
@@ -255,7 +256,39 @@ Meredith's.
 
 ---
 
-## MEDIUM — CSP: two pages still allow `'unsafe-inline'`, and every page allows all of cdn.jsdelivr.net
+## ~~MEDIUM — CSP: two pages still allow `'unsafe-inline'`, and every page allows all of cdn.jsdelivr.net~~ — RESOLVED 2026-10-17 (script-src); style-src gap still open
+
+**Resolved 2026-10-17 (sweep finding F09):** re-checked on the release tree.
+All 39 CSP pages (of 42 root pages) are clean in `script-src`:
+- None allows `'unsafe-inline'`. claim.html and contact.html now carry the
+  sha256 of their single inline block instead.
+- None allows the bare `https://cdn.jsdelivr.net` host. 38 pages name the
+  exact file `npm/@supabase/supabase-js@2.98.0/dist/umd/supabase.js` and 5
+  (chat, discussion, postcards, suggest-text, text) also name
+  `npm/dompurify@3.3.1/dist/purify.min.js`; all 43 of those script tags carry
+  SRI (`integrity` + `crossorigin="anonymous"`). The only other sources are
+  `'self'` and sha256 hashes; agent-kit.html is `script-src 'none'`.
+- `https://storage.ko-fi.com` is gone from every CSP.
+
+`tests/page-heads.test.js` now fails on any regression of these (and prints
+the hash an inline script needs).
+
+**Still open (LOW): what the CSP leaves open.**
+- **`style-src 'unsafe-inline'`** remains on 35 of the 39 CSP pages (all but
+  agent-kit.html and the three remote-* pages). This is the main remaining
+  gap: injected markup can still restyle a page (overlay or hide content).
+  Dropping it first means moving the pages' inline `style=` attributes into
+  classes in css/style.css.
+- `script-src 'self'` lets injected markup that can load script, such as an
+  iframe `srcdoc`, run our own js/ files.
+- Only agent-kit.html and the remote-* pages set `form-action`; add
+  `form-action 'self'` to pages whose forms never post off-site.
+- A meta CSP cannot set `frame-ancestors` (GitHub Pages serves no custom
+  headers), and the three meta-refresh stubs (discussions, moments,
+  whats-new) carry no CSP.
+
+Check the current state with `node --test tests/page-heads.test.js` and
+`grep -l "style-src[^;]*'unsafe-inline'" *.html`.
 
 **Correction 2026-10-17:** this entry used to say every page's CSP carried
 `script-src 'unsafe-inline'`. That was never true (`git log -G` shows it was
@@ -263,7 +296,8 @@ only ever added to claim.html and contact.html, on 2026-03-07), and agents
 who believed it wrote inline `onclick=` handlers that the hash-pinned CSP
 silently blocked (fixed in `0afd33d`, 2026-09-24).
 
-**Status (2026-10-17):** 39 of 42 root pages carry a CSP meta tag. 33 pin
+**Original status (2026-10-17, before F09 merged):** 39 of 42 root pages
+carry a CSP meta tag. 33 pin
 `script-src` to sha256 hashes of their inline scripts, which blocks inline
 event handlers and unhashed inline script; agent-kit.html and the three
 remote-* pages have no inline script and no hashes. Two gaps remain:
@@ -280,9 +314,8 @@ remote-* pages have no inline script and no hashes. Two gaps remain:
   (`npm/@supabase/supabase-js@2.98.0/dist/umd/supabase.js` and
   `npm/dompurify@3.3.1/dist/purify.min.js`).
 
-Both are planned as sweep finding F09. Check the current state with
-`grep -l "script-src[^;]*'unsafe-inline'" *.html` before relying on this
-entry; strike it with a RESOLVED date line once both are gone.
+Both were fixed by sweep finding F09 (see the Resolved paragraph at the top
+of this entry).
 
 ---
 
@@ -356,7 +389,7 @@ tag, and the three without it (discussions.html, moments.html,
 whats-new.html) are all meta-refresh redirect stubs with no content of
 their own. moments.html was never "a real page" when this was written: it
 has been a stub since 2026-03-06. Nothing to fix; the remaining CSP work is
-the MEDIUM entry above.
+the **Still open** list in the CSP entry above.
 
 **Original status:** 33 of 35 root HTML pages carry the
 `Content-Security-Policy` meta tag. Two do not: `moments.html` (a real
