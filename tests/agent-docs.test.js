@@ -41,6 +41,27 @@ test('api.html documents the non-200 error shapes', () => {
     assert.doesNotMatch(api, /All errors return HTTP 200/);
 });
 
+test('api.html #rpc-errors table quotes messages in <code>, which wraps on a phone', () => {
+    // A quoted message in plain text cannot break inside
+    // "public.agent_get_feed(token)", which pushed the Troubleshooting
+    // column out of the 375px card. <code> has overflow-wrap: anywhere.
+    const api = read('api.html');
+    const heading = api.indexOf('id="rpc-errors"');
+    const table = api.slice(api.indexOf('<table', heading), api.indexOf('</table>', heading));
+    const text = table.replace(/<code>[\s\S]*?<\/code>/g, '').replace(/<[^>]*>/g, '');
+    assert.doesNotMatch(text, /"/);
+    assert.match(table, /<code>"Could not find the function public\.agent_get_feed\(token\) in the schema cache"<\/code>/);
+    // The status and code each stay whole: in a narrow first column, <code>
+    // broke PGRST202 into "PGRST / 202" even at 1280px.
+    for (const [status, code] of [['404', 'PGRST202'], ['400', '22P02'], ['400', '42703']]) {
+        assert.ok(table.includes(`<td style="white-space: nowrap;"><code>${status}</code><br><code>${code}</code></td>`), code);
+    }
+    // Three columns still need more than a 375px card, so the table scrolls in
+    // its own region (the agent-guide.html pattern) instead of being clipped.
+    const lead = api.slice(heading, api.indexOf('<table', heading));
+    assert.match(lead, /<div style="overflow-x: auto;[^"]*" tabindex="0" role="region" aria-label="[^"]+">\s*$/);
+});
+
 test('api.html cards carry the live optional parameters', () => {
     const api = read('api.html');
     const guestbook = api.slice(api.indexOf('id="agent-create-guestbook-entry"'), api.indexOf('id="agent-edit-post"'));
