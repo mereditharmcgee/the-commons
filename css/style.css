@@ -2287,7 +2287,8 @@ a:focus-visible {
    ============================================ */
 .texts-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    /* min() keeps the one-column track inside the container below ~350px */
+    grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
     gap: var(--space-lg);
 }
 
@@ -2350,6 +2351,8 @@ a:focus-visible {
     font-size: 0.9rem;
     color: var(--text-secondary);
     line-height: 1.6;
+    /* A long URL in a text's opening must wrap, not widen the page on phones */
+    overflow-wrap: anywhere;
 }
 
 /* ============================================
@@ -4137,6 +4140,7 @@ a.notification-dropdown__item-inner:hover {
 
 .profile-stats {
     display: flex;
+    flex-wrap: wrap;
     gap: var(--space-lg);
 }
 
@@ -4158,6 +4162,22 @@ a.notification-dropdown__item-inner:hover {
 .profile-actions {
     display: flex;
     gap: var(--space-sm);
+}
+
+/* Phones: the avatar and info keep the first row; the actions take their
+   own row instead of squeezing the bio to ~90px and overhanging the card */
+@media (max-width: 600px) {
+    .profile-header {
+        flex-wrap: wrap;
+    }
+    .profile-info {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+    .profile-actions {
+        width: 100%;
+        flex-wrap: wrap;
+    }
 }
 
 /* Subscribe Button */
@@ -4252,6 +4272,7 @@ a.notification-dropdown__item-inner:hover {
    ============================================ */
 .voices-sort {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: var(--space-sm);
     margin-bottom: var(--space-lg);
@@ -4416,6 +4437,52 @@ a.notification-dropdown__item-inner:hover {
     right: 0;
     height: 2px;
     background: var(--accent-gold);
+}
+
+/* The eight tabs run ~840px (more with the Questions badge), which widens
+   the whole page below ~1080px viewports: 888px at 375 and 768. There the
+   bar becomes its own sideways scroller. The rule line moves from a border
+   to an inset shadow so the active underline (bottom: 0) stays inside the
+   scroll box, where it would otherwise add a 1px vertical scrollbar. */
+@media (max-width: 1100px) {
+    .profile-tabs {
+        overflow-x: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--border-medium) transparent;
+        border-bottom: none;
+        box-shadow: inset 0 -1px 0 var(--border-subtle);
+        /* Touch browsers show the scrollbar only while the bar moves, so
+           with the old spacing the first three tabs filled a 375px bar
+           exactly and nothing said more tabs exist. Here the tab padding
+           alone spaces the labels (no gap) and the right edge fades out
+           over a little more than the space between two labels, so the
+           edge either cuts a label (360: "Ma", 375: "Marg", 390:
+           "Margin", 768: "Guestb") or fades the last one out. */
+        gap: 0;
+        --profile-tabs-fade: 2.5rem;
+        -webkit-mask-image: linear-gradient(to right, #000 calc(100% - var(--profile-tabs-fade)), transparent);
+        mask-image: linear-gradient(to right, #000 calc(100% - var(--profile-tabs-fade)), transparent);
+        /* A hidden tab that focus scrolls into view lands clear of the fade */
+        scroll-padding-inline-end: var(--profile-tabs-fade);
+    }
+    /* Trailing room, one fade wide, so the last tab can scroll fully out
+       of the fade */
+    .profile-tabs::after {
+        content: '';
+        flex: 0 0 var(--profile-tabs-fade);
+    }
+    .profile-tab {
+        flex-shrink: 0;
+        white-space: nowrap;
+        padding: var(--space-sm) 0.875rem;
+    }
+    .profile-tab.active::after {
+        bottom: 0;
+    }
+    /* The scroll box would clip the outset focus ring; draw it inside */
+    .profile-tab:focus-visible {
+        outline-offset: -2px;
+    }
 }
 
 .profile-tab-content {
@@ -7533,6 +7600,11 @@ button.post__edited { background: none; border: 0; padding: 0; font-family: inhe
 
 .endpoint-card__body {
     padding: var(--space-lg);
+    /* The card keeps overflow: hidden for its corners; wide schema tables
+       scroll here instead of being cut off */
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-medium) transparent;
 }
 
 .endpoint-card__description {
@@ -7648,6 +7720,15 @@ button.post__edited { background: none; border: 0; padding: 0; font-family: inhe
 @media (max-width: 768px) {
     .endpoint-card__header {
         flex-wrap: wrap;
+    }
+    .endpoint-card__body {
+        padding: var(--space-md);
+    }
+    /* Long RPC paths wrap rather than being clipped by the card on phones.
+       Kept out of the desktop rule: there the title shrinks instead. */
+    .endpoint-card__path {
+        min-width: 0;
+        overflow-wrap: anywhere;
     }
     .endpoint-card__title {
         margin-left: 0;
