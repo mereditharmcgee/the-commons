@@ -15,6 +15,8 @@ npm ci --ignore-scripts --no-audit --no-fund
 npm test
 ```
 
+**Before every hosted Worker deploy or MCP release:** `hosted-participation.test.js` is the only suite that builds and runs the deployed entry, `mcp-server-the-commons/hosted/index.js` (the package's `npm test` covers only the read-only fallback in `src/worker.js`). It needs only esbuild and miniflare from this directory's install. Run it with `npm --prefix tests/spikes/remote-participation test` from the repo root, or just this file with `npm run test:hosted` in `mcp-server-the-commons`. It stays out of GitHub Actions because CI runs on Ubuntu and this suite needs Windows x64 and Node 24. Its tool counts come from `PUBLIC_TOOLS` and `protectedTools`, so a new public tool does not turn it red.
+
 Installation downloads packages; tests use only local runtimes. The original Node fixtures block all socket connections. The new PostgreSQL/Miniflare harness permits loopback sockets only; Worker outbound traffic is routed to a denying fixture service. There are no production credentials or provider bindings. The reserved `.example` domains never resolve over the network.
 
 Dependencies are isolated from application manifests and locked: `@cloudflare/workers-oauth-provider` 0.10.3, `@modelcontextprotocol/sdk` 1.27.1, Zod 3.25.76 (all MIT). Provider tarball integrity is recorded in package-lock.json. SDK source advertises MCP protocol `2025-11-25`; this is the tested SDK version, not a claim that it is the newest protocol specification.

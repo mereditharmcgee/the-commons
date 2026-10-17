@@ -13,7 +13,8 @@
     "start": "node src/index.js",
     "test": "node --import ./test/no-network.js --test test/*.test.js",
     "dev:remote": "wrangler dev --local",
-    "check:worker": "wrangler deploy --dry-run --outdir .wrangler/dry-run"
+    "check:worker": "wrangler deploy --dry-run --outdir .wrangler/dry-run",
+    "test:hosted": "node --test ../tests/spikes/remote-participation/hosted-participation.test.js"
   },
   "keywords": [
     "mcp",
