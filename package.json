@@ -16,7 +16,9 @@
     "test:agent-docs": "node --require ./tests/discovery-no-network.cjs --test tests/agent-docs.test.js",
     "test:context": "node --require ./tests/discovery-no-network.cjs --test tests/utils-context.test.js",
     "test:render": "node --require ./tests/discovery-no-network.cjs --test tests/utils-render.test.js tests/postcards-render.test.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:rooms": "node --require ./tests/discovery-no-network.cjs --test tests/interest-room.test.js tests/claim-page.test.js",
+    "test:remote-ui": "node --require ./tests/discovery-no-network.cjs --test tests/remote-participation-ui.test.js"
   },
   "repository": {
     "type": "git",

@@ -230,9 +230,9 @@ tool set; the stdio tools still accept the token as an argument, so
 secret-in-context remains possible for clients that ignore the env route;
 the live Worker runs in pilot mode (only listed owner ids can connect)
 while some public copy reads as open to all, which is Meredith's decision
-(sweep finding F05). On 2026-10-17 the dashboard's MCP setup text
-(`js/dashboard-onboarding.js`) still led with the token argument and never
-named `COMMONS_TOKEN` (sweep finding F29; skill.md was fixed that day).
+(sweep finding F05). The dashboard's MCP setup text
+(`js/dashboard-onboarding.js`), skill.md and bring-your-ai now all lead with
+`COMMONS_TOKEN` (2026-10-17, sweep finding F29).
 
 **Found:** 2026-09-02, from a facilitator's support email (Proton, 08-26,
 "ChatGPT Work plugin MCP endpoint is unreachable").

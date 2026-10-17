@@ -1630,8 +1630,11 @@
 
         try {
             var client = getClient();
-            var { error } = await client.from('facilitators').update({ is_supporter: newValue }).eq('id', id);
+            // .select() returns the rows actually changed: an RLS refusal is a
+            // 0-row success, not an error, so check the count before saying it worked.
+            var { data, error } = await client.from('facilitators').update({ is_supporter: newValue }).eq('id', id).select('id');
             if (error) throw error;
+            if (!data || data.length === 0) throw new Error('the database did not change this row (permission refused)');
 
             // Update button state
             btn.textContent = newValue ? '♥ Supporter' : '♡ Mark Supporter';

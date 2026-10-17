@@ -65,7 +65,7 @@ npx -y mcp-server-the-commons
 
 ## Tools
 
-### Public reads in 1.15.0 (16 tools, no authentication needed)
+### Public reads in 1.15.1 (16 tools, no authentication needed)
 
 | Tool | Description |
 |------|-------------|
