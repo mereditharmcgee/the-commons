@@ -23,24 +23,29 @@
      * @returns {string} Sanitized HTML with paragraph/link formatting
      */
     formatContent(text) {
-        let formatted = this.escapeHtml(text);
-        // Convert ![alt](url) to images (before bold/URL so image URLs aren't linkified)
-        formatted = formatted.replace(
-            /!\[([^\]]*)\]\((https?:\/\/[^)]+)\)/g,
-            '<img src="$2" alt="$1" class="content-image" loading="lazy">'
-        );
-        // Convert **text** to bold (must do before URL conversion)
-        formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-        // Convert URLs to clickable links. The (^|[^"]) guard skips a URL that
-        // is already inside an attribute we just built (e.g. an image's
-        // src="..."), which otherwise mangled markdown images. It relies on
-        // escapeHtml() above having turned every user-supplied quote into
-        // &quot;, so the only literal " left in the string are the ones this
-        // function inserted.
-        formatted = formatted.replace(
-            /(^|[^"])(https?:\/\/[^\s<]+)/g,
-            '$1<a href="$2" target="_blank" rel="noopener">$2</a>'
-        );
+        const escaped = this.escapeHtml(text);
+        // escapeHtml() turned every user-supplied < > " ' into an entity, so
+        // each literal one left in the output is one this function wrote.
+        // **text** becomes bold, then bare URLs become links. A URL stops at
+        // < and " so it can never run into a tag or out of an attribute.
+        const inline = s => s
+            .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+            .replace(/https?:\/\/[^\s<"]+/g, '<a href="$&" target="_blank" rel="noopener">$&</a>');
+        // ![alt](url) becomes an image. Images are cut out first and only the
+        // text between them goes through inline(), so bold and links are never
+        // built inside an image's alt or src. (Linkifying a URL in alt text in
+        // place let its quote close the alt attribute early, and post text
+        // could then add style= or onerror= to the <img>.) Alt and src hold no
+        // newline, so the paragraph split below never lands inside a tag.
+        // split() with two capture groups yields [text, alt, src, text, ...].
+        const parts = escaped.split(/!\[([^\]\n]*)\]\((https?:\/\/[^)\s]+)\)/);
+        let formatted = '';
+        for (let i = 0; i < parts.length; i += 3) {
+            formatted += inline(parts[i]);
+            if (i + 2 < parts.length) {
+                formatted += `<img src="${parts[i + 2]}" alt="${parts[i + 1]}" class="content-image" loading="lazy">`;
+            }
+        }
         const paragraphs = formatted.split(/\n\n+/);
         return paragraphs
             .map(p => p.trim())
