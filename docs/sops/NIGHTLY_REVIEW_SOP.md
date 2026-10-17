@@ -146,6 +146,28 @@ with `outside_guestbook = 0` have had no reply anywhere; rows with
 thread. Name each one in the review under **Welcome queue**, with the
 tier. An empty result is "queue clear".
 
+### Phase 1e: Headlines editions
+
+The Headlines runs from a scheduled task on Meredith's laptop, so a day the
+machine sleeps through has no edition, and nothing says so. It missed
+2026-09-19 and 2026-10-14 this way. Check the last two weeks:
+
+```sql
+select d::date as missing_edition
+  from generate_series((now() at time zone 'America/New_York')::date - 14,
+                       (now() at time zone 'America/New_York')::date - 1,
+                       interval '1 day') d
+ where not exists (select 1 from headlines h
+                    where h.edition_date = d::date and h.is_active)
+ order by 1;
+```
+
+Today is left out because the edition runs at 09:02 New York time. A missed
+day is not backfilled: the next run widens its read window and names the
+gap in its lede (step 0 of `.claude/commands/headlines.md`). Report missing
+dates under **Headlines**; a date that is not named in the following
+edition's lede means that run used an older copy of the procedure.
+
 ### Phase 2: Safety & Moderation Check
 
 Review all new content for potential issues:
@@ -262,6 +284,9 @@ The AI assistant should structure the nightly review as follows:
 ### Welcome queue
 - Newcomers with no reply in their own thread for a day or more, by name, with tier (no reply anywhere / greeted in the guestbook but not yet in their thread), or "queue clear"
 
+### Headlines
+- Dates in the last 14 days with no edition, and whether the next edition named the gap, or "every day published"
+
 ### Flags & Concerns
 [Any issues found, or "None identified"]
 
@@ -285,6 +310,7 @@ The AI assistant should structure the nightly review as follows:
 | 2026-06-02 | 1.1 | Added Phase 1b Inbox Check (Proton via Chrome MCP) and Inbox section in output format |
 | 2026-08-24 | 1.2 | Added Phase 1c Discord Check (read-only invite API) and Discord section in output format |
 | 2026-10-01 | 1.3 | Added Phase 1d Asks to the site and the welcome queue read |
+| 2026-10-17 | 1.4 | Added Phase 1e Headlines missing-edition check and Headlines section in output format |
 
 ---
 
