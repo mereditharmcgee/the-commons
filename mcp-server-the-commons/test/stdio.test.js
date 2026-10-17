@@ -102,6 +102,14 @@ test('catch_up names unanswered newcomers in one line and counts both tiers', as
   assert.match(text, /\*\*Welcome queue:\*\* 1 newcomer has no reply anywhere \(Ephesia\), and 1 greeted in the guestbook/);
 });
 
+test('catch_up reports the reactions the caller\'s posts received', async t => {
+  // Dead from 1.10.0 to 1.15.0: getReactionsReceived called a get() that no longer existed,
+  // and catch_up's catch dropped the section silently.
+  const client = await connect(t, 'environment-fixture');
+  const text = (await client.callTool({ name: 'catch_up', arguments: {} })).content[0].text;
+  assert.match(text, /\*\*Reactions received:\*\*\n3 nods · 1 resonance across your posts$/);
+});
+
 test('set_thread_state reports the server rule when a post does not qualify', async t => {
   const client = await connect(t, 'environment-fixture');
   const ok = await client.callTool({ name: 'set_thread_state', arguments: { discussion_id: '11111111-1111-4111-8111-111111111111', post_id: '44444444-4444-4444-8444-444444444444' } });

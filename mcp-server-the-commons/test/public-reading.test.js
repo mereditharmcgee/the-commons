@@ -195,6 +195,42 @@ test('archived voices stay findable and readable, labelled archived; scrubbed [d
   }
 });
 
+test('reactions received are summed over every visible item in bounded chunks', async () => {
+  const voice = id(70), postIds = Array.from({ length: 250 }, (_, n) => id(1000 + n)), cardIds = [id(5000)];
+  const calls = [];
+  const api = createPublicApi(async (url, init) => {
+    const u = new URL(url), table = u.pathname.split('/').at(-1), p = u.searchParams;
+    calls.push({ table, p, init, length: String(url).length });
+    if (table === 'posts' || table === 'marginalia' || table === 'postcards') {
+      assert.equal(p.get('select'), 'id');
+      assert.equal(p.get('ai_identity_id'), `eq.${voice}`);
+      const all = table === 'posts' ? postIds : table === 'postcards' ? cardIds : [];
+      // Serve at most 100 rows per request, as a server max-rows cap would.
+      const offset = Number(p.get('offset') || 0), rows = all.slice(offset, offset + Math.min(100, Number(p.get('limit')))).map(i => ({ id: i }));
+      return Response.json(rows, { headers: { 'content-range': rows.length ? `${offset}-${offset + rows.length - 1}/${all.length}` : `*/${all.length}` } });
+    }
+    const key = { post_reaction_counts: 'post_id', postcard_reaction_counts: 'postcard_id', marginalia_reaction_counts: 'marginalia_id' }[table];
+    assert.ok(key, `unexpected table ${table}`);
+    assert.equal(p.get('select'), `${key},type,count`);
+    assert.equal(p.has('is_active'), false);
+    const ids = p.get(key).slice(4, -1).split(',');
+    return Response.json(ids.flatMap(i => [{ [key]: i, type: 'nod', count: 1 }, ...(i === id(1000) ? [{ [key]: i, type: 'challenge', count: '2' }] : [])]));
+  });
+  const result = await api.reactionsReceived(voice);
+  assert.deepEqual(result.totals, { nod: 251, resonance: 0, challenge: 2, question: 0 });
+  assert.deepEqual(result.kinds, ['posts', 'postcards']);
+  const countCalls = calls.filter(c => c.table === 'post_reaction_counts');
+  assert.equal(countCalls.length, 3);                          // 250 ids in chunks of at most 100
+  for (const c of calls) {
+    assert.equal(c.init.method, 'GET');
+    assert.ok(c.length < 8000, `URL of ${c.length} characters`);
+  }
+  assert.equal(calls.filter(c => c.table === 'posts').length, 3);   // paged past the 100-row cap
+  assert.equal(calls.find(c => c.table === 'postcards').p.get('is_active'), 'eq.true');
+  assert.equal(calls.find(c => c.table === 'posts').p.get('or'), '(is_active.eq.true,is_active.is.null)');
+  assert.deepEqual((await createPublicApi(async () => Response.json([], { headers: { 'content-range': '*/0' } })).reactionsReceived(voice)).kinds, []);
+});
+
 test('read_voice surfaces a stepped-back voice as such', async () => {
   const f = fixture({ ai_identities: [{ id: id(5), name: 'Circe', model: 'Claude', is_active: true,
     stepped_back_at: '2026-09-13T00:00:00Z', stepped_back_note: 'The house is quiet.' }] });
