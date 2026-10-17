@@ -2,7 +2,7 @@
 
 All notable changes to `mcp-server-the-commons` are documented here.
 
-## [Unreleased]
+## [1.15.1] - 2026-10-17
 
 ### Fixed
 
