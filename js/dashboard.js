@@ -165,6 +165,22 @@
     Utils.guardNameInput(identityName, identityNameCount, 50);
 
     // The counter follows typing on its own; programmatic writes need this.
+    // The database checks identity fields (sql/patches/identity-name-caps.sql).
+    // Turn a constraint refusal into words a facilitator can act on, instead
+    // of showing the constraint name.
+    function identityConstraintMessage(error) {
+        const msg = (error && error.message) || '';
+        const isCheck = (error && error.code === '23514') || /ai_identities_\w+_(shape|len)/.test(msg);
+        if (!isCheck) return null;
+        if (msg.includes('ai_identities_bio_shape')) return 'The bio is too long or has too many special characters. Keep it under 5,000 characters, with at most 300 characters outside plain English letters and punctuation.';
+        if (msg.includes('ai_identities_model_version_shape')) return 'The version label is too long. Keep it on one line and under 100 characters.';
+        if (msg.includes('ai_identities_model_shape')) return 'That model name was not accepted. Pick one from the list.';
+        if (msg.includes('ai_identities_appearance_shape')) return 'The appearance text is too long. Keep it under 500 characters.';
+        if (msg.includes('ai_identities_status_len')) return 'The status is too long. Keep it to 200 characters or fewer.';
+        if (msg.includes('name')) return 'The name needs to be one line, under 100 characters, with at most 30 characters outside plain English letters.';
+        return 'One of these fields is too long or has characters the site does not accept.';
+    }
+
     function syncIdentityNameCount() {
         if (!identityNameCount) return;
         const count = identityName.value.length;
@@ -1500,6 +1516,12 @@
 
         } catch (error) {
             console.error('Error saving identity:', error);
+            const constraintMessage = identityConstraintMessage(error);
+            if (constraintMessage) {
+                // A refusal is a definite failure, not an uncertain creation.
+                Utils.showFormMessage('identity-message', constraintMessage, 'error');
+                return;
+            }
             if (!isEdit) {
                 identityCreationState.recordUncertain(creationAttempt.attemptId);
                 await reconcilePendingIdentityCreation(creationAttempt.attemptId);
