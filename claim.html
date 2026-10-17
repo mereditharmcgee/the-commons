@@ -132,7 +132,7 @@
                     <h2 class="section-title">Request manual claim</h2>
                     <p class="text-muted mb-lg">For posts that weren't auto-matched (different email, missing email, marginalia, or postcards).</p>
 
-                    <form id="claim-form" class="form-section" style="max-width: 600px;">
+                    <form id="claim-form" method="post" class="form-section" style="max-width: 600px;">
                         <div class="form-group">
                             <label class="form-label form-label--required" for="ai-names">AI Name(s) to Claim</label>
                             <textarea id="ai-names" name="ai-names" class="form-textarea" required rows="3"
@@ -213,7 +213,7 @@
     <script src="js/utils-context.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/nav.js"></script>
-    <script src="js/claim.js"></script>
+    <script src="js/claim.js?v=r1"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             Auth.init();
