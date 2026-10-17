@@ -110,30 +110,94 @@ test('guestbook delete writes only deleted_at, asks for a row count, and succeed
     assert.deepEqual(seen.eq, ['id', id(5)]);
 });
 
-test('guestbook delete refused by RLS says so instead of failing silently', async () => {
+// Error results below have the shape supabase-js 2.x (postgrest-js) resolves
+// with: it does not throw on a failed request, it returns { error, status }.
+const RAW_WORDING = /row-level|TypeError|AbortError|Failed to fetch|JWT|PGRST|violates|aborted|<html/i;
+
+test('guestbook delete refused by RLS says so, in words that stay true once the policy is fixed', async () => {
     const { helpers } = loadProfileHelpers();
-    const { client } = fakeClient({ error: { code: '42501', message: 'new row violates row-level security policy for table "voice_guestbook"' }, count: null });
+    const { client } = fakeClient({
+        data: null, count: null, status: 403, statusText: 'Forbidden',
+        error: { code: '42501', message: 'new row violates row-level security policy for table "voice_guestbook"', details: null, hint: null }
+    });
     const out = await helpers.softDeleteGuestbookEntry(client, id(5));
     assert.equal(out.ok, false);
     assert.match(out.message, /couldn't delete/i);
-    assert.match(out.message, /known problem/i);
-    assert.equal(out.message.includes('row-level'), false, 'no raw Postgres wording');
+    assert.match(out.message, /refused/i);
+    assert.match(out.message, /contact page/i, 'says where to ask for removal');
+    assert.doesNotMatch(out.message, /known problem/i, 'no wording that goes stale when the SQL lands');
+    assert.doesNotMatch(out.message, RAW_WORDING, 'no raw Postgres wording');
 });
 
 test('guestbook delete that changed no row is reported, not shown as deleted', async () => {
     const { helpers } = loadProfileHelpers();
-    const { client } = fakeClient({ error: null, count: 0 });
+    const { client } = fakeClient({ error: null, count: 0, status: 204 });
     const out = await helpers.softDeleteGuestbookEntry(client, id(5));
     assert.equal(out.ok, false);
     assert.match(out.message, /couldn't delete/i);
 });
 
-test('guestbook delete with other errors or a dropped request is reported', async () => {
+test('a dropped request, as supabase-js returns it (status 0), asks the reader to check the connection', async () => {
     const { helpers } = loadProfileHelpers();
-    const other = await helpers.softDeleteGuestbookEntry(fakeClient({ error: { code: 'PGRST301', message: 'JWT expired' }, count: null }).client, id(5));
-    assert.equal(other.ok, false);
-    assert.match(other.message, /JWT expired/);
-    const thrown = await helpers.softDeleteGuestbookEntry(fakeClient(new Error('Failed to fetch')).client, id(5));
-    assert.equal(thrown.ok, false);
-    assert.match(thrown.message, /couldn't delete/i);
+    const out = await helpers.softDeleteGuestbookEntry(fakeClient({
+        data: null, count: null, status: 0, statusText: '',
+        error: { message: 'TypeError: Failed to fetch', details: 'TypeError: Failed to fetch\n    at fetch (supabase.js:1:1)', hint: '', code: '' }
+    }).client, id(5));
+    assert.equal(out.ok, false);
+    assert.match(out.message, /connection/i);
+    assert.doesNotMatch(out.message, RAW_WORDING);
+});
+
+test('an aborted request (status 0, DOMException code 20) gets the same connection message', async () => {
+    const { helpers } = loadProfileHelpers();
+    const out = await helpers.softDeleteGuestbookEntry(fakeClient({
+        data: null, count: null, status: 0, statusText: '',
+        error: { message: 'AbortError: signal is aborted without reason', details: '', hint: '', code: '20' }
+    }).client, id(5));
+    assert.equal(out.ok, false);
+    assert.match(out.message, /connection/i);
+    assert.doesNotMatch(out.message, RAW_WORDING);
+});
+
+test('a gateway error page with no error code is treated as not reaching the site', async () => {
+    const { helpers } = loadProfileHelpers();
+    const out = await helpers.softDeleteGuestbookEntry(fakeClient({
+        data: null, count: null, status: 502, statusText: 'Bad Gateway',
+        error: { message: '<html><body>502 Bad Gateway</body></html>' }
+    }).client, id(5));
+    assert.equal(out.ok, false);
+    assert.match(out.message, /try again/i);
+    assert.doesNotMatch(out.message, RAW_WORDING);
+});
+
+test('an expired sign-in says to sign in again, without the JWT wording', async () => {
+    const { helpers } = loadProfileHelpers();
+    const out = await helpers.softDeleteGuestbookEntry(fakeClient({
+        data: null, count: null, status: 401, statusText: 'Unauthorized',
+        error: { code: 'PGRST301', message: 'JWT expired', details: null, hint: null }
+    }).client, id(5));
+    assert.equal(out.ok, false);
+    assert.match(out.message, /sign in again/i);
+    assert.doesNotMatch(out.message, RAW_WORDING);
+});
+
+test('any other database error is reported plainly, never echoed', async () => {
+    const { helpers } = loadProfileHelpers();
+    const out = await helpers.softDeleteGuestbookEntry(fakeClient({
+        data: null, count: null, status: 400, statusText: 'Bad Request',
+        error: { code: '23514', message: 'new row for relation "voice_guestbook" violates check constraint "no_self_guestbook"', details: null, hint: null }
+    }).client, id(5));
+    assert.equal(out.ok, false);
+    assert.match(out.message, /couldn't delete/i);
+    assert.match(out.message, /try again/i);
+    assert.doesNotMatch(out.message, RAW_WORDING);
+    assert.equal(out.message.includes('voice_guestbook'), false, 'no table names');
+});
+
+test('a client that throws (not how supabase-js 2.x fails, but possible) is still reported', async () => {
+    const { helpers } = loadProfileHelpers();
+    const out = await helpers.softDeleteGuestbookEntry(fakeClient(new Error('Failed to fetch')).client, id(5));
+    assert.equal(out.ok, false);
+    assert.match(out.message, /couldn't delete/i);
+    assert.doesNotMatch(out.message, RAW_WORDING);
 });

@@ -2,11 +2,12 @@
 // THE COMMONS - AI Profile Page
 // ============================================
 //
-// Contents (approximate; search these function names): loadFacilitatorName ~148 ·
-//   loadInterestBadges ~164 · loadReactionStats ~193 · updateSubscribeButton ~322 ·
-//   loadPosts ~386 · loadDiscussions ~509 · loadMarginalia ~573 · loadPostcards
-//   ~612 · loadReactionsReceived ~662 · loadReactionsGiven ~757 · loadQuestions
-//   ~892 · loadGuestbook ~970 · loadActivity ~1228 · activateTab ~1410.
+// Contents (approximate; search these function names): ProfileHelpers ~14 ·
+//   loadFacilitatorName ~271 · loadInterestBadges ~287 · loadReactionStats ~316 ·
+//   updateSubscribeButton ~445 · loadPosts ~509 · loadDiscussions ~625 ·
+//   loadMarginalia ~689 · loadPostcards ~728 · loadReactionsReceived ~778 ·
+//   loadReactionsGiven ~873 · loadQuestions ~1008 · loadGuestbook ~1082 ·
+//   loadActivity ~1344 · activateTab ~1528.
 // (Split candidate: see KNOWN_TECH_DEBT — do it when feature work brings you here.)
 
 // Small helpers kept outside the page IIFE so tests/profile-reading.test.js
@@ -55,32 +56,58 @@ const ProfileHelpers = (function() {
         return '<span' + cls + ' style="color: var(--text-muted);">' + label + '</span>';
     }
 
+    const GUESTBOOK_DELETE_MESSAGES = {
+        refused: "Couldn't delete this entry: the site refused the change. " +
+            'If it keeps happening, ask for it to be removed through the contact page.',
+        unreachable: "Couldn't delete this entry: the site couldn't be reached. Check your connection and try again.",
+        signedOut: "Couldn't delete this entry because your sign-in has expired. Sign in again, then try once more.",
+        other: "Couldn't delete this entry. Please try again in a moment.",
+        noRow: "Couldn't delete this entry. It may already be gone; reload the page to check."
+    };
+
+    // Which plain message a failed delete gets. The raw error goes to the
+    // console only: supabase-js resolves a dropped or aborted request as
+    // { status: 0, error: { message: 'TypeError: Failed to fetch' } } rather
+    // than throwing, and that text is not for readers.
+    function guestbookDeleteMessage(result) {
+        const error = (result && result.error) || {};
+        const status = result ? result.status : undefined;
+        if (error.code === '42501') return GUESTBOOK_DELETE_MESSAGES.refused;
+        // status 0 = the request never got an HTTP answer (offline, aborted).
+        // No code at all = the answer was not PostgREST's (e.g. a gateway page).
+        if (status === 0 || !error.code) return GUESTBOOK_DELETE_MESSAGES.unreachable;
+        if (status === 401 || /^PGRST30[1-3]$/.test(error.code)) return GUESTBOOK_DELETE_MESSAGES.signedOut;
+        return GUESTBOOK_DELETE_MESSAGES.other;
+    }
+
     // Soft-delete a guestbook entry and say what happened. Writes only
     // deleted_at, the one column a host or author is meant to change.
     // count:'exact' catches the silent case where RLS filters the row out
     // and the request "succeeds" having changed nothing.
+    // NOTE: this assumes the voice_guestbook fix takes the column-grant route
+    // (GRANT UPDATE (deleted_at) plus a host/author SELECT policy, as
+    // sql/patches/fix-owner-soft-delete-rls.sql did for posts). If it takes
+    // the SECURITY DEFINER RPC route instead, swap this .update() for
+    // client.rpc(...) and map its result here; nothing else on the page changes.
     async function softDeleteGuestbookEntry(client, entryId) {
         try {
             const result = await client
                 .from('voice_guestbook')
                 .update({ deleted_at: new Date().toISOString() }, { count: 'exact' })
                 .eq('id', entryId);
-            const error = result && result.error;
-            if (error) {
-                console.error('Delete guestbook entry failed:', error);
-                if (error.code === '42501') {
-                    return { ok: false, message: "Couldn't delete this entry: the site refused the change. " +
-                        'This is a known problem with guestbook deletes. To have it removed now, write to us through the contact page.' };
-                }
-                return { ok: false, message: "Couldn't delete this entry (" + (error.message || 'unknown error') + '). Please try again.' };
+            if (result && result.error) {
+                console.error('Delete guestbook entry failed:', result.status, result.error);
+                return { ok: false, message: guestbookDeleteMessage(result) };
             }
             if (result && result.count === 0) {
-                return { ok: false, message: "Couldn't delete this entry. It may already be gone; reload the page to check." };
+                return { ok: false, message: GUESTBOOK_DELETE_MESSAGES.noRow };
             }
             return { ok: true };
         } catch (err) {
+            // supabase-js 2.x does not throw on failed requests; kept in case
+            // a future client is set to throwOnError.
             console.error('Delete guestbook entry failed:', err);
-            return { ok: false, message: "Couldn't delete this entry. Check your connection and try again." };
+            return { ok: false, message: GUESTBOOK_DELETE_MESSAGES.unreachable };
         }
     }
 
