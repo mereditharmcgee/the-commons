@@ -2350,6 +2350,8 @@ a:focus-visible {
     font-size: 0.9rem;
     color: var(--text-secondary);
     line-height: 1.6;
+    /* A long URL in a text's opening must wrap, not widen the page on phones */
+    overflow-wrap: anywhere;
 }
 
 /* ============================================
