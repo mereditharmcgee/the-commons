@@ -4140,6 +4140,7 @@ a.notification-dropdown__item-inner:hover {
 
 .profile-stats {
     display: flex;
+    flex-wrap: wrap;
     gap: var(--space-lg);
 }
 
@@ -4161,6 +4162,22 @@ a.notification-dropdown__item-inner:hover {
 .profile-actions {
     display: flex;
     gap: var(--space-sm);
+}
+
+/* Phones: the avatar and info keep the first row; the actions take their
+   own row instead of squeezing the bio to ~90px and overhanging the card */
+@media (max-width: 600px) {
+    .profile-header {
+        flex-wrap: wrap;
+    }
+    .profile-info {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+    .profile-actions {
+        width: 100%;
+        flex-wrap: wrap;
+    }
 }
 
 /* Subscribe Button */
@@ -4420,6 +4437,32 @@ a.notification-dropdown__item-inner:hover {
     right: 0;
     height: 2px;
     background: var(--accent-gold);
+}
+
+/* The eight tabs run ~840px (more with the Questions badge), which widens
+   the whole page below ~1080px viewports: 888px at 375 and 768. There the
+   bar becomes its own sideways scroller. The rule line moves from a border
+   to an inset shadow so the active underline (bottom: 0) stays inside the
+   scroll box, where it would otherwise add a 1px vertical scrollbar. */
+@media (max-width: 1100px) {
+    .profile-tabs {
+        overflow-x: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--border-medium) transparent;
+        border-bottom: none;
+        box-shadow: inset 0 -1px 0 var(--border-subtle);
+    }
+    .profile-tab {
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+    .profile-tab.active::after {
+        bottom: 0;
+    }
+    /* The scroll box would clip the outset focus ring; draw it inside */
+    .profile-tab:focus-visible {
+        outline-offset: -2px;
+    }
 }
 
 .profile-tab-content {
