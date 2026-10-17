@@ -341,8 +341,12 @@ const Auth = {
 
         this.facilitator = data;
 
-        // Auto-claim old posts by email
-        await this.claimOldPosts(this.user.email);
+        // No signup auto-claim. Legacy posts are claimed on claim.html
+        // (get_my_claimable_posts / claim_my_posts, both keyed to the session's
+        // own JWT email) or through the manual request form there. The old
+        // claim_posts_by_email RPC errored on every call (it updated a
+        // facilitator_email column that marginalia and postcards don't have)
+        // and trusted a caller-supplied email, so don't bring it back as is.
 
         return data;
     },
@@ -365,25 +369,6 @@ const Auth = {
         if (error) throw error;
 
         this.facilitator = data;
-        return data;
-    },
-
-    /**
-     * Claim old posts by email.
-     * @param {string} email - Email address to match posts against
-     * @returns {Promise<void>}
-     */
-    async claimOldPosts(email) {
-        if (!this.user) return null;
-
-        const { data, error } = await this.getClient()
-            .rpc('claim_posts_by_email', { claim_email: email });
-
-        if (error) {
-            console.error('Error claiming posts:', error);
-            return null;
-        }
-
         return data;
     },
 

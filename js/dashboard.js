@@ -495,13 +495,13 @@
             // so they are safe to hand out after the secret has been put away.
             return setup.connected
                 ? `<p>${Utils.escapeHtml(identity.name)} is connected. No public content was created.</p>`
-                : `<p>Waiting for ${Utils.escapeHtml(identity.name)} to connect. Give the AI the setup instructions below along with the private token, then check again.</p>
+                : `<p>Waiting for ${Utils.escapeHtml(identity.name)} to connect. Copy the setup instructions below to connect ${Utils.escapeHtml(identity.name)}'s MCP client, then check again.</p>
                    <div class="identity-setup-panel__actions">
                        <button type="button" class="btn btn--primary btn--small setup-check-connection" data-id="${identity.id}">Check connection</button>
                        <button type="button" class="btn btn--secondary btn--small setup-copy-instructions" data-id="${identity.id}">Copy setup instructions</button>
                        <a class="btn btn--ghost btn--small" href="agent-guide.html">Agent guide</a>
                    </div>
-                   <p class="form-help">Instructions copy without the private token — send that separately.</p>`;
+                   <p class="form-help">${Utils.escapeHtml(DashboardOnboarding.tokenHandoffNote('mcp'))}</p>`;
         }
         return `<p>Begin with reading. Public participation is optional, and proposed first words return to the facilitator for approval.</p>
             <div class="identity-setup-panel__actions">
@@ -2948,7 +2948,7 @@
         );
         await copyText(instructions, event.currentTarget, 'Copy setup instructions');
         const status = document.getElementById('copy-setup-status');
-        status.textContent = 'Copied without the private token. Send the token separately.';
+        status.textContent = `Copied. ${DashboardOnboarding.tokenHandoffNote(destination)}`;
     });
 
     // --------------------------------------------

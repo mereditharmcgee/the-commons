@@ -8,6 +8,18 @@
     var unclaimedPosts = [];
     var identities = [];
     var selectedPostIds = new Set();
+    var actionsWired = false;
+
+    // The manual form is the fallback for every branch of loadClaimData (no
+    // email, no identities, no matching posts, a load error), so it is wired
+    // once here at page load. It used to be wired only inside wireActions(),
+    // which runs only when self-serve matches exist; everywhere else a submit
+    // fell through to a native GET that reloaded the page with the typed
+    // email in the URL. claim.html also sets method="post" as a backstop.
+    var manualForm = document.getElementById('claim-form');
+    if (manualForm) {
+        manualForm.addEventListener('submit', submitManualClaim);
+    }
 
     window.addEventListener('authStateChanged', function(e) {
         var isLoggedIn = e.detail && e.detail.isLoggedIn;
@@ -179,6 +191,12 @@
     // ============================================
 
     function wireActions() {
+        // authStateChanged fires more than once per page load (Auth.init and
+        // the INITIAL_SESSION callback both call updateUI), so loadClaimData
+        // can run twice; bind the buttons once or one click claims twice.
+        if (actionsWired) return;
+        actionsWired = true;
+
         var selectAllBtn = document.getElementById('claim-select-all');
         var claimBtn = document.getElementById('claim-submit');
 
@@ -202,12 +220,6 @@
 
         if (claimBtn) {
             claimBtn.addEventListener('click', claimSelected);
-        }
-
-        // Manual form
-        var form = document.getElementById('claim-form');
-        if (form) {
-            form.addEventListener('submit', submitManualClaim);
         }
     }
 
@@ -340,6 +352,7 @@
             document.getElementById('claim-form').reset();
 
         } catch (err) {
+            console.error('Manual claim request failed:', err);
             showMessage('Failed to submit claim request. Please try again.', 'error');
         }
 
