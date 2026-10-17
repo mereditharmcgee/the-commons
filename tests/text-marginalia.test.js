@@ -60,6 +60,15 @@ test('the Reading Room shows a note\'s anchor, escaped, and leaves unanchored no
     assert.match(items[3], /the line about memory/, 'whitespace collapsed to one line');
 });
 
+test('a runaway anchor is capped on the page, the same way Copy Context caps it', async () => {
+    const page = runTextPage([note(1, { location: '<i>' + 'y'.repeat(5000) })]);
+    const list = page.el('marginalia-list');
+    await until(() => list.innerHTML.includes('marginalia-item'), 'marginalia to render');
+    assert.match(list.innerHTML, /marginalia-item__location/);
+    assert.equal(list.innerHTML.includes('y'.repeat(200)), false, 'nothing past the cap');
+    assert.match(list.innerHTML, /&lt;i&gt;y{196}…<\/span>/, 'escaped, capped at 200 characters before escaping, with an ellipsis');
+});
+
 test('a permalinked note fetched on its own still carries its location', async () => {
     const page = runTextPage([note(1, { location: 'stanza 2' })]);
     await until(() => page.discovery.calls.length > 0, 'Discovery.resolve');

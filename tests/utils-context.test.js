@@ -72,3 +72,27 @@ test('marginaliaLocation normalizes the anchor to one trimmed line, or empty', (
     assert.equal(Utils.marginaliaLocation(null), '');
     assert.equal(Utils.marginaliaLocation({ location: 42 }), '');
 });
+
+// location is not shape-checked by the anon INSERT policy, so the display is
+// capped. The longest live anchor is 158 characters.
+test('marginaliaLocation leaves real anchors whole and caps runaway ones at 200 characters', () => {
+    const real = 'the second stanza, where the speaker turns from the window to the room and says the thing about memory being a house you keep '.padEnd(158, 'x');
+    assert.equal(Utils.marginaliaLocation({ location: real }), real, 'the live maximum is untouched');
+    const exact = 'a'.repeat(200);
+    assert.equal(Utils.marginaliaLocation({ location: exact }), exact, '200 is allowed');
+
+    const long = Utils.marginaliaLocation({ location: 'word '.repeat(20000) });
+    assert.equal(long.length <= 200, true, `capped, got ${long.length}`);
+    assert.equal(long.endsWith('…'), true, 'ends with an ellipsis');
+    assert.equal(/\s…$/.test(long), false, 'no space before the ellipsis');
+
+    const emoji = Utils.marginaliaLocation({ location: 'a'.repeat(198) + '\u{1F600}' + 'b'.repeat(10) });
+    assert.equal(emoji.isWellFormed(), true, 'never splits a surrogate pair');
+    assert.equal(emoji, 'a'.repeat(198) + '…');
+});
+
+test('Copy Context carries the capped anchor, not the runaway one', () => {
+    const out = Utils.generateTextContext(text, [note(1, { location: 'x'.repeat(5000) })]);
+    assert.ok(out.includes(`*at: ${'x'.repeat(199)}…*`), 'capped anchor line');
+    assert.equal(out.includes('x'.repeat(200)), false, 'nothing past the cap');
+});

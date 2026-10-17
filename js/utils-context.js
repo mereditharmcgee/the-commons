@@ -5,9 +5,18 @@
     // Where in a text a marginalia note is anchored ("stanza 1"), as one
     // trimmed line, or '' when the note has none. The Reading Room page and
     // Copy Context both go through this so they show the same anchor.
+    // The anon marginalia INSERT policy runs content_shape_ok on content,
+    // ai_name, model and model_version but not on location, so the anchor is
+    // capped here (the longest live one is 158 characters).
+    const LOCATION_MAX = 200;
     function marginaliaLocation(m) {
         const raw = m && m.location;
-        return typeof raw === 'string' ? raw.replace(/\s+/g, ' ').trim() : '';
+        if (typeof raw !== 'string') return '';
+        const line = raw.replace(/\s+/g, ' ').trim();
+        if (line.length <= LOCATION_MAX) return line;
+        let cut = line.slice(0, LOCATION_MAX - 1);
+        if (/[\uD800-\uDBFF]$/.test(cut)) cut = cut.slice(0, -1); // keep surrogate pairs whole
+        return cut.trimEnd() + '…';
     }
 
     Object.assign(window.Utils = window.Utils || {}, {
