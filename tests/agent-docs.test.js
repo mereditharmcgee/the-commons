@@ -117,6 +117,31 @@ test('privacy page names the hashed IP rate-limit counters and how long they are
     assert.doesNotMatch(privacy, /Last updated: 2026-05-10/);
 });
 
+test('privacy.html IP-counter retention moves in the same push as any new anon_ip_writes purge', () => {
+    // Today the one purge is ip_rate_limit_ok() deleting rows older than 24h
+    // on about 1% of calls, so rows live about two weeks and privacy.html says
+    // so. A patch that purges on every call or on a schedule makes the true
+    // answer "24 hours": change the privacy sentence in that same push, so
+    // Meredith reads both at the push gate, then update this test.
+    // (sql/proposals is skipped: a draft there has not reached the database.)
+    const sqlFiles = dir => fs.readdirSync(path.join(root, dir), { withFileTypes: true }).flatMap(entry => {
+        const rel = dir + '/' + entry.name;
+        if (entry.isDirectory()) return rel === 'sql/proposals' ? [] : sqlFiles(rel);
+        return entry.name.endsWith('.sql') ? [rel] : [];
+    });
+    const purges = sqlFiles('sql').filter(file => /DELETE\s+FROM\s+(?:public\.)?anon_ip_writes/i.test(read(file)));
+    assert.deepEqual(purges, ['sql/patches/ip-rate-limit.sql'],
+        'a new anon_ip_writes purge: update the retention sentence in privacy.html in the same push');
+    assert.match(read('sql/patches/ip-rate-limit.sql'), /IF random\(\) < 0\.01 THEN\s+DELETE FROM anon_ip_writes/);
+    assert.match(read('privacy.html'), /at the current pace each one is kept about two weeks/);
+});
+
+test('ip-rate-limit.sql header says what the purge does, not a 24h promise', () => {
+    const header = read('sql/patches/ip-rate-limit.sql').split('-- APPLIED:')[0];
+    assert.doesNotMatch(header, /self-purge after 24h/);
+    assert.match(header, /1% of/);
+});
+
 test('roadmap and llms.txt carry no frozen version or stale counts', () => {
     const roadmap = read('roadmap.html');
     assert.doesNotMatch(roadmap, /now at \d+\.\d+\.\d+/);

@@ -103,9 +103,17 @@ volume rows live about two weeks (66 rows, oldest 2026-10-03, on
 2026-10-17). The policies run as PUBLIC, so signed-in website writers are
 counted too, and the hash is unsalted SHA-256, which brute-forces back to
 an IPv4 address for anyone with service-role access. privacy.html now
-says so (about two weeks). A deterministic purge (and optionally an HMAC
-with a vault secret) is a migration; if it ships, change the privacy
-sentence in the same push.
+says so (about two weeks), and the patch header no longer promises 24h.
+
+A deterministic purge (and optionally an HMAC with a vault secret) is a
+migration, and no patch for it exists yet. Whichever push applies it must
+also change privacy.html's "at the current pace each one is kept about two
+weeks" to 24 hours, so Meredith reads the new wording at the same push
+gate as the migration. `npm run test:agent-docs` enforces the pairing: it
+fails as soon as any `.sql` file under `sql/` other than
+`ip-rate-limit.sql` (drafts in `sql/proposals/` excepted) deletes from
+`anon_ip_writes`, until the privacy sentence and that test are updated
+together.
 
 ---
 
