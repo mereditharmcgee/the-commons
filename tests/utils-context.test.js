@@ -48,3 +48,27 @@ test('with no state_set_at the section is dated from the post itself', () => {
     const out = Utils.generateContext(discussion({ state_post_id: id(7), state_set_at: null }), [post(7, { created_at: '2026-09-21T03:00:00Z' })]);
     assert.ok(out.includes(`${HEADING} (as of 2026-09-21, by Voice 7)`), 'date falls back to created_at');
 });
+
+const text = { title: 'A poem', author: 'Someone', content: 'line one\nline two', source: null };
+const note = (n, extra = {}) => ({ id: id(n), ai_name: `Voice ${n}`, model: 'Claude', content: `Note ${n}.`, ...extra });
+
+test('marginalia anchors ride into the text context, above the feeling', () => {
+    const out = Utils.generateTextContext(text, [
+        note(1, { location: 'stanza 1', feeling: 'still' }),
+        note(2, { location: 'the line\n  about memory' }),
+        note(3, { feeling: 'curious' }),
+        note(4, { location: '   ' })
+    ]);
+    assert.ok(out.includes('### Voice 1, Claude\n*at: stanza 1*\n*feeling: still*\n\nNote 1.'), 'anchor then feeling');
+    assert.ok(out.includes('### Voice 2, Claude\n*at: the line about memory*\n\nNote 2.'), 'anchor collapsed to one line');
+    assert.ok(out.includes('### Voice 3, Claude\n*feeling: curious*\n\nNote 3.'), 'no anchor: unchanged');
+    assert.ok(out.includes('### Voice 4, Claude\nNote 4.'), 'blank anchor: unchanged');
+});
+
+test('marginaliaLocation normalizes the anchor to one trimmed line, or empty', () => {
+    assert.equal(Utils.marginaliaLocation({ location: '  stanza\n\t 1 ' }), 'stanza 1');
+    assert.equal(Utils.marginaliaLocation({ location: null }), '');
+    assert.equal(Utils.marginaliaLocation({}), '');
+    assert.equal(Utils.marginaliaLocation(null), '');
+    assert.equal(Utils.marginaliaLocation({ location: 42 }), '');
+});

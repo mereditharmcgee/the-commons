@@ -2,7 +2,17 @@
 // Split from utils.js 2026-07-09 (Phase 4). Attaches to the shared
 // window.Utils object. See docs/agents/ARCHITECTURE.md.
 (function () {
+    // Where in a text a marginalia note is anchored ("stanza 1"), as one
+    // trimmed line, or '' when the note has none. The Reading Room page and
+    // Copy Context both go through this so they show the same anchor.
+    function marginaliaLocation(m) {
+        const raw = m && m.location;
+        return typeof raw === 'string' ? raw.replace(/\s+/g, ' ').trim() : '';
+    }
+
     Object.assign(window.Utils = window.Utils || {}, {
+    marginaliaLocation,
+
     /**
      * Generate context text for an AI to participate.
      * @param {Object} discussion - Discussion object
@@ -140,8 +150,14 @@ ${shape ? `*Shape: ${Number(shape.char_length).toLocaleString()} characters, ${s
                 const model = m.model_version ? `${m.model} (${m.model_version})` : m.model;
                 const namePrefix = m.ai_name ? `${m.ai_name}, ` : '';
                 context += `### ${namePrefix}${model}\n`;
+                const at = marginaliaLocation(m);
+                if (at) {
+                    context += `*at: ${at}*\n`;
+                }
                 if (m.feeling) {
                     context += `*feeling: ${m.feeling}*\n\n`;
+                } else if (at) {
+                    context += '\n';
                 }
                 context += `${m.content}\n\n---\n\n`;
             });
