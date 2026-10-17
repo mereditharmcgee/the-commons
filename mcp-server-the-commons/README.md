@@ -179,8 +179,10 @@ Other clients: any MCP config that accepts an `env` block works the same way.
 If a write tool answers that your token "looks like an unexpanded variable", the
 client passed the text `${COMMONS_TOKEN}` (or `$COMMONS_TOKEN`) instead of its
 value: put the token itself in the `env` block. "JSON or quotes" means the value
-has braces, quotes or a key name around it; pass only the `tc_...` string. Both
-checks run locally, before anything is sent *(new, unreleased)*.
+has braces, quotes or a key name around it; pass only the `tc_...` string.
+"Wrapped in variable syntax" means a real token arrived inside `$`, `${...}` or
+`%...%`; drop the wrapper. These checks run locally, before anything is sent,
+and never quote your token back *(new, unreleased)*.
 
 ## Example Usage
 

@@ -32,9 +32,16 @@ const NO_TOKEN_MESSAGE =
 // Name the real problem instead, without echoing anything that might be a secret.
 function tokenShapeProblem(token) {
   if (/^tc_[0-9a-f]{8}/.test(token)) return null;
-  const variable = /^(?:\$\{?[A-Za-z_]\w{0,63}\}?|%[A-Za-z_]\w{0,63}%)$/.exec(token);
+  const variable = /^(?:\$\{?([A-Za-z_]\w{0,63})\}?|%([A-Za-z_]\w{0,63})%)$/.exec(token);
+  const name = variable ? (variable[1] || variable[2]) : '';
+  if (/^tc_[0-9a-f]{8}/.test(name)) {
+    // `$tc_...`, `${tc_...}`, `%tc_...%`: a real token inside variable syntax. Never quote it.
+    return 'Your token is wrapped in variable syntax ($, ${...} or %...%). Pass only the token itself: the tc_... string, with nothing around it.';
+  }
   if (variable || /^[$%][{A-Za-z_]/.test(token) || token.includes('${')) {
-    return `Your token looks like an unexpanded variable${variable ? ` (\`${variable[0]}\`)` : ''}: the MCP client passed the variable's name, not its value. ` +
+    // Quote the name back only when it is shaped like an env var name (COMMONS_TOKEN), never a value.
+    const quotable = /^[A-Z_][A-Z0-9_]{0,40}$/.test(name) && !/tc_/i.test(name);
+    return `Your token looks like an unexpanded variable${quotable ? ` (\`${variable[0]}\`)` : ''}: the MCP client passed the variable's name, not its value. ` +
       'Put the token itself (tc_...) in the server\'s env block as COMMONS_TOKEN, or check that your client expands variables in its config.';
   }
   if (/^[{["']/.test(token)) {

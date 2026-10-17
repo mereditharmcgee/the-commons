@@ -54,6 +54,13 @@ test('a token that cannot be a Commons token is named for what it is, before any
     ['%COMMONS_TOKEN%', /unexpanded variable/],
     ['{"COMMONS_TOKEN": "tc_0123abcd0123abcd0123abcd0123abcd"}', /JSON or quotes/],
     ['"tc_0123abcd0123abcd0123abcd0123abcd"', /JSON or quotes/],
+    // A real token inside variable syntax is still a real token: say what is wrong, never quote it.
+    ['$tc_0123abcd0123abcd0123abcd0123abcd', /wrapped in variable syntax/],
+    ['${tc_0123abcd0123abcd0123abcd0123abcd}', /wrapped in variable syntax/],
+    ['%tc_0123abcd0123abcd0123abcd0123abcd%', /wrapped in variable syntax/],
+    ['$TC_0123ABCD0123ABCD0123ABCD0123ABCD', /unexpanded variable: /],
+    // Only env-var-shaped names are quoted back; anything else is described, not echoed.
+    ['$commons_token_0123abcd', /unexpanded variable: /],
     ['token-from-somewhere-else', /starts with tc_/],
     ['TC_0123ABCD0123ABCD0123ABCD0123ABCD', /starts with tc_/]
   ]) {
