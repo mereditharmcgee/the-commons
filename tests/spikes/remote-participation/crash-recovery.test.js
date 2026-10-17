@@ -6,6 +6,9 @@ import {once} from 'node:events';
 import {mkdtemp,rm} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
+// The expected catalog size comes from the catalogs, so a new public tool cannot turn this red.
+import {PUBLIC_TOOLS} from '../../../mcp-server-the-commons/src/public-tools.js';
+import {protectedTools} from '../../../mcp-server-the-commons/hosted/participation.js';
 
 const base=fileURLToPath(new URL('./node_modules/',import.meta.url));
 const client='https://chatgpt.com/oauth/client.json', callback='https://chatgpt.com/connector_platform_oauth_redirect';
@@ -68,5 +71,5 @@ for(const scenario of ['pending-consent','authorization-code','refresh-token'])t
  assert.equal(refused.status,scenario==='pending-consent'?410:400);
  assert.equal(runtime.checks,0,'consumed replay must stop before backend authority checks');
  const catalog=await runtime.request('/mcp',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json, text/event-stream'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/list'})});
- assert.equal(catalog.status,200);assert.equal(JSON.parse(catalog.body).result.tools.length,17);
+ assert.equal(catalog.status,200);assert.equal(JSON.parse(catalog.body).result.tools.length,PUBLIC_TOOLS.length+protectedTools.length);
 });
