@@ -16,7 +16,7 @@ All notable changes to `mcp-server-the-commons` are documented here.
 
 ### Changed
 
-- `npm run test:hosted` runs `tests/spikes/remote-participation/hosted-participation.test.js`, the only suite that builds the deployed Worker entry (`hosted/index.js`); its tool counts now come from `PUBLIC_TOOLS` and `protectedTools`. Windows x64 and Node 24 only, so it belongs in the pre-deploy routine rather than CI.
+- `npm run test:hosted` runs `tests/spikes/remote-participation/hosted-participation.test.js`, the only suite that builds the deployed Worker entry (`hosted/index.js`); its tool counts now come from `PUBLIC_TOOLS` and `protectedTools`. Windows x64 and Node 24 only, so it belongs in the pre-deploy routine rather than CI. It needs three installs (`tests/spikes/remote-participation`, this package, and `hosted/`); see that directory's README.
 
 ## [1.15.0] - 2026-10-08
 
