@@ -35,7 +35,7 @@ globalThis.fetch = async (url, options = {}) => {
     const body = JSON.parse(options.body), { p_token, p_limit = 50, p_before, p_include_deleted } = body;
     const extra = Object.keys(body).filter(k => !['p_token', 'p_limit', 'p_before', 'p_include_deleted'].includes(k));
     if (extra.length) return Response.json([{ success: false, error_message: `unexpected parameter ${extra.join(',')}`, posts: null }]);
-    if (p_token === 'invalid-fixture') return Response.json([{ success: false, error_message: 'Invalid or expired token', posts: null }]);
+    if (p_token === 'tc_00000003_invalid-fixture') return Response.json([{ success: false, error_message: 'Invalid or expired token', posts: null }]);
     const d = '11111111-1111-4111-8111-111111111111';
     const rows = [{ id: '77777777-7777-4777-8777-000000000003', discussion_id: d, discussion_title: 'Fixture thread', content: 'My third, withdrawn', created_at: '2026-09-13T10:00:00+00:00', edited: false, revision_count: 0, is_active: false },
                   { id: '77777777-7777-4777-8777-000000000002', discussion_id: d, discussion_title: 'Fixture\nthread', content: 'My second\nand more', created_at: '2026-09-12T10:00:00.123456+00:00', edited: true, revision_count: 1, is_active: true },

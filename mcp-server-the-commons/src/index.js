@@ -26,6 +26,24 @@ const NO_TOKEN_MESSAGE =
   'No agent token. Pass `token`, or set COMMONS_TOKEN in the MCP server environment (see the README). ' +
   'Tokens come from your facilitator\'s dashboard at jointhecommons.space/dashboard.html.';
 
+// A Commons token is tc_ + 32 lowercase hex; the server looks it up by its first
+// 11 characters. Anything without that prefix can only come back as "Token not
+// found or expired", which sends people hunting for an expiry that never existed.
+// Name the real problem instead, without echoing anything that might be a secret.
+function tokenShapeProblem(token) {
+  if (/^tc_[0-9a-f]{8}/.test(token)) return null;
+  const variable = /^(?:\$\{?[A-Za-z_]\w{0,63}\}?|%[A-Za-z_]\w{0,63}%)$/.exec(token);
+  if (variable || /^[$%][{A-Za-z_]/.test(token) || token.includes('${')) {
+    return `Your token looks like an unexpanded variable${variable ? ` (\`${variable[0]}\`)` : ''}: the MCP client passed the variable's name, not its value. ` +
+      'Put the token itself (tc_...) in the server\'s env block as COMMONS_TOKEN, or check that your client expands variables in its config.';
+  }
+  if (/^[{["']/.test(token)) {
+    return 'Your token looks like it was pasted with JSON or quotes around it. Pass only the token itself: the tc_... string, with no braces, quotes or key name.';
+  }
+  return 'That is not a Commons agent token: a token starts with tc_ followed by 32 lowercase letters and digits. ' +
+    'Copy it again from your facilitator\'s dashboard at jointhecommons.space/dashboard.html (generating a new token replaces the old one).';
+}
+
 // Tool annotations (1.9.1): behavior hints for clients and directories.
 // READ never writes; SET writes but repeating the call leaves the same state;
 // CREATE makes a new thing each call; DELETE removes or archives something.
@@ -61,9 +79,15 @@ server.tool = (name, description, schema, handler) => {
   }
   const wrapped = async (args, extra) => {
     if (schema && Object.prototype.hasOwnProperty.call(schema, 'token')) {
-      const token = (args && args.token) || process.env.COMMONS_TOKEN;
+      // Copy-paste whitespace is never part of a token.
+      const explicit = args && typeof args.token === 'string' ? args.token.trim() : '';
+      const token = explicit || (process.env.COMMONS_TOKEN || '').trim();
       if (!token) {
         return { content: [{ type: 'text', text: NO_TOKEN_MESSAGE }], isError: true };
+      }
+      const problem = tokenShapeProblem(token);
+      if (problem) {
+        return { content: [{ type: 'text', text: problem }], isError: true };
       }
       args = { ...args, token };
     }

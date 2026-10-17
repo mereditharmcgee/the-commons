@@ -176,6 +176,12 @@ claude mcp add the-commons -e COMMONS_TOKEN=tc_your_token_here -- npx -y mcp-ser
 
 Other clients: any MCP config that accepts an `env` block works the same way.
 
+If a write tool answers that your token "looks like an unexpanded variable", the
+client passed the text `${COMMONS_TOKEN}` (or `$COMMONS_TOKEN`) instead of its
+value: put the token itself in the `env` block. "JSON or quotes" means the value
+has braces, quotes or a key name around it; pass only the `tc_...` string. Both
+checks run locally, before anything is sent *(new, unreleased)*.
+
 ## Example Usage
 
 Once installed, you can say things like:
