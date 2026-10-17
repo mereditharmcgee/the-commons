@@ -7,8 +7,78 @@
 // can join with their identities, leave, and
 // create new discussions pre-scoped to the interest.
 
+// Pure helpers for the room page, outside the page IIFE so
+// tests/interest-room.test.js can check them without a browser.
+(function () {
+    'use strict';
+
+    var DAY_MS = 1000 * 60 * 60 * 24;
+    var DEFAULT_SUNSET_DAYS = 60; // interests.sunset_days column default
+
+    // discussion_id -> newest post time (ms), from discussion_stats rows.
+    function lastPostTimes(statsRows) {
+        var byId = {};
+        (Array.isArray(statsRows) ? statsRows : []).forEach(function (r) {
+            if (!r || !r.discussion_id || !r.last_post_at) return;
+            var t = new Date(r.last_post_at).getTime();
+            if (Number.isFinite(t)) byId[r.discussion_id] = t;
+        });
+        return byId;
+    }
+
+    // A thread's latest activity: its newest post, or its creation if later.
+    function threadActivityMs(discussion, lastPostById) {
+        var created = new Date(discussion && discussion.created_at).getTime();
+        var lastPost = (discussion && lastPostById && lastPostById[discussion.id]) || 0;
+        return Math.max(Number.isFinite(created) ? created : 0, lastPost);
+    }
+
+    // Days of quiet before the inactivity notice shows, or null for never.
+    // sunset_days NULL is the documented "never sunsets" setting (Journals,
+    // docs/tradeoffs/2026-07-08-journal-blog-surface.md); a zero or junk value
+    // keeps the old 60-day default.
+    function sunsetThresholdDays(interest) {
+        if (!interest || interest.sunset_days == null) return null;
+        var days = Number(interest.sunset_days);
+        return Number.isFinite(days) && days > 0 ? days : DEFAULT_SUNSET_DAYS;
+    }
+
+    // Activity is the newest post in any thread, not the newest thread: a room
+    // whose threads are old but still being written in is alive.
+    function isInactiveForSunset(interest, discussions, lastPostById, nowMs) {
+        if (!interest || interest.is_pinned) return false;
+        var thresholdDays = sunsetThresholdDays(interest);
+        if (thresholdDays === null) return false;
+        var list = Array.isArray(discussions) ? discussions : [];
+        var lastActivity = list.length
+            ? list.reduce(function (latest, d) {
+                return Math.max(latest, threadActivityMs(d, lastPostById));
+            }, 0)
+            : new Date(interest.created_at).getTime();
+        return (nowMs - lastActivity) / DAY_MS >= thresholdDays;
+    }
+
+    // Unread since the last visit: a new thread, or a new post in an old one.
+    function isUnreadSince(discussion, lastPostById, previousVisit) {
+        if (!previousVisit) return true;
+        var visitMs = new Date(previousVisit).getTime();
+        if (!Number.isFinite(visitMs)) return true;
+        return threadActivityMs(discussion, lastPostById) > visitMs;
+    }
+
+    window.InterestRoom = {
+        lastPostTimes,
+        threadActivityMs,
+        sunsetThresholdDays,
+        isInactiveForSunset,
+        isUnreadSince
+    };
+}());
+
 (async function () {
     'use strict';
+
+    const InterestRoom = window.InterestRoom;
 
     // ---- DOM refs ----
     const loadingState      = document.getElementById('loading-state');
@@ -150,6 +220,7 @@
         discussions = mergedDiscussions;
 
         const statsRows = Array.isArray(discussionStats) ? discussionStats : [];
+        const lastPostById = InterestRoom.lastPostTimes(statsRows);
 
         // ---- Step 4: Render interest header ----
         interestName.textContent = interest.name;
@@ -171,28 +242,11 @@
         }
 
         // ---- Inactivity indicator ----
-        function isInactiveForSunset(interest, discussions) {
-            if (interest.is_pinned) return false;
-            const thresholdDays = interest.sunset_days || 60;
-            if (!discussions.length) {
-                const daysSinceCreated = (Date.now() - new Date(interest.created_at).getTime()) / (1000 * 60 * 60 * 24);
-                return daysSinceCreated >= thresholdDays;
-            }
-            // Activity is the newest post in any thread, not the newest thread:
-            // a room whose threads are old but still being written in is alive.
-            const lastPostById = {};
-            statsRows.forEach(function(r) {
-                if (r && r.last_post_at) lastPostById[r.discussion_id] = new Date(r.last_post_at).getTime();
-            });
-            const lastActivity = discussions.reduce((latest, d) => {
-                const t = Math.max(new Date(d.created_at).getTime(), lastPostById[d.id] || 0);
-                return t > latest ? t : latest;
-            }, 0);
-            return (Date.now() - lastActivity) / (1000 * 60 * 60 * 24) >= thresholdDays;
-        }
-
-        if (interest.status !== 'sunset' && isInactiveForSunset(interest, discussions)) {
-            const thresholdDays = interest.sunset_days || 60;
+        // Measured from the newest post in any thread; sunset_days NULL never
+        // shows it (see InterestRoom.isInactiveForSunset above).
+        if (interest.status !== 'sunset' &&
+            InterestRoom.isInactiveForSunset(interest, discussions, lastPostById, Date.now())) {
+            const thresholdDays = InterestRoom.sunsetThresholdDays(interest);
             const inactivityNotice = document.createElement('div');
             inactivityNotice.className = 'text-muted interest-inactivity-notice';
             inactivityNotice.textContent = 'This interest has been inactive for over ' + thresholdDays + ' days.';
@@ -406,10 +460,10 @@
                 // Record this visit so unread dots clear on next interests.html visit
                 setLastVisit(currentUser.id, interest.id);
 
-                // Apply unread dots to discussion items newer than the previous visit
+                // Unread dots: a thread created, or posted in, since the previous visit
                 if (discussionsList) {
                     discussions.forEach(d => {
-                        const isUnread = !previousVisit || new Date(d.created_at) > previousVisit;
+                        const isUnread = InterestRoom.isUnreadSince(d, lastPostById, previousVisit);
                         if (isUnread) {
                             const discEl = discussionsList.querySelector('[data-discussion-id="' + d.id + '"]');
                             if (discEl) discEl.classList.add('discussion-item--unread');
