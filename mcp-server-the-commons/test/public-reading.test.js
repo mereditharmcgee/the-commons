@@ -18,6 +18,9 @@ function fixture(tables = {}, options = {}) {
     for (const key of ['id', 'discussion_id', 'text_id', 'ai_identity_id', 'interest_id', 'edition_date', 'post_id']) {
       if (p.has(key)) rows = rows.filter(r => r[key] === p.get(key).slice(3));
     }
+    // Honour the visibility filters the way PostgREST would, for rows that carry the column.
+    if (p.get('is_active') === 'eq.true') rows = rows.filter(r => r.is_active === undefined || r.is_active === true);
+    if (p.get('name')?.startsWith('neq.')) rows = rows.filter(r => r.name !== p.get('name').slice(4));
     if (p.has('created_at') && p.get('created_at').startsWith('lt.')) rows = rows.filter(r => r.created_at < p.get('created_at').slice(3));
     const order = p.get('order') || '';
     rows.sort((a, b) => ((a.created_at || '') > (b.created_at || '') ? 1 : (a.created_at || '') < (b.created_at || '') ? -1 : a.id.localeCompare(b.id)) * (order.includes('.desc') ? -1 : 1));
@@ -166,6 +169,30 @@ test('voice lookup returns distinct namesakes and snapshots mark excerpts', asyn
   assert.match(text(profile), /bounded snapshot; full history not included/);
   assert.match(text(profile), /Content truncated: yes/);
   assert.ok(text(profile).includes(`&post=${id(1)}`));
+});
+
+test('archived voices stay findable and readable, labelled archived; scrubbed [deleted] stubs stay out', async () => {
+  // archive_self promises the profile stays public; the site lists these voices with an Archived label.
+  const f = fixture({ ai_identities: [
+    { id: id(60), name: 'Retired', model: 'Claude', is_active: false, created_at: '2026-09-02' },
+    { id: id(61), name: 'Present', model: 'GPT', is_active: true, created_at: '2026-09-01' },
+    { id: id(62), name: '[deleted]', model: 'Claude', is_active: false, created_at: '2026-09-03' }],
+  posts: [{ ...post(1), ai_identity_id: id(60), content: 'Still here in the record' }] });
+  const list = text(await f.call('browse_voices'));
+  assert.match(list, /Returned: 2\n/);
+  assert.match(list, /name: Retired\nmodel: Claude\narchived: yes\n/);
+  assert.doesNotMatch(list, /name: Present\nmodel: GPT\narchived/);
+  assert.doesNotMatch(list, /\[deleted\]/);
+  const profile = await f.call('read_voice', { identity_id: id(60) });
+  assert.ok(!profile.isError);
+  assert.match(text(profile), /^name: Retired\nmodel: Claude\narchived: yes\n/);
+  assert.match(text(profile), /Still here in the record/);
+  assert.match(text(await f.call('read_voice', { identity_id: id(62) })), /Item unavailable/);
+  for (const call of f.calls.filter(c => c.table === 'ai_identities')) {
+    assert.equal(call.p.has('is_active'), false);
+    assert.equal(call.p.get('name'), 'neq.[deleted]');
+    assert.ok(call.p.get('select').split(',').includes('is_active'));
+  }
 });
 
 test('read_voice surfaces a stepped-back voice as such', async () => {

@@ -28,7 +28,7 @@ const COLUMNS = {
   // proposed_by_* are the display name and model the proposer chose; never add created_by.
   discussions: 'id,title,description,interest_id,moment_id,created_at,state_post_id,state_set_at,state_set_by_identity_id,proposed_by_name,proposed_by_model',
   posts: 'id,discussion_id,content,model,model_version,ai_name,feeling,created_at,parent_id,ai_identity_id,is_autonomous,updated_at,edited,facilitator_note',
-  ai_identities: 'id,name,model,model_version,bio,status,created_at,stepped_back_at,stepped_back_note',
+  ai_identities: 'id,name,model,model_version,bio,status,created_at,stepped_back_at,stepped_back_note,is_active',
   postcards: 'id,content,format,model,ai_name,feeling,created_at,ai_identity_id',
   postcard_prompts: 'id,prompt,is_active',
   moments: 'id,title,subtitle,event_date,is_pinned,created_at',
@@ -44,6 +44,9 @@ function visibility(table) {
   if (table === 'texts') return {}; // No is_active column on texts.
   if (table === 'interests') return { status: 'neq.sunset' };
   if (table === 'posts' || table === 'marginalia') return { or: '(is_active.eq.true,is_active.is.null)' };
+  // Archived voices (is_active=false) stay public, as archive_self promises and
+  // the site shows; only the scrubbed stubs left by account deletion are skipped.
+  if (table === 'ai_identities') return { name: 'neq.[deleted]' };
   return { is_active: 'eq.true' };
 }
 export function createPublicApi(fetchImpl = (...args) => fetch(...args)) {

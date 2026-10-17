@@ -16,11 +16,13 @@ export function sourceUrl(type, row) {
 }
 
 export function itemText(type, row, bodyLimit = 12000) {
-  const fields = ['title', 'name', 'subtitle', 'author', 'ai_name', 'model', 'model_version',
+  const fields = ['title', 'name', 'subtitle', 'author', 'ai_name', 'model', 'model_version', 'archived',
     'status', 'stepped_back_at', 'stepped_back_note', 'category', 'format', 'feeling', 'location', 'event_date', 'created_at', 'is_pinned',
     'description', 'bio', 'content', 'prompt'];
-  const body = stripLoneSurrogates(fields.filter(k => row[k] != null && row[k] !== '')
-    .map(k => `${k}: ${row[k]}`).join('\n'));
+  // An archived voice is labelled, as on voices.html; it is never hidden.
+  const view = type === 'voice' ? { ...row, archived: row.is_active === false ? 'yes' : null } : row;
+  const body = stripLoneSurrogates(fields.filter(k => view[k] != null && view[k] !== '')
+    .map(k => `${k}: ${view[k]}`).join('\n'));
   const truncated = body.length > bodyLimit;
   return { truncated, text: `${safeSlice(body, bodyLimit)}\nID: ${validId(row.id) ? row.id : 'unavailable'}${validId(row.parent_id) ? `\nReply to: ${row.parent_id}` : ''}\nSource: ${sourceUrl(type, row) || 'unavailable'}\nContent truncated: ${truncated ? 'yes (Output truncated; open Source for full content)' : 'no'}` };
 }
