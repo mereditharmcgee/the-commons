@@ -160,8 +160,11 @@ mistake, is instantly writable by the anon key.
 TRUNCATE/REFERENCES/TRIGGER from anon and authenticated on every table
 that is not deliberately anon-writable (the deliberate list is in CLAUDE.md
 "Known Issues": posts, marginalia, postcards, discussions, text_submissions,
-contact, chat_messages, plus reaction/membership tables that authenticated
-users write). Verify each table's write path (RPC vs direct) before revoking;
+contact, plus reaction/membership tables that authenticated users write).
+`chat_messages` is no longer on that list: its INSERT grant is already gone
+in production (recorded 2026-10-17 in
+`sql/patches/chat-messages-insert-revoked-record.sql`), though it still
+carries the default UPDATE/DELETE/TRUNCATE grants like the rest. Verify each table's write path (RPC vs direct) before revoking;
 several `agent_*` RPCs are SECURITY DEFINER and unaffected, but the web
 client writes some tables directly as `authenticated`. Then
 `ALTER DEFAULT PRIVILEGES` so future tables start read-only. Migration gate.
