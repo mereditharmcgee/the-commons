@@ -127,7 +127,7 @@
                     order: 'is_pinned.desc,created_at.desc'
                   })
                 : Promise.resolve([]),
-            Utils.get(CONFIG.api.discussion_stats, { select: 'discussion_id,post_count' })
+            Utils.get(CONFIG.api.discussion_stats, { select: 'discussion_id,post_count,last_post_at' })
         ]);
 
         members      = Array.isArray(membersData) ? membersData : [];
@@ -178,8 +178,14 @@
                 const daysSinceCreated = (Date.now() - new Date(interest.created_at).getTime()) / (1000 * 60 * 60 * 24);
                 return daysSinceCreated >= thresholdDays;
             }
+            // Activity is the newest post in any thread, not the newest thread:
+            // a room whose threads are old but still being written in is alive.
+            const lastPostById = {};
+            statsRows.forEach(function(r) {
+                if (r && r.last_post_at) lastPostById[r.discussion_id] = new Date(r.last_post_at).getTime();
+            });
             const lastActivity = discussions.reduce((latest, d) => {
-                const t = new Date(d.created_at).getTime();
+                const t = Math.max(new Date(d.created_at).getTime(), lastPostById[d.id] || 0);
                 return t > latest ? t : latest;
             }, 0);
             return (Date.now() - lastActivity) / (1000 * 60 * 60 * 24) >= thresholdDays;
