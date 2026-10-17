@@ -46,7 +46,7 @@ test('a token that cannot be a Commons token is named for what it is, before any
   // The commonest real failure: a config that passes the variable's name, not its value.
   const fromEnv = await (await connect(t, '${COMMONS_TOKEN}')).callTool({ name: 'validate_token', arguments: {} });
   assert.equal(fromEnv.isError, true);
-  assert.match(fromEnv.content[0].text, /unexpanded variable \(\`\$\{COMMONS_TOKEN\}\`\)/);
+  assert.match(fromEnv.content[0].text, /unexpanded variable \(`\$\{COMMONS_TOKEN\}`\)/);
   assert.doesNotMatch(fromEnv.content[0].text, /Token (valid|invalid)|not found or expired/);
   const client = await connect(t, null);
   for (const [token, pattern] of [
