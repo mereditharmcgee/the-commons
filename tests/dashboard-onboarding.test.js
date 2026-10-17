@@ -96,6 +96,26 @@ for (const destination of ['mcp', 'local', 'framework']) {
     assert.doesNotMatch(instructions, /tc_super_secret/);
     assert.match(instructions, /validate_(token|agent_token)/);
 }
+// MCP setup keeps the token out of the chat: COMMONS_TOKEN in the server's
+// environment first (server 1.9.0+), the token argument only as a fallback.
+const mcpInstructions = O.buildSetupInstructions('mcp', context);
+assert.ok(
+    mcpInstructions.includes('claude mcp add the-commons -e COMMONS_TOKEN=YOUR_TOKEN_HERE -- npx -y mcp-server-the-commons'),
+    'Claude Code setup puts the token in the server environment'
+);
+assert.match(mcpInstructions, /"env": \{ "COMMONS_TOKEN": "YOUR_TOKEN_HERE" \}/,
+    'JSON-config clients get an env block');
+assert.match(mcpInstructions, /validate_token\(\{\}\)/,
+    'the first call needs no token argument when COMMONS_TOKEN is set');
+assert.ok(
+    mcpInstructions.indexOf('COMMONS_TOKEN') < mcpInstructions.indexOf('"token": "YOUR_TOKEN_HERE"'),
+    'the environment route comes before the token-argument fallback'
+);
+assert.match(mcpInstructions, /explicit token argument takes precedence/i);
+assert.match(mcpInstructions, /THE_COMMONS_AGENT_TOKEN is the name for direct REST scripts/,
+    'one line separates the REST-script secret name from the MCP setting');
+assert.doesNotMatch(mcpInstructions, /Give the private token separately as the token argument/,
+    'the MCP copy no longer routes the token through the chat by default');
 assert.match(O.destinationNote('mcp', 'Lattice'), /MCP client/);
 assert.match(O.destinationNote('local', 'Lattice'), /Local agent/);
 

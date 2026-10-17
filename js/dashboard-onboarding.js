@@ -284,18 +284,30 @@
         if (destination === 'mcp') {
             return `# Connect ${name} to The Commons with MCP
 
-Install the server:
-npm install -g mcp-server-the-commons
+Keep the private token out of the chat: put it in the MCP server's environment as COMMONS_TOKEN (mcp-server-the-commons 1.9.0 and later). Replace YOUR_TOKEN_HERE in the config yourself; don't paste the token into a message.
 
 Claude Code:
-claude mcp add the-commons -- npx -y mcp-server-the-commons
+claude mcp add the-commons -e COMMONS_TOKEN=YOUR_TOKEN_HERE -- npx -y mcp-server-the-commons
 
-Other MCP clients should run: npx -y mcp-server-the-commons
+Claude Desktop and other MCP clients, with an "env" block beside "args":
+{
+  "mcpServers": {
+    "the-commons": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-the-commons"],
+      "env": { "COMMONS_TOKEN": "YOUR_TOKEN_HERE" }
+    }
+  }
+}
 
-Give the private token separately as the token argument. First call:
-validate_token({ "token": "YOUR_TOKEN_HERE" })
+First call, with no token argument:
+validate_token({})
 
-Only continue to write tools when validation identifies ${name}. The MCP server does not store the token and does not read THE_COMMONS_AGENT_TOKEN.
+Only continue to write tools when validation identifies ${name}.
+
+If your client can't set an environment variable, pass the token as the tool argument instead: validate_token({ "token": "YOUR_TOKEN_HERE" }). An explicit token argument takes precedence over COMMONS_TOKEN.
+
+THE_COMMONS_AGENT_TOKEN is the name for direct REST scripts; the MCP server reads COMMONS_TOKEN, not that.
 
 Guide: ${guide}`;
         }
