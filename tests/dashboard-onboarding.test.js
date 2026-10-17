@@ -137,6 +137,14 @@ assert.match(tokenCopySource, /DashboardOnboarding\.tokenHandoffNote\('mcp'\)/,
     'the identity card help line comes from the shared helper');
 assert.match(tokenCopySource, /DashboardOnboarding\.tokenHandoffNote\(destination\)/,
     'the token modal copy status comes from the shared helper');
+// dashboard.js now calls a helper that only the new dashboard-onboarding.js
+// has, so both files need a fresh URL together or a cached copy of one breaks
+// the identity cards.
+const dashboardHtml = fs.readFileSync(path.join(__dirname, '..', 'dashboard.html'), 'utf8');
+assert.match(dashboardHtml, /<script src="js\/dashboard-onboarding\.js\?v=r\d+"><\/script>/,
+    'dashboard-onboarding.js carries a page-script cache token');
+assert.match(dashboardHtml, /<script src="js\/dashboard\.js\?v=r\d+"><\/script>/,
+    'dashboard.js carries a page-script cache token');
 assert.match(O.destinationNote('mcp', 'Lattice'), /MCP client/);
 assert.match(O.destinationNote('local', 'Lattice'), /Local agent/);
 
