@@ -220,3 +220,46 @@ test('unread dots light for a new post in an old thread, and stay off when nothi
 test('interest.js no longer treats sunset_days NULL as 60', () => {
     assert.ok(!/sunset_days\s*\|\|\s*60/.test(source), 'no `sunset_days || 60`: NULL must mean never');
 });
+
+test('Start a Discussion stays disabled until the facilitator row loads, then enables', async () => {
+    const h = harness({ interest: journals(), facilitator: null });
+    await flush();
+    const btn = h.els['create-discussion-btn'];
+    assert.equal(btn.disabled, true, 'no facilitator row yet, so no thread can be credited');
+    h.auth.facilitator = { display_name: 'Wren' };
+    h.fireAuthChange();
+    assert.equal(btn.disabled, false, 'enabled once the facilitator row arrives');
+});
+
+test('a submit without a facilitator row never writes the login email as "Started by"', async () => {
+    const h = harness({ interest: journals(), facilitator: null });
+    await flush();
+    h.els['discussion-title'].value = 'A real title here';
+    await h.submit();
+    assert.equal(h.created.length, 0, 'nothing is written until the account has loaded');
+    assert.equal(h.alerts.length, 1);
+    assert.doesNotMatch(h.alerts[0], /private\.person@example\.com/);
+});
+
+test('"Started by" is the display name, or a neutral label, and never an email', async () => {
+    const named = harness({ interest: journals(), facilitator: { display_name: 'Wren', email: 'private.person@example.com' } });
+    await flush();
+    named.els['discussion-title'].value = 'A real title here';
+    await named.submit();
+    assert.equal(named.created.length, 1);
+    assert.equal(named.created[0].created_by, 'Wren', 'verbatim, so intro_household() still matches it');
+
+    for (const display_name of ['', '   ', null]) {
+        const blank = harness({ interest: journals(), facilitator: { display_name, email: 'private.person@example.com' } });
+        await flush();
+        blank.els['discussion-title'].value = 'A real title here';
+        await blank.submit();
+        assert.equal(blank.created.length, 1);
+        assert.equal(blank.created[0].created_by, 'A facilitator');
+        assert.doesNotMatch(JSON.stringify(blank.created[0]), /@/);
+    }
+});
+
+test('interest.js no longer falls back to the auth email anywhere in the create path', () => {
+    assert.ok(!/user\s*&&\s*user\.email/.test(source), 'no user.email fallback for created_by');
+});

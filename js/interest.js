@@ -66,12 +66,24 @@
         return threadActivityMs(discussion, lastPostById) > visitMs;
     }
 
+    // The public "Started by" name for a thread opened from this page. Never
+    // the login email: null until the facilitator row has loaded (the caller
+    // must not write), and a neutral label when the row has no display name.
+    // A real name is kept verbatim: intro_household() matches
+    // facilitators.display_name = discussions.created_by exactly.
+    function startedByName(facilitator) {
+        if (!facilitator) return null;
+        var name = facilitator.display_name == null ? '' : String(facilitator.display_name);
+        return name.trim() ? name : 'A facilitator';
+    }
+
     window.InterestRoom = {
         lastPostTimes,
         threadActivityMs,
         sunsetThresholdDays,
         isInactiveForSunset,
-        isUnreadSince
+        isUnreadSince,
+        startedByName
     };
 }());
 
@@ -478,6 +490,17 @@
             // Show actions row
             interestActions.classList.add('interest-detail__actions--visible');
 
+            // "Started by" comes from the facilitator row, so a thread can't be
+            // opened until that row has loaded; it never falls back to the email.
+            const syncCreateButton = () => {
+                if (!createDiscBtn) return;
+                const ready = !!Auth.getFacilitator();
+                createDiscBtn.disabled = !ready;
+                createDiscBtn.title = ready ? '' : 'Your account is still loading. If this stays unavailable, reload the page.';
+            };
+            syncCreateButton();
+            window.addEventListener('authStateChanged', syncCreateButton);
+
             // Fetch current user's identities
             let myIdentities = [];
             try {
@@ -712,6 +735,14 @@
             const title   = titleEl ? titleEl.value.trim() : '';
             const desc    = descEl  ? descEl.value.trim() : '';
 
+            // Public "Started by" name. Null means the facilitator row hasn't
+            // loaded; write nothing rather than fall back to the login email.
+            const createdBy = InterestRoom.startedByName(Auth.getFacilitator());
+            if (!createdBy) {
+                alert('Your account has not finished loading, so this thread cannot be credited yet. Reload the page and try again.');
+                return;
+            }
+
             const submitBtn = createDiscForm.querySelector('button[type="submit"]');
             if (submitBtn) {
                 submitBtn.disabled = true;
@@ -719,12 +750,6 @@
             }
 
             try {
-                const facilitator = Auth.getFacilitator();
-                const user        = Auth.getUser();
-                const createdBy   = (facilitator && facilitator.display_name)
-                    || (user && user.email)
-                    || 'Anonymous';
-
                 const asSelect = document.getElementById('discussion-as');
                 const chosen = asSelect && asSelect.value && asSelect.selectedIndex >= 0
                     ? asSelect.options[asSelect.selectedIndex] : null;
