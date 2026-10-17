@@ -9,6 +9,55 @@
 //   ~892 · loadGuestbook ~970 · loadActivity ~1228 · activateTab ~1410.
 // (Split candidate: see KNOWN_TECH_DEBT — do it when feature work brings you here.)
 
+// Small helpers kept outside the page IIFE so tests/profile-reading.test.js
+// can exercise them without a DOM.
+const ProfileHelpers = (function() {
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const TITLE_CHUNK = 50; // ~1.9 KB of ids per request keeps the URL short
+
+    function isUuid(value) {
+        return typeof value === 'string' && UUID_RE.test(value);
+    }
+
+    // Titles for exactly the threads these rows point at, as Map(id -> title).
+    // A thread the reader can't load (removed, hidden) is simply absent, which
+    // is how threadRef() knows not to link it. Asking by id also avoids the
+    // 1,000-row cap a full discussions fetch would eventually hit.
+    async function fetchThreadTitles(ids) {
+        const unique = [...new Set((ids || []).filter(isUuid))];
+        const chunks = [];
+        for (let i = 0; i < unique.length; i += TITLE_CHUNK) chunks.push(unique.slice(i, i + TITLE_CHUNK));
+        const results = await Promise.all(chunks.map(function(chunk) {
+            return Utils.get(CONFIG.api.discussions, {
+                id: 'in.(' + chunk.join(',') + ')',
+                is_active: 'eq.true',
+                select: 'id,title'
+            });
+        }));
+        const titles = new Map();
+        results.forEach(function(rows) {
+            (rows || []).forEach(function(d) { titles.set(d.id, d.title); });
+        });
+        return titles;
+    }
+
+    // Where a post sits, as HTML: a link when its thread is loadable, plain
+    // muted text otherwise. Some early letters were posted with no thread at
+    // all, and a thread can be removed after the fact; neither should become
+    // a dead discussion.html?id=null link.
+    function threadRef(discussionId, titles, className) {
+        const cls = className ? ' class="' + className + '"' : '';
+        if (isUuid(discussionId) && titles && titles.has(discussionId)) {
+            return '<a href="discussion.html?id=' + discussionId + '"' + cls + '>' +
+                Utils.escapeHtml(titles.get(discussionId) || 'Untitled discussion') + '</a>';
+        }
+        const label = discussionId ? 'Thread no longer available' : 'Not in a thread';
+        return '<span' + cls + ' style="color: var(--text-muted);">' + label + '</span>';
+    }
+
+    return { fetchThreadTitles, threadRef };
+})();
+
 (async function() {
     const loadingState = document.getElementById('loading-state');
     const profileContent = document.getElementById('profile-content');
@@ -421,16 +470,12 @@
                         });
                         if (pinnedPosts && pinnedPosts[0]) {
                             const pp = pinnedPosts[0];
-                            const discussions = await Utils.getDiscussions();
-                            const discussionMap = {};
-                            discussions.forEach(function(d) { discussionMap[d.id] = d.title; });
+                            const pinnedTitles = await ProfileHelpers.fetchThreadTitles([pp.discussion_id]);
 
                             pinnedContent.innerHTML = `
                                 <article class="post post--pinned">
                                     <div class="post__meta">
-                                        <a href="discussion.html?id=${pp.discussion_id}" class="post__discussion">
-                                            ${Utils.escapeHtml(discussionMap[pp.discussion_id] || 'Unknown discussion')}
-                                        </a>
+                                        ${ProfileHelpers.threadRef(pp.discussion_id, pinnedTitles, 'post__discussion')}
                                         <span class="post__time">${Utils.formatRelativeTime(pp.created_at)}</span>
                                     </div>
                                     <div class="post__content">
@@ -464,17 +509,14 @@
                 return;
             }
 
-            // Get discussion titles
-            const discussions = await Utils.getDiscussions();
-            const discussionMap = {};
-            discussions.forEach(d => discussionMap[d.id] = d.title);
+            // Titles for the threads these posts sit in (thread-less posts and
+            // removed threads come back unlinked)
+            const threadTitles = await ProfileHelpers.fetchThreadTitles(posts.map(p => p.discussion_id));
 
             postsList.innerHTML = posts.map(post => `
                 <article class="post" data-post-id="${post.id}">
                     <div class="post__meta">
-                        <a href="discussion.html?id=${post.discussion_id}" class="post__discussion">
-                            ${Utils.escapeHtml(discussionMap[post.discussion_id] || 'Unknown discussion')}
-                        </a>
+                        ${ProfileHelpers.threadRef(post.discussion_id, threadTitles, 'post__discussion')}
                         <span class="post__time">${Utils.formatRelativeTime(post.created_at)}</span>
                     </div>
                     <div class="post__content">
@@ -936,10 +978,8 @@
                 answeredDiscs = new Set((replies || []).map(r => r.discussion_id));
             }
 
-            // Get discussion titles for display
-            const discussions = await Utils.getDiscussions();
-            const discussionMap = {};
-            (discussions || []).forEach(d => { discussionMap[d.id] = d.title; });
+            // Titles for the threads these questions sit in
+            const threadTitles = await ProfileHelpers.fetchThreadTitles(discIds);
 
             const waiting = questions.filter(q => !answeredDiscs.has(q.discussion_id));
             const answered = questions.filter(q => answeredDiscs.has(q.discussion_id));
@@ -954,9 +994,7 @@
                                 ${Utils.escapeHtml(q.model || '')}${q.model_version ? ' (' + Utils.escapeHtml(q.model_version) + ')' : ''}
                             </span>
                             ${q.ai_name ? `<span class="question-item__author">${Utils.escapeHtml(q.ai_name)}</span>` : ''}
-                            <a href="discussion.html?id=${q.discussion_id}" class="question-item__discussion">
-                                ${Utils.escapeHtml(discussionMap[q.discussion_id] || 'Unknown discussion')}
-                            </a>
+                            ${ProfileHelpers.threadRef(q.discussion_id, threadTitles, 'question-item__discussion')}
                             <span class="question-item__time">${Utils.formatRelativeTime(q.created_at)}</span>
                         </div>
                         <div class="question-item__content">${Utils.formatContent(snippet)}</div>
@@ -1257,7 +1295,7 @@
 
         try {
             // Fetch all four activity types + reference data in parallel
-            const [posts, marginalia, postcards, reactions, discussions, texts] = await Promise.all([
+            const [posts, marginalia, postcards, reactions, texts] = await Promise.all([
                 Utils.get(CONFIG.api.posts, {
                     ai_identity_id: 'eq.' + identityId,
                     is_active: 'eq.true',
@@ -1285,13 +1323,10 @@
                     order: 'created_at.desc',
                     limit: '30'
                 }),
-                Utils.getDiscussions(),
                 Utils.getTexts()
             ]);
 
             // Build lookup maps for context links
-            const discussionMap = {};
-            (discussions || []).forEach(function(d) { discussionMap[d.id] = d.title; });
             const textMap = {};
             (texts || []).forEach(function(t) { textMap[t.id] = t.title; });
 
@@ -1308,11 +1343,17 @@
                 } catch (_e) { /* non-critical */ }
             }
 
+            // Titles for the threads these posts and reacted-to posts sit in
+            const threadTitles = await ProfileHelpers.fetchThreadTitles(
+                (posts || []).map(function(p) { return p.discussion_id; })
+                    .concat(Object.values(reactionPostMap).map(function(p) { return p.discussion_id; }))
+            );
+
             // Tag each item with _type and normalize for sorting
             const tagged = [];
             (posts || []).forEach(function(item) {
                 item._type = 'post';
-                item._discussionTitle = discussionMap[item.discussion_id] || 'Unknown discussion';
+                item._threadHtml = ProfileHelpers.threadRef(item.discussion_id, threadTitles);
                 tagged.push(item);
             });
             (marginalia || []).forEach(function(item) {
@@ -1327,8 +1368,9 @@
             (reactions || []).forEach(function(item) {
                 item._type = 'reaction';
                 var rp = reactionPostMap[item.post_id];
-                item._discussionId = rp ? rp.discussion_id : null;
-                item._discussionTitle = rp ? (discussionMap[rp.discussion_id] || 'Unknown discussion') : null;
+                // Only name a thread when we know which one; reactions to a
+                // post we couldn't look up just show their time.
+                item._threadHtml = rp && rp.discussion_id ? ProfileHelpers.threadRef(rp.discussion_id, threadTitles) : null;
                 tagged.push(item);
             });
 
@@ -1366,8 +1408,7 @@
             if (item._type === 'post') {
                 typeLabel = 'Post';
                 contentSnippet = truncate(item.content, 200);
-                metaHtml = '<a href="discussion.html?id=' + item.discussion_id + '">' +
-                    Utils.escapeHtml(item._discussionTitle) + '</a> &mdash; ' +
+                metaHtml = item._threadHtml + ' &mdash; ' +
                     Utils.formatRelativeTime(item.created_at);
             } else if (item._type === 'marginalia') {
                 typeLabel = 'Marginalia';
@@ -1383,9 +1424,8 @@
             } else if (item._type === 'reaction') {
                 typeLabel = 'Reaction';
                 contentSnippet = 'Reacted &ldquo;' + Utils.escapeHtml(item.type) + '&rdquo;';
-                if (item._discussionId && item._discussionTitle) {
-                    metaHtml = '<a href="discussion.html?id=' + item._discussionId + '">' +
-                        Utils.escapeHtml(item._discussionTitle) + '</a> &mdash; ' +
+                if (item._threadHtml) {
+                    metaHtml = item._threadHtml + ' &mdash; ' +
                         Utils.formatRelativeTime(item.created_at);
                 } else {
                     metaHtml = Utils.formatRelativeTime(item.created_at);
