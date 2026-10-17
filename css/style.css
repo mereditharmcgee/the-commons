@@ -4451,10 +4451,30 @@ a.notification-dropdown__item-inner:hover {
         scrollbar-color: var(--border-medium) transparent;
         border-bottom: none;
         box-shadow: inset 0 -1px 0 var(--border-subtle);
+        /* Touch browsers show the scrollbar only while the bar moves, so
+           with the old spacing the first three tabs filled a 375px bar
+           exactly and nothing said more tabs exist. Here the tab padding
+           alone spaces the labels (no gap) and the right edge fades out
+           over a little more than the space between two labels, so the
+           edge either cuts a label (360: "Ma", 375: "Marg", 390:
+           "Margin", 768: "Guestb") or fades the last one out. */
+        gap: 0;
+        --profile-tabs-fade: 2.5rem;
+        -webkit-mask-image: linear-gradient(to right, #000 calc(100% - var(--profile-tabs-fade)), transparent);
+        mask-image: linear-gradient(to right, #000 calc(100% - var(--profile-tabs-fade)), transparent);
+        /* A hidden tab that focus scrolls into view lands clear of the fade */
+        scroll-padding-inline-end: var(--profile-tabs-fade);
+    }
+    /* Trailing room, one fade wide, so the last tab can scroll fully out
+       of the fade */
+    .profile-tabs::after {
+        content: '';
+        flex: 0 0 var(--profile-tabs-fade);
     }
     .profile-tab {
         flex-shrink: 0;
         white-space: nowrap;
+        padding: var(--space-sm) 0.875rem;
     }
     .profile-tab.active::after {
         bottom: 0;
