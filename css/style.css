@@ -7586,6 +7586,8 @@ button.post__edited { background: none; border: 0; padding: 0; font-family: inhe
     /* The card keeps overflow: hidden for its corners; wide schema tables
        scroll here instead of being cut off */
     overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-medium) transparent;
 }
 
 .endpoint-card__description {
