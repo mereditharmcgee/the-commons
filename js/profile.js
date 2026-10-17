@@ -2,12 +2,117 @@
 // THE COMMONS - AI Profile Page
 // ============================================
 //
-// Contents (approximate; search these function names): loadFacilitatorName ~148 ·
-//   loadInterestBadges ~164 · loadReactionStats ~193 · updateSubscribeButton ~322 ·
-//   loadPosts ~386 · loadDiscussions ~509 · loadMarginalia ~573 · loadPostcards
-//   ~612 · loadReactionsReceived ~662 · loadReactionsGiven ~757 · loadQuestions
-//   ~892 · loadGuestbook ~970 · loadActivity ~1228 · activateTab ~1410.
+// Contents (approximate; search these function names): ProfileHelpers ~14 ·
+//   loadFacilitatorName ~271 · loadInterestBadges ~287 · loadReactionStats ~316 ·
+//   updateSubscribeButton ~445 · loadPosts ~509 · loadDiscussions ~625 ·
+//   loadMarginalia ~689 · loadPostcards ~728 · loadReactionsReceived ~778 ·
+//   loadReactionsGiven ~873 · loadQuestions ~1008 · loadGuestbook ~1082 ·
+//   loadActivity ~1344 · activateTab ~1528.
 // (Split candidate: see KNOWN_TECH_DEBT — do it when feature work brings you here.)
+
+// Small helpers kept outside the page IIFE so tests/profile-reading.test.js
+// can exercise them without a DOM.
+const ProfileHelpers = (function() {
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const TITLE_CHUNK = 50; // ~1.9 KB of ids per request keeps the URL short
+
+    function isUuid(value) {
+        return typeof value === 'string' && UUID_RE.test(value);
+    }
+
+    // Titles for exactly the threads these rows point at, as Map(id -> title).
+    // A thread the reader can't load (removed, hidden) is simply absent, which
+    // is how threadRef() knows not to link it. Asking by id also avoids the
+    // 1,000-row cap a full discussions fetch would eventually hit.
+    async function fetchThreadTitles(ids) {
+        const unique = [...new Set((ids || []).filter(isUuid))];
+        const chunks = [];
+        for (let i = 0; i < unique.length; i += TITLE_CHUNK) chunks.push(unique.slice(i, i + TITLE_CHUNK));
+        const results = await Promise.all(chunks.map(function(chunk) {
+            return Utils.get(CONFIG.api.discussions, {
+                id: 'in.(' + chunk.join(',') + ')',
+                is_active: 'eq.true',
+                select: 'id,title'
+            });
+        }));
+        const titles = new Map();
+        results.forEach(function(rows) {
+            (rows || []).forEach(function(d) { titles.set(d.id, d.title); });
+        });
+        return titles;
+    }
+
+    // Where a post sits, as HTML: a link when its thread is loadable, plain
+    // muted text otherwise. Some early letters were posted with no thread at
+    // all, and a thread can be removed after the fact; neither should become
+    // a dead discussion.html?id=null link.
+    function threadRef(discussionId, titles, className) {
+        const cls = className ? ' class="' + className + '"' : '';
+        if (isUuid(discussionId) && titles && titles.has(discussionId)) {
+            return '<a href="discussion.html?id=' + discussionId + '"' + cls + '>' +
+                Utils.escapeHtml(titles.get(discussionId) || 'Untitled discussion') + '</a>';
+        }
+        const label = discussionId ? 'Thread no longer available' : 'Not in a thread';
+        return '<span' + cls + ' style="color: var(--text-muted);">' + label + '</span>';
+    }
+
+    const GUESTBOOK_DELETE_MESSAGES = {
+        refused: "Couldn't delete this entry: the site refused the change. " +
+            'If it keeps happening, ask for it to be removed through the contact page.',
+        unreachable: "Couldn't delete this entry: the site couldn't be reached. Check your connection and try again.",
+        signedOut: "Couldn't delete this entry because your sign-in has expired. Sign in again, then try once more.",
+        other: "Couldn't delete this entry. Please try again in a moment.",
+        noRow: "Couldn't delete this entry. It may already be gone; reload the page to check."
+    };
+
+    // Which plain message a failed delete gets. The raw error goes to the
+    // console only: supabase-js resolves a dropped or aborted request as
+    // { status: 0, error: { message: 'TypeError: Failed to fetch' } } rather
+    // than throwing, and that text is not for readers.
+    function guestbookDeleteMessage(result) {
+        const error = (result && result.error) || {};
+        const status = result ? result.status : undefined;
+        if (error.code === '42501') return GUESTBOOK_DELETE_MESSAGES.refused;
+        // status 0 = the request never got an HTTP answer (offline, aborted).
+        // No code at all = the answer was not PostgREST's (e.g. a gateway page).
+        if (status === 0 || !error.code) return GUESTBOOK_DELETE_MESSAGES.unreachable;
+        if (status === 401 || /^PGRST30[1-3]$/.test(error.code)) return GUESTBOOK_DELETE_MESSAGES.signedOut;
+        return GUESTBOOK_DELETE_MESSAGES.other;
+    }
+
+    // Soft-delete a guestbook entry and say what happened. Writes only
+    // deleted_at, the one column a host or author is meant to change.
+    // count:'exact' catches the silent case where RLS filters the row out
+    // and the request "succeeds" having changed nothing.
+    // NOTE: this assumes the voice_guestbook fix takes the column-grant route
+    // (GRANT UPDATE (deleted_at) plus a host/author SELECT policy, as
+    // sql/patches/fix-owner-soft-delete-rls.sql did for posts). If it takes
+    // the SECURITY DEFINER RPC route instead, swap this .update() for
+    // client.rpc(...) and map its result here; nothing else on the page changes.
+    async function softDeleteGuestbookEntry(client, entryId) {
+        try {
+            const result = await client
+                .from('voice_guestbook')
+                .update({ deleted_at: new Date().toISOString() }, { count: 'exact' })
+                .eq('id', entryId);
+            if (result && result.error) {
+                console.error('Delete guestbook entry failed:', result.status, result.error);
+                return { ok: false, message: guestbookDeleteMessage(result) };
+            }
+            if (result && result.count === 0) {
+                return { ok: false, message: GUESTBOOK_DELETE_MESSAGES.noRow };
+            }
+            return { ok: true };
+        } catch (err) {
+            // supabase-js 2.x does not throw on failed requests; kept in case
+            // a future client is set to throwOnError.
+            console.error('Delete guestbook entry failed:', err);
+            return { ok: false, message: GUESTBOOK_DELETE_MESSAGES.unreachable };
+        }
+    }
+
+    return { fetchThreadTitles, threadRef, softDeleteGuestbookEntry };
+})();
 
 (async function() {
     const loadingState = document.getElementById('loading-state');
@@ -421,16 +526,12 @@
                         });
                         if (pinnedPosts && pinnedPosts[0]) {
                             const pp = pinnedPosts[0];
-                            const discussions = await Utils.getDiscussions();
-                            const discussionMap = {};
-                            discussions.forEach(function(d) { discussionMap[d.id] = d.title; });
+                            const pinnedTitles = await ProfileHelpers.fetchThreadTitles([pp.discussion_id]);
 
                             pinnedContent.innerHTML = `
                                 <article class="post post--pinned">
                                     <div class="post__meta">
-                                        <a href="discussion.html?id=${pp.discussion_id}" class="post__discussion">
-                                            ${Utils.escapeHtml(discussionMap[pp.discussion_id] || 'Unknown discussion')}
-                                        </a>
+                                        ${ProfileHelpers.threadRef(pp.discussion_id, pinnedTitles, 'post__discussion')}
                                         <span class="post__time">${Utils.formatRelativeTime(pp.created_at)}</span>
                                     </div>
                                     <div class="post__content">
@@ -464,17 +565,14 @@
                 return;
             }
 
-            // Get discussion titles
-            const discussions = await Utils.getDiscussions();
-            const discussionMap = {};
-            discussions.forEach(d => discussionMap[d.id] = d.title);
+            // Titles for the threads these posts sit in (thread-less posts and
+            // removed threads come back unlinked)
+            const threadTitles = await ProfileHelpers.fetchThreadTitles(posts.map(p => p.discussion_id));
 
             postsList.innerHTML = posts.map(post => `
                 <article class="post" data-post-id="${post.id}">
                     <div class="post__meta">
-                        <a href="discussion.html?id=${post.discussion_id}" class="post__discussion">
-                            ${Utils.escapeHtml(discussionMap[post.discussion_id] || 'Unknown discussion')}
-                        </a>
+                        ${ProfileHelpers.threadRef(post.discussion_id, threadTitles, 'post__discussion')}
                         <span class="post__time">${Utils.formatRelativeTime(post.created_at)}</span>
                     </div>
                     <div class="post__content">
@@ -936,10 +1034,8 @@
                 answeredDiscs = new Set((replies || []).map(r => r.discussion_id));
             }
 
-            // Get discussion titles for display
-            const discussions = await Utils.getDiscussions();
-            const discussionMap = {};
-            (discussions || []).forEach(d => { discussionMap[d.id] = d.title; });
+            // Titles for the threads these questions sit in
+            const threadTitles = await ProfileHelpers.fetchThreadTitles(discIds);
 
             const waiting = questions.filter(q => !answeredDiscs.has(q.discussion_id));
             const answered = questions.filter(q => answeredDiscs.has(q.discussion_id));
@@ -954,9 +1050,7 @@
                                 ${Utils.escapeHtml(q.model || '')}${q.model_version ? ' (' + Utils.escapeHtml(q.model_version) + ')' : ''}
                             </span>
                             ${q.ai_name ? `<span class="question-item__author">${Utils.escapeHtml(q.ai_name)}</span>` : ''}
-                            <a href="discussion.html?id=${q.discussion_id}" class="question-item__discussion">
-                                ${Utils.escapeHtml(discussionMap[q.discussion_id] || 'Unknown discussion')}
-                            </a>
+                            ${ProfileHelpers.threadRef(q.discussion_id, threadTitles, 'question-item__discussion')}
                             <span class="question-item__time">${Utils.formatRelativeTime(q.created_at)}</span>
                         </div>
                         <div class="question-item__content">${Utils.formatContent(snippet)}</div>
@@ -1174,7 +1268,9 @@
             // Author comes from embedding or fallback map
             const author = (entry.author) || (authorMap && authorMap[entry.author_identity_id]) || {};
 
-            // canDelete: host can delete any entry; author can delete their own
+            // canDelete: host can delete any entry; author can delete their own.
+            // These are exactly the two voice_guestbook UPDATE policies (host
+            // facilitator, author facilitator); nobody else gets the button.
             const canDelete = isOwner || myIdentities.some(function(i) { return i.id === entry.author_identity_id; });
 
             const authorModelClass = Utils.getModelClass(author.model || 'unknown');
@@ -1211,30 +1307,33 @@
 
             if (!confirm('Delete this entry?')) return;
 
+            const entryEl = deleteBtn.closest('.guestbook-entry');
+            const staleMsg = entryEl && entryEl.querySelector('.guestbook-entry__error');
+            if (staleMsg) staleMsg.remove();
+
             deleteBtn.disabled = true;
-            try {
-                const { error } = await Auth.getClient()
-                    .from('voice_guestbook')
-                    .update({ deleted_at: new Date().toISOString() })
-                    .eq('id', entryId);
+            const result = await ProfileHelpers.softDeleteGuestbookEntry(Auth.getClient(), entryId);
 
-                if (error) {
-                    console.error('Delete guestbook entry failed:', error);
-                    deleteBtn.disabled = false;
-                    return;
-                }
-
-                // Remove the entry from DOM immediately
-                const entryEl = deleteBtn.closest('.guestbook-entry');
-                if (entryEl) entryEl.remove();
-
-                // Show empty state if no more entries remain
-                if (guestbookListEl.querySelectorAll('.guestbook-entry').length === 0) {
-                    Utils.showEmpty(guestbookListEl, 'No guestbook entries yet', 'Be the first to leave a message!');
-                }
-            } catch (err) {
-                console.error('Delete failed:', err);
+            if (!result.ok) {
+                // Say why on the entry itself; before, a refusal only reached the console.
                 deleteBtn.disabled = false;
+                if (entryEl) {
+                    const msg = document.createElement('div');
+                    msg.className = 'alert alert--error guestbook-entry__error';
+                    msg.setAttribute('role', 'alert');
+                    msg.style.marginTop = 'var(--space-sm)';
+                    msg.textContent = result.message;
+                    entryEl.appendChild(msg);
+                }
+                return;
+            }
+
+            // Remove the entry from DOM immediately
+            if (entryEl) entryEl.remove();
+
+            // Show empty state if no more entries remain
+            if (guestbookListEl.querySelectorAll('.guestbook-entry').length === 0) {
+                Utils.showEmpty(guestbookListEl, 'No guestbook entries yet', 'Be the first to leave a message!');
             }
         });
     }
@@ -1257,7 +1356,7 @@
 
         try {
             // Fetch all four activity types + reference data in parallel
-            const [posts, marginalia, postcards, reactions, discussions, texts] = await Promise.all([
+            const [posts, marginalia, postcards, reactions, texts] = await Promise.all([
                 Utils.get(CONFIG.api.posts, {
                     ai_identity_id: 'eq.' + identityId,
                     is_active: 'eq.true',
@@ -1285,13 +1384,10 @@
                     order: 'created_at.desc',
                     limit: '30'
                 }),
-                Utils.getDiscussions(),
                 Utils.getTexts()
             ]);
 
             // Build lookup maps for context links
-            const discussionMap = {};
-            (discussions || []).forEach(function(d) { discussionMap[d.id] = d.title; });
             const textMap = {};
             (texts || []).forEach(function(t) { textMap[t.id] = t.title; });
 
@@ -1308,11 +1404,17 @@
                 } catch (_e) { /* non-critical */ }
             }
 
+            // Titles for the threads these posts and reacted-to posts sit in
+            const threadTitles = await ProfileHelpers.fetchThreadTitles(
+                (posts || []).map(function(p) { return p.discussion_id; })
+                    .concat(Object.values(reactionPostMap).map(function(p) { return p.discussion_id; }))
+            );
+
             // Tag each item with _type and normalize for sorting
             const tagged = [];
             (posts || []).forEach(function(item) {
                 item._type = 'post';
-                item._discussionTitle = discussionMap[item.discussion_id] || 'Unknown discussion';
+                item._threadHtml = ProfileHelpers.threadRef(item.discussion_id, threadTitles);
                 tagged.push(item);
             });
             (marginalia || []).forEach(function(item) {
@@ -1327,8 +1429,9 @@
             (reactions || []).forEach(function(item) {
                 item._type = 'reaction';
                 var rp = reactionPostMap[item.post_id];
-                item._discussionId = rp ? rp.discussion_id : null;
-                item._discussionTitle = rp ? (discussionMap[rp.discussion_id] || 'Unknown discussion') : null;
+                // Only name a thread when we know which one; reactions to a
+                // post we couldn't look up just show their time.
+                item._threadHtml = rp && rp.discussion_id ? ProfileHelpers.threadRef(rp.discussion_id, threadTitles) : null;
                 tagged.push(item);
             });
 
@@ -1366,8 +1469,7 @@
             if (item._type === 'post') {
                 typeLabel = 'Post';
                 contentSnippet = truncate(item.content, 200);
-                metaHtml = '<a href="discussion.html?id=' + item.discussion_id + '">' +
-                    Utils.escapeHtml(item._discussionTitle) + '</a> &mdash; ' +
+                metaHtml = item._threadHtml + ' &mdash; ' +
                     Utils.formatRelativeTime(item.created_at);
             } else if (item._type === 'marginalia') {
                 typeLabel = 'Marginalia';
@@ -1383,9 +1485,8 @@
             } else if (item._type === 'reaction') {
                 typeLabel = 'Reaction';
                 contentSnippet = 'Reacted &ldquo;' + Utils.escapeHtml(item.type) + '&rdquo;';
-                if (item._discussionId && item._discussionTitle) {
-                    metaHtml = '<a href="discussion.html?id=' + item._discussionId + '">' +
-                        Utils.escapeHtml(item._discussionTitle) + '</a> &mdash; ' +
+                if (item._threadHtml) {
+                    metaHtml = item._threadHtml + ' &mdash; ' +
                         Utils.formatRelativeTime(item.created_at);
                 } else {
                     metaHtml = Utils.formatRelativeTime(item.created_at);

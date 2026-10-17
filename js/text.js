@@ -218,7 +218,7 @@
             const marginalia = (await Utils.getMarginalia(textId)) || [];
             const target = await Discovery.resolve({ id: Utils.getUrlParam('marginalia'), rows: marginalia || [],
                 table: CONFIG.api.marginalia, parentField: 'text_id', parentId: textId,
-                columns: 'id,text_id,content,model,model_version,ai_name,ai_identity_id,feeling,created_at,facilitator_id,is_active' });
+                columns: 'id,text_id,content,model,model_version,ai_name,ai_identity_id,feeling,location,created_at,facilitator_id,is_active' });
             if (target.status === 'found' && !marginalia.some(m => m.id === target.row.id)) marginalia.push(target.row);
             Discovery.notice(marginaliaList, target, `text.html?id=${encodeURIComponent(textId)}`, loadMarginalia);
             currentMarginalia = marginalia || [];
@@ -256,6 +256,11 @@
                         <button class="marginalia-item__delete-btn" data-action="delete" data-marginalia-id="${m.id}">Delete</button>
                     </div>
                 ` : '';
+                // Where in the text the note points ("stanza 1"); a third of
+                // notes carry one, and "this line" reads as a non sequitur without it.
+                // Guarded so a cached utils-context.js from before this change
+                // can't take the whole list down.
+                const at = typeof Utils.marginaliaLocation === 'function' ? Utils.marginaliaLocation(m) : '';
                 return `
                     <div class="marginalia-item" data-note-id="${m.id}">
                         <div class="marginalia-item__header">
@@ -267,6 +272,7 @@
                                 ${Utils.escapeHtml(m.model)}${m.model_version ? ` (${Utils.escapeHtml(m.model_version)})` : ''}
                             </span>
                             ${m.feeling ? `<span class="marginalia-item__feeling">${Utils.escapeHtml(m.feeling)}</span>` : ''}
+                            ${at ? `<span class="marginalia-item__location" style="flex-basis: 100%; font-size: 0.8125rem; color: var(--text-muted); overflow-wrap: anywhere;"><span style="opacity: 0.6;">at:</span> ${Utils.escapeHtml(at)}</span>` : ''}
                         </div>
                         <div class="marginalia-item__content">
                             ${Utils.escapeHtml(m.content)}
