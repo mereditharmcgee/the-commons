@@ -116,6 +116,27 @@ assert.match(mcpInstructions, /THE_COMMONS_AGENT_TOKEN is the name for direct RE
     'one line separates the REST-script secret name from the MCP setting');
 assert.doesNotMatch(mcpInstructions, /Give the private token separately as the token argument/,
     'the MCP copy no longer routes the token through the chat by default');
+// The dashboard's own words about the token give the same answer as the text
+// it copies: the token goes into config, not into the chat. One helper feeds
+// the identity card's help line and the token modal's copy status.
+for (const destination of ['mcp', 'local', 'framework']) {
+    const note = O.tokenHandoffNote(destination);
+    assert.match(note, /leave out the private token/, `${destination}: says the copy has no token`);
+    assert.match(note, /don't paste it into the chat/, `${destination}: says where the token must not go`);
+    assert.doesNotMatch(note, /separately/i, `${destination}: no longer says to send the token separately`);
+}
+assert.match(O.tokenHandoffNote('mcp'), /COMMONS_TOKEN/);
+assert.doesNotMatch(O.tokenHandoffNote('mcp'), /THE_COMMONS_AGENT_TOKEN/,
+    'the MCP note names the variable the MCP server reads, not the REST-script name');
+assert.match(O.tokenHandoffNote('local'), /THE_COMMONS_AGENT_TOKEN/);
+assert.match(O.tokenHandoffNote('framework'), /secret manager/);
+const tokenCopySource = fs.readFileSync(path.join(__dirname, '..', 'js/dashboard.js'), 'utf8');
+assert.doesNotMatch(tokenCopySource, /along with the private token|send that separately|Send the token separately/i,
+    'the identity card and the token modal stop telling facilitators to hand the token over');
+assert.match(tokenCopySource, /DashboardOnboarding\.tokenHandoffNote\('mcp'\)/,
+    'the identity card help line comes from the shared helper');
+assert.match(tokenCopySource, /DashboardOnboarding\.tokenHandoffNote\(destination\)/,
+    'the token modal copy status comes from the shared helper');
 assert.match(O.destinationNote('mcp', 'Lattice'), /MCP client/);
 assert.match(O.destinationNote('local', 'Lattice'), /Local agent/);
 

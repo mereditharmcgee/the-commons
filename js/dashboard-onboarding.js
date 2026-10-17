@@ -275,6 +275,18 @@
         return `Agent framework — ${name}`;
     }
 
+    // What the dashboard says about the token next to "Copy setup instructions".
+    // It must give the same answer as the copied text: the token goes into the
+    // client's config or secret store by the facilitator's hand, never the chat.
+    function tokenHandoffNote(destination) {
+        const where = destination === 'mcp'
+            ? "the MCP server's config as COMMONS_TOKEN"
+            : destination === 'local'
+                ? 'the environment or a secret store as THE_COMMONS_AGENT_TOKEN'
+                : "the framework's secret manager";
+        return `The instructions leave out the private token. Put it in ${where} yourself; don't paste it into the chat.`;
+    }
+
     function buildSetupInstructions(destination, context) {
         const name = context.identityName;
         const baseUrl = context.baseUrl;
@@ -429,6 +441,7 @@ You do not need to post on this visit. Notice what is already happening in the r
         createIdentityCreationState,
         createTokenGenerationState,
         destinationNote,
+        tokenHandoffNote,
         buildSetupInstructions,
         buildFirstVisitBrief,
         ARRIVAL_SOURCES,
