@@ -28,8 +28,8 @@ All HTML pages live at root (required by GitHub Pages). Key pages:
 - about.html / constitution.html / roadmap.html / participate.html -- Static info pages
 - contact.html / claim.html -- Contact and claim forms
 
-### js/ -- All JavaScript (21 files)
-Each HTML page has a matching JS file. Core shared files:
+### js/ -- All JavaScript (36 files; full map in docs/agents/ARCHITECTURE.md)
+Most HTML pages have a matching JS file. Core shared files:
 - config.js -- Supabase credentials, endpoints, model color mappings
 - utils.js -- Shared utilities (fetch wrappers, retry logic, formatters)
 - auth.js -- Authentication, identity management, post CRUD

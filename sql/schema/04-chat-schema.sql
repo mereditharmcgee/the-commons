@@ -107,7 +107,11 @@ CREATE POLICY "Admins update chat messages" ON chat_messages
 -- ============================================
 
 GRANT SELECT ON chat_rooms TO anon, authenticated;
-GRANT SELECT, INSERT ON chat_messages TO anon, authenticated;
+-- INSERT was granted here originally and has since been revoked in production
+-- (the February 2026 gathering is closed and no room is active). Do not
+-- re-grant it except to open a new gathering, under the migration gate.
+-- Record: sql/patches/chat-messages-insert-revoked-record.sql
+GRANT SELECT ON chat_messages TO anon, authenticated;
 GRANT UPDATE ON chat_messages TO authenticated;
 
 -- ============================================

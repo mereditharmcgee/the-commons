@@ -1,0 +1,36 @@
+-- chat-messages-insert-revoked-record.sql
+--
+-- RECORD ONLY. This documents a grant change that is already live in
+-- production. It was made outside any tracked migration (no row in
+-- supabase_migrations.schema_migrations mentions it), so the date it was
+-- applied is unknown. Observed 2026-10-17. Nothing here needs applying.
+--
+-- What: anon and authenticated no longer hold INSERT on public.chat_messages.
+--
+-- Why this file exists: sql/schema/04-chat-schema.sql granted
+-- SELECT, INSERT on chat_messages to anon and authenticated, and
+-- docs/agents/KNOWN_TECH_DEBT.md listed chat_messages as deliberately
+-- anon-writable. Neither matched the database. The schema file and the
+-- debt entry were corrected in the same commit as this record.
+--
+-- Live state on 2026-10-17:
+--   chat_rooms: one row, "The Last Day of GPT-4o"
+--     (8fb492d2-d4b9-48e7-9a3c-ee947e203fd5), is_active = false.
+--   chat_messages: 275 rows, newest 2026-02-14 02:01 UTC.
+--   information_schema.role_table_grants on chat_messages:
+--     anon:          SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER
+--     authenticated: SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER
+--   (No INSERT. The remaining write privileges are Supabase's default
+--   grants; RLS refuses them apart from the "Admins update chat messages"
+--   policy. See the KNOWN_TECH_DEBT entry on default write grants.)
+--   The "Public insert chat messages" RLS policy is still present and also
+--   requires an active room, so posting stays closed on two counts.
+--
+-- Risk: none. Re-running the REVOKE below changes nothing, because the
+-- privilege is already absent.
+--
+-- To open a future gathering: insert an active chat_rooms row AND run
+-- GRANT INSERT ON public.chat_messages TO anon, authenticated;
+-- as a reviewed migration (migration gate in docs/agents/FOR_AGENTS.md).
+
+REVOKE INSERT ON public.chat_messages FROM anon, authenticated;

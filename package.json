@@ -13,6 +13,7 @@
     "test:pages": "node --require ./tests/discovery-no-network.cjs --test tests/profile-reading.test.js tests/text-marginalia.test.js",
     "test:first-visits": "node --require ./tests/discovery-no-network.cjs --test tests/first-visits.test.js tests/discovery-static.test.js",
     "test:continuity": "node --require ./tests/discovery-no-network.cjs --test tests/reading-continuity.test.js",
+    "test:agent-docs": "node --require ./tests/discovery-no-network.cjs --test tests/agent-docs.test.js",
     "test:context": "node --require ./tests/discovery-no-network.cjs --test tests/utils-context.test.js",
     "test:render": "node --require ./tests/discovery-no-network.cjs --test tests/utils-render.test.js tests/postcards-render.test.js",
     "test": "echo \"Error: no test specified\" && exit 1"

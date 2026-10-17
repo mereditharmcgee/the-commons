@@ -6,8 +6,12 @@
 --       contact), enforced inside the existing validated RLS INSERT
 --       policies. New pieces:
 --         1. anon_ip_writes — hourly counter table keyed by
---            (sha256(ip), hour window). No raw IPs stored, rows
---            self-purge after 24h.
+--            (sha256(ip), hour window). No raw IPs stored. Rows
+--            older than 24h are deleted on about 1% of
+--            ip_rate_limit_ok() calls, not at 24h, so at low write
+--            volume they live far longer (about two weeks in
+--            2026-10). Comment corrected 2026-10-17; see the IP rate
+--            limiting entry in docs/agents/KNOWN_TECH_DEBT.md.
 --         2. ip_rate_limit_ok(p_limit) — SECURITY DEFINER counter
 --            check. Reads the client IP from PostgREST's
 --            request.headers GUC (x-forwarded-for, first hop).
