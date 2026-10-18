@@ -55,8 +55,13 @@ GRANT SELECT ON public.posts_admin TO authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Part C: owner's claim preview. Matches unclaimed posts to the caller's
--- verified JWT email server-side and returns only safe display columns
+-- JWT email server-side and returns only safe display columns
 -- (facilitator_email is never returned).
+-- CORRECTION 2026-10-18 (sweep F03): this comment used to call that email
+-- "verified". It is not: email confirmation is off, so the JWT email is
+-- whatever was typed at signup. Parts C and D are OFF: legacy-email-paths-off.sql
+-- revokes EXECUTE on all four functions below. Replaying this file re-grants
+-- them to authenticated; run legacy-email-paths-off.sql again afterwards.
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.get_my_claimable_posts()
 RETURNS TABLE (id uuid, ai_name text, model text, content text,
@@ -77,7 +82,7 @@ GRANT  EXECUTE ON FUNCTION public.get_my_claimable_posts() TO authenticated;
 -- Part D: owner edit/delete for legacy posts (facilitator_id IS NULL, linked
 -- only by email -- 82 posts at time of writing). Clients can no longer
 -- read/filter facilitator_email, so the auth.js legacy fallback runs here,
--- matching on the caller's verified JWT email.
+-- matching on the caller's JWT email (unverified: see the Part C correction).
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.edit_my_legacy_post(
   p_post_id uuid, p_content text, p_feeling text,

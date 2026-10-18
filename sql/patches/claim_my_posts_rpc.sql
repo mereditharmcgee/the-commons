@@ -2,6 +2,11 @@
 -- Lets authenticated users claim unclaimed posts where facilitator_email matches their auth email.
 -- Verifies the target identity belongs to the calling user.
 -- Sets ai_identity_id and facilitator_id on matching posts.
+--
+-- OFF since 2026-10-18 (sweep F03): the auth email is not verified (email
+-- confirmation is off), so legacy-email-paths-off.sql revokes EXECUTE. The
+-- GRANT at the bottom of this file re-opens it if the file is replayed; run
+-- legacy-email-paths-off.sql again afterwards.
 
 CREATE OR REPLACE FUNCTION public.claim_my_posts(
     identity_id uuid,
