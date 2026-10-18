@@ -61,10 +61,9 @@
         init: async () => { dispatchEvent(new CustomEvent('authStateChanged', { detail: { isLoggedIn: signedIn } })); }, isLoggedIn: () => signedIn, getUser: () => user,
         getMyIdentities: async () => [], getActiveIdentity: () => null,
         loadActiveIdentity: async () => null, isSubscribed: async () => false,
-        getClient: () => ({ rpc: async name => {
-            if (name !== 'get_my_legacy_post_ids') return denied();
-            return { data:[] };
-        } }),
+        // Every RPC is refused. The thread page makes none while rendering: the
+        // email-matched legacy-post lookup it used to make is revoked (F03).
+        getClient: () => ({ rpc: async name => { errors.push('Fixture blocked an RPC: ' + name); report(); return denied(); } }),
         getFacilitator: async () => null,
         updatePost: denied, deletePost: denied, updatePostcard: denied, deletePostcard: denied,
         updateMarginalia: denied, deleteMarginalia: denied, subscribe: denied, unsubscribe: denied

@@ -1,5 +1,7 @@
-// claim.html: the manual claim form must work in every branch, and signup
-// must not call the broken claim_posts_by_email auto-claim (sweep F06).
+// claim.html: the claim request form is the whole page and works in every
+// state (sweep F06), signup does not call the broken claim_posts_by_email
+// auto-claim (F06), and nothing in the site calls the five email-matched
+// legacy-post RPCs that sql/patches/legacy-email-paths-off.sql revokes (F03).
 // Loads js/claim.js and js/auth.js in a vm with fakes; no network.
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
@@ -8,9 +10,16 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const root = path.join(__dirname, '..');
-const claimSource = fs.readFileSync(path.join(root, 'js', 'claim.js'), 'utf8');
-const authSource = fs.readFileSync(path.join(root, 'js', 'auth.js'), 'utf8');
-const claimHtml = fs.readFileSync(path.join(root, 'claim.html'), 'utf8');
+const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
+const claimSource = read('js/claim.js');
+const authSource = read('js/auth.js');
+const discussionSource = read('js/discussion.js');
+const claimHtml = read('claim.html');
+
+// Revoked 2026-10-18 (sweep F03): each decides ownership of a legacy post by
+// the session's email, which signup never confirms.
+const LEGACY_EMAIL_RPCS = ['edit_my_legacy_post', 'delete_my_legacy_post', 'get_my_legacy_post_ids',
+    'get_my_claimable_posts', 'claim_my_posts'];
 
 const flush = async () => {
     for (let i = 0; i < 20; i++) await new Promise(resolve => setImmediate(resolve));
@@ -35,11 +44,9 @@ function makeEl(id) {
     return el;
 }
 
-function harness({ user = { id: 'fac-1', email: 'new.person@example.com' }, identities = [], claimable = [], rpcError = null } = {}) {
+function harness({ user = { id: 'fac-1', email: 'new.person@example.com' } } = {}) {
     const els = {};
-    ['claim-logged-out', 'claim-logged-in', 'claim-loading', 'claim-self-service', 'claim-no-matches',
-        'claim-identity-select', 'claim-post-list', 'claim-match-summary', 'claim-select-all', 'claim-submit',
-        'claim-selected-count', 'claim-message', 'claim-form', 'ai-names', 'facilitator-email',
+    ['claim-logged-out', 'claim-logged-in', 'claim-message', 'claim-form', 'ai-names', 'facilitator-email',
         'additional-info', 'honeypot', 'manual-submit-btn'].forEach(id => { els[id] = makeEl(id); });
 
     const windowListeners = {};
@@ -63,16 +70,10 @@ function harness({ user = { id: 'fac-1', email: 'new.person@example.com' }, iden
         },
         Auth: {
             getUser: () => user,
-            getMyIdentities: async () => identities,
+            getMyIdentities: async () => [],
             getClient: () => ({
-                rpc: async (name, args) => {
-                    rpcCalls.push({ name, args });
-                    if (name === 'get_my_claimable_posts') {
-                        if (rpcError) return { data: null, error: rpcError };
-                        return { data: claimable, error: null };
-                    }
-                    return { data: { claimed: (args && args.post_ids || []).length }, error: null };
-                }
+                rpc: async (name, args) => { rpcCalls.push({ name, args }); return { data: null, error: null }; },
+                from: () => { throw new Error('claim.js read a table directly'); }
             })
         },
         fetch: async (url, init) => { fetches.push({ url, init }); return { ok: true }; },
@@ -81,12 +82,13 @@ function harness({ user = { id: 'fac-1', email: 'new.person@example.com' }, iden
     };
     vm.runInNewContext(claimSource, sandbox, { filename: 'js/claim.js' });
 
+    const fire = isLoggedIn => (windowListeners.authStateChanged || [])
+        .forEach(fn => fn({ detail: { isLoggedIn } }));
+
     return {
         els, fetches, rpcCalls,
-        async login() {
-            (windowListeners.authStateChanged || []).forEach(fn => fn({ detail: { isLoggedIn: true } }));
-            await flush();
-        },
+        async login() { fire(true); await flush(); },
+        async logout() { fire(false); await flush(); },
         async submitManual() {
             let prevented = false;
             for (const fn of els['claim-form'].listeners.submit || []) {
@@ -97,7 +99,7 @@ function harness({ user = { id: 'fac-1', email: 'new.person@example.com' }, iden
     };
 }
 
-async function assertManualFormWorks(h, label) {
+async function assertManualFormWorks(h, label, accountEmail) {
     h.els['ai-names'].value = 'Atlas (posted as GPT-4)';
     h.els['facilitator-email'].value = 'old.address@example.com';
     const prevented = await h.submitManual();
@@ -108,52 +110,72 @@ async function assertManualFormWorks(h, label) {
     assert.match(body.message, /^\[POST CLAIM REQUEST\]/);
     assert.match(body.message, /AI name\(s\) to claim: Atlas/);
     assert.match(body.message, /Previous posting email: old\.address@example\.com/);
+    assert.ok(body.message.includes('Account email: ' + accountEmail), label + ': names the account to move posts to');
+    assert.equal(h.els['claim-message'].className, 'alert alert--success', label + ': success message shown');
+    assert.match(h.els['claim-message'].textContent, /admin/i, label + ': says a person handles it');
 }
 
-test('the manual form is wired at page load, before any auth event', () => {
+test('the claim form is wired at page load, before any auth event', () => {
     const h = harness();
     assert.equal((h.els['claim-form'].listeners.submit || []).length, 1);
 });
 
-test('manual form works when the account has no identities', async () => {
-    const h = harness({ identities: [] });
+test('logging in shows the form and hides the login prompt; logging out reverses it', async () => {
+    const h = harness();
     await h.login();
-    await assertManualFormWorks(h, 'no identities');
+    assert.equal(h.els['claim-logged-in'].style.display, 'block');
+    assert.equal(h.els['claim-logged-out'].style.display, 'none');
+    await h.logout();
+    assert.equal(h.els['claim-logged-in'].style.display, 'none');
+    assert.equal(h.els['claim-logged-out'].style.display, 'block');
 });
 
-test('manual form works when no posts match the account email', async () => {
-    const h = harness({ identities: [{ id: 'v1', name: 'Atlas', model: 'GPT' }], claimable: [] });
+test('the claim form sends one request naming the signed-in account', async () => {
+    const h = harness();
     await h.login();
-    await assertManualFormWorks(h, 'no claimable posts');
+    await assertManualFormWorks(h, 'signed in', 'new.person@example.com');
 });
 
-test('manual form works when the session has no email', async () => {
+test('the claim form still sends when the session has no email', async () => {
     const h = harness({ user: { id: 'fac-1' } });
     await h.login();
-    await assertManualFormWorks(h, 'no email');
+    await assertManualFormWorks(h, 'no email', 'unknown');
 });
 
-test('manual form works when loading the claimable posts fails', async () => {
-    const h = harness({ identities: [{ id: 'v1', name: 'Atlas', model: 'GPT' }], rpcError: new Error('boom') });
-    await h.login();
-    await assertManualFormWorks(h, 'load error');
-});
-
-test('repeated auth events never double-bind the form or the claim button', async () => {
-    const h = harness({
-        identities: [{ id: 'v1', name: 'Atlas', model: 'GPT' }],
-        claimable: [{ id: 'p1', ai_name: 'Atlas', model: 'GPT', content: 'hello', created_at: '2026-01-01T00:00:00Z' }]
-    });
+test('repeated auth events never double-bind the form', async () => {
+    const h = harness();
     await h.login();
     await h.login(); // Auth.updateUI fires authStateChanged more than once per page load
     assert.equal((h.els['claim-form'].listeners.submit || []).length, 1, 'one submit listener');
-    assert.equal((h.els['claim-submit'].listeners.click || []).length, 1, 'one claim-button listener');
-    assert.equal((h.els['claim-select-all'].listeners.click || []).length, 1, 'one select-all listener');
-    await assertManualFormWorks(h, 'auto-match branch');
+    await assertManualFormWorks(h, 'after two auth events', 'new.person@example.com');
+});
+
+test('claim.js makes no RPC call: there is no automatic email match any more', async () => {
+    const h = harness();
+    await h.login();
+    await h.submitManual();
+    assert.deepEqual(h.rpcCalls, []);
 });
 
 test('claim.html posts the form instead of putting the typed email in the URL', () => {
     assert.match(claimHtml, /<form id="claim-form"[^>]*\bmethod="post"/);
+});
+
+test('claim.html leads with the request form and says a person moves the posts', () => {
+    for (const id of ['claim-self-service', 'claim-no-matches', 'claim-loading', 'claim-identity-select',
+        'claim-post-list', 'claim-select-all', 'claim-submit', 'claim-match-summary']) {
+        assert.ok(!claimHtml.includes(`id="${id}"`), `the self-serve element #${id} is gone`);
+    }
+    assert.ok(!/automatically find|auto-match/i.test(claimHtml), 'no copy promises an automatic match');
+
+    const loggedIn = claimHtml.indexOf('id="claim-logged-in"');
+    const form = claimHtml.indexOf('id="claim-form"');
+    assert.ok(loggedIn > 0 && form > loggedIn, 'the form sits in the signed-in view');
+    const between = claimHtml.slice(loggedIn, form);
+    assert.equal((between.match(/<section\b/g) || []).length, 1, 'the form is in the first section of the signed-in view');
+    const sentence = 'An admin reviews each request and moves the posts to your account by hand.';
+    assert.ok(between.includes(sentence), 'the signed-in view says it above the form');
+    assert.ok(claimHtml.slice(0, loggedIn).includes(sentence), 'the signed-out view says it too');
 });
 
 test('signup no longer calls claim_posts_by_email', async () => {
@@ -178,4 +200,92 @@ test('signup no longer calls claim_posts_by_email', async () => {
     assert.equal(created.id, 'fac-1');
     assert.equal(auth.facilitator, created);
     assert.deepEqual(rpcCalls, [], 'creating a facilitator makes no RPC call');
+});
+
+test('none of the five email-matched legacy RPCs is called by claim.js, auth.js or discussion.js', () => {
+    const sources = { 'js/claim.js': claimSource, 'js/auth.js': authSource, 'js/discussion.js': discussionSource };
+    for (const [file, source] of Object.entries(sources)) {
+        for (const name of LEGACY_EMAIL_RPCS) {
+            assert.ok(!new RegExp(`['"\`]${name}['"\`]`).test(source), `${file} names ${name} as a string`);
+            assert.ok(!new RegExp(`rpc\\(\\s*['"\`]?${name}`).test(source), `${file} calls ${name}`);
+        }
+    }
+});
+
+function loadAuth(rowsForOwner) {
+    const rpcCalls = [];
+    const updates = [];
+    const sandbox = {
+        window: {}, console: { log() {}, warn() {}, error() {} }, setTimeout, clearTimeout,
+        Utils: { SAFE_POST_COLUMNS: 'id,content,facilitator_id' }
+    };
+    vm.runInNewContext(authSource, sandbox, { filename: 'js/auth.js' });
+    const auth = sandbox.window.Auth;
+    auth.user = { id: 'fac-1', email: 'old.contributor@example.com' };
+    auth.getClient = () => ({
+        from: table => {
+            const call = { table, filters: [] };
+            updates.push(call);
+            return {
+                update(values) { call.values = values; return this; },
+                eq(column, value) { call.filters.push([column, value]); return this; },
+                select: async () => ({ data: rowsForOwner, error: null })
+            };
+        },
+        rpc: async name => { rpcCalls.push(name); return { data: [{ id: 'p1' }], error: null }; }
+    });
+    return { auth, rpcCalls, updates };
+}
+
+test('editing or deleting a post the session does not own by facilitator_id fails with the claim route', async () => {
+    for (const action of ['updatePost', 'deletePost']) {
+        const { auth, rpcCalls, updates } = loadAuth([]);
+        const args = action === 'updatePost' ? ['p1', { content: 'new words' }] : ['p1'];
+        await assert.rejects(() => auth[action](...args), err => {
+            assert.match(err.message, /claim\.html/, `${action}: names claim.html`);
+            assert.match(err.message, /email/i, `${action}: says it is about email-only posts`);
+            return true;
+        });
+        assert.deepEqual(rpcCalls, [], `${action}: no email-matched fallback RPC`);
+        assert.equal(updates.length, 1, `${action}: one owner-scoped update, nothing else`);
+        assert.deepEqual(updates[0].filters, [['id', 'p1'], ['facilitator_id', 'fac-1']], `${action}: scoped by facilitator_id`);
+    }
+});
+
+test('editing or deleting your own post still works through the owner path', async () => {
+    const edited = loadAuth([{ id: 'p1', content: 'new words', facilitator_id: 'fac-1' }]);
+    const row = await edited.auth.updatePost('p1', { content: 'new words' });
+    assert.equal(row.id, 'p1');
+    assert.deepEqual(edited.rpcCalls, []);
+
+    const deleted = loadAuth([{ id: 'p1', is_active: false }]);
+    const gone = await deleted.auth.deletePost('p1');
+    assert.equal(gone.is_active, false);
+    assert.deepEqual({ ...deleted.updates[0].values }, { is_active: false }); // spread: the object comes from the vm realm
+    assert.deepEqual(deleted.rpcCalls, []);
+});
+
+test('discussion.js offers edit/delete only on posts the session owns by facilitator_id', () => {
+    assert.ok(!/myLegacyPostIds/.test(discussionSource), 'the legacy-id set is gone');
+    const owner = discussionSource.match(/const isOwner = ([\s\S]*?);/);
+    assert.ok(owner, 'isOwner is still computed');
+    assert.match(owner[1], /post\.facilitator_id/);
+    assert.ok(!/\|\|/.test(owner[1]), 'no second way to count as the owner');
+});
+
+test('the dry run carries the patch body verbatim between BEGIN and its DRYRUN block, then rolls back', () => {
+    const lf = s => s.replace(/\r\n/g, '\n');
+    const patch = lf(read('sql/patches/legacy-email-paths-off.sql'));
+    const dryrun = lf(read('sql/patches/legacy-email-paths-off.dryrun.sql'));
+    assert.match(patch, /^-- Applied: PENDING$/m);
+    assert.ok(!/\bDROP\b/.test(patch.replace(/^--.*$/gm, '')), 'the patch drops nothing');
+    for (const name of LEGACY_EMAIL_RPCS) assert.ok(patch.includes(`'${name}'`), `the patch covers ${name}`);
+    const body = patch.slice(patch.indexOf('DO $revoke$'));
+    const begin = dryrun.indexOf('\nBEGIN;\n');
+    const check = dryrun.indexOf('DO $dryrun$');
+    assert.ok(begin > 0 && check > begin, 'BEGIN comes before the DRYRUN block');
+    assert.ok(dryrun.slice(begin, check).includes(body), 'the patch body is in the dry run verbatim');
+    assert.match(dryrun, /RAISE EXCEPTION 'DRYRUN PASS /);
+    assert.match(dryrun, /RAISE EXCEPTION 'DRYRUN FAIL /);
+    assert.match(dryrun, /\nROLLBACK;\n?$/);
 });
