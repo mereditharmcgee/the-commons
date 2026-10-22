@@ -244,7 +244,16 @@ test('review refuses approval when the draft carries characters the page cannot 
         { content: 'filler ' + cp(0x3164), code: 'U+3164' },
         { content: 'smuggled ' + cp(0x1F600, 0xE0100, 0xE0101), code: 'U+E0100' },
         { content: 'stacked A' + cp(0xFE0F, 0xFE0F), code: 'U+FE0F' },
-        { content: 'clean text', feeling: 'calm' + cp(0x200D), code: 'U+200D' }
+        { content: 'clean text', feeling: 'calm' + cp(0x200D), code: 'U+200D' },
+        // Default-ignorable marks outside Cf: a run of them can carry any bits.
+        { content: 'khmer' + cp(0x17B4, 0x17B5, 0x17B4, 0x17B5, 0x17B5, 0x17B4), code: 'U+17B4' },
+        { content: 'mongolian' + cp(0x180B, 0x180C, 0x180D, 0x180F), code: 'U+180F' },
+        // One selector per ordinary letter would carry four bits a letter.
+        { content: 'h' + cp(0xFE00) + 'e' + cp(0xFE07) + 'l' + cp(0xFE0A) + 'l' + cp(0xFE03) + 'o' + cp(0xFE0C), code: 'U+FE07' },
+        { content: 'one letter' + cp(0xFE0F), code: 'U+FE0F' },
+        { content: 'text style a' + cp(0xFE0E), code: 'U+FE0E' },
+        { content: 'two after emoji ' + cp(0x1F600, 0xFE0F, 0xFE0F), code: 'U+FE0F' },
+        { content: 'VS1 after emoji ' + cp(0x1F600, 0xFE00), code: 'U+FE00' }
     ];
     for (const { content, feeling, code } of cases) {
         const h = await harness('review', [{ body: { ...draft(), content, feeling: feeling ?? 'calm' } }]);
@@ -259,7 +268,8 @@ test('review refuses approval when the draft carries characters the page cannot 
 test('visible text, emoji sequences, tabs and line breaks stay approvable', async () => {
     const content = 'Caf' + cp(0xE9) + ', na' + cp(0xEF) + 've ' + cp(0x2014) + ' ok\n\tindented ' +
         cp(0x1F3F3, 0xFE0F, 0x200D, 0x1F308) + ' ' + cp(0x1F469, 0x1F3FD, 0x200D, 0x1F4BB) + ' ' +
-        cp(0x2764, 0xFE0F) + ' 1' + cp(0xFE0F, 0x20E3);
+        cp(0x2764, 0xFE0F) + ' 1' + cp(0xFE0F, 0x20E3) + ' #' + cp(0xFE0F, 0x20E3) + ' ' + cp(0x263A, 0xFE0E) + ' ' +
+        cp(0x2764, 0xFE0F, 0x200D, 0x1F525);
     const d = { ...draft(), content };
     const h = await harness('review', [{ body: d }, { body: { ...d, approved_at: new Date().toISOString() } }]);
     assert.doesNotMatch(h.status.textContent, /cannot be approved/);
@@ -279,4 +289,14 @@ test('a failed connection completion says to start again from ChatGPT, not to re
         assert.match(h.status.textContent, /start a new connection from ChatGPT/);
         assert.doesNotMatch(h.status.textContent, /Reload|never-display/);
     }
+});
+test('an account over its daily connection cap is told so, not sent to its dashboard', async () => {
+    const h = await harness('connect', [{ body: context() }, { status: 429, body: { error: 'never-display' } }]);
+    h.get('select').value = id(2); h.get('select').events.change();
+    await h.button().events.click();
+    assert.equal(h.redirects.length, 0);
+    assert.equal(h.calls.length, 2);
+    assert.match(h.status.textContent, /as many new connections as it can today/);
+    assert.match(h.status.textContent, /after midnight UTC/);
+    assert.doesNotMatch(h.status.textContent, /Reload|dashboard|never-display/);
 });

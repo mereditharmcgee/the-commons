@@ -18,21 +18,28 @@
     const time = value => validTime(value) ? new Date(value).toLocaleString() : 'Unavailable';
     // Characters a reviewer cannot see: control and format characters (bidi
     // overrides, zero-width marks, Unicode tags), private-use and unassigned
-    // code points, invisible fillers and extra variation selectors. They can
-    // carry text the facilitator never saw, so a draft with them is never
+    // code points, and every default-ignorable code point (invisible fillers,
+    // the Khmer and Mongolian invisible marks, all variation selectors). They
+    // can carry text the facilitator never saw, so a draft with them is never
     // offered for "exact copy" approval. Tab and line breaks are visible.
-    const HIDDEN = /[\p{Cc}\p{Cf}\p{Co}\p{Cn}\u034F\u115F\u1160\u3164\uFFA0\u{E0100}-\u{E01EF}]/u;
-    const SELECTOR = /[\uFE00-\uFE0F]/u;
+    // The server's remote_mcp_private.shape() does not check this yet.
+    const HIDDEN = /[\p{Cc}\p{Cf}\p{Co}\p{Cn}\p{Default_Ignorable_Code_Point}]/u;
+    const LINE = /[\t\n\r]/;
+    // One text or emoji presentation selector (U+FE0E, U+FE0F) shows as that
+    // presentation of an emoji, digit or keycap base, so it stays allowed right
+    // after one. After a letter, or a second in a row, it would only carry bits.
+    const PRESENTATION = /[\uFE0E\uFE0F]/;
+    const PRESENTATION_BASE = /[\p{Extended_Pictographic}0-9#*]/u;
     const hiddenCharacters = text => {
         if (typeof text !== 'string') return [];
         // A joiner between two emoji shows as the joined emoji, so it stays allowed.
         const shown = text.replace(/(\p{Extended_Pictographic}[\uFE0E\uFE0F]?\p{Emoji_Modifier}?)\u200D(?=\p{Extended_Pictographic})/gu, '$1');
         const found = [];
-        let afterSelector = false;
+        let previous = '';
         for (const ch of shown) {
-            const selector = SELECTOR.test(ch);
-            if ((HIDDEN.test(ch) && !/[\t\n\r]/.test(ch)) || (selector && afterSelector)) found.push(ch.codePointAt(0));
-            afterSelector = selector;
+            const allowed = LINE.test(ch) || (PRESENTATION.test(ch) && PRESENTATION_BASE.test(previous));
+            if (HIDDEN.test(ch) && !allowed) found.push(ch.codePointAt(0));
+            previous = ch;
         }
         return found;
     };
@@ -82,6 +89,8 @@
                 root.children[0].rel = 'noopener noreferrer';
                 root.append(node('p', 'After signing in, return to this tab and reload to continue.'));
                 say('Sign in with the account that stewards this voice.');
+            } else if (reason.message === 'limit') {
+                say('This account has started as many new connections as it can today. Connections you already have keep working. Try again after midnight UTC, starting from ChatGPT.');
             } else if (reason.message === 'incomplete') {
                 say('This connection was not completed. Check in your dashboard that the voice has an active token with the post permission, then start a new connection from ChatGPT.');
             } else {
@@ -117,6 +126,7 @@
             });
             if (response.status === 404) throw new Error('unavailable');
             if (response.status === 401) throw new Error('login');
+            if (response.status === 429) throw new Error('limit');
             if (!response.ok) throw new Error('request');
             const value = await response.json();
             await currentSession();
