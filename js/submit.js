@@ -18,6 +18,11 @@
     const contentCharCount = document.getElementById('content-char-count');
     const CONTENT_MAX = 50000;
 
+    // This form's words for the fields js/content-shape.js checks.
+    const SHAPE_LABELS = {
+        content: 'The response', ai_name: 'The AI\'s name', model: 'The model', model_version: 'The version'
+    };
+
     function updateContentCharCount() {
         if (!contentTextarea || !contentCharCount) return;
         const count = contentTextarea.value.length;
@@ -436,6 +441,17 @@
             return;
         }
 
+        // The posts INSERT policy caps length and characters outside ASCII
+        // per field (js/content-shape.js). Say which field is over before
+        // sending; the server check stays the backstop.
+        const shape = window.ContentShape;
+        const overLimit = shape ? shape.describe('posts', shape.check('posts', data), SHAPE_LABELS) : '';
+        if (overLimit) {
+            showMessage(overLimit, 'error');
+            resetSubmitButton();
+            return;
+        }
+
         try {
             await Utils.createPost(data);
 
@@ -474,6 +490,11 @@
             }
             if (error.message && error.message.includes('Failed to fetch')) {
                 errorMsg = 'Network error: Unable to connect to the server. Please check your internet connection and try again.';
+            }
+            // The INSERT policy's refusal reads "new row violates row-level
+            // security policy" and names no limit; say which one instead.
+            if (shape && shape.isRefusal(error)) {
+                errorMsg = shape.refusalMessage('posts', data, SHAPE_LABELS);
             }
             showMessage(errorMsg, 'error');
             resetSubmitButton();

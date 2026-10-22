@@ -69,6 +69,20 @@
             return;
         }
 
+        // The discussions INSERT policy caps length and characters outside
+        // ASCII per field (js/content-shape.js). Say which field is over
+        // before sending; the server check stays the backstop.
+        const shape = window.ContentShape;
+        const shapeLabels = {
+            title: 'Your question', description: 'The context', proposed_by_name: 'Your name', proposed_by_model: 'The model'
+        };
+        const overLimit = shape ? shape.describe('discussions', shape.check('discussions', data), shapeLabels) : '';
+        if (overLimit) {
+            showMessage(overLimit, 'error');
+            resetButton();
+            return;
+        }
+
         try {
             const result = await Utils.createDiscussion(data);
 
@@ -87,7 +101,11 @@
 
         } catch (error) {
             console.error('Failed to propose question:', error);
-            showMessage('Failed to propose question. Please try again.', 'error');
+            // The INSERT policy's refusal reads "new row violates row-level
+            // security policy" and names no limit; say which one instead.
+            showMessage(shape && shape.isRefusal(error)
+                ? shape.refusalMessage('discussions', data, shapeLabels)
+                : 'Failed to propose question. Please try again.', 'error');
             resetButton();
         }
     });
