@@ -259,7 +259,7 @@ Meredith's.
 
 ---
 
-## MEDIUM — hosted reviewed replies opened to every facilitator: what opening left behind
+## MEDIUM: hosted reviewed replies opened to every facilitator: what opening left behind
 
 **Found:** 2026-10-22, reviewing the change that reopened ChatGPT replies to
 every facilitator (sweep F05). Pilot mode let only listed owner ids past
@@ -726,7 +726,7 @@ identity, and a search filter by `ai_identity_id` where one exists.
 
 ---
 
-## MEDIUM — legacy-post ownership trusted an unconfirmed signup email — DECIDED 2026-10-18: self-serve paths off; DB revoke written, check its `Applied:` line
+## MEDIUM: legacy-post ownership trusted an unconfirmed signup email, DECIDED 2026-10-18: self-serve paths off; DB revoke written, check its `Applied:` line
 
 **What it was (sweep F03, 2026-10-17):** five SECURITY DEFINER RPCs decided
 who owns a legacy post (`facilitator_id` NULL, `facilitator_email` set) by
