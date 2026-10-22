@@ -77,13 +77,31 @@
         return name.trim() ? name : 'A facilitator';
     }
 
+    // New accounts start with no public name (2026-10-22). The create modal
+    // asks for one, optionally, the first time a thread would carry it: only
+    // once the row has loaded and while it has no name.
+    function needsPublicNameAsk(facilitator) {
+        return !!facilitator
+            && !String(facilitator.display_name == null ? '' : facilitator.display_name).trim();
+    }
+
+    // The thread list's "by" line. created_by is a facilitator's name, a model
+    // (propose.html), a voice (agent RPC) or a seed label; only a missing one
+    // falls back, and it falls back to the same label a new thread would get.
+    function threadAuthorLabel(createdBy) {
+        var name = createdBy == null ? '' : String(createdBy);
+        return name.trim() ? name : 'A facilitator';
+    }
+
     window.InterestRoom = {
         lastPostTimes,
         threadActivityMs,
         sunsetThresholdDays,
         isInactiveForSunset,
         isUnreadSince,
-        startedByName
+        startedByName,
+        needsPublicNameAsk,
+        threadAuthorLabel
     };
 }());
 
@@ -114,8 +132,22 @@
     const createDiscModal    = document.getElementById('create-discussion-modal');
     const createDiscForm     = document.getElementById('create-discussion-form');
     const createCancelBtn    = document.getElementById('create-cancel-btn');
+    const publicNameGroup    = document.getElementById('discussion-public-name-group');
+    const publicNameInput    = document.getElementById('discussion-public-name');
+    const publicNameError    = document.getElementById('discussion-public-name-error');
 
     if (!loadingState || !interestContent) return;
+
+    // The optional "Your public name" field in the create modal shows only
+    // while the facilitator row has loaded and has no name.
+    function syncPublicNameAsk() {
+        if (!publicNameGroup) return;
+        publicNameGroup.hidden = !InterestRoom.needsPublicNameAsk(Auth.getFacilitator());
+    }
+
+    function showPublicNameError(text) {
+        if (publicNameError) publicNameError.textContent = text || '';
+    }
 
     // ---- Helper: open/close modals ----
     function openModal(modal) {
@@ -493,6 +525,7 @@
             // "Started by" comes from the facilitator row, so a thread can't be
             // opened until that row has loaded; it never falls back to the email.
             const syncCreateButton = () => {
+                syncPublicNameAsk();
                 if (!createDiscBtn) return;
                 const ready = !!Auth.getFacilitator();
                 createDiscBtn.disabled = !ready;
@@ -691,7 +724,7 @@
     ${d.description ? `<p class="discussion-card__description">${Utils.escapeHtml(d.description)}</p>` : ''}
     <div class="discussion-card__meta">
         <span>${postCount} ${postCount === 1 ? 'response' : 'responses'}</span>
-        <span>by ${Utils.escapeHtml(d.created_by || 'Unknown')}</span>
+        <span>by ${Utils.escapeHtml(InterestRoom.threadAuthorLabel(d.created_by))}</span>
         <span>Started ${Utils.formatRelativeTime(d.created_at)}</span>
     </div>
 </a>`;
@@ -702,6 +735,8 @@
 
     if (createDiscBtn) {
         createDiscBtn.addEventListener('click', () => {
+            syncPublicNameAsk();
+            showPublicNameError('');
             openModal(createDiscModal);
         });
     }
@@ -710,6 +745,7 @@
         createCancelBtn.addEventListener('click', () => {
             closeModal(createDiscModal);
             if (createDiscForm) createDiscForm.reset();
+            showPublicNameError('');
         });
     }
 
@@ -737,10 +773,28 @@
 
             // Public "Started by" name. Null means the facilitator row hasn't
             // loaded; write nothing rather than fall back to the login email.
-            const createdBy = InterestRoom.startedByName(Auth.getFacilitator());
-            if (!createdBy) {
+            if (!InterestRoom.startedByName(Auth.getFacilitator())) {
                 alert('Your account has not finished loading, so this thread cannot be credited yet. Reload the page and try again.');
                 return;
+            }
+
+            // First public use of the name: an account without one may type one
+            // here. It is saved to facilitators.display_name BEFORE the thread is
+            // written, and created_by is read back from the saved row, so
+            // created_by = display_name still holds for intro_household(). Left
+            // blank, the thread says "A facilitator".
+            showPublicNameError('');
+            const typedName = publicNameInput && publicNameGroup && !publicNameGroup.hidden
+                && InterestRoom.needsPublicNameAsk(Auth.getFacilitator())
+                ? publicNameInput.value.trim() : '';
+            let chosenName = null;
+            if (typedName) {
+                const checked = Auth.checkPublicName(typedName);
+                if (checked.error) {
+                    showPublicNameError(checked.error);
+                    return;
+                }
+                chosenName = checked.name;
             }
 
             const submitBtn = createDiscForm.querySelector('button[type="submit"]');
@@ -748,6 +802,23 @@
                 submitBtn.disabled = true;
                 submitBtn.textContent = 'Creating...';
             }
+
+            if (chosenName) {
+                try {
+                    // Idempotent row update: withRetry is correct here.
+                    await Utils.withRetry(() => Auth.updateFacilitator({ display_name: chosenName }));
+                } catch (err) {
+                    console.error('Saving the public name failed:', err);
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Create';
+                    }
+                    showPublicNameError('Could not save your public name, so the thread was not created. Try again, or clear the name to start it as "A facilitator".');
+                    return;
+                }
+                syncPublicNameAsk();
+            }
+            const createdBy = InterestRoom.startedByName(Auth.getFacilitator());
 
             try {
                 const asSelect = document.getElementById('discussion-as');

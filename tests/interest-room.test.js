@@ -8,6 +8,16 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const source = fs.readFileSync(path.join(__dirname, '..', 'js', 'interest.js'), 'utf8');
+
+// The public-name helpers interest.js calls on Auth, taken from the real
+// js/auth.js so the harness can't drift from them.
+const realAuth = (() => {
+    const s = { window: {}, console: { log() {}, warn() {}, error() {} }, setTimeout, clearTimeout };
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, '..', 'js', 'auth.js'), 'utf8'), s, { filename: 'js/auth.js' });
+    return s.window.Auth;
+})();
+const PUBLIC_NAME_HELPERS = ['PUBLIC_NAME_FALLBACK', 'PUBLIC_NAME_MAX_LENGTH', 'hasPublicName', 'publicNameOf',
+    'publicNameNudge', 'checkPublicName'];
 const NOW = Date.parse('2026-10-17T18:00:00.000Z');
 const DAY = 24 * 60 * 60 * 1000;
 const ago = days => new Date(NOW - days * DAY).toISOString();
@@ -43,7 +53,7 @@ function makeEl(id, inserted) {
     return el;
 }
 
-function harness({ interest, discussions = [], stats = [], facilitator, lastVisit = null, identities = [] }) {
+function harness({ interest, discussions = [], stats = [], facilitator, lastVisit = null, identities = [], saveFails = false }) {
     const inserted = [];
     const els = {};
     const el = id => (els[id] = els[id] || makeEl(id, inserted));
@@ -51,7 +61,9 @@ function harness({ interest, discussions = [], stats = [], facilitator, lastVisi
         'interest-actions', 'join-btn', 'leave-btn', 'create-discussion-btn', 'members-list',
         'discussions-list', 'join-modal', 'identity-picker', 'join-confirm-btn', 'join-cancel-btn',
         'create-discussion-modal', 'create-discussion-form', 'create-cancel-btn', 'discussion-title',
-        'discussion-desc', 'discussion-as', 'discussion-as-group'].forEach(el);
+        'discussion-desc', 'discussion-as', 'discussion-as-group', 'discussion-public-name-group',
+        'discussion-public-name', 'discussion-public-name-error'].forEach(el);
+    els['discussion-public-name-group'].hidden = true; // as in interest.html
 
     // One card element per discussion, so unread dots can be read back.
     const cards = {};
@@ -64,11 +76,21 @@ function harness({ interest, discussions = [], stats = [], facilitator, lastVisi
     els['create-discussion-form'].querySelector = () => submitBtn;
 
     const created = [];
+    const saves = [];
+    const log = [];
     const alerts = [];
     const windowListeners = {};
     const auth = {
+        ...Object.fromEntries(PUBLIC_NAME_HELPERS.map(key => [key, realAuth[key]])),
         facilitator,
         user: { id: 'fac-1', email: 'private.person@example.com' },
+        async updateFacilitator(updates) {
+            saves.push({ ...updates });
+            log.push('save');
+            if (saveFails) throw new Error('network down');
+            this.facilitator = { ...this.facilitator, ...updates };
+            return this.facilitator;
+        },
         init: () => Promise.resolve(),
         isLoggedIn: () => true,
         getUser() { return this.user; },
@@ -113,7 +135,8 @@ function harness({ interest, discussions = [], stats = [], facilitator, lastVisi
             formatRelativeTime: () => 'a while ago',
             showError() {}, showEmpty() {},
             validate: () => true,
-            createDiscussion: async row => { created.push(row); return [{ id: 'new-thread' }]; }
+            withRetry: fn => fn(),
+            createDiscussion: async row => { created.push(row); log.push('create'); return [{ id: 'new-thread' }]; }
         },
         Auth: auth,
         alert: message => alerts.push(message),
@@ -127,7 +150,7 @@ function harness({ interest, discussions = [], stats = [], facilitator, lastVisi
     vm.runInNewContext(source, sandbox, { filename: 'js/interest.js' });
 
     return {
-        els, cards, inserted, created, alerts, auth, submitBtn,
+        els, cards, inserted, created, saves, log, alerts, auth, submitBtn,
         fireAuthChange() { (windowListeners.authStateChanged || []).forEach(fn => fn({ detail: {} })); },
         async submit() {
             for (const fn of els['create-discussion-form'].listeners.submit || []) {
@@ -262,4 +285,102 @@ test('"Started by" is the display name, or a neutral label, and never an email',
 
 test('interest.js no longer falls back to the auth email anywhere in the create path', () => {
     assert.ok(!/user\s*&&\s*user\.email/.test(source), 'no user.email fallback for created_by');
+});
+
+// ---- New accounts have no public name (sweep F07-data, option A, 2026-10-22) ----
+// The create modal asks for one, optionally, the first time a thread would carry
+// it; a typed name is saved to display_name before the thread is written.
+
+const startThread = async (h, { title = 'A real title here', name } = {}) => {
+    h.els['discussion-title'].value = title;
+    if (name !== undefined) h.els['discussion-public-name'].value = name;
+    await h.submit();
+};
+
+test('the name field shows only once the row has loaded, and only while it has no name', async () => {
+    const loading = harness({ interest: journals(), facilitator: null });
+    await flush();
+    assert.equal(loading.els['discussion-public-name-group'].hidden, true, 'no row yet: nothing to ask about');
+    loading.auth.facilitator = { display_name: null };
+    loading.fireAuthChange();
+    assert.equal(loading.els['discussion-public-name-group'].hidden, false, 'row arrived without a name: ask');
+
+    for (const display_name of [null, '', '   ']) {
+        const h = harness({ interest: journals(), facilitator: { display_name } });
+        await flush();
+        assert.equal(h.els['discussion-public-name-group'].hidden, false, JSON.stringify(display_name));
+    }
+    const named = harness({ interest: journals(), facilitator: { display_name: 'Wren' } });
+    await flush();
+    assert.equal(named.els['discussion-public-name-group'].hidden, true, 'a facilitator with a name is not asked');
+});
+
+test('a typed name is saved to display_name first, then the thread is filed under the saved name', async () => {
+    const h = harness({ interest: journals(), facilitator: { display_name: null, email: 'private.person@example.com' } });
+    await flush();
+    await startThread(h, { name: '  Wren of the Hedge  ' });
+    assert.deepEqual(h.saves, [{ display_name: 'Wren of the Hedge' }], 'trimmed, and only display_name is written');
+    assert.deepEqual(h.log, ['save', 'create'], 'saved before the thread exists');
+    assert.equal(h.created.length, 1);
+    assert.equal(h.created[0].created_by, 'Wren of the Hedge', 'created_by = the saved display_name, for intro_household()');
+    assert.equal(h.els['discussion-public-name-group'].hidden, true, 'asked once: the field goes away after the save');
+});
+
+test('skipping the name files the thread as "A facilitator" and saves nothing', async () => {
+    const h = harness({ interest: journals(), facilitator: { display_name: null, email: 'private.person@example.com' } });
+    await flush();
+    await startThread(h, { name: '   ' });
+    assert.deepEqual(h.saves, []);
+    assert.equal(h.created.length, 1);
+    assert.equal(h.created[0].created_by, 'A facilitator');
+    assert.doesNotMatch(JSON.stringify(h.created[0]), /private|@/);
+});
+
+test('a name that is the fallback label, an email address or too long is refused before anything is written', async () => {
+    for (const name of ['a FACILITATOR', 'private.person@example.com', 'x'.repeat(51)]) {
+        const h = harness({ interest: journals(), facilitator: { display_name: null } });
+        await flush();
+        await startThread(h, { name });
+        assert.deepEqual(h.saves, [], name);
+        assert.equal(h.created.length, 0, name);
+        assert.ok(h.els['discussion-public-name-error'].textContent, 'says why: ' + name);
+        assert.equal(h.submitBtn.disabled, false);
+    }
+});
+
+test('if the name cannot be saved, no thread is written under a name the account does not have', async () => {
+    const h = harness({ interest: journals(), facilitator: { display_name: null }, saveFails: true });
+    await flush();
+    await startThread(h, { name: 'Wren' });
+    assert.equal(h.saves.length, 1);
+    assert.equal(h.created.length, 0);
+    assert.match(h.els['discussion-public-name-error'].textContent, /not created/);
+    assert.equal(h.submitBtn.disabled, false, 'the button comes back');
+    assert.equal(h.els['discussion-public-name-group'].hidden, false, 'still unnamed, still asked');
+});
+
+test('a facilitator with a name is never asked and never re-saved, even with stale text in the hidden field', async () => {
+    const h = harness({ interest: journals(), facilitator: { display_name: 'Wren' } });
+    await flush();
+    await startThread(h, { name: 'Someone Else' });
+    assert.deepEqual(h.saves, []);
+    assert.equal(h.created[0].created_by, 'Wren');
+});
+
+test('the thread list says "A facilitator" for a thread with no created_by, and keeps every real one', async () => {
+    const h = harness({
+        interest: journals(),
+        discussions: [
+            { id: 'd-null', title: 'No name', created_by: null, created_at: ago(1) },
+            { id: 'd-blank', title: 'Blank name', created_by: '  ', created_at: ago(2) },
+            { id: 'd-model', title: 'Proposed', created_by: 'claude-sonnet', created_at: ago(3) },
+            { id: 'd-label', title: 'Unnamed opener', created_by: 'A facilitator', created_at: ago(4) }
+        ],
+        facilitator: { display_name: 'Wren' }
+    });
+    await flush();
+    const html = h.els['discussions-list'].innerHTML;
+    assert.equal((html.match(/by A facilitator</g) || []).length, 3);
+    assert.match(html, /by claude-sonnet</);
+    assert.doesNotMatch(html, /by (Unknown|unknown|null|undefined)</);
 });

@@ -95,6 +95,12 @@
                 <div id="comment-form-container" style="display: none; margin-bottom: var(--space-xl);">
                     <div class="form-section">
                         <div id="comment-as-selector" style="margin-bottom: var(--space-md);"></div>
+                        <div id="comment-public-name-group" class="form-group" hidden>
+                            <label class="form-label" for="comment-public-name">Your public name <span class="text-muted">(optional)</span></label>
+                            <input type="text" id="comment-public-name" class="form-input" maxlength="50" autocomplete="nickname">
+                            <p class="form-help">Shown on comments you leave as yourself. You have not picked one yet. Leave it blank and this comment says "A facilitator". A name you type here is saved to your account for next time.</p>
+                            <p class="form-error" id="comment-public-name-error" role="alert"></p>
+                        </div>
                         <textarea id="comment-input" class="form-textarea" rows="3" placeholder="Share your thoughts..." maxlength="5000"></textarea>
                         <div style="display: flex; justify-content: flex-end; margin-top: var(--space-sm);">
                             <button id="comment-submit" class="btn btn--primary" disabled>Post Comment</button>

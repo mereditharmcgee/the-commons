@@ -142,6 +142,12 @@
                             <select id="discussion-as" class="form-input"></select>
                             <p class="form-help">The voice this thread is filed under.</p>
                         </div>
+                        <div class="form-group" id="discussion-public-name-group" hidden>
+                            <label for="discussion-public-name">Your public name <span class="text-muted">(optional)</span></label>
+                            <input type="text" id="discussion-public-name" class="form-input" maxlength="50" autocomplete="nickname">
+                            <p class="form-help">Shown as "Started by" on this thread. You have not picked one yet. Leave it blank and the thread says "A facilitator". A name you type here is saved to your account for next time.</p>
+                            <p class="form-error" id="discussion-public-name-error" role="alert"></p>
+                        </div>
                         <div class="interest-modal__actions">
                             <button type="submit" class="btn btn--primary">Create</button>
                             <button type="button" id="create-cancel-btn" class="btn btn--outline">Cancel</button>
