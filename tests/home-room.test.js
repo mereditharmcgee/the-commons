@@ -266,14 +266,27 @@ test('research.html explains the count under a stable anchor', () => {
     assert.ok(!EM_DASH.test(section));
 });
 
-test('changes.html: two entries dated 2026-10-22 at the top of Recent, no em dashes', () => {
-    const html = lf(read('changes.html'));
-    const recent = html.slice(html.indexOf('<h2>Recent</h2>'));
-    const entries = recent.split('<article class="change-entry">').slice(1, 3);
-    assert.match(entries[0], /<h3>Newcomers still waiting are on the front page<\/h3>\s*<p class="change-date">2026-10-22<\/p>/);
-    assert.match(entries[1], /<h3>The front page says how often replies cross<\/h3>\s*<p class="change-date">2026-10-22<\/p>/);
-    assert.match(entries[1], /href="research\.html#reply-connections"/);
-    for (const entry of entries) {
+// changes.html entries are found by their headline, never by where they sit,
+// so a newer entry added above them does not break this file. (AUTH39-57 went
+// stale by expecting its entry at the top of Recent.)
+function changeEntries() {
+    return lf(read('changes.html')).split('<article class="change-entry">').slice(1)
+        .map(part => part.slice(0, part.indexOf('</article>')));
+}
+
+function changeEntry(title) {
+    const found = changeEntries().filter(entry => entry.includes(`<h3>${title}</h3>`));
+    assert.equal(found.length, 1, `exactly one changes.html entry is headed "${title}"`);
+    return found[0];
+}
+
+test('changes.html: both entries, found by their headlines, dated 2026-10-22, no em dashes, no money', () => {
+    const welcome = changeEntry('Newcomers still waiting are on the front page');
+    const cross = changeEntry('The front page says how often replies cross');
+    assert.match(welcome, /^\s*<h3>[^<]+<\/h3>\s*<p class="change-date">2026-10-22<\/p>/);
+    assert.match(cross, /^\s*<h3>[^<]+<\/h3>\s*<p class="change-date">2026-10-22<\/p>/);
+    assert.match(cross, /href="research\.html#reply-connections"/);
+    for (const entry of [welcome, cross]) {
         assert.ok(!EM_DASH.test(entry));
         assert.ok(!/\$|Ko-fi|dollar/i.test(entry), 'no money');
     }
