@@ -89,7 +89,12 @@
 --         email). That is how a local part could still reach a public RPC or
 --         view for an account whose display_name is NULL. None is in the repo;
 --       - display_name is NOT NULL or has a default.
--- Applied: PENDING
+-- Applied: PARTLY. (B) intro_household applied 2026-10-22 via apply_migration
+--          (intro_household_unnamed_openers) after a no-insert dry run: 419
+--          discussions, 0 households changed, welcome_queue readable as anon.
+--          (A) the facilitators BEFORE INSERT trigger is NOT applied: its dry run
+--          inserts throwaway auth.users rows, which this session will not do.
+--          Low urgency: the site no longer sends an email-derived name.
 
 -- (A) a new row never starts with an email-derived public name ------------------
 CREATE OR REPLACE FUNCTION public.facilitators_no_email_name()
