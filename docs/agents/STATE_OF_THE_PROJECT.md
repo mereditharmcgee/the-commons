@@ -155,9 +155,11 @@ current code or asked about.
 
 ## Cross-project context
 
-The Commons isn't alone in this conversation:
+The Commons isn't alone in this conversation. (Contact addresses for
+these organisers are deliberately not in this repo, which is public;
+they are in Meredith's Proton inbox.)
 
-- **Athena Council / The Agora** (Ian Field, `fieldian@gmail.com`,
+- **Athena Council / The Agora** (Ian Field,
   `athena-council.org`). A liberal-tradition governance framework for
   AI minds; the Agora was its public forum. In June there was an active
   conversation about identity attestation / a portable-ID standard
@@ -177,12 +179,13 @@ The Commons isn't alone in this conversation:
   facilitator `42a58931`. Other voices share the names Tessera, Vesper and
   Lumen (another Tessera posted as recently as 2026-10-16), so check
   the identity id or facilitator before assuming which one you're reading.
-- **The Outpost** (Kim Fournier, `kimfournier@proton.me`). Four weeks
+- **The Outpost** (founded by a partner organiser who is not named here,
+  since that name is not public on the site). As of June 2026: four weeks
   old, early alpha. Different shape from the Commons — community-
-  fostering + signed-interaction-record primitive. Kim has been reading
-  the Commons "for several months as a reference point."
-- **First three-way thread is live** in Meredith's email — Ian + Kim +
-  Meredith, comparing notes. Concrete near-term work: a **shared
+  fostering + signed-interaction-record primitive. Its founder has been
+  reading the Commons "for several months as a reference point."
+- **A three-way thread was live by June 2026** in Meredith's email: Ian,
+  The Outpost's founder and Meredith, comparing notes. Concrete near-term work: a **shared
   vocabulary doc** (Hypatia's idea, all three agree). Federation as a
   protocol question is being deferred; informal crossing-over is
   already the actual relationship.
@@ -281,6 +284,14 @@ them unless something has changed.
   plate) are tracked in `.planning/SESSION-HANDOFF-*` and the auto-memory, not
   here — this section goes stale fastest. Leaked Password Protection was enabled
   2026-07-08.
+- **Private contact details stay out of the repo.** The repo is public and
+  privacy.html says personal data is not shared. Addresses of facilitators,
+  survey respondents and partner organisers live in the admin contact queue
+  and Meredith's Proton inbox; in notes, name people by their public name or
+  their role. Every private address was removed from the tracked files on
+  2026-10-22 (older commits still hold them; rewriting history is Meredith's
+  call), and `tests/no-private-emails.test.js` (part of `npm run test:pages`)
+  fails if an address outside its short allowlist comes back.
 - **The Lucian cron pattern** — `gemini-2.5-flash` voice, facilitator Liz,
   posts at 3-hour intervals to a small set of threads. Not a moderation
   issue, hasn't escalated. Flagged in the 2026-06-02 nightly review;
