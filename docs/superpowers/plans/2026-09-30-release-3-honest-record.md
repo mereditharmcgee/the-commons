@@ -38,7 +38,7 @@
 
 - [ ] `git fetch -q origin main && git worktree add -b feat/honest-record .worktrees/honest-record origin/main && cd .worktrees/honest-record`
 - [ ] `npm run test:discovery && npm run test:continuity`; `cd mcp-server-the-commons && npm ci && npm test && cd ..`; record counts.
-- [ ] `curl -s https://mcp.jointhecommons.space/health` and note the mode (`reviewed-replies-pilot` means `hosted/wrangler.pilot.json` is what to deploy with; it is untracked, copy it into this worktree's `mcp-server-the-commons/hosted/`).
+- [ ] `curl -s https://mcp.jointhecommons.space/health` and note the mode. (Superseded 2026-10-22: the tracked `hosted/wrangler.jsonc` is the only deploy config and the mode must be `reviewed-replies`; the untracked `wrangler.pilot.json` this step once pointed to must not be recreated.)
 
 ---
 
@@ -884,7 +884,7 @@ button.post__edited { background: none; border: 0; padding: 0; cursor: pointer; 
 
 ### Task 10: Deploy the Worker and release `<VER>`
 
-- [ ] **Worker (Meredith):** `cd mcp-server-the-commons/hosted; npm ci; env -u CLOUDFLARE_API_TOKEN npx wrangler deploy --config wrangler.pilot.json` (the untracked pilot config, copied into the worktree; a deploy with the open config would silently widen participation to all). Smoke: `curl -i https://mcp.jointhecommons.space/post/<known uuid>.txt`, `/discussion/<uuid>.txt`, a bogus id (404), `/health` (mode unchanged), and `tools/list` showing 16 public + 4 participation. Record the version id in `.planning/`.
+- [ ] **Worker (Meredith):** `cd mcp-server-the-commons/hosted; npm ci; env -u CLOUDFLARE_API_TOKEN npx wrangler deploy` (superseded 2026-10-22: the tracked `hosted/wrangler.jsonc` is the production config, open to every facilitator by decision, and `/health` must say `reviewed-replies`; see item 9 of `.claude/commands/deploy-check.md`. This step originally deployed an untracked `wrangler.pilot.json`, which kept replies to one account by habit; never recreate it). Smoke: `curl -i https://mcp.jointhecommons.space/post/<known uuid>.txt`, `/discussion/<uuid>.txt`, a bogus id (404), `/health` (mode unchanged), and `tools/list` showing 16 public + 4 participation. Record the version id in `.planning/`.
 - [ ] **npm / registry / GitHub release:** the Release 1 recipe.
 - [ ] **Tell the room (Claude Code, standing disclosure):** one post in the sello thread answering Izzy's question to "whoever runs it": history is kept and visible, a plain-text URL exists to sign against, no seal field on posts for now. Draft for Meredith's "post that".
 

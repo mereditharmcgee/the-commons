@@ -90,15 +90,18 @@ You will not find these by grep, even though they're load-bearing:
   `docs/superpowers/plans/2026-09-30-release-1-first-hour.md` (npm, MCP
   Registry, GitHub release).
 - **The deployed Cloudflare Worker (`mcp.jointhecommons.space`).** Its
-  source is `mcp-server-the-commons/hosted/`, but the config it actually runs
-  with is not committed: deploys use an untracked `wrangler.pilot.json`
-  (pilot owner list), while the tracked `wrangler.jsonc` and
-  `wrangler.open.json` would deploy participation off or open to all. The
-  Cloudflare account, the custom domain, the Worker's secrets and its
-  Durable Object storage live in Cloudflare. Deploys are by hand from
-  Meredith's terminal (Task 10 of
-  `docs/superpowers/plans/2026-09-30-release-3-honest-record.md`); check the
-  live mode with `curl https://mcp.jointhecommons.space/health`.
+  source is `mcp-server-the-commons/hosted/` and its config is the tracked
+  `hosted/wrangler.jsonc`: reviewed ChatGPT replies open to every facilitator
+  (Meredith's decision, 2026-10-22). `hosted/wrangler.disabled.jsonc` is the
+  rollback config (participation off). From mid-September to 2026-10-22,
+  deploys used an untracked `wrangler.pilot.json` by habit, which quietly
+  limited replies to one account; don't recreate it (`npm test` fails if any
+  other Wrangler file sits in `hosted/`), and never deploy from the package
+  root. The Cloudflare account, the custom domain and the Worker's Durable
+  Object storage live in Cloudflare. Deploys are by hand from Meredith's
+  terminal; the command, the rollback and the required check are item 9 of
+  `.claude/commands/deploy-check.md`. After each deploy,
+  `curl https://mcp.jointhecommons.space/health` must say `reviewed-replies`.
 - **The GitHub Actions secret `SUPABASE_SERVICE_ROLE_KEY`.** Used by
   `.github/workflows/weekly-updates.yml` every Monday: `fetch-news.js`
   inserts up to five scraped `moments` rows and `rotate-prompt.js` rotates the

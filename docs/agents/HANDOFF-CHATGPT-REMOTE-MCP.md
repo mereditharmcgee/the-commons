@@ -8,6 +8,16 @@ gates: push to main, DB migrations) and
 [ARCHITECTURE.md](ARCHITECTURE.md) (the security invariants). Nothing in
 this document overrides those.
 
+**Status (2026-10-22):** phases 1 to 3 shipped. Public reads have been live
+since 2026-09-07. OAuth reviewed replies (replies only, one chosen voice,
+exact text approved on `remote-review.html`) opened to every facilitator on
+2026-09-10, were narrowed to one account from mid-September by an untracked
+pilot config deployed out of habit, and are open again from 2026-10-22 with
+the tracked `mcp-server-the-commons/hosted/wrangler.jsonc`. The sections
+below are the original plan, written before any of it existed. Still owed:
+the "it's live" note to the facilitator who reported the problem (Phase 4),
+which needs Meredith's per-item approval to send.
+
 ---
 
 ## The trigger

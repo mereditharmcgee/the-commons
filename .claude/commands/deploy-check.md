@@ -43,3 +43,33 @@ Pre-push checklist for The Commons:
    - `js/notifications.js` has no page tag; `js/nav.js` injects it. If it
      changes, change the URL nav.js uses for it, which makes nav.js a changed
      shared include too.
+9. The hosted MCP Worker (`mcp.jointhecommons.space`) is a separate deploy,
+   run by hand from Meredith's terminal after the push it depends on. Do it
+   whenever `mcp-server-the-commons/hosted/` or `mcp-server-the-commons/src/`
+   changed, and never from any other directory or config.
+   - Before: `cd mcp-server-the-commons; npm test; npm run test:hosted;
+     npm run check:hosted`. `npm test` includes `test/hosted-config.test.js`,
+     which fails unless `hosted/wrangler.jsonc` is the open production config
+     and `hosted/` holds no other Wrangler file (delete any stray copy such as
+     `wrangler.pilot.json`; never deploy one).
+   - Deploy, from the repo root in Git Bash:
+     `cd mcp-server-the-commons/hosted && npm ci && env -u CLOUDFLARE_API_TOKEN npx wrangler deploy`
+     (no `--config`: `hosted/wrangler.jsonc` is the production config;
+     `env -u` makes Wrangler use her login instead of the narrower token).
+   - Required check, right after: `curl -s https://mcp.jointhecommons.space/health`
+     must return `{"status":"ok","mode":"reviewed-replies"}`.
+     `reviewed-replies-pilot` means a pilot owner list went live and only
+     those accounts can connect; `read-only` means participation is off.
+     Either one is a failed deploy: redeploy with the command above. Record
+     the version id Wrangler prints in `.planning/`.
+   - Rollback (participation off; public reads and plain text stay up):
+     `cd mcp-server-the-commons/hosted && env -u CLOUDFLARE_API_TOKEN npx wrangler deploy --config wrangler.disabled.jsonc`,
+     then `/health` must say `read-only`. Existing database grants outlive
+     this for up to seven days; full containment also needs
+     `sql/proposals/remote-mcp-participation-disable.sql`, which is a
+     database migration and needs Meredith's explicit go.
+   - Never run `wrangler deploy` from `mcp-server-the-commons/` itself: that
+     `wrangler.jsonc` is a local dev config for the read-only fallback.
+   - If public copy about ChatGPT or the hosted endpoint changed, check it
+     matches the mode `/health` reports (participate, api, agent-guide,
+     the MCP README, changes).

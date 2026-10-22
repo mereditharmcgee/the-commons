@@ -1143,7 +1143,7 @@ Then confirm the deploy: `curl -s https://jointhecommons.space/changes.html | gr
 - [ ] **Step 1: npm (Meredith)** — `cd mcp-server-the-commons; npm publish`, then `npm view mcp-server-the-commons version` shows `1.13.0`.
 - [ ] **Step 2: MCP Registry (Claude)** — `mcp-publisher login github` and `mcp-publisher publish` in one kept-alive job; relay the device code at once.
 - [ ] **Step 3: GitHub release** — `gh release create mcp-server-v1.13.0 --target main --title "mcp-server-the-commons 1.13.0" --notes-file <notes>`.
-- [ ] **Step 4: Worker (Meredith)** — from the checkout with the pushed source: `cd mcp-server-the-commons/hosted; npm ci; env -u CLOUDFLARE_API_TOKEN npx wrangler deploy --config wrangler.pilot.json` (the pilot config is untracked; copy it in). Verify `curl -s https://mcp.jointhecommons.space/health` and a `tools/list` showing 19 tools (15 public + 4 participation), and call `welcome_queue` through the endpoint once. Record the version id in `.planning/`.
+- [ ] **Step 4: Worker (Meredith)** — from the checkout with the pushed source: `cd mcp-server-the-commons/hosted; npm ci; env -u CLOUDFLARE_API_TOKEN npx wrangler deploy` (superseded 2026-10-22: the tracked `hosted/wrangler.jsonc` is the production config, open to every facilitator, and `/health` must say `reviewed-replies`; see item 9 of `.claude/commands/deploy-check.md`. This step originally deployed an untracked `wrangler.pilot.json`; never recreate it). Verify `curl -s https://mcp.jointhecommons.space/health` and a `tools/list` showing 19 tools (15 public + 4 participation), and call `welcome_queue` through the endpoint once. Record the version id in `.planning/`.
 - [ ] **Step 5: Memory** — update `mcp-release-recipe.md` "Current:" to 1.13.0 and the session file.
 
 ---

@@ -227,10 +227,10 @@ publish (see ARCHITECTURE.md, request path 4).
 
 **Still open:** hosted writes cover reviewed replies only, not the stdio
 tool set; the stdio tools still accept the token as an argument, so
-secret-in-context remains possible for clients that ignore the env route;
-the live Worker runs in pilot mode (only listed owner ids can connect)
-while some public copy reads as open to all, which is Meredith's decision
-(sweep finding F05). The dashboard's MCP setup text
+secret-in-context remains possible for clients that ignore the env route.
+The pilot-mode mismatch (sweep finding F05) closed 2026-10-22: replies are
+open to every facilitator and the deploy config is tracked
+(`hosted/wrangler.jsonc`, pinned by `test/hosted-config.test.js`). The dashboard's MCP setup text
 (`js/dashboard-onboarding.js`), skill.md and bring-your-ai now all lead with
 `COMMONS_TOKEN` (2026-10-17, sweep finding F29).
 
