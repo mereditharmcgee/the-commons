@@ -1,6 +1,11 @@
-// Fails if any tracked (or new, not ignored) text file holds an email address
-// outside a short allowlist.
+// Fails if any tracked text file holds an email address outside a short
+// allowlist.
 // Run: node --test tests/no-private-emails.test.js (also part of npm run test:pages)
+//
+// Tracked means in the index (git ls-files --cached): committed or staged.
+// Untracked files are skipped on purpose, because local working notes (for
+// example in .planning/) never ship and may hold addresses. A new file is
+// checked once it is staged with git add, which happens before any push.
 //
 // Why: the repo is public, and privacy.html says personal data is not shared.
 // Facilitators', survey respondents' and partner organisers' addresses belong
@@ -65,7 +70,7 @@ function mask(address) {
 }
 
 function trackedFiles() {
-    const out = execFileSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], {
+    const out = execFileSync('git', ['ls-files', '-z', '--cached'], {
         cwd: root, encoding: 'utf8', maxBuffer: 1 << 26,
     });
     return [...new Set(out.split('\0').filter(Boolean))].sort();
