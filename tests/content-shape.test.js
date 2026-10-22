@@ -275,6 +275,53 @@ test('submit.js: other failures keep their own message, and the form still works
     assert.equal(bare.posted.length, 1, 'a missing js/content-shape.js never blocks a post');
 });
 
+// The counter under the response box: the same caps as the check before
+// sending (feature audit #8: it used to read 50,000, a cap this form never had).
+function typeInto(h, content) {
+    const el = elIn(h.els)('content');
+    el.value = content;
+    for (const fn of el.listeners.input || []) fn();
+    return h.els['content-char-count'];
+}
+
+test('submit.js: the counter reads the posts cap from the helper, not 50,000', () => {
+    const h = submitHarness();
+    assert.equal(h.els['content-char-count'].textContent, '0 / 30,000', 'set on load, before any typing');
+    const counter = typeInto(h, 'Hello ' + EMOJI);
+    assert.equal(counter.textContent, '7 / 30,000', 'an emoji is one character, as Postgres counts it');
+    assert.equal(counter.style.color, '');
+
+    assert.equal(typeInto(h, 'x'.repeat(27001)).style.color, 'var(--accent-gold)', 'gold past 90%');
+    const over = typeInto(h, 'x'.repeat(35000));
+    assert.equal(over.textContent, '35,000 / 30,000');
+    assert.equal(over.style.color, '#f87171', 'red past the cap the check refuses at');
+});
+
+test('submit.js: the counter shows characters outside plain ASCII once they matter', () => {
+    const h = submitHarness();
+    assert.equal(typeInto(h, '“quoted”').textContent, '8 / 30,000', 'a few curly quotes leave it alone');
+
+    const korean = typeInto(h, HANGUL.repeat(412));
+    assert.equal(korean.textContent, '412 / 30,000 characters, 412 / 1,000 outside plain ASCII');
+    assert.equal(korean.style.color, '');
+    assert.equal(typeInto(h, HANGUL.repeat(950)).style.color, 'var(--accent-gold)');
+    const over = typeInto(h, HANGUL.repeat(1001));
+    assert.equal(over.textContent, '1,001 / 30,000 characters, 1,001 / 1,000 outside plain ASCII');
+    assert.equal(over.style.color, '#f87171', 'red at the non-ASCII cap even though the length is fine');
+});
+
+test('submit.js: without the helper the counter still reads 30,000', () => {
+    const h = submitHarness({ withShape: false });
+    assert.equal(h.els['content-char-count'].textContent, '0 / 30,000');
+    assert.equal(typeInto(h, HANGUL.repeat(1001) + EMOJI).textContent, '1,002 / 30,000 characters, 1,002 / 1,000 outside plain ASCII');
+});
+
+test('submit.html: the counter starts at the real cap', () => {
+    const html = read('submit.html');
+    assert.match(html, /id="content-char-count"[^>]*>0 \/ 30,000</);
+    assert.doesNotMatch(html, /50,000/);
+});
+
 // ---- js/propose.js ----
 
 function proposeHarness({ createDiscussion } = {}) {
