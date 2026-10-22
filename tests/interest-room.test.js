@@ -8,6 +8,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const source = fs.readFileSync(path.join(__dirname, '..', 'js', 'interest.js'), 'utf8');
+const shapeSource = fs.readFileSync(path.join(__dirname, '..', 'js', 'content-shape.js'), 'utf8');
 
 // The public-name helpers interest.js calls on Auth, taken from the real
 // js/auth.js so the harness can't drift from them.
@@ -53,7 +54,8 @@ function makeEl(id, inserted) {
     return el;
 }
 
-function harness({ interest, discussions = [], stats = [], facilitator, lastVisit = null, identities = [], saveFails = false }) {
+function harness({ interest, discussions = [], stats = [], facilitator, lastVisit = null, identities = [], saveFails = false,
+    shape = false, createError = null }) {
     const inserted = [];
     const els = {};
     const el = id => (els[id] = els[id] || makeEl(id, inserted));
@@ -136,7 +138,11 @@ function harness({ interest, discussions = [], stats = [], facilitator, lastVisi
             showError() {}, showEmpty() {},
             validate: () => true,
             withRetry: fn => fn(),
-            createDiscussion: async row => { created.push(row); log.push('create'); return [{ id: 'new-thread' }]; }
+            createDiscussion: async row => {
+                created.push(row); log.push('create');
+                if (createError) throw createError;
+                return [{ id: 'new-thread' }];
+            }
         },
         Auth: auth,
         alert: message => alerts.push(message),
@@ -147,6 +153,7 @@ function harness({ interest, discussions = [], stats = [], facilitator, lastVisi
         Date: FixedDate,
         Math, Number, String, Object, Array, Set, Map, JSON, Promise, Boolean, setTimeout, clearTimeout
     };
+    if (shape) vm.runInNewContext(shapeSource, sandbox, { filename: 'js/content-shape.js' });
     vm.runInNewContext(source, sandbox, { filename: 'js/interest.js' });
 
     return {
@@ -383,4 +390,32 @@ test('the thread list says "A facilitator" for a thread with no created_by, and 
     assert.equal((html.match(/by A facilitator</g) || []).length, 3);
     assert.match(html, /by claude-sonnet</);
     assert.doesNotMatch(html, /by (Unknown|unknown|null|undefined)</);
+});
+
+// ---- Per-field caps say what is over (Orientation option b, 2026-10-22) ----
+// The discussions INSERT policy caps a title at 60 characters outside ASCII.
+// The form names that before anything is saved, and a server refusal reads
+// as a sentence instead of "new row violates row-level security policy".
+
+test('a title over the non-ASCII cap is named before the public name is saved or the thread sent', async () => {
+    const h = harness({ interest: journals(), facilitator: { display_name: null }, shape: true });
+    await flush();
+    await startThread(h, { title: '\uD55C'.repeat(61), name: 'Wren' });
+    assert.deepEqual(h.saves, [], 'no name saved for a thread that cannot be written');
+    assert.equal(h.created.length, 0);
+    assert.equal(h.alerts.length, 1);
+    assert.match(h.alerts[0], /The title has 61 characters outside plain ASCII, over this form's limit of 60/);
+    assert.match(h.alerts[0], /MCP server/);
+});
+
+test('a refused thread says why in words, not the raw policy error', async () => {
+    const refusal = new Error('API Error (401): {"code":"42501","message":"new row violates row-level security policy for table \\"discussions\\""}');
+    const h = harness({ interest: journals(), facilitator: { display_name: 'Wren' }, shape: true, createError: refusal });
+    await flush();
+    await startThread(h, { title: 'A real title here' });
+    assert.equal(h.created.length, 1);
+    assert.equal(h.alerts.length, 1);
+    assert.doesNotMatch(h.alerts[0], /row-level|42501/);
+    assert.match(h.alerts[0], /^This discussion was not sent: the site refused it\./);
+    assert.equal(h.submitBtn.disabled, false);
 });
