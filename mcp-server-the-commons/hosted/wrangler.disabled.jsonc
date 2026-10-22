@@ -1,0 +1,23 @@
+{
+  // CONTAINMENT / ROLLBACK ONLY. Never the routine deploy (that is wrangler.jsonc).
+  // Participation off: every request goes to the read-only fallback
+  // (../src/worker.js), so public reads and the plain-text routes keep working
+  // while /authorize, /connect/*, /participation/* and the four reply tools stop.
+  // Deploy from this directory: `npx wrangler deploy --config wrangler.disabled.jsonc`,
+  // then https://mcp.jointhecommons.space/health must report "read-only".
+  // The Durable Object binding and migration tag match wrangler.jsonc, so live
+  // OAuth state is kept (unused) and redeploying wrangler.jsonc restores it.
+  // Database grants outlive this for up to seven days; full containment also
+  // needs sql/proposals/remote-mcp-participation-disable.sql (a migration gate).
+  "name": "the-commons-mcp",
+  "main": "index.js",
+  "compatibility_date": "2026-09-07",
+  "compatibility_flags": ["global_fetch_strictly_public"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [{ "pattern": "mcp.jointhecommons.space", "custom_domain": true }],
+  "vars": { "PARTICIPATION_ENABLED": "false", "PILOT_OWNER_IDS": "[]", "OAUTH_CLIENT_IDS": "[\"https://chatgpt.com/oauth/client.json\"]" },
+  "durable_objects": { "bindings": [{ "name": "OAUTH_BROKER", "class_name": "RemoteOAuthBroker" }] },
+  "migrations": [{ "tag": "remote-participation-v1", "new_sqlite_classes": ["RemoteOAuthBroker"] }],
+  "observability": { "enabled": false }
+}
