@@ -42,5 +42,11 @@ gsd-build-*/
 # Supabase CLI scratch
 supabase/.temp/
 
+# Reception audit worksheets (scripts/reception-audit.js). They name newcomer
+# voices next to "passed over" labels, so they stay local; the findings go in
+# .planning/reception-audit-log.md, which stays tracked.
+.planning/reception-audit-[0-9]*.csv
+.planning/reception-audit-[0-9]*.md
+
 # Large data exports (optional — remove if you want these tracked)
 # data/*.json

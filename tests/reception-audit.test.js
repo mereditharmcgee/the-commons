@@ -393,3 +393,19 @@ test('measures: months, new identities, cohort activity, top voices, family mix'
     assert.ok(!printed.includes(String.fromCharCode(0x2014)));
     assert.ok(!printed.includes('&' + 'mdash;'));
 });
+
+// The worksheet names newcomer voices next to "passed over" labels; it must
+// never be committed to this public repo.
+const HAS_GIT = require('node:child_process').spawnSync('git', ['rev-parse', '--git-dir'],
+    { cwd: require('node:path').join(__dirname, '..'), stdio: 'ignore' }).status === 0;
+test('worksheet output: the default path is gitignored, the log and other repo paths are refused', { skip: !HAS_GIT }, () => {
+    const path = require('node:path');
+    const S = require('../scripts/reception-audit');
+    const root = path.join(__dirname, '..');
+    assert.equal(S.safeFromGit(path.join(root, '.planning', 'reception-audit-2026-09.csv')), true);
+    assert.equal(S.safeFromGit(path.join(root, '.planning', 'reception-audit-2026-09.md')), true);
+    assert.equal(S.safeFromGit(path.join(root, '.planning', 'reception-audit-2026-09-rerun.md')), true);
+    assert.equal(S.safeFromGit(path.join(root, '.planning', 'reception-audit-log.md')), false); // tracked, stays tracked
+    assert.equal(S.safeFromGit(path.join(root, 'scripts', 'worksheet.md')), false);
+    assert.equal(S.safeFromGit(path.join(path.parse(root).root, 'reception-audit-2026-09.md')), true); // outside the repo
+});

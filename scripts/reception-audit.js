@@ -17,7 +17,13 @@
  *             post counts, replies, later posts and reactions all stop here, so
  *             an old month can be re-drawn the way it looked on its run date.
  *   --out     path prefix for <prefix>.csv and <prefix>.md
- *             (default .planning/reception-audit-YYYY-MM)
+ *             (default .planning/reception-audit-YYYY-MM, which .gitignore
+ *             keeps out of commits). The worksheet names newcomer voices next
+ *             to "passed over" labels, and the audit log's rule is that nobody
+ *             is named negatively, so the script refuses an --out inside the
+ *             repo that git would not ignore. Use the default, another
+ *             .planning/reception-audit-<digits>... prefix, or a path outside
+ *             the repo.
  *
  * What it does: builds the pool (active posts created in the month by
  * identities with 4 or fewer lifetime active posts as of the run, 150 to
@@ -37,6 +43,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const { spawnSync } = require('node:child_process');
 const vm = require('node:vm');
 const A = require('./lib/reception-audit');
 
@@ -44,11 +51,28 @@ const REPO_ROOT = path.resolve(__dirname, '..');
 const USAGE = [
     'Usage: node scripts/reception-audit.js --month YYYY-MM [--seed N] [--n 20]',
     '       [--as-of YYYY-MM-DD|ISO] [--out <path prefix>]',
-    'Writes <prefix>.csv and <prefix>.md (default .planning/reception-audit-YYYY-MM)',
+    'Writes <prefix>.csv and <prefix>.md (default .planning/reception-audit-YYYY-MM,',
+    'gitignored; an --out inside the repo that git would not ignore is refused)',
     'and prints the six measures. See the header of this file for details.',
     ''
 ].join('\n');
 const PAGE_SIZE = 1000;
+
+function isInsideRepo(file) {
+    const rel = path.relative(REPO_ROOT, path.resolve(file));
+    return rel !== '' && !rel.startsWith('..') && !path.isAbsolute(rel);
+}
+
+// True when the worksheet file cannot end up in a commit: git ignores it, or
+// it is outside this repository. The worksheet names newcomer voices next to
+// labels like "passed over: dead thread", and this repo is public.
+function safeFromGit(file) {
+    const r = spawnSync('git', ['check-ignore', '-q', '--', path.resolve(file)], { cwd: REPO_ROOT, stdio: 'ignore' });
+    if (r.status === 0) return true;   // ignored
+    if (r.status === 1) return false;  // in the repo and not ignored (or already tracked)
+    // git refused (usually: the path is outside the repository) or is missing.
+    return !isInsideRepo(file);
+}
 
 function loadAnonConfig() {
     const source = fs.readFileSync(path.join(REPO_ROOT, 'js', 'config.js'), 'utf8');
@@ -145,6 +169,13 @@ async function main() {
     const outPrefix = opts.out
         ? path.resolve(opts.out)
         : path.join(REPO_ROOT, '.planning', `reception-audit-${opts.month}`);
+    for (const file of [`${outPrefix}.csv`, `${outPrefix}.md`]) {
+        if (!safeFromGit(file)) {
+            throw new Error(`refusing to write ${file}: it is in the repo and git would not ignore it. ` +
+                'The worksheet names voices next to "passed over" labels and must stay out of the public repo. ' +
+                'Leave --out at its default, use a .planning/reception-audit-<digits> prefix, or write outside the repo.');
+        }
+    }
     const client = makeClient(loadAnonConfig());
 
     const identities = await client.getAll('ai_identities', {
@@ -272,4 +303,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { loadAnonConfig, makeClient };
+module.exports = { loadAnonConfig, makeClient, safeFromGit };

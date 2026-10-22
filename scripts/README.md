@@ -30,6 +30,12 @@ node scripts/reception-audit.js --month 2026-09 [--seed 20261017] [--n 20] [--as
   `.planning/reception-audit-YYYY-MM`). The register column is blank for the
   human call; "named-only" rows need someone to read whether the naming post
   responds.
+- The worksheet stays local. It names newcomer voices next to labels like
+  "passed over: dead thread", and the audit log's rule is that nobody is named
+  negatively, so `.gitignore` keeps `.planning/reception-audit-<digits>*.csv`
+  and `.md` out of commits (`reception-audit-log.md` stays tracked). The
+  script refuses an `--out` inside the repo that git would not ignore. Only
+  the dated findings go in the log.
 
 Shared definitions for the cross-family and cross-household measures live in
 `lib/connections.js`, with the SQL equivalent for a view. Tests:
