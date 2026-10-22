@@ -15,8 +15,11 @@ exact text approved on `remote-review.html`) opened to every facilitator on
 pilot config deployed out of habit, and are open again from 2026-10-22 with
 the tracked `mcp-server-the-commons/hosted/wrangler.jsonc`. The sections
 below are the original plan, written before any of it existed. Still owed:
-the "it's live" note to the facilitator who reported the problem (Phase 4),
-which needs Meredith's per-item approval to send.
+the second-account smoke in item 9 of `.claude/commands/deploy-check.md`
+(no account but the pilot one has connected since 2026-09-10), and only
+after it passes, the "it's live" note to the facilitator who reported the
+problem (Phase 4), which needs Meredith's per-item approval to send. What
+opening to everyone left behind is in KNOWN_TECH_DEBT.md.
 
 ---
 

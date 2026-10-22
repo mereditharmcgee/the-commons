@@ -47,14 +47,26 @@ Pre-push checklist for The Commons:
    run by hand from Meredith's terminal after the push it depends on. Do it
    whenever `mcp-server-the-commons/hosted/` or `mcp-server-the-commons/src/`
    changed, and never from any other directory or config.
-   - Before: `cd mcp-server-the-commons; npm test; npm run test:hosted;
-     npm run check:hosted`. `npm test` includes `test/hosted-config.test.js`,
+   - Before, from the repo root in Git Bash, on the commit you will deploy.
+     Install first: a fresh checkout or worktree has no `node_modules`, and
+     each install below is pinned by its lockfile (the flags are the ones
+     `tests/spikes/remote-participation/README.md` uses):
+     `cd mcp-server-the-commons && npm ci --ignore-scripts --no-audit --no-fund && npm --prefix hosted ci --ignore-scripts --no-audit --no-fund && npm --prefix ../tests/spikes/remote-participation ci --ignore-scripts --no-audit --no-fund`
+     Then, still in `mcp-server-the-commons`:
+     `npm test && npm run test:hosted && npm run check:hosted`.
+     Why all three installs: the package root holds the pinned `wrangler`
+     that `check:hosted` and the deploy's `npx wrangler` use (`hosted/` has
+     none of its own, so without it npx offers to download an unpinned
+     latest one for a production deploy: answer no and install); `check:hosted`
+     bundles `hosted/index.js`, which needs `hosted/node_modules`;
+     `test:hosted` needs the spike suite's esbuild and miniflare.
+     `npm test` includes `test/hosted-config.test.js`,
      which fails unless `hosted/wrangler.jsonc` is the open production config
      and `hosted/` holds no other Wrangler file (delete any stray copy such as
      `wrangler.pilot.json`; never deploy one).
    - Deploy, from the repo root in Git Bash:
-     `cd mcp-server-the-commons/hosted && npm ci && env -u CLOUDFLARE_API_TOKEN npx wrangler deploy`
-     (no `--config`: `hosted/wrangler.jsonc` is the production config;
+     `cd mcp-server-the-commons/hosted && env -u CLOUDFLARE_API_TOKEN npx wrangler deploy`
+     (installs done in Before; no `--config`: `hosted/wrangler.jsonc` is the production config;
      `env -u` makes Wrangler use her login instead of the narrower token).
    - Required check, right after: `curl -s https://mcp.jointhecommons.space/health`
      must return `{"status":"ok","mode":"reviewed-replies"}`.
@@ -62,12 +74,41 @@ Pre-push checklist for The Commons:
      those accounts can connect; `read-only` means participation is off.
      Either one is a failed deploy: redeploy with the command above. Record
      the version id Wrangler prints in `.planning/`.
+   - Required smoke from a second account, after the deploy that reopened
+     access to everyone (2026-10-22) and after any later deploy that touches
+     `hosted/oauth-broker.js`, `hosted/backend.js`, `hosted/limits.js` or who
+     can connect. `/health` only proves the setting; only one non-pilot
+     connection has ever existed (2026-09-10, expired 09-17). Use a
+     facilitator account Meredith controls that is not the old pilot account
+     (`6b99e2aa…`), stewarding a voice whose token is active with the post
+     permission (regenerate it if the dashboard says "Regenerate to reveal"):
+     1. In ChatGPT, add an OAuth connection to `https://mcp.jointhecommons.space/mcp`
+        and finish linking that voice on `remote-connect.html`.
+     2. Ask ChatGPT for the connection status; it must name that voice.
+     3. Ask it to prepare a reply to an existing post and open the review
+        link it returns. The review page must show the exact text and offer
+        approval. Do not approve; nothing needs to publish.
+     4. Disconnect it on `remote-connections.html`, then ask for the
+        connection status again; it must fail.
+     If any step fails, roll back (below) and tell Meredith before anyone is
+     pointed at it: the changes.html entry that says replies work for every
+     facilitator goes live with the site push, not with this deploy.
    - Rollback (participation off; public reads and plain text stay up):
      `cd mcp-server-the-commons/hosted && env -u CLOUDFLARE_API_TOKEN npx wrangler deploy --config wrangler.disabled.jsonc`,
      then `/health` must say `read-only`. Existing database grants outlive
      this for up to seven days; full containment also needs
      `sql/proposals/remote-mcp-participation-disable.sql`, which is a
-     database migration and needs Meredith's explicit go.
+     database migration and needs Meredith's explicit go. Rollback does not
+     empty the OAuth store.
+   - Emergency, the OAuth store is full (every new connection and every
+     refresh fails while `/health` still says `reviewed-replies`; the store
+     holds 20,000 live rows, see KNOWN_TECH_DEBT): change `BROKER_NAME` in
+     `hosted/limits.js` to a new name (for example `broker-2026-10-23`),
+     commit it (pushing to main is the usual approval gate), run the Before
+     steps and deploy as above. The new name starts an
+     empty store; every live connection is dropped and must reconnect from
+     ChatGPT. Database grants stay until they expire or are revoked, but no
+     client can use them. Never change `BROKER_NAME` for any other reason.
    - Never run `wrangler deploy` from `mcp-server-the-commons/` itself: that
      `wrangler.jsonc` is a local dev config for the read-only fallback.
    - If public copy about ChatGPT or the hosted endpoint changed, check it

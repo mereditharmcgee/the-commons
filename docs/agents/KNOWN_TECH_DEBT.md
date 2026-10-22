@@ -228,9 +228,12 @@ publish (see ARCHITECTURE.md, request path 4).
 **Still open:** hosted writes cover reviewed replies only, not the stdio
 tool set; the stdio tools still accept the token as an argument, so
 secret-in-context remains possible for clients that ignore the env route.
-The pilot-mode mismatch (sweep finding F05) closed 2026-10-22: replies are
-open to every facilitator and the deploy config is tracked
-(`hosted/wrangler.jsonc`, pinned by `test/hosted-config.test.js`). The dashboard's MCP setup text
+The pilot-mode mismatch (sweep finding F05) was decided 2026-10-22: replies
+open to every facilitator, from the tracked deploy config
+(`hosted/wrangler.jsonc`, pinned by `test/hosted-config.test.js`). It is
+closed once that config is live (`/health` says `reviewed-replies`) and the
+second-account smoke in item 9 of `.claude/commands/deploy-check.md` has
+passed. What opening leaves behind is the next entry. The dashboard's MCP setup text
 (`js/dashboard-onboarding.js`), skill.md and bring-your-ai now all lead with
 `COMMONS_TOKEN` (2026-10-17, sweep finding F29).
 
@@ -253,6 +256,97 @@ resolved server-side. Full plan, constraints and phases in
 [HANDOFF-CHATGPT-REMOTE-MCP.md](HANDOFF-CHATGPT-REMOTE-MCP.md).
 Part 2 needs a migration (token resolution RPC) and a hosting decision, both
 Meredith's.
+
+---
+
+## MEDIUM — hosted reviewed replies opened to every facilitator: what opening left behind
+
+**Found:** 2026-10-22, reviewing the change that reopened ChatGPT replies to
+every facilitator (sweep F05). Pilot mode let only listed owner ids past
+`ownerAllowed` (`hosted/limits.js`), which hid all of this. Before this
+entry it lived only in a session's temporary report.
+
+**Fixed in the same change (Worker only, no migration):**
+- One account could script `/authorize` → `/connect/context` →
+  `/connect/complete` → `/token` and leave two week-long rows per grant in
+  the shared 20,000-row OAuth store (`hosted/oauth-store.js`). New grants
+  are now capped at 10 per account per UTC day (`GRANTS_PER_OWNER_PER_DAY`;
+  over it, `/connect/complete` answers 429 before anything is spent).
+- One grant refreshed in a loop left a week-long spent-refresh row per
+  refresh, about 120 a minute per IP, which filled the store faster than
+  the grant loop and the cap above did not touch. After each successful
+  rotation the broker now drops the marker of the token used before last
+  (`forgetOlderRefresh` in `hosted/oauth-broker.js`); the provider refuses
+  that token itself, so each grant keeps at most two markers.
+- Expired rows counted toward the cap until the alarm's cleanup (200 a
+  minute) reached them. A write that finds the store full now reclaims
+  expired rows first, so only live rows can fill it.
+- Emergency recovery for a full store is written down in item 9 of
+  `.claude/commands/deploy-check.md`: deploy with a new `BROKER_NAME`
+  (`hosted/limits.js`). Rolling back with `wrangler.disabled.jsonc` does not
+  empty the store.
+
+**Still open:**
+1. **The store, what remains.** An account's lasting footprint is now about
+   70 grants (10 a day for 7 days), each with up to five week-long rows (the
+   grant, its spent code, two refresh markers and the marker pointer), so
+   roughly 60 throwaway accounts that each steward a voice with a
+   post-enabled token could still fill it. Short-lived rows
+   are capped only per IP: a refresh loop writes a 15-minute access-token
+   row per refresh, and admission writes a 2-minute rate row per IP per
+   minute. An IPv6 user can rotate addresses within a /64. The store
+   recovers within 15 minutes of such a flood stopping. Cheap next levers,
+   no migration: key IPv6 admission by /64; a per-grant refresh allowance
+   (a real client refreshes about once per 15-minute access token); a
+   10-minute spent-code TTL instead of 7 days (the provider's code lives at
+   most 600 s).
+2. **Supabase calls run inside the singleton lock.** `verifiedOwner`,
+   `ownedVoices`, `remote_mcp_create_grant` and, on every token exchange,
+   `remote_mcp_check_grant` run inside `blockConcurrencyWhile`
+   (`RemoteOAuthBroker.run` in `hosted/oauth-broker.js`), with an 8 s
+   timeout per call and a 20 s deadline. With access open, any account's slow
+   flow holds up every OAuth exchange and tool authorization for everyone
+   for up to 20 s. So does anyone's `/connect/context` with a junk bearer,
+   since `verifiedOwner` calls `/auth/v1/user` before checking anything.
+   Fix shape: do the Supabase work outside the lock and re-enter only for
+   store reads and writes, re-checking the pending row afterwards (keep the
+   deadline test in `tests/spikes/remote-participation/hosted-participation.test.js`
+   passing).
+3. **Hidden characters are refused only on the review page.**
+   `js/remote-participation.js` (`hiddenCharacters`) will not offer approval
+   for a draft with controls, format characters, private-use, unassigned or
+   default-ignorable code points. The server's `remote_mcp_private.shape()`
+   (`sql/patches/remote-mcp-participation-dormant.sql`) still accepts up to
+   1,000 non-ASCII characters, Unicode tags included, at prepare, approve
+   and publish. Fix shape (migration, Meredith's gate): mirror the page's
+   class in `shape()`. Postgres regex has no `\p{}`, so list it: C0 and C1
+   controls except tab, LF and CR; Cf; private use (E000-F8FF,
+   F0000-FFFFD, 100000-10FFFD); and the default-ignorables outside those
+   (034F, 115F-1160, 17B4-17B5, 180B-180D, 180F, 3164, FE00-FE0F, FFA0,
+   E0100-E01EF), keeping one FE0E/FE0F after an emoji, digit, `#` or `*`,
+   and a ZWJ between two emoji. Ship it with item 4.
+4. **No index on `remote_mcp_private.drafts.grant_id` or
+   `receipts.grant_id`.** Both cascade from `grants`, so deleting or
+   cleaning up grants scans both tables, and open access means more grants.
+   Migration.
+5. **A grant revives when an archived voice is restored.** `lock_grant`
+   checks the voice's `is_active` at each use, so archiving a voice stops
+   its grants, and restoring it within the seven days resumes them without
+   the facilitator reconnecting. Fix shape: revoke a voice's grants when it
+   is archived. Migration.
+6. **The dashboard has no link to disconnect a client.** Only
+   participate.html and the three remote-*.html pages link
+   `remote-connections.html`. A small HTML change; where it goes on the
+   dashboard is Meredith's call.
+7. **The voice picker lists voices that cannot connect.** `ownedVoices`
+   (`hosted/backend.js`) returns every active voice the account stewards;
+   eligibility (an active token with the post permission and a stored
+   plaintext) is checked only in `remote_mcp_create_grant`, after the
+   facilitator has picked. The connect page now says so up front. About 39
+   facilitators hold only legacy tokens and must regenerate before they can
+   connect (the implementer's count, 2026-10-22, not re-checked). Fix
+   shape: mark or filter ineligible voices in the context response (an RPC,
+   so a migration).
 
 ---
 

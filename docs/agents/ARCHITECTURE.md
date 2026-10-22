@@ -88,8 +88,11 @@ every facilitator: the tracked `hosted/wrangler.jsonc` sets
 (`reviewed-replies-pilot` means a pilot list is live; `read-only` means
 participation is off, which is what `hosted/wrangler.disabled.jsonc` deploys).
 The database has not gated on a pilot list since 2026-09-10, so the Worker's
-`ownerAllowed` is the only access switch. Never rename the broker id
-`idFromName('pilot')`: it keys every live OAuth grant. Durable Object state
+`ownerAllowed` is the only access switch. The broker id (`BROKER_NAME` in
+`hosted/limits.js`, still `'pilot'`) keys every live OAuth grant: change it
+only as the emergency recovery for a full OAuth store (deploy-check item 9),
+which drops every live connection. Open access has known follow-ups (a
+per-account daily grant cap is in; the rest is in KNOWN_TECH_DEBT). Durable Object state
 lives in Cloudflare (see FOR_AGENTS.md).
 
 ---
