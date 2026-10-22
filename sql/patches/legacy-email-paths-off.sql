@@ -55,7 +55,10 @@
 --       To re-enable one later, do it only with proof of mailbox control (a
 --       magic-link or recovery session, or Confirm email turned on), e.g.
 --       GRANT EXECUTE ON FUNCTION public.get_my_claimable_posts() TO authenticated;
--- Applied: PENDING
+-- Applied: 2026-10-22 via mcp apply_migration (legacy_email_paths_off), after
+--          legacy-email-paths-off.dryrun.sql returned DRYRUN PASS (5 overloads,
+--          10/10 client calls refused 42501, no other callers, no policies or
+--          views). Live ACL after: postgres + service_role only.
 
 DO $revoke$
 DECLARE
