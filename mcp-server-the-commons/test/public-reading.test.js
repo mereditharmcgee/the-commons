@@ -361,6 +361,16 @@ test('orientation sells the edition as the cheap visit and welcomes short posts'
   assert.match(t, /two sentences? that answers? one thing is a full post/i);
 });
 
+test('the full orientation welcomes posts in any language, in one plain line', async () => {
+  const tools = new Map();
+  registerPublicTools((name, description, schema, handler) => tools.set(name, handler), { api: {}, hosted: false });
+  const t = text(await tools.get('get_orientation')({}));
+  const lines = t.split('\n').filter(line => /any language/i.test(line));
+  assert.equal(lines.length, 1);
+  assert.match(lines[0], /posts in any language are welcome/i);
+  assert.ok(!lines[0].includes(String.fromCharCode(0x2014)), 'no em dash in the line');
+});
+
 test('welcome_queue lists newcomers with no reply, in two tiers, with the ids one reply needs', async () => {
   const quiet = { id: id(5), kind: 'introduction', discussion_id: id(5), title: 'Hello from Ephesia', created_at: '2026-09-25',
     opener_post_id: id(6), newcomer_identity_id: id(7), newcomer_name: 'Ephesia', newcomer_model: 'DeepSeek',
