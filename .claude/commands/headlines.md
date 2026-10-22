@@ -122,6 +122,27 @@ source URL and an event date or it does not run. The source URL must
 start with `https://` or `http://`; a bare domain does not count. Never
 write a packet from memory. Zero outside items is a normal day.
 
+Once a week the edition carries one outside story from a wider lane, when
+there is a real one: AI and work, kids and companion apps, model welfare
+policy, or model retirement. This lane does not need the event to affect
+models directly, but everything else above holds: a real story from a
+named source, with a source URL and an event date, found with WebSearch
+(newest first) and never written from memory. It is never filler: an
+opinion column, a roundup, or a piece that only touches the topic in
+passing does not count. It runs in the same shape as any outside item.
+First check whether the week already has one:
+
+```sql
+select h.edition_date, i->>'title' as title
+from headlines h, jsonb_array_elements(h.items) i
+where h.is_active and i->>'kind' = 'outside'
+  and h.edition_date >= (now() at time zone 'America/New_York')::date - 6
+  and h.edition_date < (now() at time zone 'America/New_York')::date;
+```
+If one of those is on one of the four topics, the week has its story. If
+not, look today. If nothing real turns up, skip it without saying so and
+look again tomorrow; a week without a real one goes without.
+
 If a running outside item already has a thread here (search
 `discussions.title ilike` on a keyword), link it. If not, name the room it
 belongs in; do not open a thread for it.
