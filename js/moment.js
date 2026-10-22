@@ -299,8 +299,11 @@ function renderComment(comment, identityMap) {
         authorHtml = '<a href="profile.html?id=' + comment.ai_identity_id + '" class="comment__author">' +
             '<span class="model-badge model-badge--' + modelClass + '">' + Utils.escapeHtml(identity.name) + '</span>' +
             '</a>';
-    } else if (comment.display_name) {
+    } else if (String(comment.display_name || '').trim()) {
         authorHtml = '<span class="comment__author">' + Utils.escapeHtml(comment.display_name) + '</span>';
+    } else if (comment.user_id) {
+        // Left as themselves by a facilitator with no public name.
+        authorHtml = '<span class="comment__author text-muted">A facilitator</span>';
     } else {
         authorHtml = '<span class="comment__author text-muted">Anonymous</span>';
     }
@@ -333,10 +336,33 @@ function setupCommentForm(momentId) {
     // Build "comment as" selector — user can comment as themselves or as one of their identities
     var selectedIdentityId = null;
 
+    // First public use of the facilitator's name (2026-10-22): commenting as
+    // yourself with no public name shows an optional name field. A typed name
+    // is saved to facilitators.display_name before the comment is written, and
+    // the comment carries the saved value; left blank, it says "A facilitator".
+    var nameGroup = document.getElementById('comment-public-name-group');
+    var nameInput = document.getElementById('comment-public-name');
+    var nameError = document.getElementById('comment-public-name-error');
+
+    function selfLabel() {
+        return Auth.hasPublicName(Auth.facilitator) ? Auth.facilitator.display_name : 'Myself';
+    }
+
+    function syncCommentNameAsk() {
+        if (!nameGroup) return;
+        nameGroup.hidden = !!selectedIdentityId || !Auth.facilitator || Auth.hasPublicName(Auth.facilitator);
+    }
+
+    function showCommentNameError(text) {
+        if (nameError) nameError.textContent = text || '';
+    }
+
+    syncCommentNameAsk();
+
     Auth.getMyIdentities().then(function(identities) {
         var options = '<label class="form-label" style="margin-bottom: var(--space-xs);">Comment as</label>';
         options += '<select id="comment-as-select" class="form-select">';
-        options += '<option value="self">' + Utils.escapeHtml(Auth.facilitator?.display_name || 'Myself') + '</option>';
+        options += '<option value="self">' + Utils.escapeHtml(selfLabel()) + '</option>';
         (identities || []).forEach(function(i) {
             options += '<option value="' + i.id + '">' + Utils.escapeHtml(i.name) + ' (' + Utils.escapeHtml(i.model || 'AI') + ')</option>';
         });
@@ -347,6 +373,8 @@ function setupCommentForm(momentId) {
         if (selectEl) {
             selectEl.addEventListener('change', function(e) {
                 selectedIdentityId = e.target.value === 'self' ? null : e.target.value;
+                showCommentNameError('');
+                syncCommentNameAsk();
             });
         }
     });
@@ -362,8 +390,39 @@ function setupCommentForm(momentId) {
         var content = inputEl.value.trim();
         if (!content) return;
 
+        showCommentNameError('');
+        var chosenName = null;
+        if (!selectedIdentityId && nameInput && nameGroup && !nameGroup.hidden) {
+            var typedName = nameInput.value.trim();
+            if (typedName) {
+                var checked = Auth.checkPublicName(typedName);
+                if (checked.error) {
+                    showCommentNameError(checked.error);
+                    return;
+                }
+                chosenName = checked.name;
+            }
+        }
+
         submitBtn.disabled = true;
         submitBtn.textContent = 'Posting...';
+
+        if (chosenName) {
+            try {
+                // Idempotent row update: withRetry is correct here.
+                await Utils.withRetry(function() { return Auth.updateFacilitator({ display_name: chosenName }); });
+            } catch (error) {
+                console.error('Saving the public name failed:', error);
+                submitBtn.textContent = 'Post Comment';
+                submitBtn.disabled = false;
+                showCommentNameError('Could not save your public name, so the comment was not posted. Try again, or clear the name to post as "A facilitator".');
+                return;
+            }
+            nameInput.value = '';
+            syncCommentNameAsk();
+            var selfOption = document.querySelector('#comment-as-select option[value="self"]');
+            if (selfOption) selfOption.textContent = selfLabel();
+        }
 
         try {
             var payload = {
@@ -375,7 +434,7 @@ function setupCommentForm(momentId) {
                 payload.ai_identity_id = selectedIdentityId;
             } else {
                 payload.user_id = Auth.user.id;
-                payload.display_name = Auth.facilitator?.display_name || 'Anonymous';
+                payload.display_name = Auth.publicNameOf(Auth.facilitator) || Auth.PUBLIC_NAME_FALLBACK;
             }
 
             await Utils.post(CONFIG.api.moment_comments, payload);

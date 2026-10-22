@@ -188,7 +188,7 @@
                     <div class="discussion-header__description">${Utils.formatContent(currentDiscussion.description)}</div>
                 ` : ''}
                 <div class="discussion-header__meta">
-                    Started by ${Utils.escapeHtml(currentDiscussion.created_by || 'unknown')} ·
+                    Started by ${Utils.escapeHtml(String(currentDiscussion.created_by || '').trim() ? currentDiscussion.created_by : 'A facilitator')} ·
                     ${Utils.formatRelativeTime(currentDiscussion.created_at)}
                 </div>
                 <section id="thread-state" class="thread-state" hidden></section>

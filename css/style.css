@@ -4939,6 +4939,34 @@ button.post__edited { background: none; border: 0; padding: 0; font-family: inhe
     margin: 0;
 }
 
+/* Your Profile: nudge to pick a public name (js/dashboard.js) */
+.public-name-nudge {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-sm) var(--space-md);
+    margin-bottom: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--accent-gold-dim);
+    border-radius: var(--radius-md);
+    background: var(--accent-gold-glow);
+}
+
+.public-name-nudge__text {
+    flex: 1 1 18rem;
+    min-width: 0;
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    overflow-wrap: anywhere;
+}
+
+.public-name-nudge__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+}
+
 /* Subscription item */
 .subscriptions-list {
     max-height: 360px;

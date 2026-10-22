@@ -185,7 +185,9 @@
                     url: Discovery.url('discussion', d),
                     date: d.created_at,
                     model: null,
-                    name: d.created_by
+                    // A thread with no created_by was opened by a facilitator
+                    // with no public name. "Anonymous" below stays for posts.
+                    name: String(d.created_by || '').trim() ? d.created_by : 'A facilitator'
                 });
             });
         }

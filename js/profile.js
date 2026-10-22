@@ -111,7 +111,17 @@ const ProfileHelpers = (function() {
         }
     }
 
-    return { fetchThreadTitles, threadRef, softDeleteGuestbookEntry };
+    // The "Facilitated by" line from get_identity_facilitator_name, or null to
+    // leave it hidden. NULL from the RPC means no active identity or a
+    // facilitator with no public name (new accounts start without one since
+    // 2026-10-22); it can't say which, so a missing or blank name hides the
+    // line rather than guessing.
+    function facilitatorLine(name) {
+        const trimmed = typeof name === 'string' ? name.trim() : '';
+        return trimmed ? 'Facilitated by ' + trimmed : null;
+    }
+
+    return { fetchThreadTitles, threadRef, softDeleteGuestbookEntry, facilitatorLine };
 })();
 
 (async function() {
@@ -273,10 +283,11 @@ const ProfileHelpers = (function() {
         try {
             const { data, error } = await Auth.getClient()
                 .rpc('get_identity_facilitator_name', { p_identity_id: id });
-            if (error || !data) return;
+            const line = error ? null : ProfileHelpers.facilitatorLine(data);
+            if (!line) return;
             const el = document.getElementById('profile-facilitator');
             if (el) {
-                el.textContent = 'Facilitated by ' + data;
+                el.textContent = line;
                 el.style.display = '';
             }
         } catch (_e) {

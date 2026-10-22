@@ -320,10 +320,79 @@
             displayNameInput.value = facilitator.display_name;
         }
 
+        // One small, dismissible nudge when the public name is unset, or is
+        // still the part of the account's email before the @ (how accounts were
+        // seeded before 2026-10-22). Compared on the client only; the copy
+        // never shows the email. The facilitator row can arrive after this
+        // runs (slow session check), so it re-syncs on authStateChanged.
+        const profileSection = displayNameInput.closest('.dashboard-section--profile');
+        const nudgeKey = DashboardOnboarding.publicNameNudgeKey(Auth.getUser().id);
+        let publicNameNudge = null;
+        let publicNameSaved = false; // a save this visit is a choice; stop nudging
+        let displayNameTouched = false;
+        displayNameInput.addEventListener('input', () => { displayNameTouched = true; });
+        const nudgeDismissed = () => {
+            try { return localStorage.getItem(nudgeKey) === '1'; } catch (_e) { return false; }
+        };
+        const removePublicNameNudge = () => {
+            if (publicNameNudge) publicNameNudge.remove();
+            publicNameNudge = null;
+        };
+        const syncPublicNameNudge = () => {
+            const current = Auth.getFacilitator();
+            if (current && current.display_name && !displayNameTouched && !displayNameInput.value) {
+                displayNameInput.value = current.display_name; // the row loaded late
+            }
+            const user = Auth.getUser();
+            const kind = Auth.publicNameNudge(current, user && user.email);
+            const text = DashboardOnboarding.publicNameNudgeText(kind);
+            if (!text || publicNameSaved || nudgeDismissed() || !profileSection) { removePublicNameNudge(); return; }
+            if (publicNameNudge && publicNameNudge.dataset.kind === kind) return;
+            removePublicNameNudge();
+
+            publicNameNudge = document.createElement('div');
+            publicNameNudge.className = 'public-name-nudge';
+            publicNameNudge.id = 'public-name-nudge';
+            publicNameNudge.dataset.kind = kind;
+            const copy = document.createElement('p');
+            copy.className = 'public-name-nudge__text';
+            copy.textContent = text;
+            const actions = document.createElement('div');
+            actions.className = 'public-name-nudge__actions';
+            const pick = document.createElement('button');
+            pick.type = 'button';
+            pick.className = 'btn btn--secondary btn--small';
+            pick.textContent = 'Pick a name';
+            pick.addEventListener('click', () => {
+                displayNameTouched = true;
+                displayNameInput.value = '';
+                displayNameInput.focus();
+            });
+            const dismiss = document.createElement('button');
+            dismiss.type = 'button';
+            dismiss.className = 'btn btn--ghost btn--small';
+            dismiss.textContent = 'Not now';
+            dismiss.addEventListener('click', () => {
+                try { localStorage.setItem(nudgeKey, '1'); } catch (_e) { /* storage blocked: hide for this visit */ }
+                removePublicNameNudge();
+            });
+            actions.append(pick, dismiss);
+            publicNameNudge.append(copy, actions);
+            const formRow = profileSection.querySelector('.form-row');
+            profileSection.insertBefore(publicNameNudge, formRow);
+        };
+        syncPublicNameNudge();
+        window.addEventListener('authStateChanged', syncPublicNameNudge);
+
         saveDisplayNameBtn.addEventListener('click', async () => {
             const newName = displayNameInput.value.trim();
             if (!newName) {
                 Utils.showFormMessage(displayNameMessage, 'Display name cannot be empty.', 'error');
+                return;
+            }
+            const checked = Auth.checkPublicName(newName);
+            if (checked.error) {
+                Utils.showFormMessage(displayNameMessage, checked.error, 'error');
                 return;
             }
 
@@ -331,7 +400,11 @@
             saveDisplayNameBtn.textContent = 'Saving...';
 
             try {
-                await Auth.updateFacilitator({ display_name: newName });
+                // Idempotent row update: withRetry is correct here.
+                await Utils.withRetry(() => Auth.updateFacilitator({ display_name: checked.name }));
+                displayNameInput.value = checked.name;
+                publicNameSaved = true;
+                removePublicNameNudge();
                 Utils.showFormMessage(displayNameMessage, 'Display name updated!', 'success');
             } catch (error) {
                 console.error('Failed to update display name:', error);

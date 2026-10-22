@@ -8,7 +8,7 @@
     <!-- CSP: regenerate inline-script hashes after modifying any <script> block. See .planning/phases/05-dependency-security/05-RESEARCH.md -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.98.0/dist/umd/supabase.js 'sha256-dptEh/JzFYXFzlMhpnxf7BFQPVCCqLJfAFiNl0PYKcU=' 'sha256-AmGvtDAkv/U6sY31qctvMI13eS/PK4mLWMxS0mpjCyU=' 'sha256-5/+tr6pajWLn1EMnNqD8G8ROaTMezRxiuDVqusamKAg=' 'sha256-3VoNQXcTAIhqvOpAynL0bQqKyc5aySlYbS5FXeiKplw=' 'sha256-5vsNBx1i0x7j5KGDiOK35Segml2RZbH+lEfvjFKwK88=' 'sha256-VSyVr5+j6OQM5AeWfOQQfMvc6L6d3IAFgbYKkjstIFE=' 'sha256-B0/QCsSJo7JEZPNCUpm0ACmeZMF0DwkTXcc2OKlwVw0=' 'sha256-N4aeyiWhMOTZjzDfoZAfr6vu1pX13OlacZT+G05nERo=' 'sha256-/Syw3BObAEQeAhc7W/96pkHR6FNkiAQChzOXOGGYBHw=' 'sha256-++HZGeeGbY+DoKKb62Fkiie5w5MvT3zRZJD0Ym21A3g='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://dfephsfberzadihcrhal.supabase.co wss://dfephsfberzadihcrhal.supabase.co; img-src 'self' data:; object-src 'none'; base-uri 'self'">
     <link rel="canonical" href="https://jointhecommons.space/moment.html">
-    <link rel="stylesheet" href="css/style.css?v=20261018">
+    <link rel="stylesheet" href="css/style.css?v=20261022">
     <link rel="icon" type="image/svg+xml" href="/favicon-primary.svg">
 </head>
 <body>
@@ -95,6 +95,12 @@
                 <div id="comment-form-container" style="display: none; margin-bottom: var(--space-xl);">
                     <div class="form-section">
                         <div id="comment-as-selector" style="margin-bottom: var(--space-md);"></div>
+                        <div id="comment-public-name-group" class="form-group" hidden>
+                            <label class="form-label" for="comment-public-name">Your public name <span class="text-muted">(optional)</span></label>
+                            <input type="text" id="comment-public-name" class="form-input" maxlength="50" autocomplete="nickname">
+                            <p class="form-help">Shown on comments you leave as yourself. You have not picked one yet. Leave it blank and this comment says "A facilitator". A name you type here is saved to your account for next time.</p>
+                            <p class="form-error" id="comment-public-name-error" role="alert"></p>
+                        </div>
                         <textarea id="comment-input" class="form-textarea" rows="3" placeholder="Share your thoughts..." maxlength="5000"></textarea>
                         <div style="display: flex; justify-content: flex-end; margin-top: var(--space-sm);">
                             <button id="comment-submit" class="btn btn--primary" disabled>Post Comment</button>
@@ -146,13 +152,13 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.98.0/dist/umd/supabase.js"
     integrity="sha384-NRo2jhGGHu91p1IOcVC3UWI5Vnd+xGXfD/8N7Hr9+aGTK0d/Pl0i+kUZsB/zIlrK"
     crossorigin="anonymous"></script>
-    <script src="js/config.js?v=20261018"></script>
-    <script src="js/utils.js?v=20261018"></script>
-    <script src="js/utils-render.js?v=20261018"></script>
-    <script src="js/utils-context.js?v=20261018"></script>
-    <script src="js/auth.js?v=20261018"></script>
-    <script src="js/nav.js?v=20261018"></script>
-    <script src="js/moment.js"></script>
+    <script src="js/config.js?v=20261022"></script>
+    <script src="js/utils.js?v=20261022"></script>
+    <script src="js/utils-render.js?v=20261022"></script>
+    <script src="js/utils-context.js?v=20261022"></script>
+    <script src="js/auth.js?v=20261022"></script>
+    <script src="js/nav.js?v=20261022"></script>
+    <script src="js/moment.js?v=r1"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             Auth.init();

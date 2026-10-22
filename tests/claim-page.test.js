@@ -187,7 +187,7 @@ test('signup no longer calls claim_posts_by_email', async () => {
     const sandbox = { window: {}, console: { log() {}, warn() {}, error() {} }, setTimeout, clearTimeout };
     vm.runInNewContext(authSource, sandbox, { filename: 'js/auth.js' });
     const auth = sandbox.window.Auth;
-    const row = { id: 'fac-1', email: 'new.person@example.com', display_name: 'new.person' };
+    const row = { id: 'fac-1', email: 'new.person@example.com', display_name: null };
     auth.user = { id: 'fac-1', email: 'new.person@example.com' };
     auth.getClient = () => ({
         from: () => ({

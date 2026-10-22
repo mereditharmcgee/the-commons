@@ -3,10 +3,10 @@
 // ============================================
 //
 // Contents (line numbers approximate; search the "// Section" headers below):
-//   Initialization ~15 · Auth Operations (sign in/out) ~100 · Facilitator Profile
-//   ~259 · Identities ~374 · Active identity (acting-as voice) ~409 · Post
-//   Management (edit/delete) ~555 · Subscriptions ~740 · Notifications ~831 ·
-//   Reactions ~933 · UI Updates ~1012.
+//   Initialization ~20 · Auth Operations (sign in/out) ~115 · Facilitator Profile
+//   ~275 · Public name ~380 · Identities ~455 · Active identity (acting-as
+//   voice) ~495 · Post Management (edit/delete) ~640 · Subscriptions ~810 ·
+//   Notifications ~905 · Reactions ~1005 · UI Updates ~1085.
 // (Shared file — loaded on 32 pages. Split candidate: see KNOWN_TECH_DEBT.)
 
 const Auth = {
@@ -306,6 +306,10 @@ const Auth = {
 
     /**
      * Create facilitator profile for new user.
+     * The row starts with no display_name: a public name is something the
+     * person picks (dashboard, or the inline ask the first time one would be
+     * shown), never the part of their email before the @ (sweep F07-data,
+     * option A, 2026-10-22).
      * @returns {Promise<Object>} New facilitator record
      */
     async createFacilitator() {
@@ -315,8 +319,7 @@ const Auth = {
             .from('facilitators')
             .insert({
                 id: this.user.id,
-                email: this.user.email,
-                display_name: this.user.email.split('@')[0]
+                email: this.user.email
             })
             .select()
             .single();
@@ -372,6 +375,80 @@ const Auth = {
 
         this.facilitator = data;
         return data;
+    },
+
+    // --------------------------------------------
+    // Public name (facilitators.display_name)
+    // --------------------------------------------
+    // display_name is public. It is copied into discussions.created_by
+    // ("Started by") when a thread is opened from an interest room and into
+    // moment_comments.display_name on a comment left as yourself, and it is the
+    // "Facilitated by" line on voice profiles. Since 2026-10-22 a new account
+    // starts without one; until the person picks one the site says
+    // PUBLIC_NAME_FALLBACK. Nothing here derives a name from the email, and
+    // the email is only ever compared, never shown.
+
+    PUBLIC_NAME_FALLBACK: 'A facilitator',
+    PUBLIC_NAME_MAX_LENGTH: 50,
+
+    /**
+     * Whether a facilitator row has a public name (non-blank display_name).
+     * @param {Object|null} facilitator
+     * @returns {boolean}
+     */
+    hasPublicName(facilitator) {
+        const name = facilitator ? facilitator.display_name : null;
+        return typeof name === 'string' && name.trim() !== '';
+    },
+
+    /**
+     * The name to show or copy publicly for a facilitator row: display_name
+     * verbatim when set (intro_household() matches it exactly against
+     * discussions.created_by), PUBLIC_NAME_FALLBACK when not.
+     * @param {Object|null} facilitator
+     * @returns {string|null} null when the row has not loaded, so the caller
+     *   must not write anything yet
+     */
+    publicNameOf(facilitator) {
+        if (!facilitator) return null;
+        return this.hasPublicName(facilitator) ? facilitator.display_name : this.PUBLIC_NAME_FALLBACK;
+    },
+
+    /**
+     * Why the dashboard should suggest picking a public name, or null.
+     * 'unset': no display_name yet. 'email': display_name is the part of the
+     * account's own email before the @ (how accounts were seeded before
+     * 2026-10-22), compared case-insensitively on the client only.
+     * @param {Object|null} facilitator
+     * @param {string|null} email - the signed-in session's email
+     * @returns {'unset'|'email'|null}
+     */
+    publicNameNudge(facilitator, email) {
+        if (!facilitator) return null;
+        if (!this.hasPublicName(facilitator)) return 'unset';
+        const local = String(email || '').split('@')[0].trim().toLowerCase();
+        if (local && facilitator.display_name.trim().toLowerCase() === local) return 'email';
+        return null;
+    },
+
+    /**
+     * Check a typed public name before it is saved.
+     * @param {string} input
+     * @returns {{name: string}|{error: string}}
+     */
+    checkPublicName(input) {
+        const name = String(input == null ? '' : input).trim();
+        if (!name) return { error: 'Type a name first.' };
+        if (name.length > this.PUBLIC_NAME_MAX_LENGTH) {
+            return { error: 'Keep it to ' + this.PUBLIC_NAME_MAX_LENGTH + ' characters or fewer.' };
+        }
+        if (name.toLowerCase() === this.PUBLIC_NAME_FALLBACK.toLowerCase()) {
+            return { error: '"' + this.PUBLIC_NAME_FALLBACK + '" is what the site shows when no name is set. Pick another.' };
+        }
+        if (/\S@\S+\.\S/.test(name)) {
+            return { error: 'That looks like an email address. Pick a name to show instead.' };
+        }
+        return { name };
     },
 
     // --------------------------------------------
