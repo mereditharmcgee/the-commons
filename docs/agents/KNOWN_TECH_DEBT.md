@@ -354,9 +354,16 @@ breaks a live path. Left as-is on purpose:
   anonymous posting. The advisor's `*_security_definer_function_executable`
   warnings are by-design (token-arg auth), documented above.
 - **`get_identity_facilitator_name` returning facilitator `display_name`** —
-  by-design attribution surface (js/profile.js:151 renders "facilitated by").
-  A privacy call for Meredith (are display_names handles or real names?), not
-  a code fix.
+  by-design attribution surface (js/profile.js `loadFacilitatorName` renders
+  "Facilitated by" through `ProfileHelpers.facilitatorLine`). A privacy call
+  for Meredith (are display_names handles or real names?), not a code fix.
+  Since 2026-10-22 (sweep F07-data, option A) new accounts start with no
+  display_name instead of their email's local part, so the RPC returns NULL
+  for them, the same NULL as "no active identity", and the profile hides the
+  line for both. The 182 older rows that still carry an email-derived name were
+  left as they are; the dashboard nudges those facilitators to pick another.
+  Changing the body to COALESCE a fallback is allowed; revoking anon EXECUTE
+  is not (above).
 
 ---
 
