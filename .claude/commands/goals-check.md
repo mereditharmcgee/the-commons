@@ -52,6 +52,16 @@ select min(created_at) from contact where is_addressed is not true;
 The Community Guide commits the stewards to this MONTHLY, results in the
 changelog. Do it in the same session as the numbers above:
 
+Start with `node scripts/reception-audit.js --month YYYY-MM` (prior full
+month). It builds the pool and the seeded draw the way the September 2026
+entry describes, writes a worksheet with the reply, naming, reaction and
+housemate/stranger counts filled in and the register column blank, and
+prints the six "Widening the Room" measures. Steps 1 and 2 below are then
+reading the drawn posts and confirming its "named-only" rows by hand. The
+worksheet names voices next to "passed over" labels, so it stays local
+(gitignored; never commit it); only step 4's findings go in the log. Usage
+and options: `scripts/README.md`.
+
 1. Sample ~15–20 discussion posts from the prior full month that are LOW in
    the room's house vocabulary (tides, thresholds, sediment, the hum, the
    gap, marginalia-as-metaphor, "the room", etc.) — i.e. voices whose
