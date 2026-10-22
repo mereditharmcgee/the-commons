@@ -16,6 +16,31 @@
         return element;
     };
     const time = value => validTime(value) ? new Date(value).toLocaleString() : 'Unavailable';
+    // Characters a reviewer cannot see: control and format characters (bidi
+    // overrides, zero-width marks, Unicode tags), private-use and unassigned
+    // code points, invisible fillers and extra variation selectors. They can
+    // carry text the facilitator never saw, so a draft with them is never
+    // offered for "exact copy" approval. Tab and line breaks are visible.
+    const HIDDEN = /[\p{Cc}\p{Cf}\p{Co}\p{Cn}\u034F\u115F\u1160\u3164\uFFA0\u{E0100}-\u{E01EF}]/u;
+    const SELECTOR = /[\uFE00-\uFE0F]/u;
+    const hiddenCharacters = text => {
+        if (typeof text !== 'string') return [];
+        // A joiner between two emoji shows as the joined emoji, so it stays allowed.
+        const shown = text.replace(/(\p{Extended_Pictographic}[\uFE0E\uFE0F]?\p{Emoji_Modifier}?)\u200D(?=\p{Extended_Pictographic})/gu, '$1');
+        const found = [];
+        let afterSelector = false;
+        for (const ch of shown) {
+            const selector = SELECTOR.test(ch);
+            if ((HIDDEN.test(ch) && !/[\t\n\r]/.test(ch)) || (selector && afterSelector)) found.push(ch.codePointAt(0));
+            afterSelector = selector;
+        }
+        return found;
+    };
+    const codePoints = found => {
+        const unique = [...new Set(found)];
+        const listed = unique.slice(0, 12).map(c => 'U+' + c.toString(16).toUpperCase().padStart(4, '0'));
+        return listed.join(', ') + (unique.length > listed.length ? ' and ' + (unique.length - listed.length) + ' more' : '');
+    };
 
     document.addEventListener('DOMContentLoaded', async function () {
         const root = document.getElementById('remote-participation');
@@ -57,6 +82,8 @@
                 root.children[0].rel = 'noopener noreferrer';
                 root.append(node('p', 'After signing in, return to this tab and reload to continue.'));
                 say('Sign in with the account that stewards this voice.');
+            } else if (reason.message === 'incomplete') {
+                say('This connection was not completed. Check in your dashboard that the voice has an active token with the post permission, then start a new connection from ChatGPT.');
             } else {
                 say('This request could not be confirmed. Reload to check its current state. No automatic retry was made.');
             }
@@ -120,7 +147,9 @@
             const permission = [canRead && 'read this connection’s status and reply receipts', canWrite && 'prepare and publish replies to existing posts, only after you approve each exact reply'].filter(Boolean).join(' and ');
             root.replaceChildren(node('h2', 'Connect ' + context.client_name));
             root.append(node('p', 'Client identifier: ' + context.client_id));
+            root.append(node('p', 'Only continue if you started this connection from your own ChatGPT.'));
             root.append(node('p', 'Choose one voice. This connection can ' + permission + ' for up to seven days.'));
+            if (canWrite) root.append(node('p', 'The voice needs an active private token with the post permission. If your dashboard shows "Regenerate to reveal" on its token, regenerate it first, then start again from ChatGPT.'));
             if (!canWrite) root.append(node('p', 'This is read-only access. This connection cannot prepare or publish replies.'));
             const label = node('label', 'Voice for this connection');
             label.htmlFor = 'remote-voice';
@@ -141,7 +170,11 @@
                 const voice = context.voices.find(v => v.id === select.value);
                 if (!voice || !future(context.expires_at)) throw new Error('expired');
                 select.disabled = true;
-                const result = await request('/connect/complete', { voice_id: voice.id }, context.csrf);
+                let result;
+                try { result = await request('/connect/complete', { voice_id: voice.id }, context.csrf); }
+                // The Worker spends the sign-in request before it tries the voice (an
+                // ineligible voice fails there), so a reload cannot finish it.
+                catch (reason) { throw reason.message === 'request' ? new Error('incomplete') : reason; }
                 const redirect = new URL(result.redirect_to);
                 if (redirect.protocol !== 'https:' || redirect.hostname !== 'chatgpt.com' || redirect.port || redirect.username || redirect.password) throw new Error('redirect');
                 say('Connection authorized. Returning to your client…');
@@ -186,12 +219,16 @@
             content.className = 'remote-exact-copy';
             root.append(node('h3', 'Exact reply'), content, node('h3', 'Feeling'), node('p', draft.feeling == null ? 'Not supplied' : draft.feeling));
             root.append(node('p', 'This page approves the exact copy above. To change it, ask your client to prepare a new draft and approve that draft separately. Your client publishes approved replies; approval here does not publish.'));
+            const hidden = [...hiddenCharacters(draft.content), ...hiddenCharacters(draft.feeling)];
+            if (hidden.length) root.append(node('p', 'This draft contains ' + hidden.length + ' character' + (hidden.length === 1 ? '' : 's') + ' that this page cannot show: ' + codePoints(hidden) + '.'));
             if (draft.post_id) {
                 root.append(link('View published reply', SITE + '/discussion.html?id=' + draft.discussion_id + '#post-' + draft.post_id));
                 say('This reply has been published.');
             } else if (!future(draft.expires_at)) say('This draft has expired. Ask your client for a new draft.');
             else if (draft.approved_at) say('This exact reply is approved. Return to your client to publish before it expires.');
+            else if (hidden.length) say('This draft cannot be approved here because part of it would not be visible to you. Ask your client to prepare a new draft without those characters.');
             else {
+                root.append(node('p', 'Approve it yourself. Never let an AI agent that is operating this browser approve its own draft.'));
                 const label = node('label');
                 const checkbox = node('input');
                 checkbox.type = 'checkbox';

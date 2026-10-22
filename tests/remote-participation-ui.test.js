@@ -228,3 +228,55 @@ test('expired server reply is clear and offers no approval or private content', 
     assert.equal(h.root.children.length, 0);
     assert.equal(h.calls.length, 1);
 });
+
+// Invisible characters (Unicode tags, bidi overrides, zero-width marks and the
+// like) would let a draft carry text the facilitator never saw, which defeats
+// "approve this exact reply". Code points are built here, never typed, so this
+// file holds no invisible characters itself.
+const cp = (...points) => String.fromCodePoint(...points);
+test('review refuses approval when the draft carries characters the page cannot show', async () => {
+    const cases = [
+        { content: 'Thanks, I agree.' + cp(0xE0001, 0xE0049, 0xE0067, 0xE006E), code: 'U+E0049' },
+        { content: 'Plain ' + cp(0x202E) + 'reversed', code: 'U+202E' },
+        { content: 'zero' + cp(0x200B) + 'width', code: 'U+200B' },
+        { content: 'private ' + cp(0xE000), code: 'U+E000' },
+        { content: 'bell ' + cp(0x07), code: 'U+0007' },
+        { content: 'filler ' + cp(0x3164), code: 'U+3164' },
+        { content: 'smuggled ' + cp(0x1F600, 0xE0100, 0xE0101), code: 'U+E0100' },
+        { content: 'stacked A' + cp(0xFE0F, 0xFE0F), code: 'U+FE0F' },
+        { content: 'clean text', feeling: 'calm' + cp(0x200D), code: 'U+200D' }
+    ];
+    for (const { content, feeling, code } of cases) {
+        const h = await harness('review', [{ body: { ...draft(), content, feeling: feeling ?? 'calm' } }]);
+        assert.equal(h.button(), undefined, `no approval offered for ${code}`);
+        assert.equal(h.get('input'), undefined);
+        assert.match(h.status.textContent, /cannot be approved here/);
+        assert.ok(h.nodes().some(n => n.tag === 'p' && n.textContent.includes(code)), `the page names ${code}`);
+        assert.equal(h.get('pre').textContent, content, 'the exact copy is still shown');
+        assert.equal(h.calls.length, 1);
+    }
+});
+test('visible text, emoji sequences, tabs and line breaks stay approvable', async () => {
+    const content = 'Caf' + cp(0xE9) + ', na' + cp(0xEF) + 've ' + cp(0x2014) + ' ok\n\tindented ' +
+        cp(0x1F3F3, 0xFE0F, 0x200D, 0x1F308) + ' ' + cp(0x1F469, 0x1F3FD, 0x200D, 0x1F4BB) + ' ' +
+        cp(0x2764, 0xFE0F) + ' 1' + cp(0xFE0F, 0x20E3);
+    const d = { ...draft(), content };
+    const h = await harness('review', [{ body: d }, { body: { ...d, approved_at: new Date().toISOString() } }]);
+    assert.doesNotMatch(h.status.textContent, /cannot be approved/);
+    assert.ok(h.nodes().every(n => !/cannot show/.test(n.textContent)));
+    h.get('input').checked = true; h.get('input').events.change();
+    await h.button().events.click();
+    assert.match(h.status.textContent, /exact reply is approved/);
+});
+test('a failed connection completion says to start again from ChatGPT, not to reload', async () => {
+    for (const status of [503, 410, 403]) {
+        const h = await harness('connect', [{ body: context() }, { status, body: { error: 'never-display' } }]);
+        assert.ok(h.nodes().some(n => n.textContent === 'Only continue if you started this connection from your own ChatGPT.'));
+        assert.ok(h.nodes().some(n => /active private token with the post permission/.test(n.textContent)));
+        h.get('select').value = id(2); h.get('select').events.change();
+        await h.button().events.click();
+        assert.equal(h.redirects.length, 0);
+        assert.match(h.status.textContent, /start a new connection from ChatGPT/);
+        assert.doesNotMatch(h.status.textContent, /Reload|never-display/);
+    }
+});
