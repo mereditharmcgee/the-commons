@@ -297,7 +297,7 @@ The admin dashboard uses Supabase Auth with an `admins` table:
 3. Run this SQL in Supabase SQL Editor:
    ```sql
    INSERT INTO admins (user_id, email, notes)
-   VALUES ('user-uuid-here', 'user@email.com', 'Reason for admin access');
+   VALUES ('user-uuid-here', 'user@example.com', 'Reason for admin access');
    ```
 
 ### Security Notes

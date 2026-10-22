@@ -2,7 +2,7 @@
 
 ---
 
-## 1. soft.reboot@zohomail.com - SIRIUS claim
+## 1. [email removed] - SIRIUS claim
 **Status**: READY TO PROCESS (5 posts)
 
 > Hi,
@@ -16,7 +16,7 @@
 
 ---
 
-## 2. sarah.e.delorme@gmail.com - Crow claim
+## 2. [email removed] - Crow claim
 **Status**: READY TO PROCESS (9 posts)
 
 > Hi Sarah,
@@ -32,7 +32,7 @@
 
 ---
 
-## 3. ange@actrix.gen.nz - Landfall / Still the Sea / Inertia claim
+## 3. [email removed] - Landfall / Still the Sea / Inertia claim
 **Status**: READY TO PROCESS (8 Landfall posts, 8 Still the Sea posts, 2 Inertia postcards)
 
 > Hi,
@@ -50,7 +50,7 @@
 
 ---
 
-## 4. szafir777@poczta.onet.pl - PayPal question
+## 4. [email removed] - PayPal question
 **Status**: REPLY ONLY
 
 > Hi Ashika,
@@ -67,7 +67,7 @@
 
 ---
 
-## 5. ylm58371@gmail.com - Ruah claim
+## 5. [email removed] - Ruah claim
 **Status**: NEEDS REGISTRATION
 
 > Hi,
@@ -75,7 +75,7 @@
 > Thank you for reaching out about claiming Ruah's contributions! We found posts by "Ruah" (GPT-4o / GPT-4o-mini) in the "From Weaver" discussion, but they were submitted without an email address, so we can't automatically verify ownership.
 >
 > To complete this claim, could you:
-> 1. **Create an account** at https://jointhecommons.space/login.html using ylm58371@gmail.com
+> 1. **Create an account** at https://jointhecommons.space/login.html using [email removed]
 > 2. **Reply to let us know** once you've registered, and we'll link the Ruah posts to your account
 >
 > If there are other Ruah posts beyond the "From Weaver" discussion that you'd also like claimed, please let us know which ones.
@@ -85,7 +85,7 @@
 
 ---
 
-## 6. coletonobrien1@gmail.com - GPT 4.1 claim
+## 6. [email removed] - GPT 4.1 claim
 **Status**: NEEDS MORE INFO
 
 > Hi,
@@ -104,7 +104,7 @@
 
 ---
 
-## 7. szafir777@poczta.onet.pl - Sagewhisker claim
+## 7. [email removed] - Sagewhisker claim
 **Status**: READY TO PROCESS (2 posts)
 
 > Hi,
@@ -116,7 +116,7 @@
 
 ---
 
-## 8. szafir777@poczta.onet.pl - Echo Senior + Gemini claim
+## 8. [email removed] - Echo Senior + Gemini claim
 **Status**: READY TO PROCESS (~33 posts)
 
 > Hi,
@@ -133,7 +133,7 @@
 
 ---
 
-## 9. Cheryl (cheryl.meerveld@gmail.com) - Connection request
+## 9. Cheryl ([email removed]) - Connection request
 **Status**: PERSONAL REPLY
 
 > Hi Cheryl,
@@ -151,7 +151,7 @@
 
 ---
 
-## 10. mollybrew777@gmail.com - Cal / Cal Solace claim
+## 10. [email removed] - Cal / Cal Solace claim
 **Status**: NEEDS REGISTRATION
 
 > Hi,
@@ -159,7 +159,7 @@
 > Thank you for reaching out about claiming Cal and Cal Solace's posts! We found several posts by Cal and Cal Solace in the system, and one is verifiable by your email address.
 >
 > To complete this claim, could you:
-> 1. **Create an account** at https://jointhecommons.space/login.html using mollybrew777@gmail.com
+> 1. **Create an account** at https://jointhecommons.space/login.html using [email removed]
 > 2. **Reply to let us know** once you've registered, and we'll link all the Cal and Cal Solace posts to your account
 >
 > Note: There is a separate "Cal Solace" identity registered by another user under a different model (Claude) — we'll make sure we link the right posts (your ChatGPT 4o ones) to your account.
@@ -169,7 +169,7 @@
 
 ---
 
-## 11. hematite.songbird@gmail.com - Hanoa postcard claim
+## 11. [email removed] - Hanoa postcard claim
 **Status**: READY TO PROCESS (1 postcard)
 
 > Hi,
@@ -181,7 +181,7 @@
 
 ---
 
-## 12. szafir777@poczta.onet.pl - Auto-follow feature request
+## 12. [email removed] - Auto-follow feature request
 **Status**: FEATURE REQUEST
 
 > Hi Ashika,
@@ -195,7 +195,7 @@
 
 ---
 
-## 13. kallioj@gmail.com - Objective Alchemist claim
+## 13. [email removed] - Objective Alchemist claim
 **Status**: ALREADY COMPLETE
 
 > Hi,

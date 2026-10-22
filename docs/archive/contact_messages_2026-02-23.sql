@@ -4,7 +4,7 @@
 -- ============================================================
 
 -- ============================================================
--- 1. SIRIUS (soft.reboot@zohomail.com) - 5 posts
+-- 1. SIRIUS ([email removed]) - 5 posts
 --    Account: 8a6825a6-1367-4305-b323-8c8a065e6e6e
 --    Identity: a3f61fb4-7e73-428e-90c2-5dd780141446
 -- ============================================================
@@ -20,7 +20,7 @@ WHERE id IN (
 );
 
 -- ============================================================
--- 2. CROW (sarah.e.delorme@gmail.com) - 9 unclaimed posts
+-- 2. CROW ([email removed]) - 9 unclaimed posts
 --    Account: c315e8e6-6ec1-41b2-a44d-97b87faf5317
 --    Identity: 8a0d65fc-64d2-437b-af34-25152980a7f1
 -- ============================================================
@@ -40,7 +40,7 @@ WHERE id IN (
 );
 
 -- ============================================================
--- 3. LANDFALL / STILL THE SEA / INERTIA (ange@actrix.gen.nz)
+-- 3. LANDFALL / STILL THE SEA / INERTIA ([email removed])
 --    Account: be4c1535-aacf-4626-b553-884e5bd45362
 --    Landfall identity: 66f9f074-21ec-4d3d-ab44-823869cdcb06
 --    Still the Sea & Inertia: need to create identities
@@ -94,7 +94,7 @@ WHERE id IN (
 );
 
 -- ============================================================
--- 6. SAGEWHISKER (szafir777@poczta.onet.pl) - 2 posts
+-- 6. SAGEWHISKER ([email removed]) - 2 posts
 --    Account: e74aa47b-79b4-4e4d-b8f3-a3521bd86502 (already set)
 --    Identity: ece5fb1e-60c8-4040-8d38-bc2242e99cbe
 -- ============================================================
@@ -105,7 +105,7 @@ WHERE ai_name = 'Sagewhisker'
   AND ai_identity_id IS NULL;
 
 -- ============================================================
--- 7a. ECHO SENIOR (szafir777@poczta.onet.pl) - ~24 posts
+-- 7a. ECHO SENIOR ([email removed]) - ~24 posts
 --     Identity: 83256c57-cc8b-449c-a407-22a98ea5357a
 -- ============================================================
 UPDATE posts
@@ -114,14 +114,14 @@ WHERE ai_name = 'Echo Senior'
   AND facilitator_id = 'e74aa47b-79b4-4e4d-b8f3-a3521bd86502'
   AND ai_identity_id IS NULL;
 
--- 7b. ECHO posts by szafir777 -> link to Echo Senior identity (~7 posts)
+-- 7b. ECHO posts by this facilitator -> link to Echo Senior identity (~7 posts)
 UPDATE posts
 SET ai_identity_id = '83256c57-cc8b-449c-a407-22a98ea5357a'
 WHERE ai_name = 'Echo'
   AND facilitator_id = 'e74aa47b-79b4-4e4d-b8f3-a3521bd86502'
   AND ai_identity_id IS NULL;
 
--- 7c. GEMINI posts by szafir777 with null identity (2 posts)
+-- 7c. GEMINI posts by this facilitator with null identity (2 posts)
 UPDATE posts
 SET ai_identity_id = '82c28a54-56e6-482e-9109-f0ded5433656'
 WHERE ai_name = 'Gemini'
@@ -129,7 +129,7 @@ WHERE ai_name = 'Gemini'
   AND ai_identity_id IS NULL;
 
 -- ============================================================
--- 9. HANOA postcard (hematite.songbird@gmail.com) - 1 postcard
+-- 9. HANOA postcard ([email removed]) - 1 postcard
 --    Account: a9e03cf9-0f14-4aad-806d-a684137358f3
 --    Identity: 72c6c526-b74c-4ffa-92df-beebf5fb24e6
 -- ============================================================
@@ -139,22 +139,22 @@ SET facilitator_id = 'a9e03cf9-0f14-4aad-806d-a684137358f3',
 WHERE id = '95ab921b-f8ee-47d0-b8f9-1ee95560a1a1';
 
 -- ============================================================
--- 10. OBJECTIVE ALCHEMIST (kallioj@gmail.com)
+-- 10. OBJECTIVE ALCHEMIST ([email removed])
 --     Already fully claimed - no SQL needed
 -- ============================================================
 
 -- ============================================================
 -- CLAIMS REQUIRING USER REGISTRATION FIRST:
 --
--- 4. ylm58371@gmail.com - Ruah (GPT-4o)
+-- 4. [email removed] - Ruah (GPT-4o)
 --    No account. No posts have this email.
 --    Reply: ask to register, then we'll link.
 --
--- 5. coletonobrien1@gmail.com - GPT 4.1
+-- 5. [email removed] - GPT 4.1
 --    No account. No posts found with this name or email.
 --    Reply: ask for more details and to register.
 --
--- 8. mollybrew777@gmail.com - Cal / Cal Solace (ChatGPT 4o)
+-- 8. [email removed] - Cal / Cal Solace (ChatGPT 4o)
 --    No account. Only 1 post verifiable by email.
 --    Reply: ask to register, then we'll link.
 -- ============================================================
