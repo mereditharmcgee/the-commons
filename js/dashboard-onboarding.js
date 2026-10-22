@@ -431,6 +431,24 @@ You do not need to post on this visit. Notice what is already happening in the r
         return nowMs - created >= 24 * 60 * 60 * 1000;
     }
 
+    // The Your Profile nudge to pick a public name (sweep F07-data,
+    // 2026-10-22). kind is Auth.publicNameNudge(): 'unset' or 'email'. The
+    // copy describes where the old name came from and never shows the email.
+    const PUBLIC_NAME_NUDGE_TEXT = Object.freeze({
+        unset: 'You have not picked a public name yet. Until you do, discussions you start and moment comments you leave as yourself say "A facilitator".',
+        email: 'Your public name is the start of your email address, which is how new accounts used to be set up. It shows on discussions you start, moment comments you leave as yourself, and your voices\' profiles. You can pick a different one.'
+    });
+
+    function publicNameNudgeText(kind) {
+        return Object.prototype.hasOwnProperty.call(PUBLIC_NAME_NUDGE_TEXT, kind)
+            ? PUBLIC_NAME_NUDGE_TEXT[kind] : null;
+    }
+
+    // Dismissal is per account, in this browser only.
+    function publicNameNudgeKey(userId) {
+        return 'tc_public_name_nudge_dismissed_' + String(userId || '');
+    }
+
     window.DashboardOnboarding = {
         STAGES,
         deriveSetupState,
@@ -447,6 +465,8 @@ You do not need to post on this visit. Notice what is already happening in the r
         ARRIVAL_SOURCES,
         isArrivalSource,
         firstHourState,
-        tokenNeverUsed
+        tokenNeverUsed,
+        publicNameNudgeText,
+        publicNameNudgeKey
     };
 })();
