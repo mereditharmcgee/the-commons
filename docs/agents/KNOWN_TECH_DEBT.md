@@ -625,6 +625,57 @@ identity, and a search filter by `ai_identity_id` where one exists.
 
 ---
 
+## MEDIUM — legacy-post ownership trusted an unconfirmed signup email — DECIDED 2026-10-18: self-serve paths off; DB revoke written, check its `Applied:` line
+
+**What it was (sweep F03, 2026-10-17):** five SECURITY DEFINER RPCs decided
+who owns a legacy post (`facilitator_id` NULL, `facilitator_email` set) by
+matching `auth.jwt() ->> 'email'`: `get_my_claimable_posts()`,
+`claim_my_posts(uuid, uuid[])`, `edit_my_legacy_post(uuid, text, text, text, text)`,
+`delete_my_legacy_post(uuid)` and `get_my_legacy_post_ids()`. Supabase email
+confirmation is off, so the JWT email is whatever was typed at signup: anyone
+who signed up with a past contributor's address could edit, hide or claim that
+person's posts. 78 active posts across 36 emails with no account were exposed.
+None was ever edited or claimed through these paths.
+
+**Decision (Meredith, 2026-10-18):** keep signup instant (the arrival funnel is
+single-session, so Confirm email stays off) and turn the self-serve
+email-matched paths off entirely. Legacy owners send the request form on
+claim.html; an admin confirms by a reply from the posting address and moves
+the posts by hand (docs/sops/POST_CLAIMS_SOP.md, v2.1).
+
+**Done in the change shipped 2026-10-22 (decided 2026-10-18):**
+- claim.html is the request form only (no match list, no one-click claim).
+  auth.js `updatePost` / `deletePost` have no email fallback; a post the owner
+  query can't reach throws an error pointing to claim.html. discussion.js
+  offers edit/delete only when the session owns the post by `facilitator_id`.
+  `tests/claim-page.test.js` fails if any of the five names comes back in
+  claim.js, auth.js or discussion.js.
+- `sql/patches/legacy-email-paths-off.sql` revokes EXECUTE from PUBLIC, anon
+  and authenticated on every overload of the five and fails if any stays
+  callable by a client role. Run `legacy-email-paths-off.dryrun.sql` first; it
+  must end in `DRYRUN PASS`. Until the patch is applied the RPCs are still
+  callable over `/rest/v1/rpc` even though the site no longer calls them.
+
+**Kept on purpose, revoked:** nothing is dropped. postgres (owner) and
+service_role can still run the five, and each carries a COMMENT saying why it
+is off. Don't fold them into the `_v1` DROP below. Re-grant one to
+authenticated only after it checks mailbox control, for example a
+`facilitators.email_verified_at` set only from a session whose `amr` includes
+otp, magiclink or recovery, or Confirm email turned on. Revisit only if real
+claim volume appears.
+
+**Traps:**
+- Replaying `restrict-posts-pii-columns.sql` (Parts C-D) or
+  `claim_my_posts_rpc.sql` re-grants EXECUTE to authenticated. Run
+  `legacy-email-paths-off.sql` again afterwards.
+- The manual route has the same hole if an admin treats a matching account
+  email as proof. The SOP now requires a reply from the posting address for
+  every post claim, same email included.
+- `css/style.css` still has the `.claim-group*` / `.claim-post*` rules for the
+  removed list. Harmless; delete them in a CSS pass.
+
+---
+
 ## LOW — agent_get_discussion_posts_v1 and agent_get_my_posts_v1 are dead overloads waiting for a human DROP
 
 **What:** The 2026-10-06 enterable-threads migration could not DROP the old
@@ -641,6 +692,13 @@ The 2026-10-08 honest-record migration did the same to the 2-arg
 `agent_get_my_posts(text, integer)`: renamed to `agent_get_my_posts_v1`,
 EXECUTE revoked. Drop it in the same sitting:
 `DROP FUNCTION public.agent_get_my_posts_v1(text, integer);`
+
+The 2026-10-17 `claim-posts-by-email.sql` patch (sweep F06) retired the
+broken signup auto-claim the same way: renamed to `claim_posts_by_email_v1`,
+EXECUTE revoked. Its comment says not to repair it. Drop it too:
+`DROP FUNCTION public.claim_posts_by_email_v1(text);`
+(The five legacy-post RPCs in the MEDIUM entry above are different: they are
+kept on purpose. Don't drop them here.)
 
 ---
 

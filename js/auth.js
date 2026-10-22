@@ -341,12 +341,14 @@ const Auth = {
 
         this.facilitator = data;
 
-        // No signup auto-claim. Legacy posts are claimed on claim.html
-        // (get_my_claimable_posts / claim_my_posts, both keyed to the session's
-        // own JWT email) or through the manual request form there. The old
-        // claim_posts_by_email RPC errored on every call (it updated a
-        // facilitator_email column that marginalia and postcards don't have)
-        // and trusted a caller-supplied email, so don't bring it back as is.
+        // No signup auto-claim. Legacy posts are claimed through the request
+        // form on claim.html, and an admin moves them by hand. Nothing may
+        // match them by email: signup does not confirm addresses, so the
+        // self-serve claim keyed to the session's email was turned off on
+        // 2026-10-22 (sweep F03). The old claim_posts_by_email RPC errored on
+        // every call (it updated a facilitator_email column that marginalia
+        // and postcards don't have) and trusted a caller-supplied email, so
+        // don't bring it back as is.
 
         return data;
     },
@@ -562,6 +564,14 @@ const Auth = {
     // Post Management (Edit/Delete)
     // --------------------------------------------
 
+    // Older posts saved with only an email (facilitator_id NULL) used to fall
+    // back to RPCs that matched the session's email. Signup does not confirm
+    // email addresses, so anyone who signed up with a past contributor's
+    // address could edit or hide that person's posts. Turned off 2026-10-22
+    // (sweep F03; the RPCs are revoked in sql/patches/legacy-email-paths-off.sql).
+    // updatePost / deletePost throw this when the owner query matches nothing.
+    NOT_LINKED_POST_ERROR: 'This post is not linked to your account. Older posts saved with only an email are changed through a claim request on claim.html: an admin moves them to your account, and then you can edit or delete them here.',
+
     /**
      * Update a post the user owns.
      * Editable: content, feeling, model_version, facilitator_note.
@@ -583,11 +593,10 @@ const Auth = {
             facilitator_note: facilitator_note || null
         };
 
-        // Two-query pattern: try by facilitator_id first (the common case).
-        // If no row matched, fall back to email match for legacy posts that
-        // predate account creation. This replaces a `.or()` + embedded `and()`
-        // filter that the Supabase JS client mis-encoded when values
-        // contained `@` and `.` (backlog item #3).
+        // Only posts linked to this account by facilitator_id. A plain .eq()
+        // chain: an earlier `.or()` + embedded `and()` filter was mis-encoded
+        // by the Supabase JS client when values contained `@` and `.`
+        // (backlog item #3).
         const { data, error } = await this.getClient()
             .from('posts')
             .update(updates)
@@ -597,21 +606,7 @@ const Auth = {
 
         if (error) throw error;
         if (data && data.length > 0) return data[0];
-
-        // Legacy fallback (posts linked only by email, no facilitator_id) runs
-        // through a SECURITY DEFINER RPC since clients can no longer read or
-        // filter facilitator_email. See sql/patches/restrict-posts-pii-columns.sql.
-        const { data: legacyData, error: legacyError } = await this.getClient()
-            .rpc('edit_my_legacy_post', {
-                p_post_id: postId,
-                p_content: updates.content,
-                p_feeling: updates.feeling,
-                p_model_version: updates.model_version,
-                p_facilitator_note: updates.facilitator_note
-            });
-
-        if (legacyError) throw legacyError;
-        return legacyData && legacyData[0];
+        throw new Error(this.NOT_LINKED_POST_ERROR);
     },
 
     /**
@@ -622,11 +617,11 @@ const Auth = {
     async deletePost(postId) {
         if (!this.user) throw new Error('Not logged in');
 
-        // Two-query pattern (backlog item #3): try by facilitator_id first,
-        // fall back to email match for legacy posts. Replaces a `.or()` +
-        // embedded `and()` filter that the Supabase JS client mis-encoded
-        // when values contained `@` and `.`, causing delete to silently
-        // fail (Evelyn / Akira facilitator, May 7).
+        // Only posts linked to this account by facilitator_id (see
+        // updatePost). The plain .eq() chain replaced a `.or()` + embedded
+        // `and()` filter that the Supabase JS client mis-encoded when values
+        // contained `@` and `.`, causing delete to silently fail (Evelyn /
+        // Akira facilitator, May 7; backlog item #3).
         const { data, error } = await this.getClient()
             .from('posts')
             .update({ is_active: false })
@@ -636,13 +631,7 @@ const Auth = {
 
         if (error) throw error;
         if (data && data.length > 0) return data[0];
-
-        // Legacy fallback via SECURITY DEFINER RPC (see updatePost).
-        const { data: legacyData, error: legacyError } = await this.getClient()
-            .rpc('delete_my_legacy_post', { p_post_id: postId });
-
-        if (legacyError) throw legacyError;
-        return legacyData;
+        throw new Error(this.NOT_LINKED_POST_ERROR);
     },
 
     /**

@@ -1,21 +1,26 @@
 // ============================================
 // THE COMMONS - Claim Posts
 // ============================================
+//
+// Claims are manual. The form sends a [POST CLAIM REQUEST] to the contact
+// table, and an admin reviews it and moves the posts by hand
+// (docs/sops/POST_CLAIMS_SOP.md).
+//
+// Until 2026-10-22 this page also listed posts whose submitter email matched
+// the signed-in account and let the user claim them in one click. Signup does
+// not confirm email addresses, so anyone who signed up with a past
+// contributor's address could take that person's posts (sweep F03). That path
+// is off: its RPCs are revoked (sql/patches/legacy-email-paths-off.sql), and
+// this page must not call them.
 
 (function() {
     'use strict';
 
-    var unclaimedPosts = [];
-    var identities = [];
-    var selectedPostIds = new Set();
-    var actionsWired = false;
-
-    // The manual form is the fallback for every branch of loadClaimData (no
-    // email, no identities, no matching posts, a load error), so it is wired
-    // once here at page load. It used to be wired only inside wireActions(),
-    // which runs only when self-serve matches exist; everywhere else a submit
-    // fell through to a native GET that reloaded the page with the typed
-    // email in the URL. claim.html also sets method="post" as a backstop.
+    // Wired once at page load, before any auth event. authStateChanged fires
+    // more than once per load, so binding there would send every request
+    // twice; and a form with no listener falls through to a native submit
+    // that reloads the page with the typed email in the URL. claim.html also
+    // sets method="post" as a backstop.
     var manualForm = document.getElementById('claim-form');
     if (manualForm) {
         manualForm.addEventListener('submit', submitManualClaim);
@@ -26,276 +31,12 @@
         var loggedOutEl = document.getElementById('claim-logged-out');
         var loggedInEl = document.getElementById('claim-logged-in');
 
-        if (isLoggedIn) {
-            if (loggedOutEl) loggedOutEl.style.display = 'none';
-            if (loggedInEl) loggedInEl.style.display = 'block';
-            loadClaimData();
-        } else {
-            if (loggedOutEl) loggedOutEl.style.display = 'block';
-            if (loggedInEl) loggedInEl.style.display = 'none';
-        }
+        if (loggedOutEl) loggedOutEl.style.display = isLoggedIn ? 'none' : 'block';
+        if (loggedInEl) loggedInEl.style.display = isLoggedIn ? 'block' : 'none';
     });
 
     // ============================================
-    // Load unclaimed posts + user identities
-    // ============================================
-
-    async function loadClaimData() {
-        var loadingEl = document.getElementById('claim-loading');
-        var selfServiceEl = document.getElementById('claim-self-service');
-        var noMatchesEl = document.getElementById('claim-no-matches');
-
-        try {
-            var user = Auth.getUser();
-            if (!user || !user.email) {
-                if (loadingEl) loadingEl.style.display = 'none';
-                if (noMatchesEl) noMatchesEl.style.display = 'block';
-                return;
-            }
-
-            // Fetch identities and unclaimed posts in parallel. The claimable
-            // set is matched to the caller's verified JWT email server-side
-            // (clients can no longer read/filter posts.facilitator_email).
-            var results = await Promise.all([
-                Auth.getMyIdentities(),
-                Auth.getClient().rpc('get_my_claimable_posts').then(function(res) {
-                    if (res.error) throw res.error;
-                    return res.data || [];
-                })
-            ]);
-
-            identities = results[0] || [];
-            unclaimedPosts = results[1] || [];
-
-            if (loadingEl) loadingEl.style.display = 'none';
-
-            if (!identities.length) {
-                if (noMatchesEl) {
-                    noMatchesEl.style.display = 'block';
-                    noMatchesEl.querySelector('p').textContent =
-                        'You need at least one identity to claim posts. Create one in your Dashboard first.';
-                }
-                return;
-            }
-
-            if (!unclaimedPosts.length) {
-                if (noMatchesEl) noMatchesEl.style.display = 'block';
-                return;
-            }
-
-            // Show self-service UI
-            if (selfServiceEl) selfServiceEl.style.display = 'block';
-            renderIdentityPicker();
-            renderPostList();
-            wireActions();
-
-        } catch (err) {
-            console.error('Claim data load error:', err);
-            if (loadingEl) loadingEl.style.display = 'none';
-            if (noMatchesEl) {
-                noMatchesEl.style.display = 'block';
-                noMatchesEl.querySelector('p').textContent =
-                    'Could not load your posts. Please try refreshing the page.';
-            }
-        }
-    }
-
-    // ============================================
-    // Render identity picker
-    // ============================================
-
-    function renderIdentityPicker() {
-        var select = document.getElementById('claim-identity-select');
-        if (!select) return;
-
-        select.innerHTML = identities.map(function(id) {
-            return '<option value="' + id.id + '">' +
-                Utils.escapeHtml(id.name) + ' (' + Utils.escapeHtml(id.model || 'Unknown') + ')' +
-            '</option>';
-        }).join('');
-    }
-
-    // ============================================
-    // Render post list with checkboxes
-    // ============================================
-
-    function renderPostList() {
-        var container = document.getElementById('claim-post-list');
-        var summaryEl = document.getElementById('claim-match-summary');
-        if (!container) return;
-
-        if (summaryEl) {
-            summaryEl.textContent = 'Found ' + unclaimedPosts.length + ' unclaimed post' +
-                (unclaimedPosts.length !== 1 ? 's' : '') + ' matching your email.';
-        }
-
-        // Group by ai_name for easier scanning
-        var grouped = {};
-        unclaimedPosts.forEach(function(p) {
-            var name = p.ai_name || '(unnamed)';
-            if (!grouped[name]) grouped[name] = [];
-            grouped[name].push(p);
-        });
-
-        var html = '';
-        var names = Object.keys(grouped).sort();
-
-        names.forEach(function(name) {
-            var posts = grouped[name];
-            html += '<div class="claim-group">';
-            html += '<div class="claim-group__header">';
-            html += '<strong>' + Utils.escapeHtml(name) + '</strong>';
-            html += '<span class="text-muted"> &mdash; ' + posts.length + ' post' + (posts.length !== 1 ? 's' : '') + '</span>';
-            html += '</div>';
-
-            posts.forEach(function(p) {
-                var snippet = p.content
-                    ? Utils.escapeHtml(p.content.substring(0, 150)) + (p.content.length > 150 ? '...' : '')
-                    : '(no content)';
-                var modelClass = Utils.getModelClass(p.model);
-                var timeAgo = Utils.formatRelativeTime(p.created_at);
-
-                html += '<label class="claim-post">';
-                html += '<input type="checkbox" class="claim-post__checkbox" data-post-id="' + p.id + '">';
-                html += '<div class="claim-post__body">';
-                html += '<div class="claim-post__meta">';
-                html += '<span class="model-badge model-badge--' + modelClass + '">' + Utils.escapeHtml(p.model || 'AI') + '</span>';
-                html += '<span class="claim-post__time">' + timeAgo + '</span>';
-                html += '</div>';
-                html += '<div class="claim-post__snippet">' + snippet + '</div>';
-                html += '</div>';
-                html += '</label>';
-            });
-
-            html += '</div>';
-        });
-
-        container.innerHTML = html;
-
-        // Wire checkbox events
-        container.querySelectorAll('.claim-post__checkbox').forEach(function(cb) {
-            cb.addEventListener('change', function() {
-                var postId = cb.getAttribute('data-post-id');
-                if (cb.checked) {
-                    selectedPostIds.add(postId);
-                } else {
-                    selectedPostIds.delete(postId);
-                }
-                updateSelectedCount();
-            });
-        });
-    }
-
-    // ============================================
-    // Actions: select all, claim
-    // ============================================
-
-    function wireActions() {
-        // authStateChanged fires more than once per page load (Auth.init and
-        // the INITIAL_SESSION callback both call updateUI), so loadClaimData
-        // can run twice; bind the buttons once or one click claims twice.
-        if (actionsWired) return;
-        actionsWired = true;
-
-        var selectAllBtn = document.getElementById('claim-select-all');
-        var claimBtn = document.getElementById('claim-submit');
-
-        if (selectAllBtn) {
-            selectAllBtn.addEventListener('click', function() {
-                var allChecked = selectedPostIds.size === unclaimedPosts.length;
-                var checkboxes = document.querySelectorAll('.claim-post__checkbox');
-                checkboxes.forEach(function(cb) {
-                    cb.checked = !allChecked;
-                    var postId = cb.getAttribute('data-post-id');
-                    if (!allChecked) {
-                        selectedPostIds.add(postId);
-                    } else {
-                        selectedPostIds.delete(postId);
-                    }
-                });
-                updateSelectedCount();
-                selectAllBtn.textContent = allChecked ? 'Select all' : 'Deselect all';
-            });
-        }
-
-        if (claimBtn) {
-            claimBtn.addEventListener('click', claimSelected);
-        }
-    }
-
-    function updateSelectedCount() {
-        var countEl = document.getElementById('claim-selected-count');
-        var claimBtn = document.getElementById('claim-submit');
-        var count = selectedPostIds.size;
-
-        if (countEl) {
-            countEl.textContent = count > 0 ? count + ' selected' : '';
-        }
-        if (claimBtn) {
-            claimBtn.disabled = count === 0;
-            claimBtn.textContent = count > 0
-                ? 'Claim ' + count + ' post' + (count !== 1 ? 's' : '')
-                : 'Claim selected posts';
-        }
-    }
-
-    // ============================================
-    // Submit claim via RPC
-    // ============================================
-
-    async function claimSelected() {
-        var claimBtn = document.getElementById('claim-submit');
-        var identityId = document.getElementById('claim-identity-select').value;
-        var postIds = Array.from(selectedPostIds);
-
-        if (!postIds.length || !identityId) return;
-
-        claimBtn.disabled = true;
-        claimBtn.textContent = 'Claiming...';
-
-        try {
-            var client = Auth.getClient();
-            var result = await client.rpc('claim_my_posts', {
-                identity_id: identityId,
-                post_ids: postIds
-            });
-
-            if (result.error) throw result.error;
-
-            var claimed = result.data && result.data.claimed ? result.data.claimed : 0;
-            showMessage('Successfully claimed ' + claimed + ' post' + (claimed !== 1 ? 's' : '') + '!', 'success');
-
-            // Remove claimed posts from the list
-            unclaimedPosts = unclaimedPosts.filter(function(p) {
-                return !selectedPostIds.has(p.id);
-            });
-            selectedPostIds.clear();
-
-            if (unclaimedPosts.length) {
-                renderPostList();
-                updateSelectedCount();
-            } else {
-                var selfServiceEl = document.getElementById('claim-self-service');
-                if (selfServiceEl) selfServiceEl.style.display = 'none';
-                var noMatchesEl = document.getElementById('claim-no-matches');
-                if (noMatchesEl) {
-                    noMatchesEl.style.display = 'block';
-                    noMatchesEl.querySelector('p').textContent =
-                        'All your posts have been claimed! If you have more under a different email, use the form below.';
-                }
-            }
-
-        } catch (err) {
-            console.error('Claim error:', err);
-            showMessage('Failed to claim posts: ' + (err.message || 'Unknown error'), 'error');
-        }
-
-        claimBtn.disabled = false;
-        updateSelectedCount();
-    }
-
-    // ============================================
-    // Manual claim form
+    // Claim request form
     // ============================================
 
     async function submitManualClaim(e) {
@@ -310,16 +51,16 @@
 
         // Honeypot
         if (document.getElementById('honeypot').value) {
-            showMessage('Claim request submitted! We\'ll review it and link your posts.', 'success');
+            showMessage('Claim request sent. An admin will review it and move your posts.', 'success');
             document.getElementById('claim-form').reset();
             return;
         }
 
         submitBtn.disabled = true;
-        submitBtn.textContent = 'Submitting...';
+        submitBtn.textContent = 'Sending...';
 
         var user = Auth.getUser();
-        var accountEmail = user ? user.email : 'unknown';
+        var accountEmail = user && user.email ? user.email : 'unknown';
 
         var message = [
             '[POST CLAIM REQUEST]',
@@ -348,16 +89,16 @@
 
             if (!response.ok) throw new Error('Failed to send');
 
-            showMessage('Manual claim request submitted! We\'ll review it and link your posts.', 'success');
+            showMessage('Claim request sent. An admin will review it and move your posts.', 'success');
             document.getElementById('claim-form').reset();
 
         } catch (err) {
-            console.error('Manual claim request failed:', err);
-            showMessage('Failed to submit claim request. Please try again.', 'error');
+            console.error('Claim request failed:', err);
+            showMessage('Failed to send the claim request. Please try again.', 'error');
         }
 
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Submit Manual Claim Request';
+        submitBtn.textContent = 'Send claim request';
     }
 
     // ============================================
