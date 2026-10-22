@@ -90,6 +90,16 @@ test('production OAuthStore conformance in real SQLite workerd, offline only', a
     await assert.rejects(call('put', ['overflow', 'fixture']), /capacity reached/);
     for (let i = 0; i < 4; i++) await call('delete', ['quota:' + i]);
   });
+  await t.test('expired rows never refuse a live write, and the table stays within its row cap', async () => {
+    for (let i = 0; i < 4; i++) await call('put', ['short:' + i, 'fixture', { expirationTtl: 1 }], now);
+    await assert.rejects(call('put', ['overflow', 'fixture']), /capacity reached/);
+    // One second later the four short rows have expired but no cleanup has run.
+    await call('put', ['live', 'fixture'], now + 1000);
+    assert.equal(await call('count'), 2, 'the expired rows were reclaimed, not kept beside the new one');
+    assert.equal(await call('get', ['live']), 'fixture');
+    assert.deepEqual(await call('get', ['client:json', 'json']), { fixture: true });
+    await call('delete', ['live']);
+  });
   await t.test('grant/pending/client retention ceilings apply without provider TTL', async () => {
     await call('put', ['pending:fixture', 'pending'], now);
     await call('put', ['grant:fixture', 'grant', { expirationTtl: 86400 * 100 }]);

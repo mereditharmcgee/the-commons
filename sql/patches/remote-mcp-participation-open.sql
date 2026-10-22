@@ -1,4 +1,7 @@
--- PROPOSED ONLY. Not applied. Requires explicit production approval.
+-- APPLIED 2026-09-10 to dfephsfberzadihcrhal (pilot trigger dropped; postflight
+-- pilotTriggers 0). As applied, this first line read "PROPOSED ONLY. Not
+-- applied." and the CRLF file's sha256 was 83b1e02c2b7fa368a83c8060dabaf0fae7ebb594254397789553a7397f1661b0;
+-- only this header changed on 2026-10-22.
 -- Open grant creation to eligible owners; existing session, ownership, token,
 -- scope, approval and rate checks remain. Risk: expands remote participation.
 BEGIN;

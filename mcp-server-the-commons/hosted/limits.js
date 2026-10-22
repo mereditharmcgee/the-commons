@@ -5,6 +5,15 @@ export const READ_SCOPE = 'commons.connection.read';
 export const WRITE_SCOPE = 'commons.replies.write';
 export const SCOPES = [READ_SCOPE, WRITE_SCOPE];
 export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+// The one OAuth broker Durable Object, by name. It keys every live grant and
+// refresh token. Changing it is the emergency recovery for a full or corrupted
+// OAuth store (item 9 of .claude/commands/deploy-check.md): the new name starts
+// an empty store, and every live connection has to reconnect. Never change it otherwise.
+export const BROKER_NAME = 'pilot';
+// New grants one facilitator account may start per UTC day. With access open to
+// every facilitator, any account could otherwise script the consent flow and
+// fill the shared OAuth store with week-long rows (oauth-store.js).
+export const GRANTS_PER_OWNER_PER_DAY = 10;
 export class Unavailable extends Error { constructor() { super('Connection unavailable'); } }
 export function randomSecret() { return Array.from(crypto.getRandomValues(new Uint8Array(32)), v => v.toString(16).padStart(2, '0')).join(''); }
 export async function digest(value) { return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))), v => v.toString(16).padStart(2, '0')).join(''); }

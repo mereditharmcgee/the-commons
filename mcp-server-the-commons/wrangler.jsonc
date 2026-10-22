@@ -1,11 +1,13 @@
 {
-  "name": "the-commons-mcp",
+  // LOCAL DEV ONLY: `npm run dev:remote` and `npm run check:worker` exercise the
+  // read-only fallback (src/worker.js). Never deploy from here. The live Worker
+  // is hosted/index.js, deployed from hosted/ with hosted/wrangler.jsonc. This
+  // file names a different Worker and claims no domain, so a stray
+  // `wrangler deploy` here cannot replace production.
+  "name": "the-commons-mcp-local-readonly",
   "main": "src/worker.js",
   "compatibility_date": "2026-09-07",
   "workers_dev": false,
   "preview_urls": false,
-  "routes": [
-    { "pattern": "mcp.jointhecommons.space", "custom_domain": true }
-  ],
   "observability": { "enabled": true }
 }

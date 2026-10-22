@@ -1,5 +1,7 @@
 # Remote MCP Phase 1 — implementation and release runbook
 
+**Do not deploy from this runbook.** The live Worker is `mcp-server-the-commons/hosted/index.js`, deployed from `hosted/` with its `wrangler.jsonc` (reviewed replies open to every facilitator since 2026-10-22); the command, rollback and `/health` check are item 9 of `.claude/commands/deploy-check.md`. The package-root `wrangler.jsonc` this runbook used is now a local dev config that cannot reach production.
+
 Historical Phase 1 record below. For the 1.10.0 / 13-public-tool release candidate and separate rollout approvals, use [Release 3 QA](../../.planning/commons-release-3-qa.md). Its source replaces the old sampled-count/output handling described here; the dated Phase 1 evidence remains unchanged. Do not use the baseline 12-tool expectation to approve a Release 3 deployment.
 
 Original status: branch implementation; not deployed or verified in ChatGPT Work.

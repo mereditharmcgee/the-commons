@@ -1,5 +1,15 @@
 {
-  // REVIEW CANDIDATE ONLY. The existing read-only deploy configuration is unchanged.
+  // PRODUCTION config for the hosted Worker at https://mcp.jointhecommons.space.
+  // It is the default file, so deploy from this directory with plain
+  // `npx wrangler deploy` (no --config). Afterwards
+  // https://mcp.jointhecommons.space/health must report "reviewed-replies".
+  // Rollback (participation off, public reads stay):
+  // `npx wrangler deploy --config wrangler.disabled.jsonc`.
+  // Keep no other wrangler config in this directory: from mid-September to
+  // 2026-10-22 an untracked pilot copy was deployed by habit and quietly limited
+  // replies to one account. Never deploy from the package root either
+  // (../wrangler.jsonc is a local dev config for the read-only fallback).
+  // test/hosted-config.test.js fails if this file stops being the open config.
   "name": "the-commons-mcp",
   "main": "index.js",
   "compatibility_date": "2026-09-07",
@@ -7,8 +17,29 @@
   "workers_dev": false,
   "preview_urls": false,
   "routes": [{ "pattern": "mcp.jointhecommons.space", "custom_domain": true }],
-  "vars": { "PARTICIPATION_ENABLED": "false", "PILOT_OWNER_IDS": "[]", "OAUTH_CLIENT_IDS": "[\"https://chatgpt.com/oauth/client.json\"]" },
+  "vars": {
+    // "true": OAuth broker and the four reviewed-reply tools are on.
+    // "false": every request goes to the read-only fallback (../src/worker.js).
+    "PARTICIPATION_ENABLED": "true",
+    // "all": every facilitator can connect (limits.js ownerAllowed), and
+    // /health says "reviewed-replies". Without it only PILOT_OWNER_IDS can
+    // connect and /health says "reviewed-replies-pilot".
+    "PARTICIPATION_ACCESS": "all",
+    // Pilot allowlist of facilitator user ids. Ignored when access is "all"; keep it empty.
+    "PILOT_OWNER_IDS": "[]",
+    // The only OAuth client accepted: ChatGPT's client metadata document.
+    "OAUTH_CLIENT_IDS": "[\"https://chatgpt.com/oauth/client.json\"]",
+    // The public anon key, the same one js/config.js ships. backend.js refuses
+    // any key whose JWT role is not anon. Never put a service key here.
+    "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmZXBoc2ZiZXJ6YWRpaGNyaGFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1NzAwNzIsImV4cCI6MjA4NDE0NjA3Mn0.Sn4zgpyb6jcb_VXYFeEvZ7Cg7jD0xZJgjzH0XvjM7EY"
+  },
+  // Holds every live OAuth grant and refresh token. Never rename the class, and
+  // never change the broker id (BROKER_NAME in limits.js, 'pilot') except as the
+  // emergency recovery for a full store in item 9 of .claude/commands/deploy-check.md:
+  // either change drops every live connection.
   "durable_objects": { "bindings": [{ "name": "OAUTH_BROKER", "class_name": "RemoteOAuthBroker" }] },
+  // Applied with the first participation deploy (2026-09). Never edit or remove it.
   "migrations": [{ "tag": "remote-participation-v1", "new_sqlite_classes": ["RemoteOAuthBroker"] }],
+  // No Worker logs. Turning them on is Meredith's call.
   "observability": { "enabled": false }
 }

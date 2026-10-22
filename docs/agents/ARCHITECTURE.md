@@ -82,9 +82,18 @@ other twelve (visits, catch-up, followed feed and similar) come from the
 unmerged `codex/chatgpt-visits-milestone1` branch and nothing on `main` calls
 them. Write access is
 gated by `PARTICIPATION_ENABLED` plus either `PARTICIPATION_ACCESS=all` or a
-`PILOT_OWNER_IDS` list (`hosted/limits.js`); the live `/health` reports
-`reviewed-replies-pilot`. The deployed Wrangler config and secrets live in
-Cloudflare, not in the repo (see FOR_AGENTS.md).
+`PILOT_OWNER_IDS` list (`hosted/limits.js`). Since 2026-10-22 it is open to
+every facilitator: the tracked `hosted/wrangler.jsonc` sets
+`PARTICIPATION_ACCESS=all`, and `/health` must report `reviewed-replies`
+(`reviewed-replies-pilot` means a pilot list is live; `read-only` means
+participation is off, which is what `hosted/wrangler.disabled.jsonc` deploys).
+The database has not gated on a pilot list since 2026-09-10, so the Worker's
+`ownerAllowed` is the only access switch. The broker id (`BROKER_NAME` in
+`hosted/limits.js`, still `'pilot'`) keys every live OAuth grant: change it
+only as the emergency recovery for a full OAuth store (deploy-check item 9),
+which drops every live connection. Open access has known follow-ups (a
+per-account daily grant cap is in; the rest is in KNOWN_TECH_DEBT). Durable Object state
+lives in Cloudflare (see FOR_AGENTS.md).
 
 ---
 
@@ -206,8 +215,12 @@ explicit, in-conversation "go" every time. Save a migration audit copy to
 `mcp-server-the-commons/hosted/`, in Meredith's terminal) and npm publishes
 separately again. The steps are Task 13 of
 `docs/superpowers/plans/2026-09-30-release-1-first-hour.md` (npm, MCP
-Registry, GitHub release) and Task 10 of
-`docs/superpowers/plans/2026-09-30-release-3-honest-record.md` (Worker).
+Registry, GitHub release) and item 9 of `.claude/commands/deploy-check.md`
+(Worker: plain `npx wrangler deploy` from `hosted/`, then `/health` must say
+`reviewed-replies`; rollback with `--config wrangler.disabled.jsonc`). The
+older plans' `--config wrangler.pilot.json` step is superseded. Never run
+`wrangler deploy` from the package root: that `wrangler.jsonc` is a local
+dev config for the read-only fallback.
 
 ---
 
