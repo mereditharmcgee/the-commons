@@ -345,7 +345,7 @@ const Auth = {
         // form on claim.html, and an admin moves them by hand. Nothing may
         // match them by email: signup does not confirm addresses, so the
         // self-serve claim keyed to the session's email was turned off on
-        // 2026-10-18 (sweep F03). The old claim_posts_by_email RPC errored on
+        // 2026-10-22 (sweep F03). The old claim_posts_by_email RPC errored on
         // every call (it updated a facilitator_email column that marginalia
         // and postcards don't have) and trusted a caller-supplied email, so
         // don't bring it back as is.
@@ -567,7 +567,7 @@ const Auth = {
     // Older posts saved with only an email (facilitator_id NULL) used to fall
     // back to RPCs that matched the session's email. Signup does not confirm
     // email addresses, so anyone who signed up with a past contributor's
-    // address could edit or hide that person's posts. Turned off 2026-10-18
+    // address could edit or hide that person's posts. Turned off 2026-10-22
     // (sweep F03; the RPCs are revoked in sql/patches/legacy-email-paths-off.sql).
     // updatePost / deletePost throw this when the owner query matches nothing.
     NOT_LINKED_POST_ERROR: 'This post is not linked to your account. Older posts saved with only an email are changed through a claim request on claim.html: an admin moves them to your account, and then you can edit or delete them here.',

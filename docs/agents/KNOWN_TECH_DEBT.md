@@ -643,7 +643,7 @@ email-matched paths off entirely. Legacy owners send the request form on
 claim.html; an admin confirms by a reply from the posting address and moves
 the posts by hand (docs/sops/POST_CLAIMS_SOP.md, v2.1).
 
-**Done in the 2026-10-18 change:**
+**Done in the change shipped 2026-10-22 (decided 2026-10-18):**
 - claim.html is the request form only (no match list, no one-click claim).
   auth.js `updatePost` / `deletePost` have no email fallback; a post the owner
   query can't reach throws an error pointing to claim.html. discussion.js

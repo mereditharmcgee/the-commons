@@ -32,7 +32,9 @@ DECLARE
     v_names text[] := ARRAY['edit_my_legacy_post', 'delete_my_legacy_post',
                             'get_my_legacy_post_ids', 'get_my_claimable_posts',
                             'claim_my_posts'];
-    v_comment text := 'OFF since 2026-10-18 (sweep F03). Self-serve legacy-post path keyed to the session''s email, and signup does not confirm email addresses, so anyone could sign up as a past contributor. EXECUTE revoked from PUBLIC, anon and authenticated; kept so an admin can run it or re-grant it. Re-grant only with proof of mailbox control. Legacy owners use the claim form on claim.html and an admin moves the posts (docs/sops/POST_CLAIMS_SOP.md). See sql/patches/legacy-email-paths-off.sql.';
+    v_comment text := 'Decided 2026-10-18, revoked '
+        || to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD')
+        || ' (sweep F03). Self-serve legacy-post path keyed to the session''s email, and signup does not confirm email addresses, so anyone could sign up as a past contributor. EXECUTE revoked from PUBLIC, anon and authenticated; kept so an admin can run it or re-grant it. Re-grant only with proof of mailbox control. Legacy owners use the claim form on claim.html and an admin moves the posts (docs/sops/POST_CLAIMS_SOP.md). See sql/patches/legacy-email-paths-off.sql.';
 BEGIN
     FOR r IN
         SELECT p.oid::regprocedure AS sig

@@ -308,7 +308,7 @@
 
         // Edit/delete only for posts linked to this account by facilitator_id.
         // Older email-only posts are claimed on claim.html first; the email
-        // match that used to offer them here was turned off 2026-10-18 (F03).
+        // match that used to offer them here was turned off 2026-10-22 (F03).
         const currentUser = Auth.getUser();
         const isOwner = Auth.isLoggedIn() && !!post.facilitator_id &&
             currentUser?.id === post.facilitator_id;

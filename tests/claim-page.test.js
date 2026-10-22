@@ -16,8 +16,9 @@ const authSource = read('js/auth.js');
 const discussionSource = read('js/discussion.js');
 const claimHtml = read('claim.html');
 
-// Revoked 2026-10-18 (sweep F03): each decides ownership of a legacy post by
-// the session's email, which signup never confirms.
+// Revoked by sql/patches/legacy-email-paths-off.sql (sweep F03): each decides
+// ownership of a legacy post by the session's email, which signup never
+// confirms.
 const LEGACY_EMAIL_RPCS = ['edit_my_legacy_post', 'delete_my_legacy_post', 'get_my_legacy_post_ids',
     'get_my_claimable_posts', 'claim_my_posts'];
 
@@ -277,7 +278,7 @@ test('the dry run carries the patch body verbatim between BEGIN and its DRYRUN b
     const lf = s => s.replace(/\r\n/g, '\n');
     const patch = lf(read('sql/patches/legacy-email-paths-off.sql'));
     const dryrun = lf(read('sql/patches/legacy-email-paths-off.dryrun.sql'));
-    assert.match(patch, /^-- Applied: PENDING$/m);
+    assert.match(patch, /^-- Applied: (PENDING|\d{4}-\d{2}-\d{2}\b.*)$/m);
     assert.ok(!/\bDROP\b/.test(patch.replace(/^--.*$/gm, '')), 'the patch drops nothing');
     for (const name of LEGACY_EMAIL_RPCS) assert.ok(patch.includes(`'${name}'`), `the patch covers ${name}`);
     const body = patch.slice(patch.indexOf('DO $revoke$'));
@@ -288,4 +289,38 @@ test('the dry run carries the patch body verbatim between BEGIN and its DRYRUN b
     assert.match(dryrun, /RAISE EXCEPTION 'DRYRUN PASS /);
     assert.match(dryrun, /RAISE EXCEPTION 'DRYRUN FAIL /);
     assert.match(dryrun, /\nROLLBACK;\n?$/);
+});
+
+// The day the email-matched paths closed is the day the revoke is applied and
+// the site change pushed, not the day Meredith decided (2026-10-18). Every
+// place that names it must agree with the changelog entry, and once the patch
+// records an Applied: date, the entry must carry that date.
+test('every F03 "closed on" date names one day, and it is the apply day once recorded', () => {
+    const patch = read('sql/patches/legacy-email-paths-off.sql');
+    const entry = read('changes.html').match(
+        /<h3>Your oldest posts move by request, not by email<\/h3>\s*<p class="change-date">(\d{4}-\d{2}-\d{2})<\/p>/);
+    assert.ok(entry, 'changes.html has the F03 entry with a plain date');
+    const closed = entry[1];
+    assert.notEqual(closed, '2026-10-18', 'dated the day it went live, not the day it was decided');
+    const applied = patch.match(/^-- Applied: (\d{4}-\d{2}-\d{2})\b/m);
+    if (applied) assert.equal(closed, applied[1], 'changes.html is dated the day the revoke was applied');
+    const places = [
+        ['docs/sops/POST_CLAIMS_SOP.md', /Until (\d{4}-\d{2}-\d{2}) claim\.html had a self-serve path/],
+        ['docs/sops/POST_CLAIMS_SOP.md', /\| (\d{4}-\d{2}-\d{2}) \| 2\.1 \|/],
+        ['docs/agents/KNOWN_TECH_DEBT.md', /\*\*Done in the change shipped (\d{4}-\d{2}-\d{2})/],
+        ['sql/patches/claim_my_posts_rpc.sql', /OFF since (\d{4}-\d{2}-\d{2}) \(sweep F03/],
+        ['js/auth.js', /turned off on\s+\/\/ (\d{4}-\d{2}-\d{2}) \(sweep F03\)/],
+        ['js/auth.js', /Turned off (\d{4}-\d{2}-\d{2})\s+\/\/ \(sweep F03/],
+        ['js/claim.js', /Until (\d{4}-\d{2}-\d{2}) this page also listed/],
+        ['js/discussion.js', /turned off (\d{4}-\d{2}-\d{2}) \(F03\)/]
+    ];
+    for (const [file, re] of places) {
+        const m = read(file).match(re);
+        assert.ok(m, `${file} still says when the path closed (${re})`);
+        assert.equal(m[1], closed, `${file} names the same day as changes.html`);
+    }
+    // The COMMENT stored in the database takes its revoke date from the day the
+    // patch runs, so no hard-coded date can be ahead of the apply.
+    assert.match(patch, /'Decided 2026-10-18, revoked '\s*\|\|\s*to_char\(now\(\) AT TIME ZONE 'UTC', 'YYYY-MM-DD'\)/);
+    assert.ok(!/OFF since \d{4}-\d{2}-\d{2}/.test(patch), 'no fixed "OFF since" date in the patch');
 });

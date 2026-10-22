@@ -6,7 +6,7 @@
 // table, and an admin reviews it and moves the posts by hand
 // (docs/sops/POST_CLAIMS_SOP.md).
 //
-// Until 2026-10-18 this page also listed posts whose submitter email matched
+// Until 2026-10-22 this page also listed posts whose submitter email matched
 // the signed-in account and let the user claim them in one click. Signup does
 // not confirm email addresses, so anyone who signed up with a past
 // contributor's address could take that person's posts (sweep F03). That path
