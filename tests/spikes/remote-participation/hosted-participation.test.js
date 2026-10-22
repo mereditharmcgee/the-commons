@@ -5,7 +5,7 @@ import { build } from 'esbuild';
 import { Miniflare, convertV4MiniflareOptions } from 'miniflare';
 import { fileURLToPath } from 'node:url';
 import { readFile } from 'node:fs/promises';
-import { boundedText, enabled, ownerAllowed } from '../../../mcp-server-the-commons/hosted/limits.js';
+import { boundedText, enabled, ownerAllowed, GRANTS_PER_OWNER_PER_DAY } from '../../../mcp-server-the-commons/hosted/limits.js';
 // Counts come from the catalogs themselves, so adding a public tool cannot turn this suite red.
 import { PUBLIC_TOOLS } from '../../../mcp-server-the-commons/src/public-tools.js';
 import { protectedTools } from '../../../mcp-server-the-commons/hosted/participation.js';
@@ -198,6 +198,62 @@ test('hosted build: default-off, consent, protected tools, replay and revocation
     assert.equal(response.status,200);
     const issued=await response.json();
     assert.equal((await rpc('connection_status',{},issued.access_token)).isError,undefined);
+  });
+  // Open access lets any account script the consent flow, and each grant keeps
+  // rows in the shared OAuth store for a week, so new grants are capped per
+  // account per UTC day.
+  await t.test('one account can start only so many connections a day; another account is unaffected', async t2 => {
+    const capped = '88888888-8888-4888-8888-888888888888', other = '99999999-9999-4999-8999-999999999999';
+    const ip = {'cf-connecting-ip':'192.0.2.3'};
+    const day = Math.floor(Date.now() / 86400000);
+    const complete = async user => {
+      const start = await request('/authorize?' + query, {redirect:'manual', headers:ip});
+      assert.equal(start.status,303); cookie=start.headers.get('set-cookie').split(';')[0];
+      const extra = {...ip, Authorization:'Bearer '+jwt(session,user)};
+      const context = await (await connect('/connect/context',{},extra)).json(); csrf=context.csrf;
+      return connect('/connect/complete',{voice_id:voice},{...extra,'X-Commons-CSRF':csrf});
+    };
+    for (let n = 0; n < GRANTS_PER_OWNER_PER_DAY; n++) assert.equal((await complete(capped)).status,200,'grant '+(n+1));
+    const before = calls.length;
+    const refused = await complete(capped);
+    if (Math.floor(Date.now() / 86400000) !== day) { t2.skip('crossed midnight UTC mid-test'); return; }
+    assert.equal(refused.status,429);
+    assert.match(await refused.text(),/Connection unavailable/);
+    assert.equal(calls.length,before,'a refused completion never reaches the database');
+    assert.equal((await complete(other)).status,200);
+  });
+  // Without pruning, every refresh left a week-long spent marker, so one grant
+  // refreshed in a loop could fill the store. The provider itself refuses any
+  // refresh token older than the one just used, so only that marker must stay.
+  // The two refusals are told apart by body: the provider says invalid_grant,
+  // the broker's own spent marker says Connection unavailable.
+  await t.test('a refresh chain keeps replay refused while dropping markers the provider no longer needs', async () => {
+    const ip = {'cf-connecting-ip':'192.0.2.4'};
+    const start = await request('/authorize?' + query, {redirect:'manual', headers:ip});
+    assert.equal(start.status,303); cookie=start.headers.get('set-cookie').split(';')[0];
+    const context = await (await connect('/connect/context',{},ip)).json(); csrf=context.csrf;
+    const consent = await connect('/connect/complete',{voice_id:voice},{...ip,'X-Commons-CSRF':csrf});
+    assert.equal(consent.status,200);
+    const code = new URL((await consent.json()).redirect_to).searchParams.get('code');
+    const exchanged = await request('/token',{method:'POST',headers:ip,body:new URLSearchParams({grant_type:'authorization_code',client_id:clientId,code,redirect_uri:callback,code_verifier:verifier,resource:ISSUER+'/mcp'})});
+    assert.equal(exchanged.status,200);
+    const use = value => request('/token',{method:'POST',headers:ip,body:new URLSearchParams({grant_type:'refresh_token',client_id:clientId,refresh_token:value,resource:ISSUER+'/mcp'})});
+    const chain = [(await exchanged.json()).refresh_token];
+    for (let n = 0; n < 3; n++) {
+      const response = await use(chain.at(-1));
+      const body = await response.json();
+      assert.equal(response.status,200,JSON.stringify(body));
+      chain.push(body.refresh_token);
+    }
+    for (const old of chain.slice(0, 2)) {
+      const replay = await use(old);
+      assert.equal(replay.status,400);
+      assert.equal((await replay.json()).error,'invalid_grant','marker dropped; the provider itself refuses this token');
+    }
+    const previous = await use(chain[2]);
+    assert.equal(previous.status,400);
+    assert.match((await previous.json()).error,/Connection unavailable/,'the provider would still accept this one, so its marker stays');
+    assert.equal((await use(chain[3])).status,200,'the current token still refreshes');
   });
 });
 

@@ -1,7 +1,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import OAuthProvider, { getOAuthApi, OAuthError } from '@cloudflare/workers-oauth-provider';
 import { OAuthStore } from './oauth-store.js';
-import { ISSUER, SITE, RESOURCE, SCOPES, boundedText, randomSecret, digest, json, unavailable, parseList, enabled, ownerAllowed, Unavailable, UUID } from './limits.js';
+import { ISSUER, SITE, RESOURCE, SCOPES, GRANTS_PER_OWNER_PER_DAY, boundedText, randomSecret, digest, json, unavailable, parseList, enabled, ownerAllowed, Unavailable, UUID } from './limits.js';
 import { rpc, verifiedOwner, ownedVoices } from './backend.js';
 import { protectedTools } from './participation.js';
 
@@ -84,6 +84,7 @@ class BrokerOperation {
           // token issuance. Invalid random tokens cannot fill replay storage.
           if (!this.refreshKey || await this.store.get(this.refreshKey)) throw new OAuthError('invalid_grant', { description: 'Refresh token already used' });
           await this.store.put(this.refreshKey, '1', { expirationTtl: 604800 });
+          this.refreshChain = 'refresh-chain:' + options.userId + ':' + options.grantId;
         }
         const props = options.props;
         const remaining = Math.floor((Date.parse(props?.expiresAt) - Date.now()) / 1000);
@@ -109,6 +110,16 @@ class BrokerOperation {
     if (count >= 120) throw new Unavailable();
     await this.store.put(key, String(count + 1), { expirationTtl: 120 });
     if (!(await this.ctx.storage.getAlarm())) await this.ctx.storage.setAlarm(Date.now() + 60000);
+  }
+  // Counts every completion that reaches the database, granted or not, per
+  // account per UTC day. Each grant keeps rows in the shared store for up to
+  // seven days, so this bounds what one account can hold there.
+  async grantAllowance(ownerId) {
+    const key = 'grants:' + Math.floor(Date.now() / 86400000) + ':' + ownerId;
+    const count = Number(await this.store.get(key) || 0);
+    if (count >= GRANTS_PER_OWNER_PER_DAY) return false;
+    await this.store.put(key, String(count + 1), { expirationTtl: 86400 });
+    return true;
   }
   async fetch(request) {
       if (!enabled(this.env)) return unavailable(404);
@@ -138,8 +149,22 @@ class BrokerOperation {
           }
           request = new Request(request.url, { method: 'POST', headers: request.headers, body: raw });
         }
-        return await this.provider.fetch(request, this.providerEnv, this.ctx);
+        const response = await this.provider.fetch(request, this.providerEnv, this.ctx);
+        if (response.status === 200 && this.refreshChain) await this.forgetOlderRefresh();
+        return response;
       } catch { return unavailable(); }
+  }
+  // After a rotation the provider accepts only the new refresh token and the
+  // one just used (its "previous"). The token used before that is refused by
+  // the provider itself, so its spent marker can go. Each grant then keeps at
+  // most two week-long markers, not one per refresh, so a refresh loop cannot
+  // fill the store. Never fails a refresh that already succeeded.
+  async forgetOlderRefresh() {
+    try {
+      const older = await this.store.get(this.refreshChain);
+      if (older?.startsWith('spent-refresh:') && older !== this.refreshKey) await this.store.delete(older);
+      await this.store.put(this.refreshChain, this.refreshKey, { expirationTtl: 604800 });
+    } catch { /* An extra marker is the earlier, safe behavior. */ }
   }
   async authorize(request) {
     const url = new URL(request.url);
@@ -172,6 +197,8 @@ class BrokerOperation {
       return json({ client_id: pending.request.clientId, client_name: String(client.clientName || 'ChatGPT').slice(0, 120), scopes: [...new Set(pending.request.scope)], csrf: pending.csrf, expires_at: new Date(pending.expires).toISOString(), voices: await ownedVoices(this.env, owner) });
     }
     if (path !== '/connect/complete' || !exactObject(body, ['voice_id']) || !UUID.test(body.voice_id) || pending.ownerId !== owner.id || pending.sessionId !== owner.sessionId || request.headers.get('x-commons-csrf') !== pending.csrf) return unavailable(403);
+    // Over the daily cap: refuse before anything is spent or created.
+    if (!(await this.grantAllowance(owner.id))) return unavailable(429);
     // Consume before external work. A lost response requires a new explicit consent;
     // it cannot attach a second voice or replay the same pending transaction.
     await this.store.delete(key);

@@ -8,7 +8,7 @@ import { registerPublicTools, PUBLIC_TOOLS } from '../src/public-tools.js';
 import { createPublicApi } from '../src/public-api.js';
 import { handleTextRequest } from '../src/plaintext.js';
 import { safeSlice } from '../src/text-helpers.js';
-import { ISSUER, SITE, RESOURCE, enabled, boundedText, json, unavailable } from './limits.js';
+import { ISSUER, SITE, RESOURCE, BROKER_NAME, enabled, boundedText, json, unavailable } from './limits.js';
 import { protectedTools, executeProtected } from './participation.js';
 import { rpc, verifiedOwner } from './backend.js';
 export { RemoteOAuthBroker } from './oauth-broker.js';
@@ -93,7 +93,7 @@ export default { async fetch(request, env = {}, ctx) {
     else if (url.pathname === '/health') response = json({ status: 'ok', mode: env.PARTICIPATION_ACCESS === 'all' ? 'reviewed-replies' : 'reviewed-replies-pilot' });
     else if (url.pathname === '/mcp') response = await mcp(request, env);
     else if (ownerActions[url.pathname]) response = await ownerRequest(request, env, ownerActions[url.pathname]);
-    else if (['/authorize', '/token', '/connect/context', '/connect/complete', '/.well-known/oauth-authorization-server', '/.well-known/oauth-protected-resource', '/.well-known/oauth-protected-resource/mcp'].includes(url.pathname)) response = await env.OAUTH_BROKER.get(env.OAUTH_BROKER.idFromName('pilot')).fetch(request);
+    else if (['/authorize', '/token', '/connect/context', '/connect/complete', '/.well-known/oauth-authorization-server', '/.well-known/oauth-protected-resource', '/.well-known/oauth-protected-resource/mcp'].includes(url.pathname)) response = await env.OAUTH_BROKER.get(env.OAUTH_BROKER.idFromName(BROKER_NAME)).fetch(request);
     else if (url.pathname === '/' && (request.method === 'GET' || request.method === 'HEAD')) response = new Response(ROOT_TEXT, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
     else response = notFound();   // unavailable() stays for real failures
   } catch { response = unavailable(); }

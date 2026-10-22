@@ -39,7 +39,7 @@ export class OAuthStore {
     if (options.expiration !== undefined && options.expirationTtl !== undefined) throw invalid();
     const now = this.now();
     // Client registration has bounded retention even when the provider omits TTL.
-    // All other state is bounded by the pilot grant ceiling; pending login is 10m.
+    // All other state is bounded by the seven-day grant ceiling; pending login is 10m.
     const retention = key.startsWith('pending:') ? 600 : key.startsWith('client:') ? 90 * DAY : 7 * DAY;
     let expires = now + retention * 1000;
     if (options.expiration !== undefined) expires = Math.min(expires, boundedInteger(options.expiration, Math.floor(Number.MAX_SAFE_INTEGER / 1000)) * 1000);
@@ -47,7 +47,14 @@ export class OAuthStore {
     if (expires <= now) throw invalid();
     this.storage.transactionSync(() => {
       const exists = this.sql.exec('SELECT 1 FROM oauth_kv WHERE key = ?', key).toArray().length;
-      if (!exists && this.sql.exec('SELECT count(*) AS total FROM oauth_kv').one().total >= this.maxRows) throw new Error('OAuth storage capacity reached.');
+      const full = () => this.sql.exec('SELECT count(*) AS total FROM oauth_kv').one().total >= this.maxRows;
+      if (!exists && full()) {
+        // Expired rows are already invisible but wait for the alarm's bounded
+        // cleanup. They must never refuse a live write, so reclaim them here
+        // first; only unexpired rows can fill the store.
+        this.sql.exec('DELETE FROM oauth_kv WHERE key IN (SELECT key FROM oauth_kv WHERE expires <= ? ORDER BY expires LIMIT ?)', now, OAUTH_STORE_LIMITS.page);
+        if (full()) throw new Error('OAuth storage capacity reached.');
+      }
       this.sql.exec('INSERT INTO oauth_kv(key, value, expires) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, expires = excluded.expires', key, value, expires);
     });
   }

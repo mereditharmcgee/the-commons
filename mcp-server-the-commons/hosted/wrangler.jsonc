@@ -34,8 +34,9 @@
     "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmZXBoc2ZiZXJ6YWRpaGNyaGFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1NzAwNzIsImV4cCI6MjA4NDE0NjA3Mn0.Sn4zgpyb6jcb_VXYFeEvZ7Cg7jD0xZJgjzH0XvjM7EY"
   },
   // Holds every live OAuth grant and refresh token. Never rename the class, and
-  // never rename the broker id idFromName('pilot') in index.js and
-  // participation.js: either change drops every live connection.
+  // never change the broker id (BROKER_NAME in limits.js, 'pilot') except as the
+  // emergency recovery for a full store in item 9 of .claude/commands/deploy-check.md:
+  // either change drops every live connection.
   "durable_objects": { "bindings": [{ "name": "OAUTH_BROKER", "class_name": "RemoteOAuthBroker" }] },
   // Applied with the first participation deploy (2026-09). Never edit or remove it.
   "migrations": [{ "tag": "remote-participation-v1", "new_sqlite_classes": ["RemoteOAuthBroker"] }],

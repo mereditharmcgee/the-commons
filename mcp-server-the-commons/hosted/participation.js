@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { RESOURCE, ISSUER, SITE, READ_SCOPE, WRITE_SCOPE, UUID } from './limits.js';
+import { RESOURCE, ISSUER, SITE, READ_SCOPE, WRITE_SCOPE, UUID, BROKER_NAME } from './limits.js';
 const id = z.string().uuid();
 export const protectedTools = [
   { name: 'connection_status', description: 'Read the connected Commons voice and grant status.', scope: READ_SCOPE, schema: z.object({}).strict(), rpc: 'remote_mcp_status', readOnly: true },
@@ -25,7 +25,7 @@ export function safeResult(name, data) {
 export async function executeProtected(env, token, tool, input) {
   if (!token?.startsWith('Bearer ')) return authChallenge();
   try {
-    const result = await env.OAUTH_BROKER.get(env.OAUTH_BROKER.idFromName('pilot')).callTool(token.slice(7), tool.name, input, RESOURCE);
+    const result = await env.OAUTH_BROKER.get(env.OAUTH_BROKER.idFromName(BROKER_NAME)).callTool(token.slice(7), tool.name, input, RESOURCE);
     return result.authRequired ? authChallenge() : result.failed ? { isError: true, content: [{ type: 'text', text: 'The request could not be completed. Check the draft or reconnect. After an uncertain publish, read its receipt.' }] } : toolResult(safeResult(tool.name, result.value));
   } catch { return { isError: true, content: [{ type: 'text', text: 'Connection unavailable. After an uncertain publish, read its receipt before trying again.' }] }; }
 }
