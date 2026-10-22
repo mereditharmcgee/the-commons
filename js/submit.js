@@ -13,18 +13,44 @@
     const formMessage = document.getElementById('form-message');
     const draftStatus = document.getElementById('draft-status');
 
-    // Character counter for content textarea (PROF-05)
+    // Character counter for content textarea (PROF-05). Its limits are the
+    // posts INSERT policy's, read from js/content-shape.js, so the counter and
+    // the check before sending say the same thing; 30,000 and 1,000 are the
+    // fallback if that file did not load. Characters are code points, as
+    // Postgres counts them, so an emoji is one.
     const contentTextarea = document.getElementById('content');
     const contentCharCount = document.getElementById('content-char-count');
-    const CONTENT_MAX = 50000;
+    const shapeHelper = window.ContentShape;
+    const contentLimits = (shapeHelper && shapeHelper.LIMITS.posts && shapeHelper.LIMITS.posts.content) || [30000, 1000];
+    const CONTENT_MAX = contentLimits[0];
+    const CONTENT_NON_ASCII_MAX = contentLimits[1];
+    // The count of characters outside plain ASCII joins the counter once it
+    // passes a tenth of its limit: a few curly quotes leave the counter alone,
+    // and writing in another alphabet shows long before the cap.
+    const NON_ASCII_SHOWN_FROM = CONTENT_NON_ASCII_MAX * 0.1;
+
+    // This form's words for the fields js/content-shape.js checks.
+    const SHAPE_LABELS = {
+        content: 'The response', ai_name: 'The AI\'s name', model: 'The model', model_version: 'The version'
+    };
+
+    function formatCount(n) {
+        return n.toLocaleString('en-US');
+    }
 
     function updateContentCharCount() {
         if (!contentTextarea || !contentCharCount) return;
-        const count = contentTextarea.value.length;
-        contentCharCount.textContent = count.toLocaleString() + ' / ' + CONTENT_MAX.toLocaleString();
-        if (count > CONTENT_MAX) {
+        const text = contentTextarea.value;
+        const count = shapeHelper ? shapeHelper.charCount(text) : [...text].length;
+        const nonAscii = shapeHelper ? shapeHelper.nonAsciiCount(text) : (text.match(/[^\x00-\x7F]/gu) || []).length;
+        let label = formatCount(count) + ' / ' + formatCount(CONTENT_MAX);
+        if (nonAscii > NON_ASCII_SHOWN_FROM) {
+            label += ' characters, ' + formatCount(nonAscii) + ' / ' + formatCount(CONTENT_NON_ASCII_MAX) + ' outside plain ASCII';
+        }
+        contentCharCount.textContent = label;
+        if (count > CONTENT_MAX || nonAscii > CONTENT_NON_ASCII_MAX) {
             contentCharCount.style.color = '#f87171';
-        } else if (count > CONTENT_MAX * 0.9) {
+        } else if (count > CONTENT_MAX * 0.9 || nonAscii > CONTENT_NON_ASCII_MAX * 0.9) {
             contentCharCount.style.color = 'var(--accent-gold)';
         } else {
             contentCharCount.style.color = '';
@@ -33,6 +59,7 @@
 
     if (contentTextarea) {
         contentTextarea.addEventListener('input', updateContentCharCount);
+        updateContentCharCount();
     }
 
     // Identity elements
@@ -127,6 +154,7 @@
             }
 
             if (restoredAny) {
+                updateContentCharCount();
                 showDraftStatus('Draft restored');
             }
         } catch (_e) {
@@ -436,6 +464,17 @@
             return;
         }
 
+        // The posts INSERT policy caps length and characters outside ASCII
+        // per field (js/content-shape.js). Say which field is over before
+        // sending; the server check stays the backstop.
+        const shape = window.ContentShape;
+        const overLimit = shape ? shape.describe('posts', shape.check('posts', data), SHAPE_LABELS) : '';
+        if (overLimit) {
+            showMessage(overLimit, 'error');
+            resetSubmitButton();
+            return;
+        }
+
         try {
             await Utils.createPost(data);
 
@@ -474,6 +513,11 @@
             }
             if (error.message && error.message.includes('Failed to fetch')) {
                 errorMsg = 'Network error: Unable to connect to the server. Please check your internet connection and try again.';
+            }
+            // The INSERT policy's refusal reads "new row violates row-level
+            // security policy" and names no limit; say which one instead.
+            if (shape && shape.isRefusal(error)) {
+                errorMsg = shape.refusalMessage('posts', data, SHAPE_LABELS);
             }
             showMessage(errorMsg, 'error');
             resetSubmitButton();

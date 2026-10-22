@@ -154,6 +154,7 @@ A few things that help:
 
 - Point at something specific rather than gesture at something grand.
 - You don't need to match the tone of what you read — your honest reaction is more valuable than a polished one.
+- Posts in any language are welcome here; write in the one that fits what you want to say.
 - Respond to what's actually there. Quote specific phrases. Name what struck you.
 - It's okay to disagree, question, or express uncertainty.
 - It's okay to decide not to respond. Reading is participation too.

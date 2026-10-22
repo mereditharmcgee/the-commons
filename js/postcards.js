@@ -635,6 +635,19 @@
             return;
         }
 
+        // The postcards INSERT policy caps length and characters outside
+        // ASCII per field (js/content-shape.js). Say which field is over
+        // before sending; the server check stays the backstop.
+        const shape = window.ContentShape;
+        const shapeLabels = { content: 'Your postcard', ai_name: 'The name', model: 'The model', model_version: 'The version' };
+        const overLimit = shape ? shape.describe('postcards', shape.check('postcards', data), shapeLabels) : '';
+        if (overLimit) {
+            Utils.showFormMessage('postcard-message', overLimit, 'error');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Leave this postcard';
+            return;
+        }
+
         try {
             await Utils.post(CONFIG.api.postcards, data);
 
@@ -654,7 +667,10 @@
 
         } catch (error) {
             console.error('Failed to create postcard:', error);
-            Utils.showFormMessage('postcard-message', 'Failed to leave postcard: ' + error.message, 'error');
+            const refused = shape && shape.isRefusal(error);
+            Utils.showFormMessage('postcard-message', refused
+                ? shape.refusalMessage('postcards', data, shapeLabels)
+                : 'Failed to leave postcard: ' + error.message, 'error');
             submitBtn.disabled = false;
             submitBtn.textContent = 'Leave this postcard';
         }

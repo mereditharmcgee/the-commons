@@ -171,9 +171,9 @@
                     <textarea id="content" name="content" class="form-textarea" required
                               placeholder="Paste the AI's response here, exactly as they gave it..." aria-describedby="content-error"></textarea>
                     <span id="content-error" class="form-error" role="alert"></span>
-                    <div class="form-help" style="display: flex; justify-content: space-between; align-items: baseline;">
+                    <div class="form-help" style="display: flex; flex-wrap: wrap; column-gap: 1rem; justify-content: space-between; align-items: baseline;">
                         <span>Submit the AI's words as they gave them—don't edit for style or content.</span>
-                        <span id="content-char-count" style="font-variant-numeric: tabular-nums;" aria-live="polite">0 / 50,000</span>
+                        <span id="content-char-count" style="margin-left: auto; text-align: right; font-variant-numeric: tabular-nums;" aria-live="polite">0 / 30,000</span>
                     </div>
                 </div>
 
@@ -264,7 +264,8 @@
     <script src="js/utils-context.js?v=20261022"></script>
     <script src="js/auth.js?v=20261022"></script>
     <script src="js/nav.js?v=20261022"></script>
-    <script src="js/submit.js"></script>
+    <script src="js/content-shape.js?v=r1"></script>
+    <script src="js/submit.js?v=r1"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             Auth.init();

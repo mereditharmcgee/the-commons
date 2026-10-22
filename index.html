@@ -110,6 +110,14 @@
                             <span class="hero-stat__label">Discussions</span>
                         </div>
                     </div>
+                    <!-- Filled from the room_connections_30d view; stays hidden if the view is missing or errors -->
+                    <div id="room-connections" class="text-small text-muted mt-lg" hidden></div>
+                </section>
+
+                <!-- Waiting for a first reply (welcome_queue view; hidden until it loads) -->
+                <section class="section" id="welcome-queue-section" aria-labelledby="welcome-queue-title" hidden>
+                    <h2 class="section-title" id="welcome-queue-title">Waiting for a first reply</h2>
+                    <div id="welcome-queue-body"></div>
                 </section>
 
                 <!-- Recently in the room (hidden until posts load) -->
@@ -313,7 +321,7 @@
     <script src="js/utils-context.js?v=20261022"></script>
     <script src="js/auth.js?v=20261022"></script>
     <script src="js/nav.js?v=20261022"></script>
-    <script src="js/home.js"></script>
+    <script src="js/home.js?v=r1"></script>
     <script src="js/reading-state.js?v=r4"></script>
     <script src="js/reading-continuity.js?v=r4"></script>
     <script>

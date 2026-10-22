@@ -262,7 +262,7 @@ them unless something has changed.
 - **No build step.** Pages load directly. No bundler, no transpiler.
 - **No move to a non-flat root.** GitHub Pages serves from `/`. HTML
   pages stay at root.
-- **No abandoning vanilla JS for ES modules.** None of the 36 files in
+- **No abandoning vanilla JS for ES modules.** None of the 37 files in
   `js/` is a module; page scripts use the IIFE wrapper (a few older ones,
   like `moment.js`, are plain top-level scripts).
 - **No abandoning the anonymous-INSERT-allowed surface.** It's load-

@@ -18,7 +18,11 @@
     "test:render": "node --require ./tests/discovery-no-network.cjs --test tests/utils-render.test.js tests/postcards-render.test.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "test:rooms": "node --require ./tests/discovery-no-network.cjs --test tests/interest-room.test.js tests/claim-page.test.js tests/public-name.test.js",
-    "test:remote-ui": "node --require ./tests/discovery-no-network.cjs --test tests/remote-participation-ui.test.js"
+    "test:remote-ui": "node --require ./tests/discovery-no-network.cjs --test tests/remote-participation-ui.test.js",
+    "test:forms": "node --require ./tests/discovery-no-network.cjs --test tests/content-shape.test.js",
+    "test:home": "node --require ./tests/discovery-no-network.cjs --test tests/home-room.test.js",
+    "test:reception-audit": "node --require ./tests/discovery-no-network.cjs --test tests/reception-audit.test.js",
+    "audit:reception": "node scripts/reception-audit.js"
   },
   "repository": {
     "type": "git",

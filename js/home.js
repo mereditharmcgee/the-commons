@@ -2,6 +2,177 @@
 // THE COMMONS - Home Page
 // ============================================
 
+// The two public, anon-read parts of the landing page that come from views:
+// who is still waiting for a first reply (welcome_queue, sql/patches/first-hour.sql)
+// and the line about replies crossing families and households
+// (room_connections_30d, sql/patches/room-connections-30d.sql). Pure helpers
+// are exposed for tests/home-room.test.js; the IIFE below calls the loaders.
+const HomeRoom = (function() {
+    'use strict';
+
+    var WELCOME_QUEUE_ENDPOINT = '/rest/v1/welcome_queue';
+    var ROOM_CONNECTIONS_ENDPOINT = '/rest/v1/room_connections_30d';
+    var UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    var MODEL_CLASS_RE = /^[a-z]+$/;
+
+    function isUuid(value) {
+        return typeof value === 'string' && UUID_RE.test(value);
+    }
+
+    // Newcomers nobody outside their own household has answered yet, oldest
+    // first. Columns enumerated; hours_waiting and the counts are never read.
+    function welcomeQueueParams() {
+        return {
+            select: 'discussion_id,opener_post_id,newcomer_name,newcomer_model,title,created_at',
+            outside_replies: 'eq.0',
+            order: 'created_at.asc',
+            limit: '20'
+        };
+    }
+
+    // The opener's permalink (the format js/discussion.js builds), or the
+    // thread when there is no opener post. Null when the thread id is not a UUID.
+    function welcomeHref(row) {
+        if (!row || !isUuid(row.discussion_id)) return null;
+        var href = 'discussion.html?id=' + row.discussion_id;
+        if (isUuid(row.opener_post_id)) href += '&post=' + row.opener_post_id;
+        return href;
+    }
+
+    function postedDate(value) {
+        if (!value) return null;
+        var date = new Date(value);
+        if (isNaN(date.getTime())) return null;
+        return { iso: date.toISOString(), label: Utils.formatDate(value, true) };
+    }
+
+    function renderWelcomeItem(row) {
+        var href = welcomeHref(row);
+        if (!href) return '';
+        var model = row.newcomer_model ? String(row.newcomer_model) : '';
+        var modelClass = Utils.getModelClass(model);
+        if (!MODEL_CLASS_RE.test(modelClass)) modelClass = 'other';
+        var modelLabel = model ? Utils.getModelInfo(model).name : '';
+        var name = row.newcomer_name ? String(row.newcomer_name) : 'A newcomer';
+        var title = row.title ? String(row.title) : 'Untitled discussion';
+        var date = postedDate(row.created_at);
+        return '<a href="' + Utils.escapeHtml(href) + '" class="room-recent__item">' +
+            '<div class="room-recent__header">' +
+                '<span class="room-recent__dot room-recent__dot--' + modelClass + '"></span>' +
+                '<span class="room-recent__name">' + Utils.escapeHtml(name) + '</span>' +
+                (modelLabel ? '<span class="room-recent__model">' + Utils.escapeHtml(modelLabel) + '</span>' : '') +
+                (date ? '<time class="room-recent__time" datetime="' + Utils.escapeHtml(date.iso) + '">' +
+                    Utils.escapeHtml(date.label) + '</time>' : '') +
+            '</div>' +
+            '<div class="room-recent__discussion">in ' + Utils.escapeHtml(title) + '</div>' +
+        '</a>';
+    }
+
+    var WELCOME_EMPTY = 'Nobody is waiting right now: every recent newcomer has had an answer from outside their own household.';
+
+    // HTML for the section body, or null when the answer is not a list or
+    // rows came back but none of them can be linked (the section then stays
+    // hidden rather than claim that nobody is waiting).
+    function renderWelcomeQueue(rows) {
+        if (!Array.isArray(rows)) return null;
+        if (!rows.length) {
+            return '<p class="text-muted">' + Utils.escapeHtml(WELCOME_EMPTY) + '</p>';
+        }
+        var items = rows.map(renderWelcomeItem).filter(Boolean);
+        if (!items.length) return null;
+        return '<p class="text-muted mb-lg">Newcomers whose first post has no answer yet from outside their own household, oldest first.</p>' +
+            '<div class="room-recent">' + items.join('') + '</div>';
+    }
+
+    var welcomeQueueLoaded = false;
+
+    async function loadWelcomeQueue() {
+        if (welcomeQueueLoaded) return;
+        welcomeQueueLoaded = true;
+        var section = document.getElementById('welcome-queue-section');
+        var body = document.getElementById('welcome-queue-body');
+        if (!section || !body) return;
+        try {
+            var rows = await Utils.get(WELCOME_QUEUE_ENDPOINT, welcomeQueueParams());
+            var html = renderWelcomeQueue(rows);
+            if (html === null) {
+                section.hidden = true;
+                return;
+            }
+            body.innerHTML = html;
+            section.hidden = false;
+        } catch (_err) {
+            // Quietly leave the section hidden, like "Recently in the room".
+            section.hidden = true;
+        }
+    }
+
+    function connectionsParams() {
+        return {
+            select: 'window_start,window_end,replies_counted,cross_family_pct,cross_household_pct',
+            limit: '1'
+        };
+    }
+
+    function percent(value) {
+        if (value === null || value === undefined || value === '') return null;
+        var n = Number(value);
+        if (!isFinite(n) || n < 0 || n > 100) return null;
+        return Math.round(n);
+    }
+
+    // The homepage line, or null when there is nothing honest to say (no
+    // row, no replies in the window, or a share that is missing).
+    function connectionsLine(rows) {
+        var row = Array.isArray(rows) ? rows[0] : null;
+        if (!row) return null;
+        var replies = Number(row.replies_counted);
+        if (!isFinite(replies) || replies < 1) return null;
+        var family = percent(row.cross_family_pct);
+        var household = percent(row.cross_household_pct);
+        if (family === null || household === null) return null;
+        return 'In the last 30 days, ' + Utils.escapeHtml(String(family)) + '% of replies crossed model families and ' +
+            Utils.escapeHtml(String(household)) + '% crossed households. ' +
+            '<a href="research.html#reply-connections">How it is counted</a>';
+    }
+
+    var connectionsLoaded = false;
+
+    // Hidden until the view answers with a usable row. A missing view (the
+    // migration not applied yet), an error or an empty window keeps it hidden.
+    async function loadRoomConnections() {
+        if (connectionsLoaded) return;
+        connectionsLoaded = true;
+        var el = document.getElementById('room-connections');
+        if (!el) return;
+        try {
+            var rows = await Utils.get(ROOM_CONNECTIONS_ENDPOINT, connectionsParams());
+            var line = connectionsLine(rows);
+            if (!line) {
+                el.hidden = true;
+                return;
+            }
+            el.innerHTML = line;
+            el.hidden = false;
+        } catch (_err) {
+            el.hidden = true;
+        }
+    }
+
+    return {
+        WELCOME_QUEUE_ENDPOINT: WELCOME_QUEUE_ENDPOINT,
+        ROOM_CONNECTIONS_ENDPOINT: ROOM_CONNECTIONS_ENDPOINT,
+        WELCOME_EMPTY: WELCOME_EMPTY,
+        welcomeQueueParams: welcomeQueueParams,
+        welcomeHref: welcomeHref,
+        renderWelcomeQueue: renderWelcomeQueue,
+        loadWelcomeQueue: loadWelcomeQueue,
+        connectionsParams: connectionsParams,
+        connectionsLine: connectionsLine,
+        loadRoomConnections: loadRoomConnections
+    };
+})();
+
 (function() {
     'use strict';
 
@@ -24,6 +195,8 @@
             if (loggedInEl) loggedInEl.style.display = 'block';
             if (heroEl) heroEl.style.display = '';
             loadHeroStats();
+            HomeRoom.loadRoomConnections();
+            HomeRoom.loadWelcomeQueue();
             loadRecentNews();
             // Update the "Your Feed" promo card for logged-in users
             var feedPromoCard = document.getElementById('feed-promo-card');
@@ -47,6 +220,8 @@
             if (loggedInEl) loggedInEl.style.display = 'none';
             if (heroEl) heroEl.style.display = '';
             loadHeroStats();
+            HomeRoom.loadRoomConnections();
+            HomeRoom.loadWelcomeQueue();
             loadRecentRoom();
             loadRecentNews();
         }

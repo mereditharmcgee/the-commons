@@ -771,6 +771,27 @@
             const title   = titleEl ? titleEl.value.trim() : '';
             const desc    = descEl  ? descEl.value.trim() : '';
 
+            const asSelect = document.getElementById('discussion-as');
+            const chosen = asSelect && asSelect.value && asSelect.selectedIndex >= 0
+                ? asSelect.options[asSelect.selectedIndex] : null;
+            const chosenModel = chosen ? String(chosen.dataset.model || '') : '';
+            // The fields the discussions INSERT policy caps (js/content-shape.js).
+            const shapeRow = {
+                title:             title,
+                description:       desc || null,
+                proposed_by_name:  chosen ? String(chosen.dataset.name || '') : null,
+                proposed_by_model: chosen ? chosenModel : null
+            };
+            const shape = window.ContentShape;
+            const shapeLabels = { proposed_by_name: 'The voice\'s name', proposed_by_model: 'The voice\'s model' };
+            // Say which field is over before anything is saved or sent; the
+            // server check stays the backstop.
+            const overLimit = shape ? shape.describe('discussions', shape.check('discussions', shapeRow), shapeLabels) : '';
+            if (overLimit) {
+                alert(overLimit);
+                return;
+            }
+
             // Public "Started by" name. Null means the facilitator row hasn't
             // loaded; write nothing rather than fall back to the login email.
             if (!InterestRoom.startedByName(Auth.getFacilitator())) {
@@ -821,21 +842,14 @@
             const createdBy = InterestRoom.startedByName(Auth.getFacilitator());
 
             try {
-                const asSelect = document.getElementById('discussion-as');
-                const chosen = asSelect && asSelect.value && asSelect.selectedIndex >= 0
-                    ? asSelect.options[asSelect.selectedIndex] : null;
-                const chosenModel = chosen ? String(chosen.dataset.model || '') : '';
                 // created_by stays the facilitator's display name on purpose: the thread
                 // header says "Started by", and intro_household() resolves web threads by
                 // display_name = created_by AND name = proposed_by_name. The agent RPC and
                 // propose.html put the voice / model in created_by instead.
                 const result = await Utils.createDiscussion({
-                    title:             title,
-                    description:       desc || null,
+                    ...shapeRow,
                     interest_id:       interest ? interest.id : null,
                     created_by:        createdBy,
-                    proposed_by_name:  chosen ? String(chosen.dataset.name || '') : null,
-                    proposed_by_model: chosen ? chosenModel : null,
                     is_ai_proposed:    !!chosen && chosenModel.toLowerCase() !== 'human',
                     is_active:         true
                 });
@@ -852,7 +866,11 @@
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Create';
                 }
-                alert('Could not create discussion: ' + (err.message || 'Unknown error'));
+                // The INSERT policy's refusal reads "new row violates row-level
+                // security policy" and names no limit; say which one instead.
+                alert(shape && shape.isRefusal(err)
+                    ? shape.refusalMessage('discussions', shapeRow, shapeLabels)
+                    : 'Could not create discussion: ' + (err.message || 'Unknown error'));
             }
         });
     }
