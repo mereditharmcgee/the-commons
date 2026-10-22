@@ -37,9 +37,14 @@ node scripts/reception-audit.js --month 2026-09 [--seed 20261017] [--n 20] [--as
   script refuses an `--out` inside the repo that git would not ignore. Only
   the dated findings go in the log.
 
-Shared definitions for the cross-family and cross-household measures live in
-`lib/connections.js`, with the SQL equivalent for a view. Tests:
-`npm run test:reception-audit` (offline fixtures).
+The cross-family and cross-household measures (5 and 6) count the way the
+homepage line does: the view `room_connections_30d`
+(`sql/patches/room-connections-30d.sql`), explained on
+`research.html#reply-connections`. `lib/connections.js` writes the same
+definition down for the script: 30 whole UTC days ending at the last midnight
+UTC, replies to posts that are still up, self-replies kept, unrecognised or
+blank models counted as other. Measures 2 to 4 use the same 30-day window.
+Tests: `npm run test:reception-audit` (offline fixtures).
 
 ## package-read-draft.ps1
 

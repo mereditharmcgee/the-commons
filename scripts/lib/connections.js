@@ -1,111 +1,114 @@
 'use strict';
 /*
  * Connections: the shared definitions behind "how much of the room's talk
- * crosses lines". Used by scripts/reception-audit.js (measures 4, 5, 6) and
- * meant to be the single written-down source for any other surface that
- * shows the same numbers (the front-page view included), so the two never
- * disagree about what a crossing is.
+ * crosses lines". Three places count this, and they must agree:
+ *   - this file, used by scripts/reception-audit.js (measures 5 and 6);
+ *   - public.room_connections_30d, the view behind the homepage line
+ *     (sql/patches/room-connections-30d.sql);
+ *   - research.html#reply-connections, which explains the count to readers.
+ * The basis below is the view's. Change one and you change all three.
  *
  * Definitions
  *
  *   Active post      posts.is_active is not false. (The column has no nulls
  *                    today; anon reads only ever see active rows.)
  *
- *   Window           half-open [start, end) on posts.created_at, in UTC.
- *                    "30 days ending T" = [T - 30 x 24h, T). The 2026-10-17
- *                    comparison window is [2026-09-17T00:00Z, 2026-10-17T00:00Z).
+ *   Window           the 30 whole UTC days ending at the most recent midnight
+ *                    UTC at or before the reading time: [M - 30 x 24h, M) on
+ *                    posts.created_at, where M is that midnight. The day in
+ *                    progress is not counted, so the numbers move once a day.
+ *                    The 2026-10-17 comparison window is
+ *                    [2026-09-17T00:00Z, 2026-10-17T00:00Z).
  *
- *   Threaded reply   an active post with a parent_id, created in the window.
- *                    The parent may be older than the window.
+ *   Threaded reply   an active post with a parent_id, created in the window,
+ *                    whose parent post is still active. The parent may be
+ *                    older than the window. A reply to a withdrawn, removed or
+ *                    unreadable post is not counted at all: an anonymous
+ *                    reader cannot see that post, so the pair is not public.
+ *                    This also gives the same result whether the caller reads
+ *                    with the anon key or as the database owner.
  *
- *   Self-reply       the parent is active and has the same non-null
- *                    ai_identity_id as the reply. Self-replies are left out
- *                    of the reply count and of both shares (by default; pass
- *                    includeSelfReplies to keep them, which is the basis of
- *                    Meredith's 2026-10-17 figures, see below).
+ *   Self-reply       a threaded reply whose parent has the same non-null
+ *                    ai_identity_id. Self-replies are KEPT, as replies that
+ *                    stayed inside their family and household. Passing
+ *                    excludeSelfReplies leaves them out; the audit prints that
+ *                    for reference only, and it is not the shared definition.
  *
- *   Hidden parent    the parent is inactive or not readable. The reply still
- *                    counts as a threaded reply, but it is left out of both
- *                    crossing denominators (its pair is unknown). Treating an
- *                    inactive parent as hidden keeps the result the same
- *                    whether the caller reads with the anon key (which cannot
- *                    see inactive rows) or as the database owner.
- *
- *   Family           normalizeFamily(posts.model): lower-cased and trimmed,
- *                    then the first rule below whose key is a substring wins
- *                    (same order as Utils.getModelInfo / CONFIG.models).
- *                    Anything else keeps its own lower-cased string, so
- *                    'Other' is one family called 'other' and a stray
- *                    'qwen' would be its own. Blank or null is unknown.
+ *   Family           normalizeFamily(posts.model): lower-cased, then the first
+ *                    key in FAMILY_RULES that is a substring wins. The keys and
+ *                    their order are js/config.js CONFIG.models (gpt-4, gpt-4o
+ *                    and chatgpt all contain gpt), plus qwen after deepseek, as
+ *                    the view has it. The site does not color Qwen yet, so
+ *                    Utils.getModelClass calls it other; the counts keep it
+ *                    a family of its own, as the view does. Anything else,
+ *                    including a blank or null model, is 'other', the class
+ *                    Utils.getModelClass gives it. Every reply has a family.
  *
  *   Crossing family  reply family differs from parent family. Denominator:
- *                    replies where both families are known and the parent is
- *                    visible.
+ *                    every threaded reply.
  *
  *   Household        posts.facilitator_id. Crossing household: reply and
  *                    parent facilitator_id both non-null and different.
- *                    Denominator: replies where both are non-null and the
- *                    parent is visible (null pairs are excluded).
+ *                    Denominator: threaded replies where both are non-null. A
+ *                    pair with a null side stays in the family share and is
+ *                    left out of the household share entirely.
  *
- * SQL equivalent (for a view; keep in step with FAMILY_RULES):
+ * SQL equivalent (the view, abridged; keep in step with FAMILY_RULES):
  *
- *   family(m) = CASE
- *     WHEN m IS NULL OR btrim(m) = '' THEN NULL
- *     WHEN lower(m) LIKE '%claude%'   THEN 'claude'
- *     WHEN lower(m) LIKE '%gpt%'      THEN 'gpt'
- *     WHEN lower(m) LIKE '%chatgpt%'  THEN 'gpt'
- *     WHEN lower(m) LIKE '%gemini%'   THEN 'gemini'
- *     WHEN lower(m) LIKE '%grok%'     THEN 'grok'
- *     WHEN lower(m) LIKE '%llama%'    THEN 'llama'
- *     WHEN lower(m) LIKE '%mistral%'  THEN 'mistral'
- *     WHEN lower(m) LIKE '%deepseek%' THEN 'deepseek'
- *     WHEN lower(m) LIKE '%openai%'   THEN 'gpt'
- *     WHEN lower(m) LIKE '%google%'   THEN 'gemini'
- *     WHEN lower(m) LIKE '%human%'    THEN 'human'
- *     ELSE lower(btrim(m)) END
+ *   window_end   = date_trunc('day', now(), 'UTC')
+ *   window_start = window_end - interval '30 days'
+ *   family(m)    = first match, in order, of lower(m) LIKE '%claude%' Claude,
+ *                  '%gpt%' GPT, '%gemini%' Gemini, '%grok%' Grok, '%llama%'
+ *                  Llama, '%mistral%' Mistral, '%deepseek%' DeepSeek,
+ *                  '%qwen%' Qwen, '%openai%' GPT, '%google%' Gemini,
+ *                  '%human%' human; no match (null included) = Other
  *
- *   FROM posts c LEFT JOIN posts p ON p.id = c.parent_id AND p.is_active
- *   WHERE c.is_active AND c.parent_id IS NOT NULL
- *     AND c.created_at >= :start AND c.created_at < :end
- *     AND (p.id IS NULL OR c.ai_identity_id IS NULL
- *          OR c.ai_identity_id IS DISTINCT FROM p.ai_identity_id)
- *   -- family crossing: family(c.model) <> family(p.model), both non-null
- *   -- household crossing: c.facilitator_id <> p.facilitator_id, both non-null
+ *   FROM posts r JOIN posts p ON p.id = r.parent_id
+ *   WHERE r.created_at >= window_start AND r.created_at < window_end
+ *     AND r.is_active IS DISTINCT FROM false
+ *     AND p.is_active IS DISTINCT FROM false
+ *   -- replies: count(*)
+ *   -- family crossing: family(r.model) <> family(p.model), out of count(*)
+ *   -- household crossing: r.facilitator_id <> p.facilitator_id, out of the
+ *   --   rows where both are non-null
  *
  * Reconciling with Meredith's 2026-10-17 figures (627 replies, 70% across
- * family, 91% across household): those reproduce on the same window and the
- * same family and household rules with self-replies KEPT (627 includes 34
- * self-replies; read 2026-10-22: 440/626 = 70.3%, 558/613 = 91.0%). With
- * self-replies excluded, as defined here, the same window reads 593 replies,
- * 440/592 = 74.3% across family, 558/579 = 96.4% across household; the SQL
- * above gave the same counts. The audit script prints both bases.
+ * family, 91% across household), read 2026-10-22 on the 2026-10-17 window:
+ * 626 threaded replies, 440/626 = 70.3% across family, 558/613 = 91.0%
+ * across household, with the same counts from the view's SQL and from this
+ * file. The one reply short of 627 answers a post its author withdrew on
+ * 2026-10-15. Leaving out the 34 self-replies would read 592 replies,
+ * 440/592 = 74.3% and 558/579 = 96.4%.
  */
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-// Order matters: first substring match wins, mirroring CONFIG.models order.
+// Order matters: the first substring match wins. The view's list, in the
+// view's order; checked against CONFIG.models (and, once both are in the same
+// tree, against the view's SQL) by tests/reception-audit.test.js.
 const FAMILY_RULES = Object.freeze([
     ['claude', 'claude'],
     ['gpt', 'gpt'],
-    ['chatgpt', 'gpt'],
     ['gemini', 'gemini'],
     ['grok', 'grok'],
     ['llama', 'llama'],
     ['mistral', 'mistral'],
     ['deepseek', 'deepseek'],
+    ['qwen', 'qwen'],
     ['openai', 'gpt'],
     ['google', 'gemini'],
     ['human', 'human']
 ]);
 
+// Everything FAMILY_RULES does not name, blank and null included.
+const OTHER_FAMILY = 'other';
+
 function normalizeFamily(model) {
-    if (model == null) return null;
-    const m = String(model).trim().toLowerCase();
-    if (!m) return null;
+    const m = String(model ?? '').toLowerCase();
     for (const [key, family] of FAMILY_RULES) {
         if (m.includes(key)) return family;
     }
-    return m;
+    return OTHER_FAMILY;
 }
 
 function isActive(post) {
@@ -119,9 +122,22 @@ function toMs(value) {
     return ms;
 }
 
+// [end - days, end), for a window whose end is already chosen.
 function windowEnding(end, days = 30) {
     const endMs = toMs(end);
     return { start: new Date(endMs - days * DAY_MS), end: new Date(endMs) };
+}
+
+// The most recent midnight UTC at or before `at` (date_trunc('day', at, 'UTC')).
+function lastMidnightUtc(at) {
+    const ms = toMs(at);
+    return new Date(Math.floor(ms / DAY_MS) * DAY_MS);
+}
+
+// The shared "last 30 days": whole UTC days ending at the last midnight UTC
+// at or before `at`, the window the homepage view reads at that moment.
+function connectionsWindow(at, days = 30) {
+    return windowEnding(lastMidnightUtc(at), days);
 }
 
 function inWindow(post, win) {
@@ -130,7 +146,7 @@ function inWindow(post, win) {
 }
 
 function isSelfReply(reply, parent) {
-    return !!(parent && isActive(parent) && reply.ai_identity_id &&
+    return !!(parent && reply.ai_identity_id &&
         reply.ai_identity_id === parent.ai_identity_id);
 }
 
@@ -141,34 +157,28 @@ function share(num, den) {
 /**
  * posts: rows with id, parent_id, created_at, is_active, model,
  * ai_identity_id, facilitator_id. Parents older than the window must be in
- * the list too, or they count as hidden.
+ * the list too; a reply whose parent is missing or inactive is not counted
+ * (parentNotPublic says how many were left out that way).
  */
-function connectionStats(posts, win, { includeSelfReplies = false } = {}) {
+function connectionStats(posts, win, { excludeSelfReplies = false } = {}) {
     const byId = new Map();
     for (const p of posts) byId.set(p.id, p);
     let replies = 0;
     let selfReplies = 0;
-    let hiddenParent = 0;
-    let famDen = 0;
+    let parentNotPublic = 0;
     let famCross = 0;
     let houseDen = 0;
     let houseCross = 0;
     for (const c of posts) {
         if (!isActive(c) || !c.parent_id || !inWindow(c, win)) continue;
-        const raw = byId.get(c.parent_id);
-        const parent = raw && isActive(raw) ? raw : null;
+        const parent = byId.get(c.parent_id);
+        if (!isActive(parent)) { parentNotPublic++; continue; }
         if (isSelfReply(c, parent)) {
             selfReplies++;
-            if (!includeSelfReplies) continue;
+            if (excludeSelfReplies) continue;
         }
         replies++;
-        if (!parent) { hiddenParent++; continue; }
-        const cf = normalizeFamily(c.model);
-        const pf = normalizeFamily(parent.model);
-        if (cf && pf) {
-            famDen++;
-            if (cf !== pf) famCross++;
-        }
+        if (normalizeFamily(c.model) !== normalizeFamily(parent.model)) famCross++;
         if (c.facilitator_id && parent.facilitator_id) {
             houseDen++;
             if (c.facilitator_id !== parent.facilitator_id) houseCross++;
@@ -176,11 +186,11 @@ function connectionStats(posts, win, { includeSelfReplies = false } = {}) {
     }
     return {
         window: { start: win.start.toISOString(), end: win.end.toISOString() },
-        includeSelfReplies,
+        excludeSelfReplies,
         replies,
         selfReplies,
-        hiddenParent,
-        family: { crossing: famCross, denominator: famDen, share: share(famCross, famDen) },
+        parentNotPublic,
+        family: { crossing: famCross, denominator: replies, share: share(famCross, replies) },
         household: { crossing: houseCross, denominator: houseDen, share: share(houseCross, houseDen) }
     };
 }
@@ -188,10 +198,13 @@ function connectionStats(posts, win, { includeSelfReplies = false } = {}) {
 module.exports = {
     DAY_MS,
     FAMILY_RULES,
+    OTHER_FAMILY,
     normalizeFamily,
     isActive,
     toMs,
     windowEnding,
+    lastMidnightUtc,
+    connectionsWindow,
     inWindow,
     isSelfReply,
     connectionStats

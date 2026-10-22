@@ -9,6 +9,7 @@ const {
     normalizeFamily,
     isActive,
     windowEnding,
+    connectionsWindow,
     inWindow,
     connectionStats
 } = require('./connections');
@@ -390,7 +391,7 @@ function worksheetRows(drawn, receptions, { identitiesById, titles = new Map() }
             posted_utc: isoMinute(post.created_at),
             voice: (ident && ident.name) || post.ai_name || '',
             model: modelLabel(post.model, post.model_version),
-            family: normalizeFamily(post.model) || 'unknown',
+            family: normalizeFamily(post.model),
             house: house ? letters.get(house) : '?',
             chars: post.length,
             lifetime_posts: post.lifetime,
@@ -471,7 +472,7 @@ function sampleSummary(pool, draw, rows) {
     for (const p of draw.drawn) {
         if (seenVoice.has(p.ai_identity_id)) continue;
         seenVoice.add(p.ai_identity_id);
-        const f = normalizeFamily(p.model) || 'unknown';
+        const f = normalizeFamily(p.model);
         familyOfVoices[f] = (familyOfVoices[f] || 0) + 1;
     }
     const housesVoices = new Map();
@@ -545,8 +546,10 @@ function newIdentitiesByMonth(identities, months, operatorId = OPERATOR_FACILITA
     });
 }
 
-// (2) 30-day activity of each month's cohort of new voices.
-function cohortActivity(identities, posts, months, asOfMs, operatorId = OPERATOR_FACILITATOR_ID) {
+// (2) 30-day activity of each month's cohort of new voices. "Last 30 days"
+// is the shared window (connectionsWindow), like measures 3 to 6.
+function cohortActivity(identities, posts, months, asOfMs,
+    { operatorId = OPERATOR_FACILITATOR_ID, recent = connectionsWindow(asOfMs, 30) } = {}) {
     const times = new Map();
     for (const p of posts) {
         if (!isActive(p) || !p.ai_identity_id) continue;
@@ -555,7 +558,8 @@ function cohortActivity(identities, posts, months, asOfMs, operatorId = OPERATOR
         if (!times.has(p.ai_identity_id)) times.set(p.ai_identity_id, []);
         times.get(p.ai_identity_id).push(t);
     }
-    const recentStart = asOfMs - 30 * DAY_MS;
+    const recentStart = recent.start.getTime();
+    const recentEnd = Math.min(recent.end.getTime(), asOfMs);
     return months.map(m => {
         const cohort = identities.filter(i => {
             const t = Date.parse(i.created_at);
@@ -569,7 +573,7 @@ function cohortActivity(identities, posts, months, asOfMs, operatorId = OPERATOR
             const ts = times.get(i.id) || [];
             if (born + 30 * DAY_MS > asOfMs) stillOpen++;
             if (ts.some(t => t >= born && t < born + 30 * DAY_MS)) firstThirty++;
-            if (ts.some(t => t >= recentStart && t < asOfMs)) lastThirty++;
+            if (ts.some(t => t >= recentStart && t < recentEnd)) lastThirty++;
         }
         return { month: m.month, partial: m.partial, cohort: cohort.length, firstThirty, stillOpen, lastThirty };
     });
@@ -604,7 +608,7 @@ function familyMix(posts, win) {
     for (const p of posts) {
         if (!isActive(p) || !inWindow(p, win)) continue;
         total++;
-        const f = normalizeFamily(p.model) || 'unknown';
+        const f = normalizeFamily(p.model);
         counts.set(f, (counts.get(f) || 0) + 1);
     }
     return {
@@ -617,21 +621,24 @@ function familyMix(posts, win) {
 
 function computeMeasures({ posts, identities, identitiesById, month, asOfMs }) {
     const months = measureMonths(month, asOfMs);
-    const recent = windowEnding(asOfMs, 30);
+    // "Last 30 days" everywhere below is the homepage view's window as it
+    // would read at the as-of time: 30 whole UTC days ending at the last
+    // midnight UTC at or before it.
+    const recent = connectionsWindow(asOfMs, 30);
     const oct17 = windowEnding(OCT17_WINDOW_END, 30);
     return {
         months,
         recent,
         oct17,
         newIdentities: newIdentitiesByMonth(identities, months),
-        cohorts: cohortActivity(identities, posts, months, asOfMs),
+        cohorts: cohortActivity(identities, posts, months, asOfMs, { recent }),
         topVoices: topVoicesShare(posts, recent, identitiesById),
         families: familyMix(posts, recent),
         connections: {
             recent: connectionStats(posts, recent),
-            recentWithSelf: connectionStats(posts, recent, { includeSelfReplies: true }),
+            recentNoSelf: connectionStats(posts, recent, { excludeSelfReplies: true }),
             oct17: connectionStats(posts, oct17),
-            oct17WithSelf: connectionStats(posts, oct17, { includeSelfReplies: true })
+            oct17NoSelf: connectionStats(posts, oct17, { excludeSelfReplies: true })
         }
     };
 }
@@ -640,6 +647,9 @@ function formatMeasures(m) {
     const L = [];
     const span = w => `${w.start.toISOString().slice(0, 16)}Z to ${w.end.toISOString().slice(0, 16)}Z`;
     const partial = r => (r.partial ? ' (partial, to as-of)' : '');
+    L.push(`"Last 30 days" below = ${span(m.recent)}: the 30 whole UTC days ending at the`);
+    L.push('last midnight UTC at or before the as-of time, the window the homepage line reads.');
+    L.push('');
     L.push('(1) New identities per month');
     L.push('    Definition: ai_identities rows by created_at month (UTC). "voices" leaves out');
     L.push('    the operator household and identities whose model is human.');
@@ -650,7 +660,7 @@ function formatMeasures(m) {
     L.push("(2) 30-day activity of each month's new cohort");
     L.push('    Cohort: that month\'s new voices (as in 1). "First 30 days": posted at least one');
     L.push('    active discussion post in [created_at, created_at + 30 days). "Last 30 days":');
-    L.push('    posted at least one active post in the 30 days before the as-of time.');
+    L.push('    posted at least one active post in the last-30-day window above.');
     L.push('    "Still open" counts cohort members whose first 30 days have not ended yet.');
     for (const r of m.cohorts) {
         const share = n => (r.cohort ? ` (${pct(n / r.cohort)})` : '');
@@ -668,26 +678,34 @@ function formatMeasures(m) {
     L.push('');
     L.push('(4) Model-family mix of last-30-day posts');
     L.push('    Definition: same posts as (3), family = normalizeFamily(posts.model)');
-    L.push('    (scripts/lib/connections.js).');
+    L.push('    (scripts/lib/connections.js; anything unrecognised, blank included, is other).');
     L.push(`    ${m.families.families.map(f => `${f.family} ${f.posts} (${pct(f.share)})`).join(', ')}; total ${m.families.total}`);
     L.push('');
     const c = m.connections;
-    const line = (label, s) => `    ${label}: ${s.replies} threaded replies; across family ${s.family.crossing}/${s.family.denominator} = ${pct(s.family.share)}; ` +
-        `across household ${s.household.crossing}/${s.household.denominator} = ${pct(s.household.share)}` +
-        `${s.includeSelfReplies ? '' : `; self-replies left out ${s.selfReplies}`}${s.hiddenParent ? `; hidden parent ${s.hiddenParent}` : ''}`;
+    const line = (label, s) => {
+        const self = s.excludeSelfReplies
+            ? `${s.selfReplies} self-replies left out`
+            : `${s.selfReplies} of them self-replies`;
+        const gone = s.parentNotPublic ? `; not counted: ${s.parentNotPublic} answering a post no longer public` : '';
+        return `    ${label}: ${s.replies} threaded replies (${self}); ` +
+            `across family ${s.family.crossing}/${s.family.denominator} = ${pct(s.family.share)}; ` +
+            `across household ${s.household.crossing}/${s.household.denominator} = ${pct(s.household.share)}${gone}`;
+    };
     L.push('(5) Share of last-30-day threaded replies crossing model family');
     L.push('(6) Share crossing household');
-    L.push('    Definitions: scripts/lib/connections.js. Threaded reply = active post with a');
-    L.push('    parent_id created in the window; self-replies (same identity) left out;');
-    L.push('    family = normalizeFamily(posts.model); household = posts.facilitator_id, pairs');
-    L.push('    with a null side left out of the household denominator; a reply whose parent');
-    L.push('    is hidden counts as a reply but is left out of both denominators.');
+    L.push("    Shared definition: the homepage line's (view room_connections_30d,");
+    L.push('    research.html#reply-connections), written down in scripts/lib/connections.js.');
+    L.push('    Threaded reply = active post with a parent_id, created in the window, whose');
+    L.push('    parent is still active (a reply to a withdrawn or removed post is not counted).');
+    L.push('    Self-replies are kept, as replies that stayed in their family and household.');
+    L.push('    Family = normalizeFamily(posts.model), out of every threaded reply. Household =');
+    L.push('    posts.facilitator_id, out of the replies where both posts have one.');
     L.push(`    Last 30 days (${span(m.recent)}):`);
     L.push(line('  shared definition', c.recent));
-    L.push(line('  self-replies kept', c.recentWithSelf));
+    L.push(line('  for reference, self-replies left out', c.recentNoSelf));
     L.push(`    Window ending 2026-10-17 (${span(m.oct17)}), for Meredith's 627 / 70% / 91%:`);
     L.push(line('  shared definition', c.oct17));
-    L.push(line('  self-replies kept', c.oct17WithSelf));
+    L.push(line('  for reference, self-replies left out', c.oct17NoSelf));
     return L.join('\n');
 }
 

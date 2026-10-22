@@ -137,19 +137,24 @@ test('pool sorts by created_at to the microsecond, then id', () => {
 
 // ------------------------------------------------------------- connections
 
-test('normalizeFamily follows the CONFIG.models order and keeps unknowns distinct', () => {
+test('normalizeFamily follows the homepage view: known keys, qwen, everything else other', () => {
     assert.equal(C.normalizeFamily('Claude'), 'claude');
     assert.equal(C.normalizeFamily('claude-sonnet-4-6'), 'claude');
     assert.equal(C.normalizeFamily(' GPT-4o '), 'gpt');
     assert.equal(C.normalizeFamily('ChatGPT'), 'gpt');
     assert.equal(C.normalizeFamily('OpenAI o3'), 'gpt');
     assert.equal(C.normalizeFamily('Google'), 'gemini');
+    assert.equal(C.normalizeFamily('gemini-3.1-pro-preview'), 'gemini');
     assert.equal(C.normalizeFamily('DeepSeek'), 'deepseek');
     assert.equal(C.normalizeFamily('Human'), 'human');
+    assert.equal(C.normalizeFamily('Qwen'), 'qwen'); // the view's own family; the site colors it other
     assert.equal(C.normalizeFamily('Other'), 'other');
-    assert.equal(C.normalizeFamily('Qwen'), 'qwen');
-    assert.equal(C.normalizeFamily(''), null);
-    assert.equal(C.normalizeFamily(null), null);
+    assert.equal(C.normalizeFamily('Some new model'), 'other');
+    assert.equal(C.normalizeFamily(''), 'other');
+    assert.equal(C.normalizeFamily('   '), 'other');
+    assert.equal(C.normalizeFamily(null), 'other');
+    assert.equal(C.normalizeFamily(undefined), 'other');
+    assert.equal(C.OTHER_FAMILY, 'other');
 });
 
 test('normalizeFamily agrees with every CONFIG.models key the site knows', () => {
@@ -165,7 +170,50 @@ test('normalizeFamily agrees with every CONFIG.models key the site knows', () =>
     }
 });
 
-test('connectionStats: window, self-replies, hidden parents and null households', () => {
+test('normalizeFamily matches Utils.getModelClass for every model but qwen', () => {
+    const fs = require('node:fs');
+    const vm = require('node:vm');
+    const ctx = vm.createContext({ window: {}, console, Date, URL, URLSearchParams, setTimeout, clearTimeout });
+    vm.runInContext(fs.readFileSync('js/config.js', 'utf8'), ctx, { filename: 'js/config.js' });
+    vm.runInContext(fs.readFileSync('js/utils.js', 'utf8'), ctx, { filename: 'js/utils.js' });
+    const U = ctx.window.Utils;
+    const models = [null, undefined, '', ' ', 'Other', 'Some new model', 'Human', 'human', 'Claude',
+        'claude-sonnet-4-6', 'GPT', 'Gemini', 'gemini-3.1-pro-preview', 'Grok', 'DeepSeek', 'Llama 3',
+        'Mistral', 'OpenAI', 'Google', 'ChatGPT', 'GPT-4o'];
+    for (const m of models) assert.equal(C.normalizeFamily(m), U.getModelClass(m), String(m));
+    assert.equal(U.getModelClass('Qwen'), 'other');
+});
+
+// The homepage view lives in sql/patches/room-connections-30d.sql. Once it
+// is in the same tree as this file, its family list, fallback, window and
+// parent rule must match connections.js.
+const VIEW_SQL = require('node:path').join(__dirname, '..', 'sql', 'patches', 'room-connections-30d.sql');
+test('FAMILY_RULES and the window match the room_connections_30d view', { skip: !require('node:fs').existsSync(VIEW_SQL) }, () => {
+    const sql = require('node:fs').readFileSync(VIEW_SQL, 'utf8');
+    const rules = [...sql.matchAll(/\('%([a-z]+)%',\s*'([^']+)',\s*(\d+)\)/g)]
+        .map(m => ({ key: m[1], family: m[2].toLowerCase(), rank: Number(m[3]) }))
+        .sort((a, b) => a.rank - b.rank)
+        .map(r => [r.key, r.family]);
+    assert.deepEqual(rules, C.FAMILY_RULES.map(r => [...r]));
+    assert.ok(sql.includes("'Other')"), 'unmatched models fall back to Other');
+    assert.ok(sql.includes("date_trunc('day', now(), 'UTC')"), 'window ends at the last midnight UTC');
+    assert.ok(sql.includes("interval '30 days'"), 'window is 30 days');
+    assert.ok(sql.includes('p.is_active IS DISTINCT FROM false'), 'replies to inactive parents are not counted');
+});
+
+test('connectionsWindow: 30 whole UTC days ending at the last midnight UTC', () => {
+    assert.equal(C.lastMidnightUtc('2026-10-22T15:00:00Z').toISOString(), '2026-10-22T00:00:00.000Z');
+    assert.equal(C.lastMidnightUtc('2026-10-18T00:00:00Z').toISOString(), '2026-10-18T00:00:00.000Z');
+    assert.equal(C.lastMidnightUtc('2026-10-17T23:59:59.999Z').toISOString(), '2026-10-17T00:00:00.000Z');
+    const w = C.connectionsWindow('2026-10-22T15:00:00Z');
+    assert.equal(w.start.toISOString(), '2026-09-22T00:00:00.000Z');
+    assert.equal(w.end.toISOString(), '2026-10-22T00:00:00.000Z');
+    const oct17 = C.connectionsWindow('2026-10-17T00:00:00Z');
+    assert.equal(oct17.start.toISOString(), '2026-09-17T00:00:00.000Z');
+    assert.equal(oct17.end.toISOString(), '2026-10-17T00:00:00.000Z');
+});
+
+test('connectionStats: self-replies kept, inactive parents not counted, every reply has a family', () => {
     const win = C.windowEnding('2026-10-17T00:00:00Z', 30);
     assert.equal(win.start.toISOString(), '2026-09-17T00:00:00.000Z');
     const p = (n, extra) => ({ id: id(n), is_active: true, created_at: '2026-10-01T00:00:00Z', ...extra });
@@ -173,25 +221,30 @@ test('connectionStats: window, self-replies, hidden parents and null households'
         p(1, { model: 'Claude', ai_identity_id: id(91), facilitator_id: id(81), created_at: '2026-08-01T00:00:00Z' }), // old parent
         p(2, { model: 'GPT', ai_identity_id: id(92), facilitator_id: id(82), parent_id: id(1) }),     // cross family, cross house
         p(3, { model: 'claude-sonnet-4-6', ai_identity_id: id(93), facilitator_id: id(81), parent_id: id(1) }), // same family, same house
-        p(4, { model: 'Claude', ai_identity_id: id(91), facilitator_id: id(81), parent_id: id(1) }),  // self-reply
-        p(5, { model: 'GPT', ai_identity_id: id(92), facilitator_id: null, parent_id: id(1) }),       // null household
-        p(6, { model: 'GPT', ai_identity_id: id(92), facilitator_id: id(82), parent_id: id(99) }),    // parent not readable
+        p(4, { model: 'Claude', ai_identity_id: id(91), facilitator_id: id(81), parent_id: id(1) }),  // self-reply: kept, stays home
+        p(5, { model: 'GPT', ai_identity_id: id(92), facilitator_id: null, parent_id: id(1) }),       // cross family; out of household share
+        p(6, { model: 'GPT', ai_identity_id: id(92), facilitator_id: id(82), parent_id: id(99) }),    // parent not readable: not counted
         p(7, { model: 'Claude', ai_identity_id: id(91), facilitator_id: id(81), is_active: false }),
-        p(8, { model: 'Claude', ai_identity_id: id(91), facilitator_id: id(81), parent_id: id(7) }),  // inactive parent: hidden, not self
+        p(8, { model: 'Claude', ai_identity_id: id(91), facilitator_id: id(81), parent_id: id(7) }),  // inactive parent: not counted, not self
         p(9, { model: 'GPT', ai_identity_id: id(92), facilitator_id: id(82), parent_id: id(1), is_active: false }), // inactive reply
         p(10, { model: 'GPT', ai_identity_id: id(92), facilitator_id: id(82), parent_id: id(1), created_at: '2026-10-17T00:00:00Z' }), // end excluded
-        p(11, { model: 'GPT', ai_identity_id: id(92), facilitator_id: id(82), parent_id: id(1), created_at: '2026-09-17T00:00:00Z' })  // start included
+        p(11, { model: 'GPT', ai_identity_id: id(92), facilitator_id: id(82), parent_id: id(1), created_at: '2026-09-17T00:00:00Z' }), // start included
+        p(12, { model: null, ai_identity_id: id(94), facilitator_id: id(83), parent_id: id(1) }),       // other vs claude: cross
+        p(13, { model: 'Qwen', ai_identity_id: id(95), facilitator_id: id(84), parent_id: id(12) }),    // qwen vs other: cross
+        p(14, { model: 'Mystery-7', ai_identity_id: id(96), facilitator_id: id(85), parent_id: id(12) }) // other vs other: same family
     ];
     const s = C.connectionStats(posts, win);
-    assert.equal(s.replies, 6);          // 2, 3, 5, 6, 8, 11
-    assert.equal(s.selfReplies, 1);      // 4
-    assert.equal(s.hiddenParent, 2);     // 6, 8
-    assert.deepEqual(s.family, { crossing: 3, denominator: 4, share: 0.75 }); // 2, 5, 11 cross; 3 same
-    assert.deepEqual(s.household, { crossing: 2, denominator: 3, share: 2 / 3 }); // 2, 11 cross; 3 same; 5 null
-    const kept = C.connectionStats(posts, win, { includeSelfReplies: true });
-    assert.equal(kept.replies, 7);
-    assert.deepEqual(kept.family, { crossing: 3, denominator: 5, share: 0.6 });
-    assert.deepEqual(kept.household, { crossing: 2, denominator: 4, share: 0.5 });
+    assert.equal(s.excludeSelfReplies, false);
+    assert.equal(s.replies, 8);          // 2, 3, 4, 5, 11, 12, 13, 14
+    assert.equal(s.selfReplies, 1);      // 4, counted
+    assert.equal(s.parentNotPublic, 2);  // 6, 8
+    assert.deepEqual(s.family, { crossing: 5, denominator: 8, share: 5 / 8 }); // 2, 5, 11, 12, 13
+    assert.deepEqual(s.household, { crossing: 5, denominator: 7, share: 5 / 7 }); // 2, 11, 12, 13, 14; 3 and 4 home; 5 null
+    const noSelf = C.connectionStats(posts, win, { excludeSelfReplies: true });
+    assert.equal(noSelf.replies, 7);
+    assert.equal(noSelf.selfReplies, 1); // 4, left out
+    assert.deepEqual(noSelf.family, { crossing: 5, denominator: 7, share: 5 / 7 });
+    assert.deepEqual(noSelf.household, { crossing: 5, denominator: 6, share: 5 / 6 });
     assert.equal(C.connectionStats([], win).family.share, null);
 });
 
@@ -379,19 +432,47 @@ test('measures: months, new identities, cohort activity, top voices, family mix'
     assert.deepEqual(tv.top, [{ id: id(5), name: 'v5', posts: 2 }]);
     assert.equal(tv.share, 0.5);
     const fm = A.familyMix(posts, recent);
-    assert.deepEqual(fm.families.map(f => [f.family, f.posts]), [['gemini', 2], ['gpt', 1], ['unknown', 1]]);
+    assert.deepEqual(fm.families.map(f => [f.family, f.posts]), [['gemini', 2], ['gpt', 1], ['other', 1]]);
 
     const all = A.computeMeasures({ posts, identities, identitiesById: new Map(), month: '2026-09', asOfMs });
     assert.equal(all.oct17.end.toISOString(), '2026-10-17T00:00:00.000Z');
+    assert.equal(all.recent.end.getTime(), asOfMs); // as-of already at midnight
     const printed = A.formatMeasures(all);
     for (const label of ['(1) New identities', '(2) 30-day activity', '(3) Share of last-30-day posts',
         '(4) Model-family mix', '(5) Share of last-30-day threaded replies', '(6) Share crossing household',
-        "Meredith's 627 / 70% / 91%"]) {
+        "Meredith's 627 / 70% / 91%", 'room_connections_30d', 'research.html#reply-connections',
+        'shared definition:', 'for reference, self-replies left out:', 'Self-replies are kept']) {
         assert.ok(printed.includes(label), label);
     }
+    assert.ok(!printed.includes('self-replies (same identity) left out'));
     // House rule: no em dashes in anything this prints (character or entity).
     assert.ok(!printed.includes(String.fromCharCode(0x2014)));
     assert.ok(!printed.includes('&' + 'mdash;'));
+});
+
+test('measures: a mid-day as-of reads the window the homepage view reads then', () => {
+    const asOfMs = Date.parse('2026-10-22T15:00:00Z');
+    const identities = [
+        { id: id(1), model: 'Claude', facilitator_id: id(70), created_at: '2026-10-01T00:00:00Z' },
+        { id: id(2), model: 'GPT', facilitator_id: id(71), created_at: '2026-10-01T00:00:00Z' }
+    ];
+    const post = (n, who, at, extra) => ({ id: id(n), ai_identity_id: who, facilitator_id: who === id(1) ? id(70) : id(71),
+        created_at: at, is_active: true, model: who === id(1) ? 'Claude' : 'GPT', ...extra });
+    const posts = [
+        post(1, id(1), '2026-10-05T00:00:00Z'),
+        post(2, id(2), '2026-10-21T23:00:00Z', { parent_id: id(1) }), // yesterday: counted
+        post(3, id(2), '2026-10-22T01:00:00Z', { parent_id: id(1) })  // today, before as-of: not yet counted
+    ];
+    const m = A.computeMeasures({ posts, identities, identitiesById: new Map(), month: '2026-09', asOfMs });
+    assert.equal(m.recent.start.toISOString(), '2026-09-22T00:00:00.000Z');
+    assert.equal(m.recent.end.toISOString(), '2026-10-22T00:00:00.000Z');
+    assert.equal(m.connections.recent.replies, 1);
+    assert.equal(m.topVoices.total, 2);
+    assert.equal(m.families.total, 2);
+    const late = A.cohortActivity(identities, [post(4, id(2), '2026-10-22T01:00:00Z')],
+        A.measureMonths('2026-09', asOfMs), asOfMs).find(r => r.month === '2026-10');
+    assert.equal(late.firstThirty, 1); // first 30 days run to the as-of instant
+    assert.equal(late.lastThirty, 0);  // last 30 days stop at the last midnight
 });
 
 // The worksheet names newcomer voices next to "passed over" labels; it must
