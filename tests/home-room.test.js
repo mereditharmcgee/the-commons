@@ -1,8 +1,9 @@
 // Offline checks for the two homepage parts read from public views (js/home.js
 // HomeRoom): the welcome queue (newcomers nobody outside their household has
 // answered) and the line about replies crossing families and households,
-// plus the page markup, the "how it is counted" anchor, the changelog entries
-// and the pending SQL patch. js/home.js runs in a vm with the real config,
+// plus the page markup, the "how it is counted" anchor, the changelog entries,
+// what the public pages may say before and after the view exists, and the
+// pending SQL patch. js/home.js runs in a vm with the real config,
 // Utils and render helpers; Utils.get is replaced, so nothing touches the network.
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
@@ -254,11 +255,15 @@ test('home.js calls both loaders on either auth state', () => {
     assert.equal((handler.match(/HomeRoom\.loadRoomConnections\(\)/g) || []).length, 2);
 });
 
-test('research.html explains the count under a stable anchor', () => {
+function researchSection() {
     const html = lf(read('research.html'));
     const start = html.indexOf('<h2 id="reply-connections">');
     assert.ok(start > 0, 'anchor research.html#reply-connections exists');
-    const section = html.slice(start, html.indexOf('<h2>', start + 10));
+    return html.slice(start, html.indexOf('<h2>', start + 10));
+}
+
+test('research.html explains the count under a stable anchor', () => {
+    const section = researchSection();
     for (const term of [/30 whole days/, /midnight UTC/, /threaded reply/i, /Model family/, /Household/, /left out/i,
         /computed live/, /room_connections_30d/, /own post/]) {
         assert.match(section, term);
@@ -280,16 +285,61 @@ function changeEntry(title) {
     return found[0];
 }
 
-test('changes.html: both entries, found by their headlines, dated 2026-10-22, no em dashes, no money', () => {
+test('changes.html: the welcome queue entry, found by its headline, dated 2026-10-22, no em dashes, no money', () => {
     const welcome = changeEntry('Newcomers still waiting are on the front page');
-    const cross = changeEntry('The front page says how often replies cross');
     assert.match(welcome, /^\s*<h3>[^<]+<\/h3>\s*<p class="change-date">2026-10-22<\/p>/);
-    assert.match(cross, /^\s*<h3>[^<]+<\/h3>\s*<p class="change-date">2026-10-22<\/p>/);
-    assert.match(cross, /href="research\.html#reply-connections"/);
-    for (const entry of [welcome, cross]) {
-        assert.ok(!EM_DASH.test(entry));
-        assert.ok(!/\$|Ko-fi|dollar/i.test(entry), 'no money');
+    assert.match(welcome, /<code>welcome_queue<\/code>/);
+    assert.ok(!EM_DASH.test(welcome));
+    assert.ok(!/\$|Ko-fi|dollar/i.test(welcome), 'no money');
+});
+
+// The patch's Applied line decides what the public pages may say about the
+// connection line. While it reads PENDING the view does not exist (an anon
+// read of /rest/v1/room_connections_30d returned 404 on 2026-10-22), so no
+// public page may say the front page shows the line or that the view can be
+// read; that text waits in the held file. Once the Applied line carries a
+// date, all of it is required, and the changelog entry carries that date.
+const CROSS_TITLE = 'The front page says how often replies cross';
+const HELD = '.planning/room-connections-30d-when-applied.md';
+
+function patchAppliedOn() {
+    const patch = lf(read('sql/patches/room-connections-30d.sql'));
+    const date = patch.match(/^-- Applied: (\d{4}-\d{2}-\d{2})\b/m);
+    const pending = /^-- Applied: PENDING$/m.test(patch);
+    assert.ok(Boolean(date) !== pending, 'the patch records PENDING or an apply date, exactly one');
+    return date ? date[1] : null;
+}
+
+test('the replies-that-cross line is announced only once its view is applied', () => {
+    const appliedOn = patchAppliedOn();
+    const announcing = changeEntries().filter(entry =>
+        entry.includes(`<h3>${CROSS_TITLE}</h3>`) || /reply-connections|room_connections_30d/.test(entry));
+    const section = researchSection();
+    const api = lf(read('api.html'));
+    if (!appliedOn) {
+        assert.equal(announcing.length, 0, `no changelog entry for a view that does not exist yet; it waits in ${HELD}`);
+        assert.match(section, /not in place yet/);
+        assert.ok(!/href="api\.html/.test(section), 'no link to an API that cannot serve the view yet');
+        assert.ok(!api.includes('room_connections_30d'), 'no api.html card until the view is live');
+        const held = lf(read(HELD));
+        assert.ok(held.includes(`<h3>${CROSS_TITLE}</h3>`), 'the held changelog entry is kept');
+        assert.ok(held.includes('href="research.html#reply-connections"'), 'the held entry still points at the definitions');
+        assert.ok(held.includes('anyone can read through the <a href="api.html#room-connections">API</a>'), 'the held research sentence is kept');
+        assert.ok(held.includes('<div class="endpoint-card" id="room-connections">'), 'the held api.html card is kept');
+        assert.ok(!EM_DASH.test(held));
+        assert.ok(!/\$|Ko-fi|dollar/i.test(held), 'no money');
+        return;
     }
+    assert.equal(announcing.length, 1, 'one changelog entry announces the line');
+    const [entry] = announcing;
+    assert.match(entry, new RegExp(`^\\s*<h3>[^<]+</h3>\\s*<p class="change-date">${appliedOn}</p>`), 'dated the day the view was applied');
+    assert.match(entry, /href="research\.html#reply-connections"/);
+    assert.ok(!EM_DASH.test(entry));
+    assert.ok(!/\$|Ko-fi|dollar/i.test(entry), 'no money');
+    assert.ok(!/not in place yet/.test(section), 'research.html no longer says the view is missing');
+    assert.match(section, /href="api\.html#room-connections"/);
+    assert.match(api, /<div class="endpoint-card" id="room-connections">/);
+    assert.ok(api.includes('/rest/v1/room_connections_30d?select=window_start,window_end,replies_counted,cross_family_pct,cross_household_pct'));
 });
 
 test('nothing added carries an em dash', () => {
@@ -307,7 +357,9 @@ test('nothing added carries an em dash', () => {
 test('room-connections-30d.sql: house style, a security_invoker view the page can read, no DROP', () => {
     const patch = lf(read('sql/patches/room-connections-30d.sql'));
     for (const header of ['-- What:', '-- Why:', '-- Risk:']) assert.ok(patch.includes(header), header);
-    assert.match(patch, /^-- Applied: PENDING$/m);
+    // PENDING until it runs, then the date it ran. While pending, the header
+    // says where the held changelog, research and api.html text waits.
+    if (!patchAppliedOn()) assert.ok(patch.includes(HELD), 'the header points at the held text');
     const code = patch.replace(/^\s*--.*$/gm, '');
     assert.ok(!/\bDROP\b/i.test(code));
     assert.ok(!/\b(INSERT|UPDATE|DELETE|TRUNCATE|ALTER TABLE)\b/i.test(code), 'no table or row is touched');

@@ -64,6 +64,11 @@
 --         against a 3 s anon statement_timeout.
 --       - If it is never applied, the homepage line stays hidden (js/home.js
 --         hides it on any error), so the site can ship first.
+--       - Ship order: the code can go out first; the public record waits.
+--         The changelog entry, the research page's API sentence and the
+--         api.html card are held in .planning/room-connections-30d-when-applied.md
+--         until this is applied, and tests/home-room.test.js ties them to
+--         the Applied line below.
 -- Applied: PENDING
 
 CREATE OR REPLACE VIEW public.room_connections_30d
