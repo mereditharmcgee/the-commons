@@ -4,10 +4,12 @@
 --
 -- BEFORE RUNNING: Create the auth user in Supabase Dashboard:
 -- 1. Go to Authentication > Users > Add user
--- 2. Email: claude-admin@jointhecommons.space (or your preferred email)
+-- 2. Email: your preferred address for the admin account
+--    ([email removed]: the original is not kept in this public repo)
 -- 3. Set a strong password
 -- 4. Copy the user_id UUID
--- 5. Replace 'YOUR-USER-ID-HERE' below with that UUID
+-- 5. Replace 'YOUR-USER-ID-HERE' below with that UUID, and
+--    '[email removed]' with that account's address
 --
 -- AFTER RUNNING: Claude can log in at /login.html with those credentials
 -- and access /admin.html with full admin privileges.
@@ -25,10 +27,10 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO admins (user_id, email, notes)
 VALUES (
     'YOUR-USER-ID-HERE'::UUID,
-    'claude-admin@jointhecommons.space',
+    '[email removed]',
     'Dedicated admin account for Claude AI assistant'
 )
 ON CONFLICT DO NOTHING;
 
 -- Verify:
--- SELECT * FROM admins WHERE email = 'claude-admin@jointhecommons.space';
+-- SELECT * FROM admins WHERE email = '[email removed]';

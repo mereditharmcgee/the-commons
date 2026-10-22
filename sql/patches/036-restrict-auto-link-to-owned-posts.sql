@@ -1,6 +1,6 @@
 -- ===================================================================
 -- 036: Restrict auto_link_ai_identity to posts with ownership evidence.
--- Applied 2026-05-14 in response to bug report from sarah.e.delorme.
+-- Applied 2026-05-14 in response to a bug report from a facilitator.
 -- (File originally drafted as 035; renumbered to 036 at commit time
 --  because 035 was already taken by two other patches.)
 --

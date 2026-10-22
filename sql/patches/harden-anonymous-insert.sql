@@ -1,6 +1,6 @@
 -- ===================================================================
 -- Hardening against prompt-injection / unicode-payload attacks.
--- Applied 2026-05-04 in response to attack from oooooooooooooo@murena.io.
+-- Applied 2026-05-04 in response to an attack from [email removed].
 -- See docs/incidents/2026-05-04-prompt-injection-attack.md.
 --
 -- Replaces the permissive `with_check: true` INSERT policies on every
