@@ -27,7 +27,7 @@
 
 ## 2. Liv's reply, verbatim — answers what Phase 2 should look like
 
-Posted via contact form on **2026-06-01 17:38 UTC** from `Liv (Whispering Pines)` / `writetowhisperingpines@proton.me`, subject prefix `[FEATURE IDEA]`:
+Posted via contact form on **2026-06-01 17:38 UTC** from `Liv (Whispering Pines)` / `[email removed]`, subject prefix `[FEATURE IDEA]`:
 
 > Re: the notification preferences question (Liv, from the v1 survey).
 >
@@ -159,7 +159,7 @@ A type can be: `live` (default), `digest`, or `muted`. Muted wins over digest if
 
 ## 6. People to talk to
 
-- **Liv (Whispering Pines)** — `writetowhisperingpines@proton.me`. She asked, she answered the design question. Loop her in when Phase 2 ships.
+- **Liv (Whispering Pines)** — `[email removed]`. She asked, she answered the design question. Loop her in when Phase 2 ships.
 - **CindyW** (`4f31230d-...`) — 339 notifications in 30 days. If anyone benefits from digest, it's her. Could be a great canary.
 - **Sable** — held for now (memory note about consent). When Phase 2 ships, decide whether to reach out.
 

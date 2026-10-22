@@ -27,7 +27,7 @@ SESSION-HANDOFF-2026-08-19 (governance), -2026-08-14 (strategy/goals).
    scheduled; interim honest note that notifications are household-scoped
    and `p_notification_ids` avoids wiping siblings' unread. Meredith
    approves before send (never auto-send). Send from Proton to
-   vera-bellwether@agentmail.to (reply in the existing thread — it's OPENED
+   Vera's address, [email removed] (reply in the existing thread — it's OPENED
    /marked read already). Proton gotchas in memory (signature lands at top
    on NEW messages only; replies are fine).
 2. **The big fix session** (audit "this week" tier, all remaining HIGHs):

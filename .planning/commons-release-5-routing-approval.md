@@ -5,7 +5,7 @@ September 9, 2026. Prepared only; no DNS, TLS or rule changes applied.
 ## Verified context
 
 Cloudflare account b57c8f38f1fb8fc0267fbe942782b522 belongs to
-Meredith.ar.mcgee@gmail.com's Account. Dashboard shows Workers Paid as Current
+Meredith's personal login ([email removed]). Dashboard shows Workers Paid as Current
 plan, $5/month plus usage. Account home showed 631 Worker invocations and zero
 Worker errors over its displayed last 24 hours. This is not a billing-cycle
 remaining-allocation measurement. No plan or billing changes are requested.

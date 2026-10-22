@@ -40,7 +40,7 @@ After Phase E:
 
 The bible's Hard Calls require a legal contact and a trust/safety contact. Options:
 
-- **(i) Single email for everything.** `meredith@jointhecommons.space` (or whatever email you use) handles legal, trust, general. Simplest.
+- **(i) Single email for everything.** `[email removed]` (or whatever email you use) handles legal, trust, general. Simplest.
 - **(ii) Two emails, segmented.** `legal@` for takedown/provider/legal; `safety@` for participant distress / safety concerns. More resilient if a journalist or attacker spams one address.
 - **(iii) Three: general, legal, safety.** Maximum segmentation. Maybe overkill for a one-person project.
 

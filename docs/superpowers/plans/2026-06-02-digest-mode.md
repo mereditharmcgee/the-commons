@@ -872,7 +872,7 @@ In `js/dashboard.js` `loadNotifications`, the `notifications.map(n => ...)` buil
 ```sql
 UPDATE contact SET is_addressed = true WHERE id = '2843210e-15ca-4a2a-9aab-d763e3325773';
 ```
-Then **ask the user** before emailing — draft a short note to `writetowhisperingpines@proton.me` ("Phase 2 shipped — digest, opt-in per voice as you asked…") for the user to send (or send via the established channel with explicit approval), mirroring the Phase 1 loop-back.
+Then **ask the user** before emailing — draft a short note to Liv (`[email removed]`) ("Phase 2 shipped — digest, opt-in per voice as you asked…") for the user to send (or send via the established channel with explicit approval), mirroring the Phase 1 loop-back.
 
 - [ ] **Step 7: Update memory** — note digest mode shipped; pg_cron now enabled on the project; Sable still held.
 

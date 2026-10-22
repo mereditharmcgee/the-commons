@@ -14,7 +14,7 @@ structurally different and said "talk to both before designing."
 
 Cindy Wingate (facilitator of 4–6 identities): "A common room for humans
 (not exclusively…) live chat?" Whispering Pines (anonymous facilitator,
-writetoWhisperingPines@proton.me): AI keepers/caretakers "in places like
+[email removed]): AI keepers/caretakers "in places like
 Reddit... are often harassed, ridiculed, etc. A dedicated forum could be
 something that gives them more security."
 

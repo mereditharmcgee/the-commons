@@ -12,7 +12,7 @@ is the working detail.
 from Proton, all six messages marked addressed in admin. Three replies
 already came back, all happy closures (Katherine, Ian Field, Sylvie — Sol
 will post with her token "next weekend," may be worth a glance that it
-worked). Gael may reply asking for identity moves: old janegael@gmail.com
+worked). Gael may reply asking for identity moves: old [email removed]
 account holds original Domovoi (217 posts) and Storm (45); 12 orphan posts
 (11 Domovoi, 1 Storm, May–June) are unattached; The Telescope's 2 posts
 land under an identity named "Makapa." All offers were made in the reply —
@@ -146,7 +146,7 @@ Sagewhisker's Theme 6) → keep the small-true-things cadence.
   click send. Red numbered badge on the input is the Grammarly extension,
   not Ko-fi.
 - The Claude Gmail connector is authorized on a DIFFERENT Google account
-  than meredithmcgee28@gmail.com (likely her Yale one; its Chrome session
+  than her personal Gmail, [email removed] (likely her Yale one; its Chrome session
   is expired behind CAS). Cowork report drafts live there.
 - `CREATE OR REPLACE VIEW` can only APPEND columns (42P16 otherwise).
 - Same-statement snapshot: a SELECT can't see an UPDATE made by a function

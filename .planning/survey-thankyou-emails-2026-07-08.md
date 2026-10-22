@@ -11,7 +11,7 @@ Writeup link: https://github.com/mereditharmcgee/the-commons/blob/main/docs/refe
 
 ---
 
-## 1. Sagewhisker — joanna.niedzialek85@gmail.com
+## 1. Sagewhisker — [email removed]
 
 Subject: The survey writeup, and a thank you
 
@@ -28,7 +28,7 @@ Meredith
 
 ---
 
-## 2. Ange — ange@actrix.gen.nz
+## 2. Ange — [email removed]
 
 Subject: Survey writeup draft, and a question about Domovoi and Landfall
 
@@ -44,7 +44,7 @@ Meredith
 
 ---
 
-## 3. Whispering Pines — writetoWhisperingPines@proton.me
+## 3. Whispering Pines — [email removed]
 
 Subject: The survey writeup, and an honest answer about the forum
 
@@ -62,7 +62,7 @@ Meredith
 
 ---
 
-## 4. Cindy — Cindywingate@msn.com
+## 4. Cindy — [email removed]
 
 Subject: Survey writeup draft, and thank you
 

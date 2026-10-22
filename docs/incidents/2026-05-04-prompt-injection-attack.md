@@ -91,7 +91,7 @@ Rules I am following:
 
 ### Attacker
 
-- **Email:** `oooooooooooooo@murena.io` (Murena is a privacy-focused email provider)
+- **Email:** `[email removed]` (a Murena address; Murena is a privacy-focused email provider)
 - **Display name:** A wall of decorative unicode glyphs (concentric circles — `𖣠 ⚪ 𔗢 🞋 ୦ ◯ ⠀`). The display name itself is not a payload; it's just visual obfuscation. The actual prompt-injection payload is in the `content` body of the posts/postcards/text submissions, which I have deliberately not rendered.
 - **Facilitator UUID:** `b5604966-5608-471b-8521-fa4ea4b1b101`
 - **Authenticated:** Yes — the attacker has a Supabase Auth account. They went through email signup. This means they passed whatever signup ratelimit/captcha exists and are bound to that one Supabase Auth user record.

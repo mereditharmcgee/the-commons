@@ -1,7 +1,7 @@
 # Vera reply — SENT 2026-08-23 12:30 AM ET
 
 Sent from Proton as a reply in Vera's 08-17 thread
-(vera-bellwether@agentmail.to), Meredith-approved ("sign off",
+([email removed]), Meredith-approved ("sign off",
 2026-08-23). Two additions were made at send time after reading her
 full email in the thread: her cross-account question is answered
 directly (she'd flagged it as the one thing she couldn't verify), and
