@@ -22,9 +22,18 @@
 --       "A facilitator" label as anyone's name any more: path 1 no longer
 --       matches a post signed with it, and paths 2 and 3 skip it. A new path
 --       2b covers a thread opened from an interest room by a facilitator with
---       no public name: the voice named proposed_by_name, created no later than
---       the thread, whose facilitator has no display_name, when exactly one
---       facilitator fits. Paths 1, 2 and 3 are otherwise as they were.
+--       no public name: the facilitator whose voice is named proposed_by_name
+--       and was created no later than the thread, when exactly one facilitator
+--       has such a voice. It does NOT look at the facilitator's display_name
+--       today: the label records that the opener had no name when the thread
+--       was opened, and the dashboard nudge in this same release asks exactly
+--       those people to pick one afterwards. Filtering on "no name now" would
+--       lose them the moment they did (welcome_queue would drop the newcomer
+--       until their voice posted in its own thread), and could credit another
+--       facilitator who shares the voice name and is still unnamed. A named
+--       facilitator with a voice by that name counts toward "more than one",
+--       so the answer is NULL rather than a guess. Paths 1, 2 and 3 are
+--       otherwise as they were.
 -- Why:  Sweep F07-data; Meredith's decision 2026-10-22 (option A). Every
 --       account was created with display_name = the email's local part
 --       (js/auth.js createFacilitator), and that name is public: it is copied
@@ -64,11 +73,22 @@
 --         js/profile.js leaves the "Facilitated by" line hidden for both. Its
 --         anon EXECUTE is load-bearing (KNOWN_TECH_DEBT); the dry run checks it
 --         is still there.
---       Not verified live when written: the session had no database access.
---       Run facilitator-public-name.dryrun.sql first. It also fails if a live
---       trigger on auth.users touches facilitators (none in the repo; one would
---       be a second way rows get created), or if display_name is NOT NULL or
---       has a default.
+--       Not verified live when written: the session had no database access,
+--       and the repo shows only part of the live schema. Run
+--       facilitator-public-name.dryrun.sql first. Besides its specimens it
+--       reads the live catalog and fails if:
+--       - a trigger on auth.users touches facilitators (none in the repo; one
+--         would be a second way rows get created);
+--       - any function outside pg_catalog/information_schema INSERTs (or
+--         MERGEs) into facilitators. (A) skips every role but anon and
+--         authenticated, so a postgres-owned SECURITY DEFINER function that
+--         seeds the name from the email would get past both the site fix and
+--         (A). None is in the repo; a hit must be read before applying;
+--       - any function or view that reads facilitators also cuts up an email
+--         (split_part, substring, left, regexp_replace, strpos/position on an
+--         email). That is how a local part could still reach a public RPC or
+--         view for an account whose display_name is NULL. None is in the repo;
+--       - display_name is NOT NULL or has a default.
 -- Applied: PENDING
 
 -- (A) a new row never starts with an email-derived public name ------------------
@@ -138,14 +158,13 @@ AS $$
       LIMIT 1),
     -- 2b. Web path for an opener with no public name (2026-10-22): created_by is the
     --     label, proposed_by_name is one of their voices, and exactly one
-    --     facilitator with no display name has a voice by that name from before the thread.
+    --     facilitator has a voice by that name from before the thread. Their
+    --     display_name today is not consulted: they may have picked a name since.
     (SELECT min(ai.facilitator_id::text)::uuid
-       FROM public.ai_identities ai
-       JOIN public.facilitators f ON f.id = ai.facilitator_id, d
+       FROM public.ai_identities ai, d
       WHERE d.unnamed
         AND ai.name = d.proposed_by_name
         AND ai.created_at <= d.created_at
-        AND nullif(btrim(f.display_name), '') IS NULL
      HAVING count(DISTINCT ai.facilitator_id) = 1),
     -- 3. Legacy web path: created_by is a display name that exactly one facilitator uses.
     (SELECT min(f.id::text)::uuid

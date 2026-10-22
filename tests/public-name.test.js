@@ -436,3 +436,42 @@ test('facilitator-public-name.sql: house style, no DROP, the dry run carries it 
     assert.match(dryrun, /RAISE EXCEPTION 'DRYRUN FAIL /);
     assert.match(dryrun, /\nROLLBACK;\n?$/);
 });
+
+test('intro_household path 2b credits an opener who picked a name afterwards, and the dry run proves it', () => {
+    const patch = lf(read('sql/patches/facilitator-public-name.sql'));
+    const dryrun = lf(read('sql/patches/facilitator-public-name.dryrun.sql'));
+    const code = patch.replace(/^\s*--.*$/gm, '');
+    const p2b = code.slice(code.indexOf('WHERE d.unnamed'), code.indexOf('WHERE NOT d.unnamed\n        AND f.display_name = d.created_by'));
+    assert.ok(p2b.length > 0, 'path 2b is found');
+    assert.match(p2b, /ai\.name = d\.proposed_by_name/);
+    assert.match(p2b, /ai\.created_at <= d\.created_at/);
+    assert.match(p2b, /HAVING count\(DISTINCT ai\.facilitator_id\) = 1/);
+    assert.ok(!/display_name/.test(p2b), 'path 2b does not look at the display_name the opener has today');
+
+    // The specimen the review asked for, and the ambiguity it trades for.
+    assert.match(dryrun, /\(2, 't_renamed',\s+'A facilitator', v_voice_f\)/);
+    assert.match(dryrun, /\(v_f_renamed, 'dryrun\.fpn\.renamed\.' \|\| v_tag \|\| '@example\.invalid', v_renamed\)/);
+    assert.match(dryrun, /'t_renamed=renamed'/);
+    assert.match(dryrun, /'t_ambig=NULL'/);
+    assert.match(dryrun, /'t_labelvoice=NULL'/);
+});
+
+test('the dry run reads the live catalog for other writers of facilitators and email cutters, and fails on either', () => {
+    const dryrun = lf(read('sql/patches/facilitator-public-name.dryrun.sql'));
+    const check = dryrun.slice(dryrun.indexOf('DO $dryrun$'));
+    assert.match(check, /pg_get_functiondef\(p\.oid\)/, 'function bodies via pg_get_functiondef (BEGIN ATOMIC too)');
+    assert.match(check, /n\.nspname NOT IN \('pg_catalog', 'information_schema'\)/);
+    assert.ok(check.includes(String.raw`'\m(insert|merge)\s+into\s+("?public"?\s*\.\s*)?"?facilitators\M'`),
+        'any function that INSERTs or MERGEs into facilitators is found');
+    assert.match(check, /FROM pg_views v/);
+    assert.match(check, /FROM pg_matviews m/);
+    assert.match(check, /split_part\|substring/);
+    assert.match(check, /p\.oid <> 'public\.facilitators_no_email_name\(\)'::regprocedure/, 'the guard itself is not a finding');
+    assert.match(check, /AND cardinality\(v_fac_inserters\) = 0/);
+    assert.match(check, /AND cardinality\(v_email_splitters\) = 0/);
+    assert.match(check, /functions_inserting_facilitators=%s email_splitters_reading_facilitators=%s/);
+    // Read-only: nothing in the catalog step writes or calls what it finds.
+    const step7 = check.slice(check.indexOf('-- 7.'), check.indexOf('-- 8.'));
+    assert.ok(!/\b(INSERT|UPDATE|DELETE|EXECUTE|PERFORM)\b/.test(step7.replace(/^\s*--.*$/gm, '').replace(/'[^']*'/g, "''")),
+        'step 7 only reads');
+});

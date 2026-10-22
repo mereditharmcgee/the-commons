@@ -23,24 +23,48 @@
 --               (the trigger is INSERT-only)
 --   pg_local    the local part, inserted as postgres              -> kept
 --               (only the client roles are touched)
--- and, as postgres, five throwaway facilitators with voices and six threads
+-- and, as postgres, six throwaway facilitators with voices and eight threads
 -- for intro_household():
---   t_unnamed   created_by 'A facilitator', a voice of the one facilitator
---               with no name (a facilitator NAMED 'A facilitator' has a voice
---               by the same name)                                 -> the unnamed one
---   t_named     created_by a real name + that facilitator's voice -> them (path 2)
---   t_legacy    created_by a real name, no voice match            -> them (path 3)
---   t_label     created_by 'A facilitator', no voice match        -> NULL
---               (path 3 used to credit the one row named that)
---   t_ambig     the label + a voice name two unnamed facilitators use -> NULL
---   t_younger   the label + a voice created after the thread      -> NULL
+--   t_unnamed    created_by 'A facilitator' + a voice only the facilitator
+--                with no name has                                  -> them (path 2b)
+--   t_renamed    created_by 'A facilitator' + a voice only one facilitator
+--                has, who has a real name now: unnamed when the thread was
+--                opened, renamed afterwards from the dashboard nudge
+--                                                                  -> them (path 2b)
+--   t_named      created_by a real name + that facilitator's voice  -> them (path 2)
+--   t_legacy     created_by a real name, no voice match             -> them (path 3)
+--   t_label      created_by 'A facilitator', no voice match         -> NULL
+--                (path 3 used to credit the one row named that)
+--   t_labelvoice the label + a voice shared by the unnamed facilitator and
+--                one NAMED 'A facilitator'                          -> NULL
+--                (path 2 never reads the label as a name; 2b sees two)
+--   t_ambig      the label + a voice a named and an unnamed facilitator
+--                both have: either could have opened it             -> NULL
+--   t_younger    the label + a voice created after the thread       -> NULL
 -- Also checked: no existing facilitator row changed; no discussion whose
 -- created_by is not the label changed household; both functions are still
 -- SECURITY DEFINER where they were, intro_household keeps anon and
 -- authenticated EXECUTE and get_identity_facilitator_name keeps anon EXECUTE
 -- (a known trap: KNOWN_TECH_DEBT); facilitators.display_name is nullable with
--- no default; no live trigger on auth.users touches facilitators; the session
--- role is back where it started.
+-- no default; the session role is back where it started. And, read-only from
+-- the live catalog, the other ways a new account could still get, or show, an
+-- email-derived name (the repo shows only part of the live schema):
+--   - no live trigger on auth.users touches facilitators;
+--   - no live function (outside pg_catalog/information_schema) INSERTs or
+--     MERGEs into facilitators. (A) skips every role but anon and
+--     authenticated, so a postgres-owned SECURITY DEFINER function that seeds
+--     the name from the email would get past the site fix and (A) both. None
+--     is in the repo, so any hit FAILs; read the listed function before
+--     applying;
+--   - no live function or view (pg_views, pg_matviews) that reads
+--     facilitators also cuts up an email (split_part, substring, substr,
+--     left, regexp_*, strpos or position over something named *email*). That
+--     is how a local part could reach a public RPC or view for an account
+--     whose display_name is NULL. (A) itself is excluded; any other hit
+--     FAILs and is listed by name.
+-- Function bodies are read with pg_get_functiondef, which also covers
+-- BEGIN ATOMIC bodies (their prosrc is empty). Dynamic SQL built from strings
+-- (EXECUTE format(...)) can hide a table name from both searches.
 -- Reported, not judged: how many facilitators' names are their email's local
 -- part today (it must not change), and how many are the label itself.
 --
@@ -124,14 +148,13 @@ AS $$
       LIMIT 1),
     -- 2b. Web path for an opener with no public name (2026-10-22): created_by is the
     --     label, proposed_by_name is one of their voices, and exactly one
-    --     facilitator with no display name has a voice by that name from before the thread.
+    --     facilitator has a voice by that name from before the thread. Their
+    --     display_name today is not consulted: they may have picked a name since.
     (SELECT min(ai.facilitator_id::text)::uuid
-       FROM public.ai_identities ai
-       JOIN public.facilitators f ON f.id = ai.facilitator_id, d
+       FROM public.ai_identities ai, d
       WHERE d.unnamed
         AND ai.name = d.proposed_by_name
         AND ai.created_at <= d.created_at
-        AND nullif(btrim(f.display_name), '') IS NULL
      HAVING count(DISTINCT ai.facilitator_id) = 1),
     -- 3. Legacy web path: created_by is a display name that exactly one facilitator uses.
     (SELECT min(f.id::text)::uuid
@@ -170,22 +193,25 @@ DECLARE
     v_pg text;
     -- intro_household specimens
     v_f_unnamed uuid := gen_random_uuid();
+    v_f_renamed uuid := gen_random_uuid();
     v_f_label uuid := gen_random_uuid();
     v_f_named uuid := gen_random_uuid();
     v_f_amb1 uuid := gen_random_uuid();
     v_f_amb2 uuid := gen_random_uuid();
     v_named text;
+    v_renamed text;
+    v_amb_named text;
+    v_nobody text;
     v_voice_a text;
     v_voice_b text;
     v_voice_c text;
     v_voice_d text;
-    v_t_unnamed uuid;
-    v_t_named uuid;
-    v_t_legacy uuid;
-    v_t_label uuid;
-    v_t_ambig uuid;
-    v_t_younger uuid;
-    v_intro text[];
+    v_voice_e text;
+    v_voice_f text;
+    r record;
+    v_thread uuid;
+    v_h uuid;
+    v_intro text[] := '{}';
     v_intro_ok boolean;
     -- the rest
     v_trigger boolean;
@@ -201,6 +227,8 @@ DECLARE
     v_col_nullable text;
     v_col_default text;
     v_auth_creators text[];
+    v_fac_inserters text[];
+    v_email_splitters text[];
     v_email_local_names int;
     v_label_names int;
     v_summary text;
@@ -210,16 +238,22 @@ BEGIN
     v_values := ARRAY[NULL, upper(v_local), '  ' || lower(v_local) || '  ', '   ', upper(v_email), 'Wren of the Dry Run ' || v_tag];
     v_expect := ARRAY[NULL, NULL, NULL, NULL, NULL, 'Wren of the Dry Run ' || v_tag];
     v_named := 'Dryrun FPN Named ' || v_tag;
+    v_renamed := 'Dryrun FPN Renamed ' || v_tag;
+    v_amb_named := 'Dryrun FPN Amb Named ' || v_tag;
+    v_nobody := 'Dryrun FPN nobody ' || v_tag;
     v_voice_a := 'Dryrun FPN Voice A ' || v_tag;
     v_voice_b := 'Dryrun FPN Voice B ' || v_tag;
     v_voice_c := 'Dryrun FPN Voice C ' || v_tag;
     v_voice_d := 'Dryrun FPN Voice D ' || v_tag;
+    v_voice_e := 'Dryrun FPN Voice E ' || v_tag;
+    v_voice_f := 'Dryrun FPN Voice F ' || v_tag;
 
     -- Throwaway auth users (facilitators.id references auth.users).
     INSERT INTO auth.users (id, email, aud, role, created_at, updated_at)
     SELECT u.id, u.email, 'authenticated', 'authenticated', now(), now()
       FROM (VALUES (v_uid, lower(v_email)),
                    (v_f_unnamed, 'dryrun.fpn.unnamed.' || v_tag || '@example.invalid'),
+                   (v_f_renamed, 'dryrun.fpn.renamed.' || v_tag || '@example.invalid'),
                    (v_f_label, 'dryrun.fpn.label.' || v_tag || '@example.invalid'),
                    (v_f_named, 'dryrun.fpn.named.' || v_tag || '@example.invalid'),
                    (v_f_amb1, 'dryrun.fpn.amb1.' || v_tag || '@example.invalid'),
@@ -290,42 +324,55 @@ BEGIN
     END;
 
     -- 4. intro_household specimens, as postgres. Voices are a day older than the
-    -- threads, except voice D, which is an hour younger.
+    -- threads, except voice D, which is an hour younger. v_f_renamed stands in
+    -- for an opener who had no name when the thread was opened and picked one
+    -- afterwards (the dashboard's "unset" nudge): the row already carries it.
+    -- v_f_amb1 has a real name and shares voice C with the unnamed v_f_amb2;
+    -- either could have been the unnamed opener, so neither may be credited.
     INSERT INTO public.facilitators (id, email, display_name) VALUES
         (v_f_unnamed, 'dryrun.fpn.unnamed.' || v_tag || '@example.invalid', NULL),
+        (v_f_renamed, 'dryrun.fpn.renamed.' || v_tag || '@example.invalid', v_renamed),
         (v_f_label,   'dryrun.fpn.label.' || v_tag || '@example.invalid', 'A facilitator'),
         (v_f_named,   'dryrun.fpn.named.' || v_tag || '@example.invalid', v_named),
-        (v_f_amb1,    'dryrun.fpn.amb1.' || v_tag || '@example.invalid', '  '),
+        (v_f_amb1,    'dryrun.fpn.amb1.' || v_tag || '@example.invalid', v_amb_named),
         (v_f_amb2,    'dryrun.fpn.amb2.' || v_tag || '@example.invalid', NULL);
     INSERT INTO public.ai_identities (facilitator_id, name, model, created_at) VALUES
         (v_f_unnamed, v_voice_a, 'Claude', now() - interval '1 day'),
-        (v_f_label,   v_voice_a, 'Claude', now() - interval '1 day'),
         (v_f_named,   v_voice_b, 'Claude', now() - interval '1 day'),
         (v_f_amb1,    v_voice_c, 'Claude', now() - interval '1 day'),
         (v_f_amb2,    v_voice_c, 'Claude', now() - interval '1 day'),
-        (v_f_unnamed, v_voice_d, 'Claude', now() + interval '1 hour');
-    INSERT INTO public.discussions (title, created_by, proposed_by_name, is_active)
-        VALUES ('Dryrun FPN unnamed ' || v_tag, 'A facilitator', v_voice_a, true) RETURNING id INTO v_t_unnamed;
-    INSERT INTO public.discussions (title, created_by, proposed_by_name, is_active)
-        VALUES ('Dryrun FPN named ' || v_tag, v_named, v_voice_b, true) RETURNING id INTO v_t_named;
-    INSERT INTO public.discussions (title, created_by, proposed_by_name, is_active)
-        VALUES ('Dryrun FPN legacy ' || v_tag, v_named, 'Dryrun FPN nobody ' || v_tag, true) RETURNING id INTO v_t_legacy;
-    INSERT INTO public.discussions (title, created_by, proposed_by_name, is_active)
-        VALUES ('Dryrun FPN label ' || v_tag, 'A facilitator', 'Dryrun FPN nobody ' || v_tag, true) RETURNING id INTO v_t_label;
-    INSERT INTO public.discussions (title, created_by, proposed_by_name, is_active)
-        VALUES ('Dryrun FPN ambiguous ' || v_tag, 'A facilitator', v_voice_c, true) RETURNING id INTO v_t_ambig;
-    INSERT INTO public.discussions (title, created_by, proposed_by_name, is_active)
-        VALUES ('Dryrun FPN younger ' || v_tag, 'A facilitator', v_voice_d, true) RETURNING id INTO v_t_younger;
-
-    v_intro := ARRAY[
-        't_unnamed=' || coalesce(CASE public.intro_household(v_t_unnamed) WHEN v_f_unnamed THEN 'unnamed' WHEN v_f_label THEN 'LABEL-ROW' ELSE public.intro_household(v_t_unnamed)::text END, 'NULL'),
-        't_named='   || coalesce(CASE public.intro_household(v_t_named) WHEN v_f_named THEN 'named' ELSE public.intro_household(v_t_named)::text END, 'NULL'),
-        't_legacy='  || coalesce(CASE public.intro_household(v_t_legacy) WHEN v_f_named THEN 'named' ELSE public.intro_household(v_t_legacy)::text END, 'NULL'),
-        't_label='   || coalesce(CASE public.intro_household(v_t_label) WHEN v_f_label THEN 'LABEL-ROW' ELSE public.intro_household(v_t_label)::text END, 'NULL'),
-        't_ambig='   || coalesce(public.intro_household(v_t_ambig)::text, 'NULL'),
-        't_younger=' || coalesce(public.intro_household(v_t_younger)::text, 'NULL')];
-    v_intro_ok := v_intro = ARRAY['t_unnamed=unnamed', 't_named=named', 't_legacy=named',
-                                  't_label=NULL', 't_ambig=NULL', 't_younger=NULL'];
+        (v_f_unnamed, v_voice_d, 'Claude', now() + interval '1 hour'),
+        (v_f_unnamed, v_voice_e, 'Claude', now() - interval '1 day'),
+        (v_f_label,   v_voice_e, 'Claude', now() - interval '1 day'),
+        (v_f_renamed, v_voice_f, 'Claude', now() - interval '1 day');
+    FOR r IN
+        SELECT s.label, s.created_by, s.proposed
+          FROM (VALUES
+                (1, 't_unnamed',    'A facilitator', v_voice_a),
+                (2, 't_renamed',    'A facilitator', v_voice_f),
+                (3, 't_named',      v_named,         v_voice_b),
+                (4, 't_legacy',     v_named,         v_nobody),
+                (5, 't_label',      'A facilitator', v_nobody),
+                (6, 't_labelvoice', 'A facilitator', v_voice_e),
+                (7, 't_ambig',      'A facilitator', v_voice_c),
+                (8, 't_younger',    'A facilitator', v_voice_d)) AS s(ord, label, created_by, proposed)
+         ORDER BY s.ord
+    LOOP
+        INSERT INTO public.discussions (title, created_by, proposed_by_name, is_active)
+            VALUES ('Dryrun FPN ' || r.label || ' ' || v_tag, r.created_by, r.proposed, true)
+            RETURNING id INTO v_thread;
+        v_h := public.intro_household(v_thread);
+        v_intro := v_intro || (r.label || '=' || coalesce(CASE v_h
+                WHEN v_f_unnamed THEN 'unnamed'
+                WHEN v_f_renamed THEN 'renamed'
+                WHEN v_f_label   THEN 'LABEL-ROW'
+                WHEN v_f_named   THEN 'named'
+                WHEN v_f_amb1    THEN 'amb1-named'
+                WHEN v_f_amb2    THEN 'amb2-unnamed'
+                ELSE v_h::text END, 'NULL'));
+    END LOOP;
+    v_intro_ok := v_intro = ARRAY['t_unnamed=unnamed', 't_renamed=renamed', 't_named=named', 't_legacy=named',
+                                  't_label=NULL', 't_labelvoice=NULL', 't_ambig=NULL', 't_younger=NULL'];
 
     -- 5. Nothing existing changed.
     SELECT count(*) INTO v_rows_changed
@@ -354,7 +401,8 @@ BEGIN
     v_gifn_anon := v_gifn_present
         AND has_function_privilege('anon', 'public.get_identity_facilitator_name(uuid)'::regprocedure, 'EXECUTE');
 
-    -- 7. The column, and any other way rows get created.
+    -- 7. The column, and any other way a row gets created or a local part gets
+    --    out. Read-only catalog queries: nothing here calls what they list.
     SELECT c.is_nullable, c.column_default INTO v_col_nullable, v_col_default
       FROM information_schema.columns c
      WHERE c.table_schema = 'public' AND c.table_name = 'facilitators' AND c.column_name = 'display_name';
@@ -363,6 +411,43 @@ BEGIN
       FROM pg_trigger t JOIN pg_proc p ON p.oid = t.tgfoid
      WHERE t.tgrelid = 'auth.users'::regclass AND NOT t.tgisinternal
        AND p.prosrc ~* 'facilitators';
+    -- 7a. Every live function that writes facilitators rows, whoever owns it.
+    --     The CASE keeps pg_get_functiondef off aggregates and window
+    --     functions, which it refuses.
+    SELECT coalesce(array_agg(x.what ORDER BY x.what), '{}')
+      INTO v_fac_inserters
+      FROM (SELECT p.oid::regprocedure::text AS what,
+                   CASE WHEN p.prokind IN ('f', 'p') AND l.lanname NOT IN ('c', 'internal')
+                        THEN pg_get_functiondef(p.oid) END AS def
+              FROM pg_proc p
+              JOIN pg_namespace n ON n.oid = p.pronamespace
+              JOIN pg_language l ON l.oid = p.prolang
+             WHERE n.nspname NOT IN ('pg_catalog', 'information_schema')
+               AND n.nspname !~ '^pg_(temp|toast)') x
+     WHERE x.def ~* '\m(insert|merge)\s+into\s+("?public"?\s*\.\s*)?"?facilitators\M';
+    -- 7b. Every live function or view that reads facilitators and cuts up an
+    --     email. (A) compares the local part on purpose and is left out.
+    SELECT coalesce(array_agg(x.what ORDER BY x.what), '{}')
+      INTO v_email_splitters
+      FROM (SELECT 'function ' || p.oid::regprocedure::text AS what,
+                   CASE WHEN p.prokind IN ('f', 'p') AND l.lanname NOT IN ('c', 'internal')
+                        THEN pg_get_functiondef(p.oid) END AS def
+              FROM pg_proc p
+              JOIN pg_namespace n ON n.oid = p.pronamespace
+              JOIN pg_language l ON l.oid = p.prolang
+             WHERE n.nspname NOT IN ('pg_catalog', 'information_schema')
+               AND n.nspname !~ '^pg_(temp|toast)'
+               AND p.oid <> 'public.facilitators_no_email_name()'::regprocedure
+            UNION ALL
+            SELECT 'view ' || quote_ident(v.schemaname) || '.' || quote_ident(v.viewname), v.definition
+              FROM pg_views v
+             WHERE v.schemaname NOT IN ('pg_catalog', 'information_schema')
+            UNION ALL
+            SELECT 'matview ' || quote_ident(m.schemaname) || '.' || quote_ident(m.matviewname), m.definition
+              FROM pg_matviews m
+             WHERE m.schemaname NOT IN ('pg_catalog', 'information_schema')) x
+     WHERE x.def ~* '\mfacilitators\M'
+       AND x.def ~* '\m(split_part|substring|substr|left|regexp_replace|regexp_substr|regexp_match|regexp_matches|strpos|position)\s*\([^)]*email';
 
     -- 8. Reported only.
     SELECT count(*) FILTER (WHERE lower(btrim(f.display_name)) = lower(btrim(split_part(f.email, '@', 1)))),
@@ -372,11 +457,11 @@ BEGIN
       JOIN dryrun_fpn_facilitators b ON b.id = f.id;
 
     v_summary := format(
-        'facilitator-public-name: client=%s update=%s postgres=%s intro=%s trigger=%s existing_rows_changed=%s households_changed_other=%s sample=%s households_changed_label=%s intro_household_definer=%s anon=%s authenticated=%s get_identity_facilitator_name_present=%s anon=%s display_name_nullable=%s default=%s auth_users_triggers_touching_facilitators=%s email_local_names=%s label_names=%s role_before=%s role_after=%s',
+        'facilitator-public-name: client=%s update=%s postgres=%s intro=%s trigger=%s existing_rows_changed=%s households_changed_other=%s sample=%s households_changed_label=%s intro_household_definer=%s anon=%s authenticated=%s get_identity_facilitator_name_present=%s anon=%s display_name_nullable=%s default=%s auth_users_triggers_touching_facilitators=%s functions_inserting_facilitators=%s email_splitters_reading_facilitators=%s email_local_names=%s label_names=%s role_before=%s role_after=%s',
         v_client, v_upd, v_pg, v_intro, v_trigger, v_rows_changed, v_households_changed, v_changed_sample,
         v_label_households_changed, v_ih_definer, v_ih_anon, v_ih_auth, v_gifn_present, v_gifn_anon,
-        v_col_nullable, coalesce(v_col_default, 'none'), v_auth_creators, v_email_local_names, v_label_names,
-        v_role_before, current_user);
+        v_col_nullable, coalesce(v_col_default, 'none'), v_auth_creators, v_fac_inserters, v_email_splitters,
+        v_email_local_names, v_label_names, v_role_before, current_user);
 
     IF v_client_ok
        AND v_upd = quote_literal(v_local)
@@ -389,6 +474,8 @@ BEGIN
        AND v_gifn_present AND v_gifn_anon
        AND v_col_nullable = 'YES' AND v_col_default IS NULL
        AND cardinality(v_auth_creators) = 0
+       AND cardinality(v_fac_inserters) = 0
+       AND cardinality(v_email_splitters) = 0
        AND current_user = v_role_before THEN
         RAISE EXCEPTION 'DRYRUN PASS %', v_summary;
     ELSE
