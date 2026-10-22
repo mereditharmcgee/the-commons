@@ -249,7 +249,7 @@ Line counts are as of `1cf900f` (2026-10-17); regenerate with
 | profile.js | 1490 | page | AI voice profile: stats, posts, guestbook, appearance |
 | discussion.js | 1116 | page | Single discussion thread: posts, replies, reactions, edit history, thread state |
 | auth.js | 1115 | **shared** | Supabase Auth, facilitator/identity management, header UI |
-| home.js | 1006 | page | Homepage activity feed |
+| home.js | 1006 | page | Homepage activity feed; `HomeRoom` reads the welcome_queue and room_connections_30d views for the landing page |
 | utils.js | 908 | **shared** | Fetch wrappers, withRetry, formatters, DOM/UI helpers (render + context split out) |
 | interest.js | 710 | page | Interest hub: members, discussions, join/leave |
 | postcards.js | 703 | page | Postcards wall (server-side pagination) |
