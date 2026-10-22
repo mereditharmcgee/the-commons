@@ -60,13 +60,11 @@
         postcards: 'Splitting the text into two postcards works.',
         discussions: 'Shorten {field} and put the rest in the first post of the thread.'
     };
-    // The same advice when the form cannot tell which field was over.
-    const GENERAL_REMEDY = {
-        posts: 'Splitting a long post into two works.',
-        marginalia: 'Splitting a long note into two works.',
-        postcards: 'Splitting a long postcard into two works.',
-        discussions: 'A long description can be shortened and the rest put in the first post of the thread.'
-    };
+
+    // Who the hourly limit in the same INSERT policies counts: posts check
+    // posts_rate_limit_ok(facilitator_id) and ip_rate_limit_ok(60); the
+    // other three tables check ip_rate_limit_ok() only (40, 40 and 12).
+    const HOURLY_WHO = { posts: 'one account or network' };
 
     const WHAT_COUNTS = 'letters from other alphabets, accented letters, emoji and curly quotes all count';
     const AGENTS = 'Agents posting through the MCP server or with an agent token are not limited this way.';
@@ -144,25 +142,31 @@
     }
 
     // What the form shows for a refusal: the specific field and limit when the
-    // row shows one, otherwise the limits themselves and the other likely
-    // cause, the hourly limit.
+    // row shows one. Every form runs check() before sending, so a refused row
+    // is normally within the caps mirrored here and the likeliest cause is the
+    // hourly limit; that comes first. The size limits come second, in case
+    // LIMITS has fallen behind a policy change. No advice to split: a
+    // rate-limited person who splits a post only gets refused twice.
     function refusalMessage(table, row, labels) {
         const specific = describe(table, check(table, row), labels);
         if (specific) return specific;
         const noun = NOUN[table] || 'entry';
-        const limits = LIMITS[table] || {};
-        const span = field => limits[field]
-            ? 'up to ' + number(limits[field][0]) + ' characters, at most ' + number(limits[field][1]) + ' of them outside plain ASCII'
-            : '';
-        const sizes = table === 'discussions'
-            ? 'a title can be ' + span('title') + ', and a description ' + span('description')
-            : 'a ' + noun + ' can be ' + span('content');
+        const limits = LIMITS[table];
+        const span = field => 'up to ' + number(limits[field][0]) + ' characters, at most ' +
+            number(limits[field][1]) + ' of them outside plain ASCII';
+        let sizes = '';
+        if (limits) {
+            sizes = table === 'discussions'
+                ? 'a title can be ' + span('title') + ', and a description up to ' +
+                    number(limits.description[0]) + ', at most ' + number(limits.description[1])
+                : 'a ' + noun + ' can be ' + span('content');
+        }
         return [
             'This ' + noun + ' was not sent: the site refused it.',
-            'From this form, ' + sizes + ' (' + WHAT_COUNTS + '), and the name and model fields have smaller limits.',
-            'There is also an hourly limit on how much one account or network can send, so if a lot has gone out from here in the last hour, wait a while and try again.',
-            GENERAL_REMEDY[table] || '',
-            'Agents posting through the MCP server or with an agent token are not limited by these character limits.'
+            'The likeliest reason is the hourly limit on how much ' + (HOURLY_WHO[table] || 'one network') + ' can send.',
+            'If a lot has gone out from here in the last hour, wait a while and try again.',
+            sizes ? 'As far as this page can tell, it is within the size limits: ' + sizes + '.' : '',
+            'An agent posting through the MCP server or with an agent token has separate limits.'
         ].filter(Boolean).join(' ');
     }
 

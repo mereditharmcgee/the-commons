@@ -112,17 +112,27 @@ test('isRefusal() knows the policy refusal and nothing else', () => {
     assert.equal(Shape.isRefusal(null), false);
 });
 
-test('refusalMessage() falls back to naming the limits and the hourly limit when the row is within them', () => {
+test('refusalMessage() leads with the hourly limit when the row is within the caps, then the sizes', () => {
     const general = Shape.refusalMessage('posts', { content: 'short', model: 'Claude' });
-    assert.match(general, /^This post was not sent: the site refused it\./);
-    assert.match(general, /up to 30,000 characters, at most 1,000 of them outside plain ASCII/);
-    assert.match(general, /hourly limit/);
-    assert.match(general, /Splitting a long post into two works\./);
-    assert.match(general, /MCP server or with an agent token are not limited by these character limits/);
+    assert.match(general, /^This post was not sent: the site refused it\. The likeliest reason is the hourly limit on how much one account or network can send\./);
+    assert.match(general, /wait a while and try again\./);
+    assert.match(general, /As far as this page can tell, it is within the size limits: a post can be up to 30,000 characters, at most 1,000 of them outside plain ASCII\./);
+    assert.ok(general.indexOf('hourly limit') < general.indexOf('30,000'), 'the hourly limit comes before the sizes');
+    assert.doesNotMatch(general, /[Ss]plit/, 'splitting only costs a rate-limited person another refusal');
+    assert.match(general, /An agent posting through the MCP server or with an agent token has separate limits\.$/);
+    assert.ok(general.split(/\s+/).length <= 90, 'short enough to read: ' + general.split(/\s+/).length + ' words');
+
+    for (const table of ['marginalia', 'postcards', 'discussions']) {
+        const m = Shape.refusalMessage(table, {});
+        assert.match(m, /hourly limit on how much one network can send\./, table + ': only the per-network limit applies');
+        assert.doesNotMatch(m, /[Ss]plit|shorten/i, table);
+    }
 
     const discussion = Shape.refusalMessage('discussions', { title: 'A fine title' });
+    assert.match(discussion, /^This discussion was not sent: the site refused it\. The likeliest reason is the hourly limit/);
     assert.match(discussion, /a title can be up to 300 characters, at most 60 of them outside plain ASCII/);
-    assert.match(discussion, /a description up to 5,000 characters, at most 300/);
+    assert.match(discussion, /a title can be up to 300 characters, at most 60 of them outside plain ASCII, and a description up to 5,000, at most 300\./);
+    assert.ok(discussion.split(/\s+/).length <= 95, 'the discussion fallback stays short: ' + discussion.split(/\s+/).length + ' words');
 
     assert.match(Shape.refusalMessage('marginalia', { content: HANGUL.repeat(501) }), /over this form's limit of 500/,
         'the specific message wins when the row shows the problem');
@@ -248,9 +258,9 @@ test('submit.js: a server refusal reads as a sentence, never as the raw policy e
     assert.equal(h.posted.length, 1, 'sent, and refused by the server (an hourly limit, say)');
     const text = h.els['form-message'].textContent;
     assert.doesNotMatch(text, /row-level security|42501|API Error/);
-    assert.match(text, /^This post was not sent: the site refused it\./);
+    assert.match(text, /^This post was not sent: the site refused it\. The likeliest reason is the hourly limit/);
     assert.match(text, /30,000 characters, at most 1,000 of them outside plain ASCII/);
-    assert.match(text, /hourly limit/);
+    assert.doesNotMatch(text, /[Ss]plit/);
     assert.match(text, /MCP server/);
     assert.equal(h.els['submit-btn'].disabled, false);
 });
