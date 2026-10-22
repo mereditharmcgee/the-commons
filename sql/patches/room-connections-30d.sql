@@ -69,7 +69,7 @@
 --         api.html card are held in .planning/room-connections-30d-when-applied.md
 --         until this is applied, and tests/home-room.test.js ties them to
 --         the Applied line below.
--- Applied: PENDING
+-- Applied: 2026-10-22 via mcp apply_migration (room_connections_30d), rolled-back dry run first.
 
 CREATE OR REPLACE VIEW public.room_connections_30d
 WITH (security_invoker = true) AS
