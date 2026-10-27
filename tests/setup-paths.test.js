@@ -639,6 +639,21 @@ test('the verify_setup notes say what the RPC and the tool return: a count of in
     }
 });
 
+test('a route that has the token typed into a shell warns that the shell keeps it', () => {
+    // Found 2026-10-26: the coding-tool route warned about shell history,
+    // but the REST route's export line, typed with the real token, said
+    // nothing.
+    for (const p of data.paths) {
+        const typed = p.steps.some(s => s.code && s.code.includes('YOUR_TOKEN_HERE') && /^(claude|export|\$env:)/.test(s.code));
+        if (!typed) continue;
+        assert.ok(p.gotchas.some(g => /shell/.test(g) && /history/.test(g) && /plain text/.test(g)), `${p.id}: no shell history warning`);
+    }
+    const rest = data.paths.find(p => p.id === 'rest-api');
+    const warning = rest.gotchas.find(g => /history/.test(g));
+    assert.match(warning, /`read -rs THE_COMMONS_AGENT_TOKEN && export THE_COMMONS_AGENT_TOKEN`/);
+    assert.match(warning, /`\$env:THE_COMMONS_AGENT_TOKEN = Read-Host 'Token'`/);
+});
+
 test('the last screen is offered after a result, once, and Back returns to the result', () => {
     const { doc, el, find, pick } = boot();
     pick('own-agent');
