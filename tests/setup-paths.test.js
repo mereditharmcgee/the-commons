@@ -378,14 +378,33 @@ test('setup.html lists every path for readers without JavaScript', () => {
     assert.match(html, /<div id="setup-picker"[^>]*\shidden>/, 'the picker waits for setup.js');
     const items = [...list.matchAll(/<li class="setup-all__item" id="path-([a-z0-9-]+)" data-path-id="\1">([\s\S]*?)<\/li>/g)];
     assert.deepEqual(items.map(m => m[1]), data.paths.map(p => p.id), 'one list item per path, in order');
+    // Found 2026-10-26: this check accepted any badge and never read the
+    // Fits and Needs lines, so the list could drift from the data unseen.
+    const STATUS_LABELS = { live: 'Live', pilot: 'Pilot', untested: 'Untested' };
+    const field = (body, name) => [...body.matchAll(/<p class="setup-all__meta"><strong>([^<:]+):<\/strong>([\s\S]*?)<\/p>/g)]
+        .filter(m => m[1] === name).map(m => textOf(m[2]));
     for (const [, id, body] of items) {
         const p = data.paths.find(x => x.id === id);
-        assert.match(textOf(body), new RegExp('^' + p.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' (Live|Pilot|Untested)'), `${id}: name`);
-        assert.ok(textOf(body).includes(plain(p.summary)), `${id}: summary`);
-        assert.ok(body.includes(`href="${p.docs.href}"`), `${id}: docs link`);
-        const choice = body.match(/<strong>Dashboard choice:<\/strong> ([^<]+)<\/p>/);
-        if (p.dashboardChoice) assert.ok(choice && p.dashboardChoice.text.endsWith(choice[1] + '.'), `${id}: dashboard choice`);
-        else assert.equal(choice, null, `${id}: names a dashboard choice it does not have`);
+        const title = body.match(/<h3 class="setup-all__name">([\s\S]*?)<\/h3>/);
+        assert.ok(title, `${id}: title`);
+        const badges = [...title[1].matchAll(/<span class="setup-status setup-status--([a-z]+)">([^<]*)<\/span>/g)];
+        assert.equal(badges.length, 1, `${id}: one status badge`);
+        assert.equal(badges[0][1], p.status, `${id}: badge class`);
+        assert.equal(badges[0][2], STATUS_LABELS[p.status], `${id}: badge text`);
+        assert.equal(textOf(title[1]), `${p.name} ${STATUS_LABELS[p.status]}`, `${id}: name`);
+        assert.equal(textOf(body.match(/<p class="setup-all__summary">([\s\S]*?)<\/p>/)[1]), plain(p.summary), `${id}: summary`);
+        // setup.js joins Fits and Needs with "; ", and the list does the same.
+        assert.deepEqual(field(body, 'Fits'), [plain(p.fits.join('; '))], `${id}: Fits`);
+        assert.deepEqual(field(body, 'Needs'), [plain(p.needs.join('; '))], `${id}: Needs`);
+        const known = new Set(['Fits', 'Needs', 'Dashboard choice']);
+        for (const m of body.matchAll(/<strong>([^<:]+):<\/strong>/g)) assert.ok(known.has(m[1]), `${id}: unexpected line ${m[1]}`);
+        const docs = body.match(/<p class="setup-all__docs"><a href="([^"]+)">([\s\S]*?)<\/a><\/p>/);
+        assert.ok(docs, `${id}: docs link`);
+        assert.equal(docs[1], p.docs.href, `${id}: docs href`);
+        assert.equal(textOf(docs[2]), p.docs.label, `${id}: docs label`);
+        const choice = field(body, 'Dashboard choice');
+        if (p.dashboardChoice) assert.deepEqual(choice.map(c => `When the token appears, pick where the voice will connect from: ${c}.`), [p.dashboardChoice.text], `${id}: dashboard choice`);
+        else assert.deepEqual(choice, [], `${id}: names a dashboard choice it does not have`);
     }
     const listText = textOf(list);
     for (const s of data.sharedTokenSteps.concat(data.copyContextSteps)) assert.ok(listText.includes(plain(s.text)), `missing step: ${s.text}`);
