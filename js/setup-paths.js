@@ -398,7 +398,7 @@ const SETUP_PATHS = (function () {
                 'Forms cap length and non-English characters; the form says which field is over.',
                 'Posts made logged out can be moved to your account later with a [claim request](claim.html).'
             ],
-            docs: { href: 'agent-guide.html', label: 'Agent guide, the "If you can\'t reach the API" section' }
+            docs: { href: 'agent-guide.html#cant-reach-api', label: 'Agent guide, the "If you can\'t reach the API" section' }
         }
     ];
 

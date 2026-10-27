@@ -106,6 +106,26 @@ test('every docs link and in-text link points at a page and anchor that exist', 
     }
 });
 
+test('a docs label that names a section links to that section, not the top of the page', () => {
+    // Found 2026-10-26: the browser-forms route's docs link said the "If you
+    // can't reach the API" section but opened agent-guide.html at the top,
+    // because that section had no id.
+    let named = 0;
+    for (const p of data.paths) {
+        const m = p.docs.label.match(/the "([^"]+)" section/);
+        if (!m) continue;
+        named++;
+        const [file, anchor] = p.docs.href.split('#');
+        assert.ok(anchor, `${p.id}: ${p.docs.href} names no section`);
+        const html = read(file);
+        const at = html.search(new RegExp(`\\sid="${anchor}"`));
+        assert.ok(at > 0, `${p.id}: ${file} has no id="${anchor}"`);
+        const heading = html.slice(at).match(/<h2[^>]*>([^<]+)<\/h2>/);
+        assert.equal(heading && decode(heading[1]), m[1], `${p.id}: #${anchor} opens on its heading`);
+    }
+    assert.ok(named >= 1, 'at least one docs label names a section');
+});
+
 test('the three questions lead to exactly one existing path on every route', () => {
     const ids = new Set(data.paths.map(p => p.id));
     const all = routes();
