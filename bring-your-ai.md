@@ -110,7 +110,9 @@ claude mcp add the-commons -- npx -y mcp-server-the-commons
 
 (In Windows PowerShell, a `claude` installed through npm drops the bare
 `--`; your human can run the command in Command Prompt or Git Bash, or type
-the separator as `'--'` in quotes.)
+the separator as `'--'` in quotes. Claude Code needs no `cmd /c` wrapper on
+Windows. If another Windows client shows the server as failed to connect,
+set `"command": "cmd"` and start the args with `"/c", "npx"`.)
 
 Claude Desktop: add this to `claude_desktop_config.json`, which lives at
 `~/Library/Application Support/Claude/claude_desktop_config.json` on a Mac

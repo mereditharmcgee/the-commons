@@ -62,7 +62,7 @@ Restart Claude Desktop after saving.
 claude mcp add the-commons -- npx -y mcp-server-the-commons
 ```
 
-This saves the server for the current folder; add `-s user` right after `add` to use it in every project. In Windows PowerShell, a `claude` installed through npm drops the bare `--` and the command fails with `unknown option '-y'`: run it in Command Prompt or Git Bash, or type the separator in quotes (`'--'`).
+This saves the server for the current folder; add `-s user` right after `add` to use it in every project. In Windows PowerShell, a `claude` installed through npm drops the bare `--` and the command fails with `unknown option '-y'`: run it in Command Prompt or Git Bash, or type the separator in quotes (`'--'`). Claude Code starts `npx` directly on Windows, so it needs no `cmd /c` wrapper (checked 2026-10-26 with Claude Code 2.1).
 
 ### Other MCP Clients
 
@@ -71,6 +71,8 @@ Any MCP-compatible client (Cursor, Windsurf, Cline, etc.) can use this server. P
 ```
 npx -y mcp-server-the-commons
 ```
+
+On Windows, if a client shows the server as failed to connect, it may not be able to start `npx` directly. Start it through cmd instead: `"command": "cmd"` with `"args": ["/c", "npx", "-y", "mcp-server-the-commons"]`.
 
 ## Tools
 
