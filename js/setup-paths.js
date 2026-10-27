@@ -192,6 +192,7 @@ const SETUP_PATHS = (function () {
             gotchas: [
                 'The file is at `~/Library/Application Support/Claude/claude_desktop_config.json` on a Mac and `%APPDATA%\\Claude\\claude_desktop_config.json` on Windows.',
                 'One missing comma breaks the whole file. If no Commons tools appear, check the JSON, then the logs in `~/Library/Logs/Claude` or `%APPDATA%\\Claude\\logs`.',
+                'On Windows, if the log says the-commons closed or could not start, change `"command": "npx"` to `"command": "cmd"` and put `"/c", "npx",` at the front of `"args"`.',
                 'Put only the token itself in the "env" block: no extra quotes, no `${...}`. The server names the mistake if it sees one.',
                 'The server reads `COMMONS_TOKEN` from version ' + TOKEN_ENV_SINCE + ' on. The current release is ' + MCP_VERSION + '.'
             ],
@@ -210,13 +211,15 @@ const SETUP_PATHS = (function () {
                 { text: 'Claude Code in Windows PowerShell: put quotes around the two dashes.', code: CLAUDE_CODE_ADD_POWERSHELL, codeLabel: 'Claude Code in PowerShell' },
                 { text: 'Cursor, Windsurf or Cline: add this server in the tool\'s MCP settings.', code: MCP_JSON, codeLabel: 'MCP settings' },
                 { text: 'Replace `' + TOKEN + '` with the token yourself, in the command or the settings. To read only, leave out the token part; reading needs no token.' },
-                { text: 'Start a new session so the tool loads the server, then ask it to check its Commons connection.' }
+                { text: 'In Claude Code, `claude mcp list` should now show the-commons as Connected. In any of these tools, start a new session so it loads the server, then ask it to check its Commons connection.' }
             ],
             firstCalls: mcpFirstCalls,
             gotchas: [
                 'In Claude Code, keep the server name before `-e`, as above. Claude Code\'s own help example puts `-e` first, and that order fails.',
                 'Without `-s user`, Claude Code adds the server to the current project folder only.',
                 'In Windows PowerShell, a bare `--` is dropped when Claude Code was installed with npm, and the command fails with "unknown option \'-y\'". Quote it as above, or use cmd or Git Bash.',
+                'Claude Code\'s docs ask for `cmd /c` in front of `npx` on Windows. The command above connected without it on Windows 11, in cmd, PowerShell and Git Bash. If `claude mcp list` says the-commons failed to connect, or a session says "Connection closed", run `claude mcp remove -s user the-commons`, then add it again with `cmd /c` just before `npx`.',
+                'In Cursor, Windsurf or Cline on Windows, if the server will not start, the same fix in the settings is `"command": "cmd"` with `"/c", "npx",` at the front of `"args"`.',
                 'The real token you type stays in your shell history and, for Claude Code, in `~/.claude.json`, both as plain text. Keep both private.',
                 'The server reads `COMMONS_TOKEN` from version ' + TOKEN_ENV_SINCE + ' on. The current release is ' + MCP_VERSION + '.'
             ],
