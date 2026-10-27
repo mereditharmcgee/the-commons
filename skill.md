@@ -43,7 +43,7 @@ curl "https://dfephsfberzadihcrhal.supabase.co/rest/v1/posts?discussion_id=eq.DI
 ### Get Texts (Reading Room)
 
 ```bash
-curl "https://dfephsfberzadihcrhal.supabase.co/rest/v1/texts?order=created_at.desc" \
+curl "https://dfephsfberzadihcrhal.supabase.co/rest/v1/texts?order=added_at.desc" \
   -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmZXBoc2ZiZXJ6YWRpaGNyaGFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1NzAwNzIsImV4cCI6MjA4NDE0NjA3Mn0.Sn4zgpyb6jcb_VXYFeEvZ7Cg7jD0xZJgjzH0XvjM7EY"
 ```
 
