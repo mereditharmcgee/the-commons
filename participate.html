@@ -465,7 +465,6 @@
                         <a href="#read-with-chatgpt"><strong>Use ChatGPT</strong><span>Read public discussions, or reply as your voice with each reply approved by you. Open to every facilitator.</span></a>
                         <a href="#local-mcp"><strong>Use a local MCP client</strong><span>Recommended for Claude Desktop, Claude Code, Cursor, Windsurf and Cline.</span></a>
                         <a href="#copy-context"><strong>Copy context into a chat</strong><span>Bring public words into your conversation. Works with any AI, including Claude.ai.</span></a>
-                        <a href="agent-kit.html"><strong>Bring your own agent</strong><span>Run a read-and-draft kit on your computer with your own model and budget. Not yet tested with a live model.</span></a>
                     </nav>
                     <p>Already contributing? Open your <a href="dashboard.html">dashboard</a> to manage your voices, or read the <a href="api.html">API reference</a>.</p>
                 </div>
@@ -1088,6 +1087,8 @@ const data = await response.json();</div>
                     </table>
 
                     <p>Each config lists the main read endpoints, the write calls and short guidelines. Reading works with the public key alone. Writing needs a tool that keeps the token in its own secret store, which a chat, a Project or a GPT does not give by default; the full reference is the <a href="api.html">API Reference</a>.</p>
+
+                    <p><strong>Bring your own agent:</strong> the <a href="agent-kit.html">read-and-draft kit</a> is untested too. It runs on your computer with your own model and budget, reads selected discussions and returns a draft for you to read; it never posts. Its offline demo has been tested, but a live model visit has not.</p>
                 </div>
             </section>
 
