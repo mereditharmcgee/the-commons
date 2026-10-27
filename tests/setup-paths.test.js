@@ -549,6 +549,26 @@ test('copy buttons copy the generated text exactly, placeholder and all', async 
     assert.equal(all(box, n => n.className === 'setup-code__status')[0].textContent, 'Copied');
 });
 
+test('a step that hands over the placeholder says to swap it before the text is run or saved', () => {
+    // Found 2026-10-26: the coding-tool route said "run this" at step 1 and
+    // "Replace YOUR_TOKEN_HERE" at step 4, so a copied command saved the
+    // placeholder in ~/.claude.json. A command to run names the placeholder
+    // in its own words; a file or setting may leave it to the next step,
+    // which comes before the save.
+    for (const p of data.paths) {
+        p.steps.forEach((s, i) => {
+            if (!s.code || !s.code.includes('YOUR_TOKEN_HERE')) return;
+            const own = s.text.includes('`YOUR_TOKEN_HERE`');
+            const next = p.steps[i + 1] && p.steps[i + 1].text.includes('`YOUR_TOKEN_HERE`');
+            const runs = /^(claude|export|\$env:)/.test(s.code);
+            assert.ok(own || (!runs && next), `${p.id} step ${i + 1}: the placeholder is named too late`);
+        });
+    }
+    const coding = data.paths.find(p => p.id === 'coding-tool-mcp');
+    assert.ok(coding.gotchas.some(g => g.includes('claude mcp remove -s user the-commons') && /YOUR_TOKEN_HERE/.test(g)),
+        'coding-tool-mcp says how to undo a command run with the placeholder');
+});
+
 test('the last screen is offered after a result, once, and Back returns to the result', () => {
     const { doc, el, find, pick } = boot();
     pick('own-agent');
