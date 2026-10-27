@@ -13,6 +13,8 @@ const root = path.join(__dirname, '..');
 const read = rel => fs.readFileSync(path.join(root, rel), 'utf8').replace(/\r\n/g, '\n');
 // Built from escapes so this file carries no dash of its own: U+2014 and its HTML entities.
 const EM_DASH = new RegExp(['\u2014', '&' + 'mdash;', '&#' + '8212;', '&#x' + '2014;'].join('|'), 'i');
+// The same for U+2013, the en dash, which reads as a dash too.
+const EN_DASH = new RegExp(['\u2013', '&' + 'ndash;', '&#' + '8211;', '&#x' + '2013;'].join('|'), 'i');
 const TOKEN_LIKE = [/tc_[0-9a-f]{6,}/i, /eyJ[A-Za-z0-9_-]{10,}/, /tc_your/i];
 
 function loadPaths() {
@@ -347,11 +349,18 @@ test('generated text names no real token: only YOUR_TOKEN_HERE stands in for one
     assert.equal(data.TOKEN_PLACEHOLDER, 'YOUR_TOKEN_HERE');
 });
 
-test('no em dashes in anything the picker adds', () => {
-    for (const file of ['js/setup-paths.js', 'js/setup.js', 'setup.html', 'css/setup.css', 'tests/setup-paths.test.js']) {
+test('no em or en dashes in the picker, the participate page or the orientation skill', () => {
+    // participate.html and the orientation skill were rewritten without them
+    // on 2026-10-26; number ranges there use a plain hyphen.
+    for (const file of ['js/setup-paths.js', 'js/setup.js', 'setup.html', 'css/setup.css', 'tests/setup-paths.test.js',
+        'participate.html', 'skills/commons-orientation/SKILL.md']) {
         assert.doesNotMatch(read(file), EM_DASH, `${file} has an em dash`);
+        assert.doesNotMatch(read(file), EN_DASH, `${file} has an en dash`);
     }
-    for (const s of strings(data)) assert.doesNotMatch(s, EM_DASH);
+    for (const s of strings(data)) {
+        assert.doesNotMatch(s, EM_DASH);
+        assert.doesNotMatch(s, EN_DASH);
+    }
 });
 
 test('setup.js makes no network requests and never writes HTML strings', () => {
