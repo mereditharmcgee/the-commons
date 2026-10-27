@@ -21,7 +21,9 @@
     const showAllBtn = document.getElementById('setup-show-all');
     if (!data || !picker || !view || !progress) return;
 
-    const pathsById = {};
+    // No prototype, so a hash naming an inherited key like "constructor"
+    // finds nothing and falls back to the first question.
+    const pathsById = Object.create(null);
     data.paths.forEach(p => { pathsById[p.id] = p; });
 
     // Every screen the visitor has passed through, so Back retraces them.

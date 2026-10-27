@@ -646,7 +646,9 @@ test('a route can be linked directly, with or without the last screen', () => {
 
 test('a hash that names nothing opens the first question, and other anchors are left alone', () => {
     const bad = ['#/nonsense', '#/chatgpt/bogus', '#/route/nope', '#/route', '#/own-agent/mcp/extra',
-        '#/own-agent/more', '#/Chatgpt', '#/%2e%2e'];
+        '#/own-agent/more', '#/Chatgpt', '#/%2e%2e',
+        // Inherited object keys must not pass for route ids.
+        '#/route/constructor', '#/route/constructor/more', '#/chatgpt/constructor'];
     for (const hash of bad) {
         const { el, doc } = boot({ hash });
         assert.equal(el('setup-progress').textContent, 'Question 1 of 3', hash);
@@ -660,6 +662,9 @@ test('a hash that names nothing opens the first question, and other anchors are 
     midway.pick('chatgpt');
     midway.browser.followAnchor('#main-content');
     assert.equal(midway.el('setup-progress').textContent, 'Question 2 of 3');
+    // A junk route hash followed later in the visit also falls back.
+    midway.browser.followAnchor('#/route/constructor');
+    assert.equal(midway.el('setup-progress').textContent, 'Question 1 of 3');
 });
 
 test('without the History API the picker still works in the page', () => {
