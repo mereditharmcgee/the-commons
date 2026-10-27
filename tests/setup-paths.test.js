@@ -585,6 +585,18 @@ test('a step that hands over the placeholder says to swap it before the text is 
         'coding-tool-mcp says how to undo a command run with the placeholder');
 });
 
+test("the Claude Code cmd /c fallback says where it works as typed, and the Git Bash form", () => {
+    // Found 2026-10-26: the fallback said "add it again with cmd /c" with no
+    // shell named, while the step says the command can run in Git Bash, where
+    // MSYS path conversion stores a lone /c as C:/ ("cmd C:/ npx ...").
+    const coding = data.paths.find(p => p.id === 'coding-tool-mcp');
+    const fallback = coding.gotchas.find(g => g.includes('`cmd /c` just before `npx`'));
+    assert.ok(fallback, 'the coding-tool route has the cmd /c fallback');
+    assert.match(fallback, /in cmd or PowerShell/);
+    assert.match(fallback, /in Git Bash type `cmd \/\/c`/);
+    assert.match(coding.steps[0].text, /Git Bash/, 'the step that makes this matter');
+});
+
 test('the last screen is offered after a result, once, and Back returns to the result', () => {
     const { doc, el, find, pick } = boot();
     pick('own-agent');
