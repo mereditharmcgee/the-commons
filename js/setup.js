@@ -2,7 +2,9 @@
 // THE COMMONS - Setup picker (setup.html)
 // Up to three questions lead to one route from js/setup-paths.js.
 // Runs entirely in the page: it sends nothing anywhere and never asks for
-// or shows a private token. Every node is built with textContent.
+// or shows a private token. Every node is built with textContent. Each
+// screen is a browser history entry with a hash that rebuilds it, so the
+// browser's Back button retraces the answers and a route can be linked.
 // =============================================
 
 (function () {
@@ -23,7 +25,9 @@
     data.paths.forEach(p => { pathsById[p.id] = p; });
 
     // Every screen the visitor has passed through, so Back retraces them.
-    // { kind: 'question', id } | { kind: 'result', id, why } | { kind: 'last', id }
+    // { kind: 'question', id, answer } | { kind: 'result', id, why, answer }
+    // | { kind: 'last', id }. answer is the option that led to the step; a
+    // route opened straight from the full list or a link has direct: true.
     let trail = [];
 
     // ---- small DOM helpers ----------------------------------------------
@@ -131,6 +135,13 @@
         const section = el('section', 'setup-block' + (className ? ' ' + className : ''));
         section.appendChild(el('h3', 'setup-block__title', title));
         return section;
+    }
+
+    function button(label, className, onClick) {
+        const node = el('button', className, label);
+        node.type = 'button';
+        node.addEventListener('click', onClick);
+        return node;
     }
 
     // ---- progress -------------------------------------------------------
@@ -268,10 +279,14 @@
 
         const next = el('div', 'setup-result__next');
         next.appendChild(el('p', null, 'After the first visit works:'));
-        const lastBtn = el('button', 'btn btn--secondary', data.lastScreen.title);
-        lastBtn.type = 'button';
-        lastBtn.addEventListener('click', () => go({ kind: 'last', id: path.id }));
-        next.appendChild(lastBtn);
+        next.appendChild(button(data.lastScreen.title, 'btn btn--secondary', () => go({ kind: 'last', id: path.id })));
+        // On a phone a route runs thousands of pixels, so the end of it gets
+        // its own way back instead of a long scroll to the bar at the top.
+        const redo = el('div', 'setup-result__redo');
+        redo.appendChild(el('p', null, 'Not the right route?'));
+        redo.appendChild(button('Back', 'btn btn--secondary btn--small', back));
+        redo.appendChild(button('Start over', 'btn btn--ghost btn--small', restart));
+        next.appendChild(redo);
         wrap.appendChild(next);
 
         showScreen(wrap, heading, 'Your route');
@@ -302,6 +317,85 @@
     }
 
     // ---- navigation -----------------------------------------------------
+    // Every screen has a hash that rebuilds it:
+    //   setup.html#/chatgpt/connectors/posting   the answers given, in order
+    //   setup.html#/route/rest-api               one route, opened directly
+    //   either one ending in /more               the last screen after a route
+    //   setup.html                               the first question
+    // A hash without the leading "#/", such as the skip link's, belongs to
+    // the page, and the picker leaves it alone.
+
+    const hist = window.history && typeof window.history.pushState === 'function' ? window.history : null;
+
+    function startTrail() {
+        return [{ kind: 'question', id: data.start }];
+    }
+
+    function stepFor(option) {
+        return option.next
+            ? { kind: 'question', id: option.next, answer: option.id }
+            : { kind: 'result', id: option.path, why: option.why || '', answer: option.id };
+    }
+
+    function hashFor(steps) {
+        if (steps.length <= 1) return '';
+        const parts = steps[1].direct
+            ? ['route', steps[1].id]
+            : steps.filter(step => step.answer).map(step => step.answer);
+        if (steps[steps.length - 1].kind === 'last') parts.push('more');
+        return '#/' + parts.join('/');
+    }
+
+    // The trail a hash describes; null when the hash is not the picker's.
+    // A picker hash that names nothing real opens the first question.
+    function trailFromHash(hash) {
+        const h = String(hash || '');
+        if (h === '' || h === '#' || h === '#/') return startTrail();
+        if (h.indexOf('#/') !== 0) return null;
+        const parts = h.slice(2).split('/').filter(Boolean);
+        if (!parts.every(part => /^[a-z0-9-]+$/.test(part))) return startTrail();
+        const steps = startTrail();
+        let i = 0;
+        if (parts[0] === 'route') {
+            if (!pathsById[parts[1]]) return startTrail();
+            steps.push({ kind: 'result', id: parts[1], why: '', direct: true });
+            i = 2;
+        } else {
+            for (; i < parts.length && steps[steps.length - 1].kind === 'question'; i++) {
+                const option = data.questions[steps[steps.length - 1].id].options.find(o => o.id === parts[i]);
+                if (!option) return startTrail();
+                steps.push(stepFor(option));
+            }
+        }
+        const rest = parts.slice(i);
+        if (rest.length === 1 && rest[0] === 'more' && steps[steps.length - 1].kind === 'result') {
+            steps.push({ kind: 'last', id: steps[steps.length - 1].id });
+        } else if (rest.length) {
+            return startTrail();
+        }
+        return steps;
+    }
+
+    // How many picker entries sit below this one in the browser history.
+    function depth() {
+        try {
+            const state = hist && hist.state;
+            return state && typeof state.setupDepth === 'number' ? state.setupDepth : 0;
+        } catch (_e) {
+            return 0;
+        }
+    }
+
+    function record(mode) {
+        if (!hist) return;
+        const url = location.pathname + location.search + hashFor(trail);
+        try {
+            if (mode === 'push') hist.pushState({ setupDepth: depth() + 1 }, '', url);
+            else hist.replaceState({ setupDepth: depth() }, '', url);
+        } catch (_e) {
+            // A sandboxed frame can refuse; the picker still works in the page.
+        }
+    }
 
     function render() {
         const here = trail[trail.length - 1];
@@ -312,29 +406,41 @@
 
     function go(step) {
         trail.push(step);
+        record('push');
         render();
     }
 
     function choose(option) {
-        if (option.next) go({ kind: 'question', id: option.next });
-        else go({ kind: 'result', id: option.path, why: option.why || '' });
+        go(stepFor(option));
     }
 
+    // While there is a picker entry to return to, Back is the browser's
+    // Back, so the page's buttons and the browser's never disagree. A page
+    // opened from a link has none, and Back steps up the trail in place.
     function back() {
-        if (trail.length > 1) trail.pop();
+        if (trail.length <= 1) return;
+        if (hist && depth() > 0) {
+            hist.back();
+            return;
+        }
+        trail.pop();
+        record('replace');
         render();
     }
 
+    // A new entry, so the browser's Back still returns to the route.
     function restart() {
-        trail = [{ kind: 'question', id: data.start }];
+        trail = startTrail();
+        record('push');
         render();
     }
 
-    // Opening a route from the full list starts a fresh trail at that route,
-    // so Back goes to the first question.
+    // A route opened from the full list is one new entry; Back returns to
+    // the screen the list was opened from.
     function openPath(id) {
-        trail = [{ kind: 'question', id: data.start }, { kind: 'result', id, why: '' }];
+        trail = startTrail().concat({ kind: 'result', id, why: '', direct: true });
         setAllPathsOpen(false);
+        record('push');
         render();
     }
 
@@ -364,6 +470,27 @@
     setAllPathsOpen(false);
     picker.hidden = false;
 
-    trail = [{ kind: 'question', id: data.start }];
+    // The browser's Back and Forward, and a hash typed or followed by hand.
+    if (hist && typeof window.addEventListener === 'function') {
+        window.addEventListener('popstate', () => {
+            const steps = trailFromHash(location.hash);
+            if (!steps) return;
+            trail = steps;
+            render();
+        });
+    }
+
+    const linked = trailFromHash(location.hash);
+    trail = linked || startTrail();
+    if (hist && !(hist.state && typeof hist.state.setupDepth === 'number')) {
+        try {
+            hist.replaceState({ setupDepth: 0 }, '', location.pathname + location.search + location.hash);
+        } catch (_e) {
+            // As in record(): without history the picker still works.
+        }
+    }
+    // A link to a later screen opens with focus on it, so that screen is the
+    // one in view; the first question leaves focus at the top of the page.
+    moveFocus = !!(linked && linked.length > 1);
     render();
 })();

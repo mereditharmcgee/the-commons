@@ -167,6 +167,15 @@
     border-top: 1px solid var(--border-subtle);
 }
 .setup-result__next p { margin: 0 0 var(--space-sm); color: var(--text-secondary); }
+.setup-result__redo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-top: var(--space-lg);
+}
+/* The label takes its own line, like the one above, so the two buttons stay together on a phone. */
+.setup-result__next .setup-result__redo p { flex-basis: 100%; margin: 0; }
 
 /* Last screen */
 .setup-last__title {

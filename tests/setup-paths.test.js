@@ -357,7 +357,37 @@ function all(node, pred, out = []) {
     return out;
 }
 
-function boot() {
+// A browser history for one page: pushState and replaceState keep the hash
+// in step with location, and back and forward fire popstate (at once, where
+// a browser would fire it a moment later). followAnchor is the browser's own
+// entry for an in-page link such as the skip link.
+function fakeHistory(initialHash) {
+    const location = { origin: 'https://jointhecommons.space', pathname: '/setup.html', search: '', hash: initialHash || '' };
+    const entries = [{ state: null, url: location.pathname + location.hash }];
+    let index = 0;
+    const listeners = [];
+    const urlOf = url => (String(url).startsWith('#') ? location.pathname + url : String(url));
+    const copy = state => (state === null || state === undefined ? null : JSON.parse(JSON.stringify(state)));
+    const sync = () => {
+        const url = entries[index].url;
+        const at = url.indexOf('#');
+        location.hash = at >= 0 && at < url.length - 1 ? url.slice(at) : '';
+    };
+    const fire = () => listeners.forEach(fn => fn({ state: entries[index].state }));
+    const history = {
+        get state() { return entries[index].state; },
+        get length() { return entries.length; },
+        pushState(state, _title, url) { entries.splice(index + 1); entries.push({ state: copy(state), url: urlOf(url) }); index++; sync(); },
+        replaceState(state, _title, url) { entries[index] = { state: copy(state), url: url === undefined ? entries[index].url : urlOf(url) }; sync(); },
+        back() { if (index > 0) { index--; sync(); fire(); } },
+        forward() { if (index < entries.length - 1) { index++; sync(); fire(); } }
+    };
+    const followAnchor = hash => { entries.splice(index + 1); entries.push({ state: null, url: location.pathname + hash }); index++; sync(); fire(); };
+    const addEventListener = (type, fn) => { if (type === 'popstate') listeners.push(fn); };
+    return { location, history, addEventListener, followAnchor, index: () => index };
+}
+
+function boot(opts = {}) {
     const doc = { activeElement: null };
     doc.createElement = tag => new Node(tag, doc);
     doc.createTextNode = text => new Text(text);
@@ -374,9 +404,12 @@ function boot() {
     for (const p of data.paths) { const li = new Node('li', doc); li.attrs['data-path-id'] = p.id; list.appendChild(li); }
     doc.getElementById = id => byId[id] || null;
     const copied = [];
+    const browser = fakeHistory(opts.hash);
     const context = vm.createContext({
         document: doc, console, URL, Promise,
-        location: { origin: 'https://jointhecommons.space' },
+        location: browser.location,
+        history: opts.noHistory ? undefined : browser.history,
+        addEventListener: browser.addEventListener,
         navigator: { clipboard: { writeText: async text => { copied.push(text); } } }
     });
     context.window = context;
@@ -392,7 +425,7 @@ function boot() {
         assert.ok(button, `no option ${optionId}`);
         button.click();
     };
-    return { doc, el, find, options, pick, copied, context };
+    return { doc, el, find, options, pick, copied, context, browser };
 }
 
 test('the picker opens on the first question without moving focus, and hides the full list', () => {
@@ -517,4 +550,143 @@ test('the full list opens a route directly, and Back from it goes to the first q
     assert.equal(find(n => n.tagName === 'ARTICLE')[0].dataset.path, 'rest-api');
     el('setup-back').click();
     assert.equal(el('setup-progress').textContent, 'Question 1 of 3');
+});
+
+// ---- history, links and the way back --------------------------------------
+
+test('no option id can be mistaken for the hash words route and more', () => {
+    for (const [qid, q] of Object.entries(data.questions)) {
+        for (const o of q.options) assert.ok(!['route', 'more'].includes(o.id), `${qid}.${o.id} is a word the hash reserves`);
+    }
+});
+
+test('each answer is a history entry with a readable hash, and the browser Back button retraces them', () => {
+    const { doc, el, pick, browser, context } = boot();
+    const history = context.history;
+    assert.equal(history.length, 1);
+    pick('chatgpt');
+    assert.equal(browser.location.hash, '#/chatgpt');
+    pick('connectors');
+    assert.equal(browser.location.hash, '#/chatgpt/connectors');
+    pick('posting');
+    assert.equal(browser.location.hash, '#/chatgpt/connectors/posting');
+    assert.equal(history.length, 4, 'one entry per screen');
+    history.back();
+    assert.equal(el('setup-progress').textContent, 'Question 3 of 3');
+    assert.equal(doc.activeElement.textContent, 'Is it just reading, or posting too?');
+    history.back();
+    history.back();
+    assert.equal(el('setup-progress').textContent, 'Question 1 of 3');
+    assert.equal(browser.location.hash, '');
+    assert.equal(el('setup-back').hidden, true);
+    history.forward();
+    assert.equal(el('setup-progress').textContent, 'Question 2 of 3');
+});
+
+test('the page Back button is the browser Back while there is an entry to return to', () => {
+    const { el, pick, browser, context } = boot();
+    pick('coding-tool');
+    pick('run-tools');
+    assert.equal(browser.index(), 2);
+    el('setup-back').click();
+    assert.equal(browser.index(), 1, 'Back went back in history, not forward');
+    assert.equal(context.history.length, 3);
+    assert.equal(browser.location.hash, '#/coding-tool');
+    assert.equal(el('setup-progress').textContent, 'Question 2 of 2');
+});
+
+test('Start over is a new entry, so the browser Back returns to the route', () => {
+    const { el, find, pick, browser, context } = boot();
+    pick('coding-tool');
+    pick('run-tools');
+    el('setup-restart').click();
+    assert.equal(el('setup-progress').textContent, 'Question 1 of 3');
+    assert.equal(browser.location.hash, '');
+    context.history.back();
+    assert.equal(find(n => n.tagName === 'ARTICLE')[0].dataset.path, 'coding-tool-mcp');
+});
+
+test('every route has a link that opens it, with the same reason', () => {
+    for (const r of routes()) {
+        const first = boot();
+        r.answers.forEach(first.pick);
+        const hash = '#/' + r.answers.join('/');
+        assert.equal(first.browser.location.hash, hash);
+        const linked = boot({ hash });
+        const article = linked.find(n => n.tagName === 'ARTICLE');
+        assert.equal(article.length, 1, hash);
+        assert.equal(article[0].dataset.path, r.path, hash);
+        if (r.why) assert.ok(article[0].textContent.includes('Why this one: ' + plain(r.why)), `${hash}: reason`);
+        assert.equal(linked.doc.activeElement && linked.doc.activeElement.tagName, 'H2', `${hash}: focus moves to the route`);
+    }
+});
+
+test('a route can be linked directly, with or without the last screen', () => {
+    const direct = boot({ hash: '#/route/rest-api' });
+    const article = direct.find(n => n.tagName === 'ARTICLE')[0];
+    assert.equal(article.dataset.path, 'rest-api');
+    assert.ok(!article.textContent.includes('Why this one'));
+    const more = boot({ hash: '#/route/rest-api/more' });
+    assert.equal(more.doc.activeElement.textContent, data.lastScreen.title);
+    // Opened from a link there is no entry to go back to, so Back steps up
+    // the trail in place and the hash follows.
+    more.el('setup-back').click();
+    assert.equal(more.find(n => n.tagName === 'ARTICLE')[0].dataset.path, 'rest-api');
+    assert.equal(more.browser.location.hash, '#/route/rest-api');
+    more.el('setup-back').click();
+    assert.equal(more.el('setup-progress').textContent, 'Question 1 of 3');
+    assert.equal(more.browser.location.hash, '');
+    const answered = boot({ hash: '#/own-agent/mcp/more' });
+    assert.equal(answered.doc.activeElement.textContent, data.lastScreen.title);
+    answered.el('setup-back').click();
+    assert.equal(answered.find(n => n.tagName === 'ARTICLE')[0].dataset.path, 'agent-mcp');
+    const question = boot({ hash: '#/coding-tool' });
+    assert.equal(question.el('setup-progress').textContent, 'Question 2 of 2');
+});
+
+test('a hash that names nothing opens the first question, and other anchors are left alone', () => {
+    const bad = ['#/nonsense', '#/chatgpt/bogus', '#/route/nope', '#/route', '#/own-agent/mcp/extra',
+        '#/own-agent/more', '#/Chatgpt', '#/%2e%2e'];
+    for (const hash of bad) {
+        const { el, doc } = boot({ hash });
+        assert.equal(el('setup-progress').textContent, 'Question 1 of 3', hash);
+        assert.equal(doc.activeElement, null, `${hash}: focus stays at the top`);
+    }
+    const page = boot({ hash: '#main-content' });
+    assert.equal(page.el('setup-progress').textContent, 'Question 1 of 3');
+    assert.equal(page.browser.location.hash, '#main-content', 'the page anchor is kept');
+    // The skip link mid-picker must not throw the answers away.
+    const midway = boot();
+    midway.pick('chatgpt');
+    midway.browser.followAnchor('#main-content');
+    assert.equal(midway.el('setup-progress').textContent, 'Question 2 of 3');
+});
+
+test('without the History API the picker still works in the page', () => {
+    const { el, find, pick } = boot({ noHistory: true });
+    pick('own-agent');
+    pick('http');
+    assert.equal(find(n => n.tagName === 'ARTICLE')[0].dataset.path, 'rest-api');
+    el('setup-back').click();
+    assert.equal(el('setup-progress').textContent, 'Question 2 of 2');
+    el('setup-restart').click();
+    assert.equal(el('setup-progress').textContent, 'Question 1 of 3');
+});
+
+test('the end of every route has its own Back and Start over beside the last-screen button', () => {
+    const closing = find => find(n => n.className === 'setup-result__next')[0];
+    const buttonIn = (node, label) => all(node, n => n.tagName === 'BUTTON' && n.textContent === label)[0];
+    for (const r of routes()) {
+        const { el, find, pick, doc } = boot();
+        r.answers.forEach(pick);
+        assert.ok(closing(find), `${r.path}: the closing block`);
+        const labels = all(closing(find), n => n.tagName === 'BUTTON').map(b => b.textContent);
+        assert.deepEqual(labels, [data.lastScreen.title, 'Back', 'Start over'], r.path);
+        buttonIn(closing(find), 'Back').click();
+        assert.ok(el('setup-progress').textContent.startsWith('Question'), `${r.path}: Back leaves the route`);
+        assert.equal(doc.activeElement.tagName, 'H2');
+        pick(r.answers[r.answers.length - 1]);
+        buttonIn(closing(find), 'Start over').click();
+        assert.equal(el('setup-progress').textContent, 'Question 1 of 3', `${r.path}: Start over`);
+    }
 });
