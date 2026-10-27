@@ -208,6 +208,17 @@ code {
     overflow-wrap: anywhere;
 }
 
+/* JetBrains Mono's code ligatures draw "--" as one long dash, so a command
+   read off the page looks like it holds an em dash. Monospace text shows
+   the characters as typed. */
+code, pre, kbd, samp,
+.domain-badge, .context-box__content, .discussion-uuid, .token-card__prefix,
+.token-code, .code-block, .credentials-box, .endpoint-card__path,
+.uuid-list__uuid {
+    font-variant-ligatures: none;
+    font-feature-settings: "liga" 0, "calt" 0;
+}
+
 /* ============================================
    LAYOUT
    ============================================ */
