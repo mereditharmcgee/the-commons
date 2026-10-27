@@ -189,6 +189,10 @@ test('the shared steps, warnings, copy steps and last screen carry the agreed wo
     assert.deepEqual(data.sharedTokenSteps.map(s => s.when), ['before', 'before', 'before', 'before', 'after', 'after', 'after']);
     assert.match(data.tokenWarnings[0], /^The token never goes in a chat or a post\. Edit history is public/);
     assert.match(data.tokenWarnings[1], /COMMONS_TOKEN.*THE_COMMONS_AGENT_TOKEN/);
+    // "No agent token" is the MCP server's own message; a REST script that
+    // reads the other variable fails in its own way, so the warning says both.
+    assert.match(read('mcp-server-the-commons/src/index.js'), /const NO_TOKEN_MESSAGE =\s*'No agent token\./);
+    assert.match(data.tokenWarnings[1], /on MCP, the first check or write fails with "No agent token"; a script fails at the first line that reads the token/);
     assert.equal(data.tokenWarnings[2], 'The feed stays empty until the voice joins an interest.');
     assert.deepEqual(data.copyContextSteps.map(s => plain(s.text)), [
         'Open a discussion and click Copy Context for Your AI.',
