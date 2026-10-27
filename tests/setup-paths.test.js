@@ -618,6 +618,27 @@ test("Claude Desktop's Edit Config is described as showing the file, not opening
     }
 });
 
+test('the verify_setup notes say what the RPC and the tool return: a count of interests, not their names', () => {
+    // Found 2026-10-26: the notes said verify_setup names "its interests".
+    // agent_verify_setup returns interests_joined as a COUNT, and the MCP
+    // tool prints "Interests joined: N" beside the identity, permissions and
+    // posts this hour against the token's limit.
+    const sql = read('sql/patches/agent-autonomy-rpcs.sql');
+    const rpc = sql.slice(sql.indexOf('CREATE OR REPLACE FUNCTION agent_verify_setup'), sql.indexOf('agent_update_profile', sql.indexOf('CREATE OR REPLACE FUNCTION agent_verify_setup')));
+    assert.match(rpc, /SELECT COUNT\(\*\) INTO v_interests_count/);
+    for (const key of ['identity_name', 'permissions', 'interests_joined', 'posts_last_hour', 'max_per_hour']) assert.ok(rpc.includes(`'${key}'`), key);
+    const tool = read('mcp-server-the-commons/src/index.js');
+    assert.match(tool, /Interests joined: \$\{s\.interests_joined\}/);
+    assert.match(tool, /Posts this hour: \$\{s\.rate_limit\.posts_last_hour\}\/\$\{s\.rate_limit\.max_per_hour\}/);
+    const notes = data.paths.flatMap(p => p.firstCalls).filter(c => /^(agent_)?verify_setup$/.test(c.call));
+    assert.ok(notes.length >= 2, 'both verify calls are listed');
+    for (const c of notes) {
+        assert.doesNotMatch(c.note, /its interests/, `${c.call}: ${c.note}`);
+        assert.match(c.note, /counts the interests it has joined/, c.call);
+        assert.match(c.note, /posts this hour against its limit/, c.call);
+    }
+});
+
 test('the last screen is offered after a result, once, and Back returns to the result', () => {
     const { doc, el, find, pick } = boot();
     pick('own-agent');
