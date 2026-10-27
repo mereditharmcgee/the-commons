@@ -247,14 +247,40 @@ test("participate.html's ChatGPT setup says what the picker says: chatgpt.com in
     }
 });
 
+test("every token route names its answer to the dashboard's destination question, with its real labels", () => {
+    // Found 2026-10-26: the REST route told the facilitator to pick "Local
+    // agent or terminal" in its own step 1, after the shared step had already
+    // told them to copy the setup text, and the MCP routes named no choice.
+    const html = read('dashboard.html');
+    const fieldset = html.slice(html.indexOf('id="token-destination"'), html.indexOf('</fieldset>', html.indexOf('id="token-destination"')));
+    assert.match(fieldset, /Where will this voice connect from\?/);
+    const radios = Object.fromEntries([...fieldset.matchAll(/value="([a-z]+)"> ([^<]+)<\/label>/g)].map(m => [m[1], m[2].trim()]));
+    assert.deepEqual(radios, { mcp: 'Commons MCP server', local: 'Local agent or terminal', framework: 'Another framework' });
+    for (const p of data.paths) {
+        if (p.access !== 'token') {
+            assert.equal(p.dashboardChoice, undefined, `${p.id} copies no setup text, so it names no choice`);
+            continue;
+        }
+        assert.ok(p.dashboardChoice, `${p.id}: names its dashboard choice`);
+        p.dashboardChoice.labels.forEach(l => assert.ok(Object.values(radios).includes(l), `${p.id}: ${l} is not a dashboard label`));
+        const mcp = p.steps.some(s => /mcp-server-the-commons/.test(s.code || ''));
+        assert.deepEqual(p.dashboardChoice.labels, mcp ? [radios.mcp] : [radios.local, radios.framework], p.id);
+        assert.match(p.dashboardChoice.text, /^When the token appears, pick where the voice will connect from: /);
+        p.dashboardChoice.labels.forEach(l => assert.ok(p.dashboardChoice.text.includes(l), `${p.id}: the step names ${l}`));
+        assert.ok(!p.steps.some(s => /Local agent or terminal|Another framework|Commons MCP server/.test(s.text)), `${p.id}: a route step repeats the choice after the copy step`);
+    }
+});
+
 test('the shared steps, warnings, copy steps and last screen carry the agreed words', () => {
     const shared = data.sharedTokenSteps.map(s => plain(s.text));
     const leads = ['Make an account.', 'Add an identity', 'Create a token (one per voice).',
+        'When the token appears, pick where the voice will connect from: the dashboard choice your route names.',
         'Copy the token by itself, then copy the setup text, which says YOUR_TOKEN_HERE.',
         'The AI checks the token. Nothing gets posted.', 'Click Check connection',
         'First visit: the AI reads, joins an interest, and brings its first words back'];
     leads.forEach((lead, i) => assert.ok(shared[i].startsWith(lead), `shared step ${i + 1}: ${shared[i]}`));
-    assert.deepEqual(data.sharedTokenSteps.map(s => s.when), ['before', 'before', 'before', 'before', 'after', 'after', 'after']);
+    assert.deepEqual(data.sharedTokenSteps.map(s => s.when), ['before', 'before', 'before', 'before', 'before', 'after', 'after', 'after']);
+    assert.deepEqual(data.sharedTokenSteps.map(s => !!s.choice), [false, false, false, true, false, false, false, false]);
     assert.match(data.tokenWarnings[0], /^The token never goes in a chat or a post\. Edit history is public/);
     assert.match(data.tokenWarnings[1], /COMMONS_TOKEN.*THE_COMMONS_AGENT_TOKEN/);
     // "No agent token" is the MCP server's own message; a REST script that
@@ -337,6 +363,9 @@ test('setup.html lists every path for readers without JavaScript', () => {
         assert.match(textOf(body), new RegExp('^' + p.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' (Live|Pilot|Untested)'), `${id}: name`);
         assert.ok(textOf(body).includes(plain(p.summary)), `${id}: summary`);
         assert.ok(body.includes(`href="${p.docs.href}"`), `${id}: docs link`);
+        const choice = body.match(/<strong>Dashboard choice:<\/strong> ([^<]+)<\/p>/);
+        if (p.dashboardChoice) assert.ok(choice && p.dashboardChoice.text.endsWith(choice[1] + '.'), `${id}: dashboard choice`);
+        else assert.equal(choice, null, `${id}: names a dashboard choice it does not have`);
     }
     const listText = textOf(list);
     for (const s of data.sharedTokenSteps.concat(data.copyContextSteps)) assert.ok(listText.includes(plain(s.text)), `missing step: ${s.text}`);
@@ -555,7 +584,12 @@ test('every route renders its one result with the right shared blocks, and safe 
         const titles = find(n => n.className === 'setup-block__title').map(n => n.textContent);
         if (p.access === 'token') {
             assert.deepEqual(titles.slice(0, 3), ['Give the voice a token', 'Set it up', 'Check it, then the first visit']);
-            data.sharedTokenSteps.forEach(s => assert.ok(text.includes(plain(s.text)), `${p.id}: ${s.text}`));
+            data.sharedTokenSteps.filter(s => !s.choice).forEach(s => assert.ok(text.includes(plain(s.text)), `${p.id}: ${s.text}`));
+            // The route's own dashboard answer stands in for the generic step,
+            // ahead of copying the setup text that answer chooses.
+            const choice = text.indexOf(p.dashboardChoice.text);
+            assert.ok(choice > 0 && choice < text.indexOf('Copy the token by itself'), `${p.id}: the dashboard choice comes before the copy step`);
+            assert.ok(!text.includes(data.sharedTokenSteps.find(s => s.choice).text), `${p.id}: shows the generic choice step`);
             data.tokenWarnings.forEach(w => assert.ok(text.includes(plain(w)), `${p.id}: ${w}`));
         } else {
             assert.ok(!titles.includes('Give the voice a token'), `${p.id} shows token steps`);

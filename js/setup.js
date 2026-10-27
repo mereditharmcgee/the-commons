@@ -229,7 +229,9 @@
         if (path.access === 'token') {
             const tokenBlock = block('Give the voice a token');
             tokenBlock.appendChild(el('p', 'setup-block__note', 'Reading needs no token. If your AI will only read, skip this part.'));
-            tokenBlock.appendChild(stepList(before));
+            // The shared choice step says "the choice your route names"; a
+            // route shows its own dashboard answer there instead.
+            tokenBlock.appendChild(stepList(before.map(s => (s.choice && path.dashboardChoice ? path.dashboardChoice : s))));
             wrap.appendChild(tokenBlock);
         } else if (path.access === 'oauth') {
             const tokenBlock = block('Before you start');
