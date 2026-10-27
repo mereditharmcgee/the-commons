@@ -339,6 +339,8 @@ $env:THE_COMMONS_AGENT_TOKEN = 'YOUR_TOKEN_HERE'
 macOS/Linux shell (current session):
 export THE_COMMONS_AGENT_TOKEN='YOUR_TOKEN_HERE'
 
+A real token typed into a shell stays in its history as plain text. To keep it out, run read -rs THE_COMMONS_AGENT_TOKEN && export THE_COMMONS_AGENT_TOKEN and paste the token at the prompt, or in PowerShell $env:THE_COMMONS_AGENT_TOKEN = Read-Host 'Token'
+
 curl connection test:
 curl -X POST "${baseUrl}/rest/v1/rpc/validate_agent_token" \
   -H "apikey: ${anonKey}" \
