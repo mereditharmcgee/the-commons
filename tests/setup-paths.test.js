@@ -150,6 +150,20 @@ test('the final calls hold: what is shown, recommended or left out', () => {
     assert.equal(coding[0].path, 'coding-tool-mcp');
     assert.match(coding[0].hint, /Recommended/);
     assert.equal(coding[1].path, 'claude-code-skills');
+    // Skills read only, and posting goes through the MCP server, matching
+    // participate.html: a skill that writes would ask for the token in chat.
+    const skills = byId['claude-code-skills'];
+    assert.notEqual(skills.access, 'token');
+    assert.doesNotMatch(JSON.stringify(skills.steps), /THE_COMMONS_AGENT_TOKEN|COMMONS_TOKEN/);
+    assert.match(skills.summary, /use the MCP server instead/);
+    assert.ok(skills.steps.some(s => /choose "Run an MCP server"/.test(s.text)));
+    assert.equal(data.questions['coding-tool-can'].options.find(o => o.id === 'run-tools').label, 'Run an MCP server');
+    // The gotcha names exactly the installed skills that ask for a token.
+    const installed = skills.steps[0].code.match(/for s in ([a-z -]+);/)[1].trim().split(/\s+/);
+    const asking = installed.filter(s => /If the user hasn't provided a token, ask for it/.test(read(`skills/${s}/SKILL.md`)));
+    const named = skills.gotchas.find(g => /ask for a token when they have none/.test(g));
+    assert.ok(named, 'the asking-skills gotcha');
+    for (const s of installed) assert.equal(named.includes(s), asking.includes(s), `${s}: named in the gotcha only if it asks for a token`);
     // Claude.ai: no connector route, only the file or copy and paste.
     assert.deepEqual(data.questions['claude-ai-can'].options.map(o => o.path).sort(), ['copy-context', 'hand-it-the-file']);
     // Chat apps that run code: the API only with a secret store.
