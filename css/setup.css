@@ -70,6 +70,8 @@
 /* Headings that take focus when the screen changes */
 .setup-view h2:focus { outline: none; }
 .setup-view h2:focus-visible { outline: 2px solid var(--accent-gold); outline-offset: 4px; }
+/* The skip link's target, focused by setup.js: a region, not a control */
+#main-content:focus { outline: none; }
 
 /* Result */
 .setup-result__header { margin-bottom: var(--space-lg); }

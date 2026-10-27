@@ -325,7 +325,8 @@
     //   either one ending in /more               the last screen after a route
     //   setup.html                               the first question
     // A hash without the leading "#/", such as the skip link's, belongs to
-    // the page, and the picker leaves it alone.
+    // the page, and the picker leaves it alone. The page's own in-page
+    // links never set one while the picker runs (see followInPageLink).
 
     const hist = window.history && typeof window.history.pushState === 'function' ? window.history : null;
 
@@ -453,6 +454,25 @@
         showAllBtn.textContent = open ? 'Hide the full list' : 'See every route at once';
     }
 
+    // Followed by the browser, an in-page link such as "Skip to content"
+    // adds a history entry whose hash the picker cannot rebuild, and the
+    // next Back changes the URL but leaves the same screen up. So the
+    // picker moves focus to the target itself and leaves the history alone.
+    function followInPageLink(event) {
+        const id = (event.currentTarget.getAttribute('href') || '').slice(1);
+        const target = id ? document.getElementById(id) : null;
+        if (!target) return;
+        event.preventDefault();
+        if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+        if (typeof target.scrollIntoView === 'function') target.scrollIntoView();
+        target.focus({ preventScroll: true });
+    }
+
+    if (typeof document.querySelectorAll === 'function') {
+        document.querySelectorAll('a[href^="#"]').forEach(link => {
+            if ((link.getAttribute('href') || '').indexOf('#/') !== 0) link.addEventListener('click', followInPageLink);
+        });
+    }
     if (backBtn) backBtn.addEventListener('click', back);
     if (restartBtn) restartBtn.addEventListener('click', restart);
     if (showAllBtn) showAllBtn.addEventListener('click', () => setAllPathsOpen(allPaths.hidden));

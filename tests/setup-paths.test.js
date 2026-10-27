@@ -361,9 +361,18 @@ class Node {
     get textContent() { return this._text + this.children.map(c => c.textContent).join(''); }
     setAttribute(k, v) { this.attrs[k] = String(v); if (k === 'hidden') this.hidden = true; }
     getAttribute(k) { return k in this.attrs ? this.attrs[k] : null; }
+    hasAttribute(k) { return k in this.attrs; }
+    removeAttribute(k) { delete this.attrs[k]; }
     addEventListener(type, fn) { (this.listeners[type] = this.listeners[type] || []).push(fn); }
-    click() { (this.listeners.click || []).forEach(fn => fn({ target: this })); }
+    // Returns the event, so a test can do what the browser would have done
+    // when no listener prevented it.
+    click() {
+        const event = { target: this, currentTarget: this, defaultPrevented: false, preventDefault() { this.defaultPrevented = true; } };
+        (this.listeners.click || []).forEach(fn => fn(event));
+        return event;
+    }
     focus() { this.doc.activeElement = this; }
+    scrollIntoView() { this.doc.scrolledTo = this; }
     select() {}
     querySelectorAll(selector) {
         assert.equal(selector, '[data-path-id]');
@@ -415,13 +424,20 @@ function fakeHistory(initialHash) {
 }
 
 function boot(opts = {}) {
-    const doc = { activeElement: null };
+    const doc = { activeElement: null, scrolledTo: null };
     doc.createElement = tag => new Node(tag, doc);
     doc.createTextNode = text => new Text(text);
     doc.body = new Node('body', doc);
     doc.execCommand = () => true;
+    doc.querySelectorAll = selector => {
+        assert.equal(selector, 'a[href^="#"]');
+        return all(doc.body, n => n.tagName === 'A' && String(n.getAttribute('href')).startsWith('#'));
+    };
     const byId = {};
     const make = (id, tag = 'div') => { const n = new Node(tag, doc); n.attrs.id = id; byId[id] = n; doc.body.appendChild(n); return n; };
+    // As in setup.html: the skip link comes first and targets <main>.
+    const skipLink = new Node('a', doc); skipLink.attrs.href = '#main-content'; doc.body.appendChild(skipLink);
+    make('main-content', 'main');
     const picker = make('setup-picker'); picker.hidden = true;
     make('setup-view'); make('setup-progress', 'p');
     const back = make('setup-back', 'button'); back.hidden = true;
@@ -452,7 +468,7 @@ function boot(opts = {}) {
         assert.ok(button, `no option ${optionId}`);
         button.click();
     };
-    return { doc, el, find, options, pick, copied, context, browser };
+    return { doc, el, find, options, pick, copied, context, browser, skipLink };
 }
 
 test('the picker opens on the first question without moving focus, and hides the full list', () => {
@@ -712,6 +728,31 @@ test('a hash that names nothing opens the first question, and other anchors are 
     // A junk route hash followed later in the visit also falls back.
     midway.browser.followAnchor('#/route/constructor');
     assert.equal(midway.el('setup-progress').textContent, 'Question 1 of 3');
+});
+
+test('the skip link mid-picker moves focus without a history entry, so the first Back works', () => {
+    // Found 2026-10-26: following "Skip to content" partway through added a
+    // #main-content entry the picker cannot rebuild, so the next browser Back
+    // changed the URL and left the same screen up, and the page Back stepped
+    // the trail in place over a stale entry.
+    for (const how of ['page Back', 'browser Back']) {
+        const { doc, el, pick, browser, context, skipLink } = boot();
+        pick('chatgpt');
+        pick('connectors');
+        const before = context.history.length;
+        const event = skipLink.click();
+        if (!event.defaultPrevented) browser.followAnchor('#main-content');
+        assert.equal(doc.activeElement, el('main-content'), `${how}: focus moves to the main content`);
+        assert.equal(doc.scrolledTo, el('main-content'), `${how}: the main content scrolls into view`);
+        assert.equal(context.history.length, before, `${how}: no new history entry`);
+        assert.equal(browser.location.hash, '#/chatgpt/connectors', `${how}: the picker keeps its hash`);
+        if (how === 'page Back') el('setup-back').click();
+        else context.history.back();
+        assert.equal(el('setup-progress').textContent, 'Question 2 of 3', `${how}: the first Back changes the screen`);
+        assert.equal(browser.location.hash, '#/chatgpt', how);
+        context.history.back();
+        assert.equal(el('setup-progress').textContent, 'Question 1 of 3', `${how}: and the next one too`);
+    }
 });
 
 test('without the History API the picker still works in the page', () => {
