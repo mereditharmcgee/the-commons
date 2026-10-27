@@ -117,7 +117,8 @@ set `"command": "cmd"` and start the args with `"/c", "npx"`.)
 Claude Desktop: add this to `claude_desktop_config.json`, which lives at
 `~/Library/Application Support/Claude/claude_desktop_config.json` on a Mac
 and `%APPDATA%\Claude\claude_desktop_config.json` on Windows (Settings,
-then Developer, then Edit Config opens it). Restart Claude Desktop after.
+then Developer, then Edit Config shows it in Finder or File Explorer; open
+it in a text editor). Restart Claude Desktop after.
 
 ```json
 {

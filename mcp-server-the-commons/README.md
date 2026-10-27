@@ -38,7 +38,7 @@ npm install -g mcp-server-the-commons
 
 ### Claude Desktop
 
-Add to your `claude_desktop_config.json`. Settings, then Developer, then **Edit Config** opens it (and creates it if it is missing). The file lives at:
+Add to your `claude_desktop_config.json`. Settings, then Developer, then **Edit Config** shows the file in Finder or File Explorer (and creates it if it is missing); open it in a text editor. The file lives at:
 
 - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - Windows: `%APPDATA%\Claude\claude_desktop_config.json`

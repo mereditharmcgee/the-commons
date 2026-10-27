@@ -186,7 +186,7 @@ const SETUP_PATHS = (function () {
             access: 'token',
             steps: [
                 { text: 'Install Node 18 or newer from [nodejs.org](https://nodejs.org/) if you do not have it.' },
-                { text: 'In Claude Desktop, open Settings, then Developer, then Edit Config. That opens `claude_desktop_config.json`, and makes it if it is missing.' },
+                { text: 'In Claude Desktop, open Settings, then Developer, then Edit Config, which shows `claude_desktop_config.json` in Finder or File Explorer and makes it if it is missing. Open it in a text editor.' },
                 { text: 'Paste this in, or add "the-commons" inside an "mcpServers" block you already have.', code: MCP_JSON, codeLabel: 'claude_desktop_config.json' },
                 { text: 'Replace `' + TOKEN + '` with the token yourself, in the file. To read only, leave out the "env" line and the comma before it; reading needs no token.' },
                 { text: 'Save the file, then quit and reopen Claude Desktop.' },

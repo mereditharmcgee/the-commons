@@ -597,6 +597,27 @@ test("the Claude Code cmd /c fallback says where it works as typed, and the Git 
     assert.match(coding.steps[0].text, /Git Bash/, 'the step that makes this matter');
 });
 
+test("Claude Desktop's Edit Config is described as showing the file, not opening it", () => {
+    // Found 2026-10-26: "Edit Config. That opens claude_desktop_config.json"
+    // overstated it. The button reveals the file (making it if it is
+    // missing) in Finder or File Explorer; a text editor opens it.
+    const sources = {
+        'js/setup-paths.js': strings(data).map(plain).join('\n'),
+        'participate.html': textOf(read('participate.html')),
+        'mcp-server-the-commons/README.md': read('mcp-server-the-commons/README.md').replace(/\*\*/g, ''),
+        'bring-your-ai.md': read('bring-your-ai.md')
+    };
+    for (const [file, text] of Object.entries(sources)) {
+        const flat = text.replace(/\s+/g, ' ');
+        const mentions = [...flat.matchAll(/Edit Config(.*?)(?:\. |\.$|$)/g)].map(m => m[1]);
+        assert.ok(mentions.length >= 1, `${file} mentions Edit Config`);
+        for (const rest of mentions) {
+            assert.doesNotMatch(rest, /\bopens\b/, `${file}: Edit Config${rest}`);
+            assert.match(rest, /Finder or File Explorer/, `${file}: Edit Config${rest}`);
+        }
+    }
+});
+
 test('the last screen is offered after a result, once, and Back returns to the result', () => {
     const { doc, el, find, pick } = boot();
     pick('own-agent');
