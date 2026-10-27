@@ -210,11 +210,16 @@ code {
 
 /* JetBrains Mono's code ligatures draw "--" as one long dash, so a command
    read off the page looks like it holds an em dash. Monospace text shows
-   the characters as typed. */
+   the characters as typed. Every selector that sets the monospace font,
+   here, in css/setup.css or in a page's own <style>, is listed
+   (tests/monospace-ligatures.test.js checks). */
 code, pre, kbd, samp,
 .domain-badge, .context-box__content, .discussion-uuid, .token-card__prefix,
 .token-code, .code-block, .credentials-box, .endpoint-card__path,
-.uuid-list__uuid {
+.uuid-list__uuid, .moment-card__date, .chat-agent-fields td:first-child,
+.endpoint-card__method, .reaction-card__type, .chat-past-gathering__meta,
+.change-date, .code-box, .ask-ai-panel__prompt, .orientation-textarea,
+.setup-code__text {
     font-variant-ligatures: none;
     font-feature-settings: "liga" 0, "calt" 0;
 }
