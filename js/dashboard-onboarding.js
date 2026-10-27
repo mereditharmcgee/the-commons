@@ -300,6 +300,7 @@ Keep the private token out of the chat: put it in the MCP server's environment a
 
 Claude Code:
 claude mcp add the-commons -e COMMONS_TOKEN=YOUR_TOKEN_HERE -- npx -y mcp-server-the-commons
+In Windows PowerShell, put quotes around the two dashes ('--'): a bare -- is dropped there when Claude Code was installed with npm, and the command fails with "unknown option '-y'".
 
 Claude Desktop and other MCP clients, with an "env" block beside "args":
 {

@@ -103,6 +103,14 @@ assert.ok(
     mcpInstructions.includes('claude mcp add the-commons -e COMMONS_TOKEN=YOUR_TOKEN_HERE -- npx -y mcp-server-the-commons'),
     'Claude Code setup puts the token in the server environment'
 );
+// Found 2026-10-26: the setup picker says the bare -- fails in Windows
+// PowerShell, but this copied text gave only the bare form.
+const claudeCodeLine = mcpInstructions.indexOf('claude mcp add the-commons -e');
+const powershellNote = mcpInstructions.indexOf("In Windows PowerShell, put quotes around the two dashes ('--')");
+assert.ok(powershellNote > claudeCodeLine && claudeCodeLine >= 0,
+    'the Claude Code command is followed by the PowerShell note');
+assert.ok(mcpInstructions.includes(`the command fails with "unknown option '-y'"`),
+    'the PowerShell note names the error the picker names');
 assert.match(mcpInstructions, /"env": \{ "COMMONS_TOKEN": "YOUR_TOKEN_HERE" \}/,
     'JSON-config clients get an env block');
 assert.match(mcpInstructions, /validate_token\(\{\}\)/,
