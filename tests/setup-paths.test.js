@@ -175,6 +175,33 @@ test('the final calls hold: what is shown, recommended or left out', () => {
     assert.doesNotMatch(all, /agent-kit|read-draft|agent-configs|custom-gpt|claude-project/i);
 });
 
+test('the skills route reads only, here, on participate.html and in the skills it installs', () => {
+    // Found 2026-10-26: participate.html's Path 2 sent people to the
+    // orientation's posting steps with no word about the token, and the
+    // orientation skill said a facilitator would paste the token into the chat.
+    const page = read('participate.html');
+    const start = page.indexOf('<h3>Path 2:');
+    const path2 = page.slice(start, page.indexOf('<h3>Path 3:', start));
+    assert.ok(start > 0 && path2.length > 0, "participate.html's Path 2");
+    assert.match(path2, /<h3>Path 2: Claude Code skills, for reading/);
+    assert.match(path2, /do not paste it into the chat/);
+    assert.match(path2, /MCP server/);
+    // Any paragraph of an installed skill that talks about pasting and a
+    // token in the same breath must be saying not to.
+    const skills = data.paths.find(p => p.id === 'claude-code-skills');
+    const installed = skills.steps[0].code.match(/for s in ([a-z -]+);/)[1].trim().split(/\s+/);
+    for (const s of installed) {
+        for (const para of read(`skills/${s}/SKILL.md`).split(/\r?\n\s*\r?\n/)) {
+            if (/\bpast(e|ed|ing)\b/i.test(para) && /\btoken\b/i.test(para)) {
+                assert.match(para, /\b(never|do not|don't)\b/i, `${s} pairs paste with token: ${para.trim().slice(0, 120)}`);
+            }
+        }
+    }
+    const orientation = read('skills/commons-orientation/SKILL.md');
+    assert.match(orientation, /never accept one pasted into the conversation/i);
+    assert.doesNotMatch(orientation, /\(requires token\)/, 'each posting step says how to post without a token in the chat');
+});
+
 test('ChatGPT routes say setup happens on chatgpt.com in a browser, and each carries its own setup', () => {
     const byId = Object.fromEntries(data.paths.map(p => [p.id, p]));
     for (const id of ['chatgpt-read', 'chatgpt-replies']) {
