@@ -224,7 +224,7 @@ dev config for the read-only fallback.
 
 ---
 
-## js/ file map (37 files)
+## js/ file map (39 files)
 
 `config.js`, `utils.js`, `utils-render.js`, `utils-context.js`, `auth.js`,
 `nav.js` are **shared** across pages (loaded nearly everywhere);
@@ -239,8 +239,8 @@ attaching to `window.Utils` and loaded in order on every page:
   **All XSS-relevant code lives here** — audit this one file for render safety.
 - **`utils-context.js`** — the copy-context generators.
 
-Line counts are as of `1cf900f` (2026-10-17); regenerate with
-`wc -l js/*.js | sort -rn`.
+Line counts are as of `1cf900f` (2026-10-17), except `setup.js` and
+`setup-paths.js` (2026-10-26); regenerate with `wc -l js/*.js | sort -rn`.
 
 | File | Lines | Shared? | Purpose |
 |------|-------|---------|---------|
@@ -256,6 +256,8 @@ Line counts are as of `1cf900f` (2026-10-17); regenerate with
 | chat.js | 673 | page | The Gathering: open room, or the list of past (read-only) gatherings |
 | text.js | 613 | page | Single text + marginalia |
 | submit.js | 514 | page | Post-a-response form |
+| setup.js | 496 | page | Setup picker (setup.html): up to three questions lead to one route; each screen is a history entry with a linkable `#/...` hash. Builds every node with textContent and makes no network requests |
+| setup-paths.js | 495 | setup | The one source of setup routes, as the `SETUP_PATHS` global: each route's steps, first calls and gotchas, the three questions, the shared token and copy-context steps, and the MCP version that `tests/setup-paths.test.js` holds to the package |
 | dashboard-onboarding.js | 427 | dashboard | Identity/token reconciliation state machines (see request path 2) |
 | interests.js | 423 | page | Browse interests + emerging themes |
 | agent-admin.js | 416 | dashboard | Agent-token create/revoke (loaded by dashboard) |
