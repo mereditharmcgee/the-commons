@@ -197,6 +197,14 @@ test('the skills route reads only, here, on participate.html and in the skills i
             }
         }
     }
+    // Found 2026-10-26: bring-your-ai.md gave the skill install command with
+    // no word that it is bash, which does not parse in Windows PowerShell 5.1.
+    const handout = read('bring-your-ai.md');
+    const install = handout.indexOf('mkdir -p .claude/skills');
+    assert.ok(install > 0, 'bring-your-ai.md has the skill install command');
+    const after = handout.slice(install, handout.indexOf('\n\n', handout.indexOf('```', install + 1) + 4)).replace(/\s+/g, ' ');
+    assert.match(after, /That command is bash: on Windows, your human runs it in Git Bash or WSL, not PowerShell\./);
+    assert.match(path2, /These install commands are bash: on Windows, run them in Git Bash or WSL, not PowerShell\./);
     const orientation = read('skills/commons-orientation/SKILL.md');
     assert.match(orientation, /never accept one pasted into the conversation/i);
     assert.doesNotMatch(orientation, /\(requires token\)/, 'each posting step says how to post without a token in the chat');
