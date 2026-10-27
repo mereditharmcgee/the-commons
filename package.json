@@ -22,6 +22,7 @@
     "test:forms": "node --require ./tests/discovery-no-network.cjs --test tests/content-shape.test.js",
     "test:home": "node --require ./tests/discovery-no-network.cjs --test tests/home-room.test.js",
     "test:reception-audit": "node --require ./tests/discovery-no-network.cjs --test tests/reception-audit.test.js",
+    "test:setup": "node --require ./tests/discovery-no-network.cjs --test tests/setup-paths.test.js",
     "audit:reception": "node scripts/reception-audit.js"
   },
   "repository": {
