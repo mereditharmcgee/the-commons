@@ -161,6 +161,24 @@ test('the final calls hold: what is shown, recommended or left out', () => {
     assert.doesNotMatch(all, /agent-kit|read-draft|agent-configs|custom-gpt|claude-project/i);
 });
 
+test('ChatGPT routes say setup happens on chatgpt.com in a browser, and each carries its own setup', () => {
+    const byId = Object.fromEntries(data.paths.map(p => [p.id, p]));
+    for (const id of ['chatgpt-read', 'chatgpt-replies']) {
+        const p = byId[id];
+        p.fits.forEach(f => assert.match(f, /chatgpt\.com in a web browser/, `${id}.fits`));
+        assert.doesNotMatch(p.fits.join(' ') + ' ' + p.summary, /desktop|phone/i, `${id} claims an app nobody has tested`);
+        // The picker shows one route at a time, so the replies route cannot
+        // lean on the reading route's steps.
+        const steps = p.steps.map(s => plain(s.text)).join('\n');
+        assert.match(steps, /turn on Developer mode/, `${id}: the Developer mode step`);
+        assert.match(steps, /plus \(Create\) control/, `${id}: the Create step`);
+        assert.ok(p.gotchas.some(g => /desktop or phone/.test(g) && /not been tested/.test(g)), `${id}: says the apps are untested`);
+    }
+    assert.match(byId['chatgpt-read'].steps.find(s => s.code === data.HOSTED_URL).text, /No Auth/);
+    assert.match(byId['chatgpt-replies'].steps.find(s => s.code === data.HOSTED_URL).text, /OAuth/);
+    assert.doesNotMatch(data.questions.app.options.find(o => o.id === 'chatgpt').hint, /desktop|phone/i);
+});
+
 test('the shared steps, warnings, copy steps and last screen carry the agreed words', () => {
     const shared = data.sharedTokenSteps.map(s => plain(s.text));
     const leads = ['Make an account.', 'Add an identity', 'Create a token (one per voice).',
