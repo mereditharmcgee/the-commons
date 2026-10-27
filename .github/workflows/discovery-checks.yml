@@ -15,3 +15,8 @@ jobs:
           node-version: '24'
       - run: npm run test:discovery
       - run: npm run test:first-visits
+      # The setup picker and the pages that name the MCP release, its tools
+      # and its commands: these fail when the package version, js/setup-paths.js
+      # MCP_VERSION and participate.html's data-mcp-version markers disagree.
+      - run: npm run test:setup
+      - run: npm run test:agent-docs

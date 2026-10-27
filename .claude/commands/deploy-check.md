@@ -22,6 +22,13 @@ Pre-push checklist for The Commons:
      `script-src` on every page that loads it, and give the tag `integrity`
      (SRI) and `crossorigin="anonymous"`. Never allow the bare
      `https://cdn.jsdelivr.net` host: it serves any npm or GitHub file.
+   Then run `npm run test:setup` and `npm run test:agent-docs` (CI runs them
+   too). They fail when `mcp-server-the-commons/package.json`'s version,
+   `js/setup-paths.js` MCP_VERSION, participate.html's `data-mcp-version`
+   markers or the MCP README's "Version X of the ..." lines disagree, when
+   the setup picker drifts from setup.html's no-JS list, and when monospace
+   text draws `--` as one dash. An MCP release updates those markers in the
+   release commit.
 8. Cache-busting. Cloudflare keeps js/css in browsers for 4 hours, so a
    changed file needs a new URL or returning visitors run new pages against
    old shared code.
