@@ -614,6 +614,19 @@ test("the Claude Code cmd /c fallback says where it works as typed, and the Git 
     assert.match(fallback, /in cmd or PowerShell/);
     assert.match(fallback, /in Git Bash type `cmd \/\/c`/);
     assert.match(coding.steps[0].text, /Git Bash/, 'the step that makes this matter');
+    // The docs said flatly that Claude Code needs no cmd /c; each now gives
+    // the same fallback, Git Bash form included.
+    const docs = {
+        'participate.html': textOf(read('participate.html')),
+        'mcp-server-the-commons/README.md': read('mcp-server-the-commons/README.md'),
+        'bring-your-ai.md': read('bring-your-ai.md')
+    };
+    for (const [file, raw] of Object.entries(docs)) {
+        const text = plain(raw).replace(/\s+/g, ' ');
+        assert.doesNotMatch(text, /needs no cmd \/c/, `${file} says flatly that Claude Code needs no cmd /c`);
+        assert.match(text, /If claude mcp list says the-commons failed to connect, (your human can )?run claude mcp remove the-commons, then add it again with cmd \/c just before npx\./, `${file}: the Claude Code fallback`);
+        assert.match(text, /That works as typed in Command Prompt or PowerShell; in Git Bash (type|it is) cmd \/\/c, because Git Bash turns a lone \/c into C:\//, `${file}: where it works, and the Git Bash form`);
+    }
 });
 
 test("Claude Desktop's Edit Config is described as showing the file, not opening it", () => {
