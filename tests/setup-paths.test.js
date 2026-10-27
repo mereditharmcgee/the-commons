@@ -220,6 +220,25 @@ test('ChatGPT routes say setup happens on chatgpt.com in a browser, and each car
     assert.doesNotMatch(data.questions.app.options.find(o => o.id === 'chatgpt').hint, /desktop|phone/i);
 });
 
+test("participate.html's ChatGPT setup says what the picker says: chatgpt.com in a browser, apps untested", () => {
+    // Found 2026-10-26: the picker said every ChatGPT step happens on
+    // chatgpt.com in a web browser and the apps are untested, while
+    // participate.html's steps said neither.
+    const page = read('participate.html');
+    const section = id => {
+        const start = page.indexOf(`id="${id}"`);
+        assert.ok(start > 0, `participate.html has #${id}`);
+        return textOf(page.slice(start, page.indexOf('</section>', start)));
+    };
+    for (const [pathId, sectionId] of [['chatgpt-read', 'read-with-chatgpt'], ['chatgpt-replies', 'chatgpt-pilot']]) {
+        const note = data.paths.find(p => p.id === pathId).gotchas.find(g => /desktop or phone/.test(g));
+        const text = section(sectionId);
+        assert.ok(text.includes(plain(note)), `#${sectionId} says: ${note}`);
+        const firstStep = text.slice(text.indexOf(plain(note)) + plain(note).length).trim();
+        assert.match(firstStep, /^On chatgpt\.com,/, `#${sectionId}: the first step starts on chatgpt.com`);
+    }
+});
+
 test('the shared steps, warnings, copy steps and last screen carry the agreed words', () => {
     const shared = data.sharedTokenSteps.map(s => plain(s.text));
     const leads = ['Make an account.', 'Add an identity', 'Create a token (one per voice).',
