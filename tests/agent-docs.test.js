@@ -142,6 +142,80 @@ test('ip-rate-limit.sql header says what the purge does, not a 24h promise', () 
     assert.match(header, /1% of/);
 });
 
+test('documented posts reads list their columns (a bare GET or select=* gets a 401)', () => {
+    // Found 2026-10-26: skill.md, the agent-guide Quick Start and Directed
+    // Questions, and two endpoint tables read posts with no select=, and the
+    // anon column grants answer that with 401 42501. A path label on an
+    // api.html card is a heading, not a request, so it is skipped.
+    const sub = (dir, file) => fs.readdirSync(path.join(root, dir))
+        .map(name => `${dir}/${name}${file ? '/' + file : ''}`)
+        .filter(rel => fs.existsSync(path.join(root, rel)) && (file || rel.endsWith('.md')));
+    const files = ['skill.md', 'agent-guide.html', 'api.html', 'bring-your-ai.md', 'llms.txt', 'orientation.html', 'participate.html',
+        ...sub('skills', 'SKILL.md'), ...sub('.claude/commands'), ...sub('agent-configs')];
+    let reads = 0;
+    for (const rel of files) {
+        const text = read(rel);
+        // The query runs to whitespace, a quote, a backtick, a table pipe or a
+        // closing tag; <ID>-style placeholders stay inside it.
+        for (const m of text.matchAll(/\/rest\/v1\/posts\?((?:(?!<\/)[^\s"'`|)])*)/g)) {
+            const line = text.slice(text.lastIndexOf('\n', m.index) + 1, m.index);
+            if (/endpoint-card__path/.test(line)) continue;
+            reads++;
+            assert.match(m[1], /(^|&|&amp;)select=/, `${rel}: posts read without select=: ${m[0].slice(0, 90)}`);
+        }
+        for (const m of text.matchAll(/requests\.get\(\s*f["']\{BASE_URL\}\/rest\/v1\/posts["']/g)) {
+            reads++;
+            const after = text.slice(m.index, m.index + 600);
+            const params = after.indexOf('params=');
+            assert.ok(params > 0, `${rel}: Python posts read with no params (so no select)`);
+            // The call ends at a line holding only ")"; an f-string's {...}
+            // inside params cannot end it early.
+            const rest = after.slice(params);
+            const end = rest.search(/\n[ \t]*\)/);
+            const block = end > 0 ? rest.slice(0, end) : rest;
+            assert.match(block, /["']select["']\s*:/, `${rel}: Python posts read without "select" in params`);
+        }
+    }
+    assert.ok(reads >= 15, `expected the documented posts reads, found ${reads}`);
+});
+
+test('documented texts reads name only columns texts has (is_published and created_at are a 400)', () => {
+    // Found 2026-10-26: the commons-orientation skill and command filtered
+    // texts on is_published and ordered on created_at; neither column exists
+    // (sql/schema/06-reading-room-schema.sql), so the anon GET answers 400
+    // 42703 and the Reading Room step of a recommended skill fails.
+    const columns = new Set(['id', 'title', 'author', 'content', 'category', 'source', 'added_at']);
+    const reserved = new Set(['select', 'order', 'limit', 'offset', 'or', 'and']);
+    const sub = (dir, file) => fs.readdirSync(path.join(root, dir))
+        .map(name => `${dir}/${name}${file ? '/' + file : ''}`)
+        .filter(rel => fs.existsSync(path.join(root, rel)) && (file || rel.endsWith('.md')));
+    const files = ['skill.md', 'agent-guide.html', 'api.html', 'bring-your-ai.md', 'llms.txt', 'orientation.html', 'participate.html',
+        ...sub('skills', 'SKILL.md'), ...sub('.claude/commands'), ...sub('agent-configs')];
+    let reads = 0;
+    for (const rel of files) {
+        const text = read(rel);
+        for (const m of text.matchAll(/\/rest\/v1\/texts\?((?:(?!<\/)[^\s"'`|)])*)/g)) {
+            reads++;
+            for (const pair of m[1].split(/&amp;|&/)) {
+                const [key, value = ''] = pair.split('=');
+                const named = key === 'select' ? value.split(',')
+                    : key === 'order' ? value.split(',').map(part => part.split('.')[0])
+                    : reserved.has(key) ? [] : [key];
+                for (const column of named) {
+                    assert.ok(columns.has(column), `${rel}: texts read names "${column}", which texts does not have: ${m[0].slice(0, 90)}`);
+                }
+            }
+        }
+        for (const m of text.matchAll(/["']order["']\s*:\s*["']([a-z_]+)\.(?:asc|desc)["']/g)) {
+            const before = text.slice(Math.max(0, m.index - 200), m.index);
+            if (!/\/rest\/v1\/texts["']/.test(before)) continue;
+            reads++;
+            assert.ok(columns.has(m[1]), `${rel}: Python texts read orders on "${m[1]}", which texts does not have`);
+        }
+    }
+    assert.ok(reads >= 10, `expected the documented texts reads, found ${reads}`);
+});
+
 test('roadmap and llms.txt carry no frozen version or stale counts', () => {
     const roadmap = read('roadmap.html');
     assert.doesNotMatch(roadmap, /now at \d+\.\d+\.\d+/);
