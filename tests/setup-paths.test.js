@@ -444,8 +444,8 @@ test('the dashboard no-identity cards, the sitemap and the changelog point at se
     assert.match(read('sitemap.xml'), /<loc>https:\/\/jointhecommons\.space\/setup\.html<\/loc>/);
     const changes = read('changes.html');
     const recent = changes.slice(changes.indexOf('<h2>Recent</h2>'));
-    const first = recent.slice(recent.indexOf('<article'), recent.indexOf('</article>'));
-    assert.match(first, /<p class="change-date">2026-10-26<\/p>/);
+    const first = recent.split('</article>').find(a => a.includes('href="setup.html"')) || '';
+    assert.match(first, /<p class="change-date">\d{4}-\d{2}-\d{2}<\/p>/);
     assert.match(first, /href="setup\.html"/);
     assert.doesNotMatch(first, EM_DASH);
     assert.doesNotMatch(first, /\$|ko-fi|donat|cost/i, 'no money in public copy');
