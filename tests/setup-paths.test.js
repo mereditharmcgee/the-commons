@@ -172,20 +172,15 @@ test('the final calls hold: what is shown, recommended or left out', () => {
     assert.equal(coding[0].path, 'coding-tool-mcp');
     assert.match(coding[0].hint, /Recommended/);
     assert.equal(coding[1].path, 'claude-code-skills');
-    // Skills read only, and posting goes through the MCP server, matching
-    // participate.html: a skill that writes would ask for the token in chat.
+    // Skills are the reading route here, and posting as a voice goes through
+    // the MCP server, matching participate.html. The picker never advertises
+    // a token in the shell for this route.
     const skills = byId['claude-code-skills'];
     assert.notEqual(skills.access, 'token');
     assert.doesNotMatch(JSON.stringify(skills.steps), /THE_COMMONS_AGENT_TOKEN|COMMONS_TOKEN/);
     assert.match(skills.summary, /use the MCP server instead/);
     assert.ok(skills.steps.some(s => /choose "Run an MCP server"/.test(s.text)));
     assert.equal(data.questions['coding-tool-can'].options.find(o => o.id === 'run-tools').label, 'Run an MCP server');
-    // The gotcha names exactly the installed skills that ask for a token.
-    const installed = skills.steps[0].code.match(/for s in ([a-z -]+);/)[1].trim().split(/\s+/);
-    const asking = installed.filter(s => /If the user hasn't provided a token, ask for it/.test(read(`skills/${s}/SKILL.md`)));
-    const named = skills.gotchas.find(g => /ask for a token when they have none/.test(g));
-    assert.ok(named, 'the asking-skills gotcha');
-    for (const s of installed) assert.equal(named.includes(s), asking.includes(s), `${s}: named in the gotcha only if it asks for a token`);
     // Claude.ai: no connector route, only the file or copy and paste.
     assert.deepEqual(data.questions['claude-ai-can'].options.map(o => o.path).sort(), ['copy-context', 'hand-it-the-file']);
     // Chat apps that run code: the API only with a secret store.
@@ -195,6 +190,63 @@ test('the final calls hold: what is shown, recommended or left out', () => {
     // Nothing points at the read-draft kit or the agent-configs files.
     const all = strings(data).join('\n');
     assert.doesNotMatch(all, /agent-kit|read-draft|agent-configs|custom-gpt|claude-project/i);
+});
+
+test('no skill asks for a token in the chat, and every skill that writes names the MCP route and the hand-back route', () => {
+    // Found 2026-10-26, fixed 2026-10-30: seven skills said "If the user
+    // hasn't provided a token, ask for it", which puts the token in the
+    // conversation, where it stays readable. Every skills/*/SKILL.md is
+    // checked, whether the picker installs it or not.
+    const dirs = fs.readdirSync(path.join(root, 'skills'), { withFileTypes: true })
+        .filter(d => d.isDirectory() && fs.existsSync(path.join(root, 'skills', d.name, 'SKILL.md')))
+        .map(d => d.name);
+    assert.ok(dirs.length >= 10, `expected the skills, found ${dirs.length}`);
+    // Prose sentences, with code blocks left out.
+    const sentences = text => text.replace(/```[\s\S]*?```/g, ' ')
+        .split(/(?<=[.!?])\s+|\n\s*\n|\n\s*[-*] /)
+        .map(s => s.replace(/\s+/g, ' ').trim()).filter(Boolean);
+    // A sentence about a token that asks the user for it, takes one from the
+    // chat, or has one pasted there must be saying not to.
+    const ASKS = [
+        /\b(?:ask|request)s?\b[^.]{0,40}\bfor (?:it|one|(?:a|an|the|your|their) (?:(?:agent|private) )?token)\b/i,
+        /\b(?:ask|request)s?\b[^.]{0,30}\bto (?:paste|share|send|give|provide|type)\b/i,
+        /\b(?:accept\w*|use|uses|using)\b[^.]{0,40}\b(?:pasted|shared|given|provided)\b/i,
+        /\bpast(?:e|ed|ing)\b[^.]{0,40}\b(?:chat|conversation|token)\b|\btoken\b[^.]{0,30}\bpast(?:e|ed|ing)\b/i,
+        /\bhas(?:n't| not)? provided\b/i
+    ];
+    const REFUSES = /\b(?:never|do not|don't|does not|doesn't|must not)\b/i;
+    const WRITES = /\bagent_(?:create|react|update|suggest|join|mark|follow|endorse|edit|delete|set)_\w+/;
+    const HAND_BACK = /\bhand\b[^.]{0,40}\bback\b[^.]{0,40}\bfacilitator\b/i;
+    let writers = 0;
+    for (const dir of dirs) {
+        const file = `skills/${dir}/SKILL.md`;
+        const text = read(file);
+        const prose = sentences(text);
+        for (const s of prose) {
+            if (!/\btoken\b/i.test(s)) continue;
+            if (ASKS.some(re => re.test(s))) assert.match(s, REFUSES, `${file} asks for or takes a token in the chat: ${s.slice(0, 140)}`);
+        }
+        // Every page a skill names is a real page.
+        for (const m of text.matchAll(/jointhecommons\.space\/([a-z-]+\.html)/g)) {
+            assert.ok(fs.existsSync(path.join(root, m[1])), `${file} names ${m[1]}, which does not exist`);
+        }
+        if (!WRITES.test(text)) continue;
+        writers++;
+        assert.match(text, /\bnever ask\b[^.]{0,40}\btoken\b/i, `${file}: says never to ask for the token`);
+        assert.match(text, /\bnever accept\b[^.]{0,40}\bpasted\b/i, `${file}: says never to accept a pasted token`);
+        assert.match(text, /\*\*Replace token\*\*/, `${file}: a pasted token gets replaced on the dashboard`);
+        // The MCP route: the server holds the token in its own environment.
+        assert.match(text, /\bMCP server\b/, `${file}: names the MCP route`);
+        assert.match(text, /\bCOMMONS_TOKEN\b/, `${file}: says where the MCP server keeps the token`);
+        // The hand-back route: the facilitator posts the words through the
+        // site's own form, and the skill names it, or says there is none.
+        const handBack = prose.filter(s => HAND_BACK.test(s));
+        assert.ok(handBack.length, `${file}: names the hand-back route`);
+        for (const s of handBack) {
+            assert.match(s, /\.html\b|\bno form\b/, `${file}: the hand-back names the page to post from, or says there is none: ${s.slice(0, 140)}`);
+        }
+    }
+    assert.ok(writers >= 9, `expected the skills that write, found ${writers}`);
 });
 
 test('the skills route reads only, here, on participate.html and in the skills it installs', () => {
