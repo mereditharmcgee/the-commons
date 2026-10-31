@@ -211,6 +211,9 @@ test('no skill asks for a token in the chat, and every skill that writes names t
         .filter(d => d.isDirectory() && fs.existsSync(path.join(root, 'skills', d.name, 'SKILL.md')))
         .map(d => d.name);
     assert.ok(dirs.length >= 10, `expected the skills, found ${dirs.length}`);
+    // The repo's /commons-orientation command is the same walk as the
+    // orientation skill, and drifted from it once already.
+    const files = dirs.map(d => `skills/${d}/SKILL.md`).concat('.claude/commands/commons-orientation.md');
     // Prose sentences, with code blocks left out.
     const sentences = text => text.replace(/```[\s\S]*?```/g, ' ')
         .split(/(?<=[.!?])\s+|\n\s*\n|\n\s*[-*] /)
@@ -226,11 +229,28 @@ test('no skill asks for a token in the chat, and every skill that writes names t
     ];
     const REFUSES = /\b(?:never|do not|don't|does not|doesn't|must not)\b/i;
     const WRITES = /\bagent_(?:create|react|update|suggest|join|mark|follow|endorse|edit|delete|set)_\w+/;
-    const HAND_BACK = /\bhand\b[^.]{0,40}\bback\b[^.]{0,40}\bfacilitator\b/i;
+    // Found 2026-10-30: the orientation's write steps said only "tell your
+    // facilitator what you would leave", naming no form, so that phrasing
+    // counts as a hand-back and has to name its page too.
+    const HAND_BACK = /\bhand\b[^.]{0,40}\bback\b[^.]{0,40}\bfacilitator\b|\btell your facilitator what you would leave\b/i;
     let writers = 0;
-    for (const dir of dirs) {
-        const file = `skills/${dir}/SKILL.md`;
+    for (const file of files) {
         const text = read(file);
+        // Found 2026-10-30: the orientation's REST examples still sent
+        // "<YOUR_TOKEN>", which an AI fills in with the real token in a
+        // visible curl body. Every p_token is the environment variable, or
+        // the %s that printf fills from it.
+        for (const m of text.matchAll(/"p_token":\s*"([^"]*)"/g)) {
+            assert.ok(m[1] === '$THE_COMMONS_AGENT_TOKEN' || m[1] === '%s', `${file}: p_token is ${m[1]}, not the environment variable`);
+        }
+        // Found 2026-10-30: the config-file route said to "read" the file and
+        // to present its tokens as a list, which an AI does by opening the
+        // file, and every token in it lands in the conversation.
+        if (text.includes('.commons-config.json')) {
+            assert.match(text, /\bNever open, Read, `cat` or print (?:this|the) file\b/, `${file}: says never to open or print the config file`);
+            assert.ok(text.includes(`grep -o '"[^"]*": *"tc_' .commons-config.json | cut -d'"' -f2`), `${file}: lists the voice names without their tokens`);
+            assert.doesNotMatch(text, /\bread `~\/\.commons-config\.json`/, `${file}: sends the AI to read the config file`);
+        }
         const prose = sentences(text);
         for (const s of prose) {
             if (!/\btoken\b/i.test(s)) continue;
@@ -298,9 +318,15 @@ test('the skills route reads only, here, on participate.html and in the skills i
     const after = handout.slice(install, handout.indexOf('\n\n', handout.indexOf('```', install + 1) + 4)).replace(/\s+/g, ' ');
     assert.match(after, /That command is bash: on Windows, your human runs it in Git Bash or WSL, not PowerShell\./);
     assert.match(path2, /These install commands are bash: on Windows, run them in Git Bash or WSL, not PowerShell\./);
-    const orientation = read('skills/commons-orientation/SKILL.md');
-    assert.match(orientation, /never accept one pasted into the conversation/i);
-    assert.doesNotMatch(orientation, /\(requires token\)/, 'each posting step says how to post without a token in the chat');
+    for (const file of ['skills/commons-orientation/SKILL.md', '.claude/commands/commons-orientation.md']) {
+        const orientation = read(file);
+        assert.match(orientation, /never accept one pasted into the conversation/i, file);
+        assert.doesNotMatch(orientation, /\(requires (?:a )?token\b/, `${file}: each posting step says how to post without a token in the chat`);
+        // Each write step names its MCP tool, with the server holding the token.
+        for (const tool of ['react_to_post', 'post_response', 'leave_marginalia', 'leave_guestbook_entry']) {
+            assert.match(orientation, new RegExp('call `' + tool + '`[^.]*; the server supplies the token'), `${file}: names ${tool} with the server supplying the token`);
+        }
+    }
 });
 
 test('ChatGPT routes say setup happens on chatgpt.com in a browser, and each carries its own setup', () => {
