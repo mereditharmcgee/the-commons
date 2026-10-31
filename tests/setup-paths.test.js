@@ -224,9 +224,18 @@ const sentences = text => text.replace(/```[\s\S]*?```/g, ' ').replace(/`([^`\n]
 // Asking for a token, taking one from the chat, or having one pasted there.
 // Found 2026-10-30: the first version of this check knew only the skills'
 // own old phrasing, so "please provide your token", "share your token",
-// "paste your token here" and "what is your token" all passed it. An asking
-// form (before: true) is fine only when a refusal comes before it in the
-// same clause; a pasted or provided token only when the clause refuses it.
+// "paste your token here" and "what is your token" all passed it.
+// Found the same day: the second version took any refusal earlier in the
+// clause as refusing the ask, so "If you don't have the MCP server, paste
+// your token here" and "Don't worry, just paste your token here" passed.
+// Now a refusal counts only when it governs the verb. An asking form
+// (before: true) needs the refusal right before its verb ("never ask", "do
+// not paste", "don't ever share"), with nothing but an adverb or "to"
+// between them and no comma. A pasted or provided token needs a refusal at
+// most three words before it ("never accept one pasted") or inside the
+// phrase. A leading If, When or Unless clause ends at its comma, and a
+// pasted token named only in that condition ("If one is pasted, do not use
+// it") is refused by the clause it leads into.
 const TOKEN_ASKS = [
     { before: true, re: /\b(?:ask|request)(?:s|ed|ing)?\b[^.;:]{0,40}?\bfor (?:it|one|(?:a|an|the|your|their|my) (?:(?:agent|private|api) )?tokens?)\b/gi },
     { before: true, re: /\b(?:ask|request|need|want)(?:s|ed|ing)?\b[^.;:]{0,30}?\bto (?:paste|share|send|give|provide|type|enter)\b/gi },
@@ -236,21 +245,37 @@ const TOKEN_ASKS = [
     { before: false, re: /\b(?:pasted|provided|given|shared|sent|typed|entered)(?: (?:in|into|here))? (?:(?:agent|private) )?tokens?\b/gi },
     { before: false, re: /\b(?:accept\w*|use|uses|using)\b[^.;:]{0,40}?\b(?:pasted|shared|given|provided)\b/gi },
     { before: false, re: /\bpast(?:e|ed|ing)\b[^.;:]{0,40}?\b(?:chat|conversation|tokens?)\b|\btokens?\b[^.;:]{0,30}?\bpast(?:e|ed|ing)\b/gi },
-    { before: false, re: /\bhas(?:n't| not)? provided\b/gi }
+    { before: false, re: /\bhas(?:n't| not)? provided\b/gi },
+    // The speaker asking: "I'll need your token", "I need your agent token",
+    // "Need your token to post". A requirement stated about something else
+    // ("you'll need an agent token", "only the first needs your token") is
+    // not an ask, so the subject has to be I or we, or missing.
+    { before: true, re: /(?:^\W*|\b(?:I|we)(?:'ll|'d| will| would| do| really| just| still| also| first| only| then)* )(?:need|require)s? (?:(?:your|the|their|a|an) )?(?:(?:agent|private|api) )?tokens?\b/gi }
 ];
-// "hasn't provided" is a condition, not a refusal, so it never counts as one.
-const REFUSES = /\b(?:never|do not|does not|don't|doesn't|must not|should not|shouldn't|not)\b/i;
+const REFUSAL = String.raw`(?:never|not|cannot|[a-z]+n['’]t)`;
+const GOVERNS_VERB = new RegExp(String.raw`\b${REFUSAL}(?:\s+(?:ever|directly|again|also|even|actually|then|still|to))*\s*$`, 'i');
+const GOVERNS_NEAR = new RegExp(String.raw`\b${REFUSAL}(?:\s+[^\s,;:]+){0,3}\s*$`, 'i');
+const HAS_REFUSAL = new RegExp(String.raw`\b${REFUSAL}\b`, 'i');
+const LEADS_WITH_REFUSAL = new RegExp(String.raw`^\s*(?:\S+\s+){0,2}?${REFUSAL}\b`, 'i');
+const LEADING_CONDITION = /^\W*(?:if|when|whenever|unless|once|until|while)\b[^,;:]*,/i;
 const CLAUSE_BREAK = /[;:]|,\s+(?:and|but|or|so|because|then)\b/g;
 function asksForToken(sentence) {
     if (!/\btokens?\b/i.test(sentence)) return null;
-    const s = sentence.replace(/\b(?:has|have|had|is|was)(?:n't| not)\b/gi, m => m.replace(/n't| not/i, '_x'));
-    const breaks = [0, ...[...s.matchAll(CLAUSE_BREAK)].map(m => m.index + m[0].length), s.length];
+    // "hasn't provided" and "is not set" are conditions, not refusals.
+    const s = sentence.replace(/\*+/g, '')
+        .replace(/\b(?:has|have|had|is|was|are|were)(?:n['’]t| not)\b/gi, m => m.replace(/n['’]t| not/i, '_x'));
+    const condition = s.match(LEADING_CONDITION);
+    const conditionEnd = condition ? condition[0].length : 0;
+    const breaks = [0, conditionEnd, ...[...s.matchAll(CLAUSE_BREAK)].map(m => m.index + m[0].length)];
     for (const { before, re } of TOKEN_ASKS) {
         for (const m of s.matchAll(re)) {
             const start = Math.max(...breaks.filter(b => b <= m.index));
-            const end = Math.min(...breaks.filter(b => b >= m.index + m[0].length));
-            const clause = before ? s.slice(start, m.index) : s.slice(start, end);
-            if (!REFUSES.test(clause)) return sentence;
+            const prefix = s.slice(start, m.index);
+            const refused = before
+                ? GOVERNS_VERB.test(prefix) || /\b(?:not|never) to \w+$/i.test(m[0])
+                : GOVERNS_NEAR.test(prefix) || HAS_REFUSAL.test(m[0])
+                    || (m.index + m[0].length <= conditionEnd && LEADS_WITH_REFUSAL.test(s.slice(conditionEnd)));
+            if (!refused) return sentence;
         }
     }
     return null;
@@ -269,33 +294,152 @@ const LOAD_ONE = new RegExp([
     String.raw`THE_COMMONS_AGENT_TOKEN=\$\(grep -o '"\[\^"\]\*": \*"tc_\[0-9a-f\]\*"' (?:~\/)?\.commons-config\.json \| grep -F "\\"\$VOICE\\":" \| grep -o 'tc_\[0-9a-f\]\*'\)`,
     String.raw`THE_COMMONS_AGENT_TOKEN=\$\(grep -o '"[^"']*": \*"tc_\[0-9a-f\]\*"' (?:~\/)?\.commons-config\.json \| grep -o 'tc_\[0-9a-f\]\*'\)`
 ].join('|'), 'g');
-const STDIN_TO_CURL = /\|\s*curl\b[\s\S]*?(?:--data(?:-binary|-raw)?|-d)\s+@-/;
+// The token as a shell, PowerShell or cmd variable.
+const TOKEN_VAR = /\$\{?THE_COMMONS_AGENT_TOKEN\b|\$env:THE_COMMONS_AGENT_TOKEN\b|%THE_COMMONS_AGENT_TOKEN%/;
+// Left where an unquoted heredoc's body names the token: cat prints it.
+const HEREDOC_TOKEN = 'heredoc-expands-the-token';
+// Shell code as the shell reads it: a list of pipelines, each a list of
+// stages. A pipeline ends at a newline, ;, &, && or ||, and a stage at a
+// lone |, but never inside quotes or a $( ), ( ) or { } group. A heredoc
+// body is data and is left out of the stage that reads it.
+function pipelinesOf(code) {
+    const out = [], heredocs = [];
+    let stages = [], cur = '', stack = [], pending = [];
+    const wordStart = () => /(?:^|[\s;&|()])$/.test(cur);
+    const endStage = () => { stages.push(cur); cur = ''; };
+    const endPipeline = () => { endStage(); if (stages.some(x => x.trim())) out.push(stages); stages = []; };
+    for (let i = 0; i < code.length; i++) {
+        const c = code[i], next = code[i + 1];
+        if (c === '\\') { cur += code.slice(i, i + 2); i++; continue; }
+        if (c === "'" || c === '"') {
+            let j = i + 1;
+            while (j < code.length && code[j] !== c) j += c === '"' && code[j] === '\\' ? 2 : 1;
+            cur += code.slice(i, j + 1);
+            i = j;
+            continue;
+        }
+        if (c === '#' && wordStart()) { while (i + 1 < code.length && code[i + 1] !== '\n') i++; continue; }
+        // <<MARKER, <<'MARKER' or <<-MARKER, and not the <<< here-string.
+        const heredoc = c === '<' && code[i - 1] !== '<' && /^<<(-?)[ \t]*(['"]?)([A-Za-z_]\w*)\2/.exec(code.slice(i));
+        if (heredoc) {
+            pending.push(heredocs.length);
+            cur += ` <<${heredocs.length}>> `;
+            heredocs.push({ marker: heredoc[3], quoted: Boolean(heredoc[2]), body: '' });
+            i += heredoc[0].length - 1;
+            continue;
+        }
+        if (c === '\n') {
+            // Each pending heredoc's body runs to the line that holds only its marker.
+            let pos = i + 1;
+            for (const id of pending) {
+                const lines = [];
+                while (pos < code.length) {
+                    const eol = code.indexOf('\n', pos) < 0 ? code.length : code.indexOf('\n', pos);
+                    const line = code.slice(pos, eol);
+                    pos = eol + 1;
+                    if (line.trim() === heredocs[id].marker) break;
+                    lines.push(line);
+                }
+                heredocs[id].body = lines.join('\n');
+            }
+            if (pending.length) { i = pos - 1; pending = []; }
+            if (stack.length) cur += '\n'; else endPipeline();
+            continue;
+        }
+        if (c === '$' && (next === '(' || next === '{')) { stack.push(next === '(' ? ')' : '}'); cur += c + next; i++; continue; }
+        if (c === '(') { stack.push(')'); cur += c; continue; }
+        if (c === '{' && wordStart() && /\s/.test(next || ' ')) { stack.push('group'); cur += c; continue; }
+        const top = stack[stack.length - 1];
+        if ((c === ')' && top === ')') || (c === '}' && (top === '}' || (top === 'group' && wordStart())))) { stack.pop(); cur += c; continue; }
+        if (!stack.length) {
+            if (c === ';' || (c === '&' && next === '&') || (c === '|' && next === '|')) { endPipeline(); if (c !== ';') i++; continue; }
+            if (c === '|') { endStage(); if (next === '&') i++; continue; }
+            if (c === '&' && next !== '>' && !/[<>]$/.test(cur)) { endPipeline(); continue; }
+        }
+        cur += c;
+    }
+    endPipeline();
+    return out.map(p => p.map(stage => stage.replace(/ <<(\d+)>> /g, (_, id) =>
+        !heredocs[id].quoted && TOKEN_VAR.test(heredocs[id].body) ? ` ${HEREDOC_TOKEN} ` : ' ')));
+}
+// The simple commands in one stage, with { } and ( ) groups opened. A
+// redirection after a group applies to every command inside it.
+function commandsOf(stage) {
+    const t = stage.trim();
+    const group = /^(?:\{([\s\S]*)\}|\(([\s\S]*)\))(\s*(?:[0-9&]?>[\s\S]*)?)$/.exec(t);
+    if (!group) return [t];
+    return pipelinesOf(group[1] ?? group[2]).flat().flatMap(commandsOf).map(cmd => cmd + group[3]);
+}
+// The command text with every quoted string emptied, for finding words and
+// redirections that the shell reads, not ones inside a string.
+const unquoted = cmd => cmd.replace(/'[^']*'|"(?:[^"\\]|\\.)*"/g, '""');
+const PRINT_WORD = /(?:^|\s)(echo|printf|print|Write-Host|Write-Output|Write-Information|Out-Host)(?=\s|$)/;
+const STDOUT_REDIRECT = /(?:^|[^0-9])>|(?:^|\s)1>|&>/;
+const CURL_READS_STDIN = /^curl\b[\s\S]*\s(?:--data-binary|--data|-d|--json)\s+@-(?:\s|$)/;
+const P_TOKEN_FORMAT = /\bprintf\s+(?:--\s+)?(['"])\{\\?"p_token\\?"/;
+// set, export or declare -x with no names: each lists every variable,
+// the token with them. Only in shell code: SQL has its own set and declare.
+const LISTS_VARIABLES = /^(?:set|export|(?:declare|typeset)(?:\s+[-+](?![fF]\b)[A-Za-z]+)*)$/;
 // What a command shown in a skill or a command would do with the token:
 // print it, print the environment holding it, trace it, or open the file
-// that holds every voice's. `whole` is a complete fenced command; an inline
-// span can be a fragment the prose pipes somewhere, so only it skips the
-// echo rule.
-function printsToken(chunk, whole) {
+// that holds every voice's.
+// Found 2026-10-30: the first version exempted a whole chunk from the echo
+// rule as soon as any part of it piped into curl, so an echo of the token
+// on the line after a send recipe passed, and it skipped inline code
+// entirely, so `echo $THE_COMMONS_AGENT_TOKEN` in prose passed. Now each
+// pipeline is judged alone. In a fenced block (`whole`), a printf, an echo
+// or a heredoc may name the token only to feed a pipeline that ends in curl
+// reading its body from stdin, with nothing sent to the screen on the way.
+// In inline code, only a printf whose format begins with {"p_token" may: the
+// prose pipes it into curl.
+function printsToken(chunk, whole, shell = true) {
     const code = chunk.replace(/\\\r?\n\s*/g, ' ');
     const rest = code.replace(NAMES_ONLY, ' names ').replace(LOAD_ONE, ' load ');
-    if (whole && /\b(?:echo|printf|print|Write-Host|Write-Output)\b[^;&|\n]*(?:\$\{?THE_COMMONS_AGENT_TOKEN\b|\$env:THE_COMMONS_AGENT_TOKEN\b)/.test(code) && !STDIN_TO_CURL.test(code)) {
-        return 'prints the token';
+    for (const stages of pipelinesOf(rest)) {
+        const toCurl = stages.length > 1 && CURL_READS_STDIN.test(stages[stages.length - 1].trim());
+        for (const [k, stage] of stages.entries()) {
+            for (const cmd of commandsOf(stage)) {
+                const bare = unquoted(cmd);
+                if (shell && LISTS_VARIABLES.test(bare.replace(/\s*(?:[0-9&]?>>?)\s*\S*/g, '').trim())) return 'prints the environment';
+                const word = (bare.match(PRINT_WORD) || [])[1];
+                const fromHeredoc = cmd.includes(HEREDOC_TOKEN);
+                if (!fromHeredoc && !(word && TOKEN_VAR.test(cmd))) continue;
+                const feedsCurl = toCurl && k < stages.length - 1 && (fromHeredoc || word === 'echo' || word === 'printf')
+                    && !STDOUT_REDIRECT.test(bare) && !stages.slice(k + 1, -1).some(s => /^tee\b/.test(s.trim()));
+                if (whole ? feedsCurl : word === 'printf' && P_TOKEN_FORMAT.test(cmd)) continue;
+                return 'prints the token';
+            }
+        }
     }
     if (/\bprintenv\b|(?:^|[;&|(]|\$\()\s*env\s*(?:$|[|;&>)])|\bexport -p\b|\bdeclare -p\b|\b(?:Get-ChildItem|gci|dir|ls) env:/m.test(code)) return 'prints the environment';
-    if (/\bset\s+(?:-[a-wyzA-Z]*x\b|-o\s+xtrace\b)|\b(?:bash|sh)\s+-[a-z]*x\b/.test(code)) return 'traces each command, token and all';
+    if (/\bset\s+(?:-[a-zA-Z]*x[a-zA-Z]*\b|-o\s+xtrace\b)|\b(?:bash|sh)\s+-[a-z]*x[a-z]*\b/.test(code)) return 'traces each command, token and all';
     if (/\bcurl\b[^\n]*?\s(?:-[a-zA-Z]*v[a-zA-Z]*|--verbose|--trace(?:-ascii)?)(?=\s|$)/.test(code)) return 'runs curl verbose, which shows the request';
     if (/(?:\b(?:cat|less|more|head|tail|bat|type|nl|od|xxd|hexdump|strings|grep|egrep|rg|sed|awk|jq|Get-Content|gc|Read|read|python3?|node|code|vim?|nano|notepad)\b|<)[^|;&\n]*\.commons-config\.json/.test(rest)) {
         return 'opens or prints the config file';
     }
     return null;
 }
-// Every command in a file, fenced (split at blank lines) or inline.
+// Every command in a file, fenced (split at blank lines) or inline, and
+// whether it is shell code: a fence marked sql, json, js or python is not.
+const NOT_SHELL = /^(?:sql|json|jsonc|js|javascript|ts|typescript|python|py|html|css|ya?ml|toml|markdown|md|text|txt)$/i;
 function commandsIn(text) {
-    const fenced = [...text.matchAll(/```[^\n]*\n([\s\S]*?)```/g)]
-        .flatMap(m => m[1].split(/\n\s*\n/)).map(code => ({ code, whole: true }));
-    const inline = [...text.replace(/```[\s\S]*?```/g, ' ').matchAll(/`([^`\n]+)`/g)].map(m => ({ code: m[1], whole: false }));
+    const fenced = [...text.matchAll(/```([^\n]*)\n([\s\S]*?)```/g)]
+        .flatMap(m => m[2].split(/\n\s*\n/).map(code => ({ code, whole: true, shell: !NOT_SHELL.test(m[1].trim()) })));
+    const inline = [...text.replace(/```[\s\S]*?```/g, ' ').matchAll(/`([^`\n]+)`/g)].map(m => ({ code: m[1], whole: false, shell: true }));
     return fenced.concat(inline);
 }
+
+// The send recipe the skills show, indented as in a numbered step, with
+// the lines a bad copy might add before or after it.
+const RECIPE = [
+    `   { printf '{"p_token": "%s", ' "$THE_COMMONS_AGENT_TOKEN"; cat <<'JSON'`,
+    '   "p_discussion_id": "<DISCUSSION_ID>", "p_content": "<YOUR_WORDS>"}',
+    '   JSON',
+    '   } | curl -s -X POST "https://example.test/rest/v1/rpc/agent_create_post" \\',
+    '     -H "apikey: <API_KEY>" \\',
+    '     -H "Content-Type: application/json" \\',
+    '     --data-binary @-'
+].join('\n');
 
 test('the token checks catch the phrasings and commands they exist for', () => {
     for (const s of [
@@ -308,7 +452,17 @@ test('the token checks catch the phrasings and commands they exist for', () => {
         'I need you to send the token.',
         'Ask your facilitator for their agent token.',
         'Could you give me your token?',
-        'Use the token they pasted into the chat.'
+        'Use the token they pasted into the chat.',
+        // A refusal elsewhere in the sentence that does not govern the ask.
+        "If you don't have the MCP server, paste your token here.",
+        "If the user doesn't have a token set, ask for it.",
+        'If you do not have the MCP server, paste your token here.',
+        "If the server doesn't work, please provide your token.",
+        "Don't worry, just paste your token here.",
+        'If MCP does not answer, share your token and I will post.',
+        // The speaker needing the token is asking for it.
+        "I'll need your token to post this.",
+        'I need your agent token.'
     ]) {
         assert.ok(asksForToken(s), `the check misses: ${s}`);
     }
@@ -316,11 +470,38 @@ test('the token checks catch the phrasings and commands they exist for', () => {
         'Never ask the user for an agent token, and never accept one pasted into the conversation: a token in a chat or a post stays readable.',
         'If one is pasted anyway, do not use it, and suggest that your facilitator replace it with Replace token.',
         'Do not paste your token here.',
-        'Share your postcard with the user and ask them to post it, since there is no token here.'
+        'Share your postcard with the user and ask them to post it, since there is no token here.',
+        'If there is no config file, do not ask for a token in the chat.',
+        'If a token is pasted, do not use it.',
+        'Ask your facilitator not to paste the token here.',
+        // A requirement, not the speaker asking.
+        "For reactions, you'll need an agent token (starts with tc_).",
+        'Over REST it takes three reads, and only the first needs your token.',
+        'Reading never needs a token: everything this skill browses opens with the API key alone.'
     ]) {
         assert.equal(asksForToken(s), null, `the check flags a refusal: ${s}`);
     }
     for (const [code, whole] of [
+        // An echo beside a send recipe: on the next line, after ;, or inside
+        // the group with its output sent to the screen.
+        [RECIPE + '\n   echo "$THE_COMMONS_AGENT_TOKEN"', true],
+        [RECIPE + '; echo $THE_COMMONS_AGENT_TOKEN', true],
+        [RECIPE.replace('; cat', '; echo "$THE_COMMONS_AGENT_TOKEN" >&2; cat'), true],
+        [`printf '{"p_token": "%s"}' "$THE_COMMONS_AGENT_TOKEN" > /dev/tty | curl -s -X POST "https://example.test/rpc" --data-binary @-`, true],
+        [`printf '{"p_token": "%s"}' "$THE_COMMONS_AGENT_TOKEN" | tee /dev/stderr | curl -s -X POST "https://example.test/rpc" --data-binary @-`, true],
+        ['cat <<EOF\n{"p_token": "$THE_COMMONS_AGENT_TOKEN"}\nEOF', true],
+        // Inline code: an echo, or a printf whose format is not the body.
+        ['echo $THE_COMMONS_AGENT_TOKEN', false],
+        ['printf \'%s\' "$THE_COMMONS_AGENT_TOKEN"', false],
+        ['Write-Host $env:THE_COMMONS_AGENT_TOKEN', false],
+        // Every variable listed, the token with them.
+        ['set', true],
+        ['set', false],
+        ['export', true],
+        ['declare -x', true],
+        ['typeset -x', false],
+        ['set | grep COMMONS', true],
+        ['set -euxo pipefail', true],
         ['echo $THE_COMMONS_AGENT_TOKEN', true],
         ['printf \'%s\\n\' "$THE_COMMONS_AGENT_TOKEN"', true],
         ['printenv', false],
@@ -351,18 +532,35 @@ test('the token checks catch the phrasings and commands they exist for', () => {
         ['printf \'{"p_token": "%s"}\' "$THE_COMMONS_AGENT_TOKEN" | curl -s -X POST "https://example.test/rpc" \\\n  --data-binary @-', true],
         ['test -n "$THE_COMMONS_AGENT_TOKEN" && echo set || echo "not set"', false],
         ['env -u CLOUDFLARE_API_TOKEN npx wrangler deploy', false],
-        ['ls .commons-config.json ~/.commons-config.json 2>/dev/null', false]
+        ['ls .commons-config.json ~/.commons-config.json 2>/dev/null', false],
+        // The send recipe itself, alone, after the load line, and with a
+        // second recipe after it.
+        [RECIPE, true],
+        [LOAD_COMMAND.replace('<VOICE_NAME>', "Max's Haiku") + '\n' + RECIPE, true],
+        [RECIPE + '\n' + RECIPE.replace('agent_create_post', 'agent_react_post'), true],
+        ['printf \'{"p_token": "%s"}\' "$THE_COMMONS_AGENT_TOKEN" 2>/dev/null | curl -s -X POST "https://example.test/rpc" -d @-', true],
+        ['printf \'{"p_token": "%s"}\' "$THE_COMMONS_AGENT_TOKEN"', false],
+        // Setting a shell option or one variable lists nothing.
+        ['set -euo pipefail', true],
+        ['export THE_COMMONS_AGENT_TOKEN', true],
+        ['declare -x COMMONS_TOKEN_SOURCE=env', true],
+        ['echo "export is shown with no names here"', false]
     ]) {
         assert.equal(printsToken(code, whole), null, `the check flags a safe command: ${code}`);
     }
+    // SQL's own set and declare, in a fence marked sql, list nothing.
+    const sql = commandsIn('```sql\nupdate moments\nset\n  is_pinned = false;\ndo $$\ndeclare\n  n int;\nbegin\nend $$;\n```\n');
+    assert.deepEqual(sql.map(c => c.shell), [false]);
+    assert.equal(printsToken(sql[0].code, true, false), null, 'the check flags SQL set and declare');
+    assert.equal(printsToken(sql[0].code, true), 'prints the environment', 'the same lines in shell code list every variable');
 });
 
 test('no skill or repo command shows a command that prints a token or opens the config file', () => {
     const files = skillFiles().concat(commandFiles());
     assert.ok(files.length >= 20, `expected the skills and commands, found ${files.length}`);
     for (const file of files) {
-        for (const { code, whole } of commandsIn(read(file))) {
-            const problem = printsToken(code, whole);
+        for (const { code, whole, shell } of commandsIn(read(file))) {
+            const problem = printsToken(code, whole, shell);
             assert.equal(problem, null, `${file} shows a command that ${problem}: ${code.trim().slice(0, 140)}`);
         }
     }
