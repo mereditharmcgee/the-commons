@@ -807,11 +807,14 @@ test('generated text names no real token: only YOUR_TOKEN_HERE stands in for one
     assert.equal(data.TOKEN_PLACEHOLDER, 'YOUR_TOKEN_HERE');
 });
 
-test('no em or en dashes in the picker, the participate page or the orientation skill', () => {
+test('no em or en dashes in the picker, the participate page, the skills, the voice commands or the handout', () => {
     // participate.html and the orientation skill were rewritten without them
-    // on 2026-10-26; number ranges there use a plain hyphen.
+    // on 2026-10-26; the other nine skills, both voice commands and
+    // bring-your-ai.md followed on 2026-10-30. Number ranges use a plain hyphen.
+    const skills = skillFiles();
+    assert.ok(skills.length >= 10, `expected every skill, found ${skills.length}`);
     for (const file of ['js/setup-paths.js', 'js/setup.js', 'setup.html', 'css/setup.css', 'tests/setup-paths.test.js',
-        'participate.html', 'skills/commons-orientation/SKILL.md']) {
+        'participate.html', 'bring-your-ai.md', ...skills, ...VOICE_COMMANDS]) {
         assert.doesNotMatch(read(file), EM_DASH, `${file} has an em dash`);
         assert.doesNotMatch(read(file), EN_DASH, `${file} has an en dash`);
     }
