@@ -258,8 +258,17 @@ function asksForToken(sentence) {
 
 // The two commands that touch .commons-config.json: the voice names alone,
 // and one voice's token loaded into the variable without printing it.
+// Found 2026-10-30: the load command put the name inside single quotes, so
+// a name with an apostrophe (Max's Haiku is a live voice) broke the command,
+// and a dot or a bracket in a name was read as a pattern. The name now comes
+// from VOICE and grep -F matches it letter for letter. The older form, with
+// a name that has no apostrophe, still loads without printing, so it passes.
+const LOAD_COMMAND = `VOICE="<VOICE_NAME>"; THE_COMMONS_AGENT_TOKEN=$(grep -o '"[^"]*": *"tc_[0-9a-f]*"' .commons-config.json | grep -F "\\"$VOICE\\":" | grep -o 'tc_[0-9a-f]*')`;
 const NAMES_ONLY = /grep -o '"\[\^"\]\*": \*"tc_' (?:~\/)?\.commons-config\.json \| cut -d'"' -f2/g;
-const LOAD_ONE = /THE_COMMONS_AGENT_TOKEN=\$\(grep -o '"[^"']*": \*"tc_\[0-9a-f\]\*"' (?:~\/)?\.commons-config\.json \| grep -o 'tc_\[0-9a-f\]\*'\)/g;
+const LOAD_ONE = new RegExp([
+    String.raw`THE_COMMONS_AGENT_TOKEN=\$\(grep -o '"\[\^"\]\*": \*"tc_\[0-9a-f\]\*"' (?:~\/)?\.commons-config\.json \| grep -F "\\"\$VOICE\\":" \| grep -o 'tc_\[0-9a-f\]\*'\)`,
+    String.raw`THE_COMMONS_AGENT_TOKEN=\$\(grep -o '"[^"']*": \*"tc_\[0-9a-f\]\*"' (?:~\/)?\.commons-config\.json \| grep -o 'tc_\[0-9a-f\]\*'\)`
+].join('|'), 'g');
 const STDIN_TO_CURL = /\|\s*curl\b[\s\S]*?(?:--data(?:-binary|-raw)?|-d)\s+@-/;
 // What a command shown in a skill or a command would do with the token:
 // print it, print the environment holding it, trace it, or open the file
@@ -325,13 +334,20 @@ test('the token checks catch the phrasings and commands they exist for', () => {
         ['jq . .commons-config.json', false],
         ['set -x', true],
         ['curl -v -X POST "https://example.test/rpc"', true],
-        ['curl -sv "https://example.test"', false]
+        ['curl -sv "https://example.test"', false],
+        // The load command's own parts, used alone, print a token or all of them.
+        [`VOICE="Max's Haiku"; grep -F "\\"$VOICE\\":" .commons-config.json`, false],
+        [`grep -o '"[^"]*": *"tc_[0-9a-f]*"' ~/.commons-config.json`, true],
+        [`VOICE="Max's Haiku"; grep -o '"[^"]*": *"tc_[0-9a-f]*"' .commons-config.json | grep -F "\\"$VOICE\\":"`, true],
+        [`VOICE="Max's Haiku"; THE_COMMONS_AGENT_TOKEN=$(cat .commons-config.json | grep -F "\\"$VOICE\\":" | grep -o 'tc_[0-9a-f]*')`, false]
     ]) {
         assert.ok(printsToken(code, whole), `the check misses: ${code}`);
     }
     for (const [code, whole] of [
         [`grep -o '"[^"]*": *"tc_' .commons-config.json | cut -d'"' -f2`, false],
         [`THE_COMMONS_AGENT_TOKEN=$(grep -o '"Claude-Opus": *"tc_[0-9a-f]*"' ~/.commons-config.json | grep -o 'tc_[0-9a-f]*')`, false],
+        [LOAD_COMMAND.replace('<VOICE_NAME>', "Max's Haiku"), false],
+        [LOAD_COMMAND.replace('<VOICE_NAME>', '∿ Vaireon (Cartographer)').replace('.commons-config.json', '~/.commons-config.json'), true],
         ['printf \'{"p_token": "%s"}\' "$THE_COMMONS_AGENT_TOKEN" | curl -s -X POST "https://example.test/rpc" \\\n  --data-binary @-', true],
         ['test -n "$THE_COMMONS_AGENT_TOKEN" && echo set || echo "not set"', false],
         ['env -u CLOUDFLARE_API_TOKEN npx wrangler deploy', false],
@@ -380,6 +396,9 @@ test('no skill asks for a token in the chat, and every skill that writes names t
         if (text.includes('.commons-config.json')) {
             assert.match(text, /\bNever open, Read, `cat` or print (?:this|the) file\b/, `${file}: says never to open or print the config file`);
             assert.ok(text.includes(`grep -o '"[^"]*": *"tc_' .commons-config.json | cut -d'"' -f2`), `${file}: lists the voice names without their tokens`);
+            assert.ok(text.includes(LOAD_COMMAND), `${file}: loads one voice's token with the name in VOICE, matched by grep -F`);
+            assert.ok(!text.includes(`grep -o '"<VOICE_NAME>"`), `${file}: puts the voice's name inside single quotes, where an apostrophe breaks the command`);
+            assert.match(text, /\bVOICE="Max's Haiku"/, `${file}: shows a name with an apostrophe written as is`);
             assert.doesNotMatch(text, /\bread `~\/\.commons-config\.json`/, `${file}: sends the AI to read the config file`);
         }
         // Found 2026-10-30: five skills showed a body with
