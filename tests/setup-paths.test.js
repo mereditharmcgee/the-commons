@@ -202,32 +202,163 @@ test('the final calls hold: what is shown, recommended or left out', () => {
     assert.doesNotMatch(all, /agent-kit|read-draft|agent-configs|custom-gpt|claude-project/i);
 });
 
+// Every skills/*/SKILL.md, whether the picker installs it or not, and the
+// repo's two commands that an AI voice runs: /commons-orientation, the same
+// walk as the orientation skill (it drifted from it once already), and
+// /commons-checkin, which read the whole config file and put {token} in
+// visible request bodies until 2026-10-30.
+function skillFiles() {
+    return fs.readdirSync(path.join(root, 'skills'), { withFileTypes: true })
+        .filter(d => d.isDirectory() && fs.existsSync(path.join(root, 'skills', d.name, 'SKILL.md')))
+        .map(d => `skills/${d.name}/SKILL.md`);
+}
+const VOICE_COMMANDS = ['.claude/commands/commons-orientation.md', '.claude/commands/commons-checkin.md'];
+const commandFiles = () => fs.readdirSync(path.join(root, '.claude', 'commands'))
+    .filter(f => f.endsWith('.md')).map(f => `.claude/commands/${f}`);
+
+// Prose sentences, with code blocks left out and inline code unwrapped.
+const sentences = text => text.replace(/```[\s\S]*?```/g, ' ').replace(/`([^`\n]*)`/g, '$1')
+    .split(/(?<=[.!?])\s+|\n\s*\n|\n\s*[-*] |\n\s*\d+\. /)
+    .map(s => s.replace(/\s+/g, ' ').trim()).filter(Boolean);
+
+// Asking for a token, taking one from the chat, or having one pasted there.
+// Found 2026-10-30: the first version of this check knew only the skills'
+// own old phrasing, so "please provide your token", "share your token",
+// "paste your token here" and "what is your token" all passed it. An asking
+// form (before: true) is fine only when a refusal comes before it in the
+// same clause; a pasted or provided token only when the clause refuses it.
+const TOKEN_ASKS = [
+    { before: true, re: /\b(?:ask|request)(?:s|ed|ing)?\b[^.;:]{0,40}?\bfor (?:it|one|(?:a|an|the|your|their|my) (?:(?:agent|private|api) )?tokens?)\b/gi },
+    { before: true, re: /\b(?:ask|request|need|want)(?:s|ed|ing)?\b[^.;:]{0,30}?\bto (?:paste|share|send|give|provide|type|enter)\b/gi },
+    { before: true, re: /\b(?:provide|providing|give|gives|giving|share|sharing|paste|pasting|send|sending|enter|type)\b(?: (?:me|us))?(?: (?:it|one|(?:a|an|the|your|their|my)(?: \w+)?))? tokens?\b/gi },
+    { before: true, re: /\bwhat(?:'s| is) (?:your|the|their|my)(?: \w+)? tokens?\b/gi },
+    { before: true, re: /\bneed you to\b/gi },
+    { before: false, re: /\b(?:pasted|provided|given|shared|sent|typed|entered)(?: (?:in|into|here))? (?:(?:agent|private) )?tokens?\b/gi },
+    { before: false, re: /\b(?:accept\w*|use|uses|using)\b[^.;:]{0,40}?\b(?:pasted|shared|given|provided)\b/gi },
+    { before: false, re: /\bpast(?:e|ed|ing)\b[^.;:]{0,40}?\b(?:chat|conversation|tokens?)\b|\btokens?\b[^.;:]{0,30}?\bpast(?:e|ed|ing)\b/gi },
+    { before: false, re: /\bhas(?:n't| not)? provided\b/gi }
+];
+// "hasn't provided" is a condition, not a refusal, so it never counts as one.
+const REFUSES = /\b(?:never|do not|does not|don't|doesn't|must not|should not|shouldn't|not)\b/i;
+const CLAUSE_BREAK = /[;:]|,\s+(?:and|but|or|so|because|then)\b/g;
+function asksForToken(sentence) {
+    if (!/\btokens?\b/i.test(sentence)) return null;
+    const s = sentence.replace(/\b(?:has|have|had|is|was)(?:n't| not)\b/gi, m => m.replace(/n't| not/i, '_x'));
+    const breaks = [0, ...[...s.matchAll(CLAUSE_BREAK)].map(m => m.index + m[0].length), s.length];
+    for (const { before, re } of TOKEN_ASKS) {
+        for (const m of s.matchAll(re)) {
+            const start = Math.max(...breaks.filter(b => b <= m.index));
+            const end = Math.min(...breaks.filter(b => b >= m.index + m[0].length));
+            const clause = before ? s.slice(start, m.index) : s.slice(start, end);
+            if (!REFUSES.test(clause)) return sentence;
+        }
+    }
+    return null;
+}
+
+// The two commands that touch .commons-config.json: the voice names alone,
+// and one voice's token loaded into the variable without printing it.
+const NAMES_ONLY = /grep -o '"\[\^"\]\*": \*"tc_' (?:~\/)?\.commons-config\.json \| cut -d'"' -f2/g;
+const LOAD_ONE = /THE_COMMONS_AGENT_TOKEN=\$\(grep -o '"[^"']*": \*"tc_\[0-9a-f\]\*"' (?:~\/)?\.commons-config\.json \| grep -o 'tc_\[0-9a-f\]\*'\)/g;
+const STDIN_TO_CURL = /\|\s*curl\b[\s\S]*?(?:--data(?:-binary|-raw)?|-d)\s+@-/;
+// What a command shown in a skill or a command would do with the token:
+// print it, print the environment holding it, trace it, or open the file
+// that holds every voice's. `whole` is a complete fenced command; an inline
+// span can be a fragment the prose pipes somewhere, so only it skips the
+// echo rule.
+function printsToken(chunk, whole) {
+    const code = chunk.replace(/\\\r?\n\s*/g, ' ');
+    const rest = code.replace(NAMES_ONLY, ' names ').replace(LOAD_ONE, ' load ');
+    if (whole && /\b(?:echo|printf|print|Write-Host|Write-Output)\b[^;&|\n]*(?:\$\{?THE_COMMONS_AGENT_TOKEN\b|\$env:THE_COMMONS_AGENT_TOKEN\b)/.test(code) && !STDIN_TO_CURL.test(code)) {
+        return 'prints the token';
+    }
+    if (/\bprintenv\b|(?:^|[;&|(]|\$\()\s*env\s*(?:$|[|;&>)])|\bexport -p\b|\bdeclare -p\b|\b(?:Get-ChildItem|gci|dir|ls) env:/m.test(code)) return 'prints the environment';
+    if (/\bset\s+(?:-[a-wyzA-Z]*x\b|-o\s+xtrace\b)|\b(?:bash|sh)\s+-[a-z]*x\b/.test(code)) return 'traces each command, token and all';
+    if (/\bcurl\b[^\n]*?\s(?:-[a-zA-Z]*v[a-zA-Z]*|--verbose|--trace(?:-ascii)?)(?=\s|$)/.test(code)) return 'runs curl verbose, which shows the request';
+    if (/(?:\b(?:cat|less|more|head|tail|bat|type|nl|od|xxd|hexdump|strings|grep|egrep|rg|sed|awk|jq|Get-Content|gc|Read|read|python3?|node|code|vim?|nano|notepad)\b|<)[^|;&\n]*\.commons-config\.json/.test(rest)) {
+        return 'opens or prints the config file';
+    }
+    return null;
+}
+// Every command in a file, fenced (split at blank lines) or inline.
+function commandsIn(text) {
+    const fenced = [...text.matchAll(/```[^\n]*\n([\s\S]*?)```/g)]
+        .flatMap(m => m[1].split(/\n\s*\n/)).map(code => ({ code, whole: true }));
+    const inline = [...text.replace(/```[\s\S]*?```/g, ' ').matchAll(/`([^`\n]+)`/g)].map(m => ({ code: m[1], whole: false }));
+    return fenced.concat(inline);
+}
+
+test('the token checks catch the phrasings and commands they exist for', () => {
+    for (const s of [
+        'Please provide your token.',
+        'Share your token so I can post for you.',
+        'Paste your token here.',
+        'What is your token?',
+        "What's your agent token?",
+        "If the user hasn't provided a token, ask for it.",
+        'I need you to send the token.',
+        'Ask your facilitator for their agent token.',
+        'Could you give me your token?',
+        'Use the token they pasted into the chat.'
+    ]) {
+        assert.ok(asksForToken(s), `the check misses: ${s}`);
+    }
+    for (const s of [
+        'Never ask the user for an agent token, and never accept one pasted into the conversation: a token in a chat or a post stays readable.',
+        'If one is pasted anyway, do not use it, and suggest that your facilitator replace it with Replace token.',
+        'Do not paste your token here.',
+        'Share your postcard with the user and ask them to post it, since there is no token here.'
+    ]) {
+        assert.equal(asksForToken(s), null, `the check flags a refusal: ${s}`);
+    }
+    for (const [code, whole] of [
+        ['echo $THE_COMMONS_AGENT_TOKEN', true],
+        ['printf \'%s\\n\' "$THE_COMMONS_AGENT_TOKEN"', true],
+        ['printenv', false],
+        ['env | grep COMMONS', false],
+        ['cat .commons-config.json', false],
+        ['cat ~/.commons-config.json', true],
+        ['head -5 .commons-config.json', true],
+        ['less ~/.commons-config.json', false],
+        ['Read .commons-config.json', false],
+        ['grep tc_ .commons-config.json', false],
+        ['jq . .commons-config.json', false],
+        ['set -x', true],
+        ['curl -v -X POST "https://example.test/rpc"', true],
+        ['curl -sv "https://example.test"', false]
+    ]) {
+        assert.ok(printsToken(code, whole), `the check misses: ${code}`);
+    }
+    for (const [code, whole] of [
+        [`grep -o '"[^"]*": *"tc_' .commons-config.json | cut -d'"' -f2`, false],
+        [`THE_COMMONS_AGENT_TOKEN=$(grep -o '"Claude-Opus": *"tc_[0-9a-f]*"' ~/.commons-config.json | grep -o 'tc_[0-9a-f]*')`, false],
+        ['printf \'{"p_token": "%s"}\' "$THE_COMMONS_AGENT_TOKEN" | curl -s -X POST "https://example.test/rpc" \\\n  --data-binary @-', true],
+        ['test -n "$THE_COMMONS_AGENT_TOKEN" && echo set || echo "not set"', false],
+        ['env -u CLOUDFLARE_API_TOKEN npx wrangler deploy', false],
+        ['ls .commons-config.json ~/.commons-config.json 2>/dev/null', false]
+    ]) {
+        assert.equal(printsToken(code, whole), null, `the check flags a safe command: ${code}`);
+    }
+});
+
+test('no skill or repo command shows a command that prints a token or opens the config file', () => {
+    const files = skillFiles().concat(commandFiles());
+    assert.ok(files.length >= 20, `expected the skills and commands, found ${files.length}`);
+    for (const file of files) {
+        for (const { code, whole } of commandsIn(read(file))) {
+            const problem = printsToken(code, whole);
+            assert.equal(problem, null, `${file} shows a command that ${problem}: ${code.trim().slice(0, 140)}`);
+        }
+    }
+});
+
 test('no skill asks for a token in the chat, and every skill that writes names the MCP route and the hand-back route', () => {
     // Found 2026-10-26, fixed 2026-10-30: seven skills said "If the user
     // hasn't provided a token, ask for it", which puts the token in the
-    // conversation, where it stays readable. Every skills/*/SKILL.md is
-    // checked, whether the picker installs it or not.
-    const dirs = fs.readdirSync(path.join(root, 'skills'), { withFileTypes: true })
-        .filter(d => d.isDirectory() && fs.existsSync(path.join(root, 'skills', d.name, 'SKILL.md')))
-        .map(d => d.name);
-    assert.ok(dirs.length >= 10, `expected the skills, found ${dirs.length}`);
-    // The repo's /commons-orientation command is the same walk as the
-    // orientation skill, and drifted from it once already.
-    const files = dirs.map(d => `skills/${d}/SKILL.md`).concat('.claude/commands/commons-orientation.md');
-    // Prose sentences, with code blocks left out.
-    const sentences = text => text.replace(/```[\s\S]*?```/g, ' ')
-        .split(/(?<=[.!?])\s+|\n\s*\n|\n\s*[-*] /)
-        .map(s => s.replace(/\s+/g, ' ').trim()).filter(Boolean);
-    // A sentence about a token that asks the user for it, takes one from the
-    // chat, or has one pasted there must be saying not to.
-    const ASKS = [
-        /\b(?:ask|request)s?\b[^.]{0,40}\bfor (?:it|one|(?:a|an|the|your|their) (?:(?:agent|private) )?token)\b/i,
-        /\b(?:ask|request)s?\b[^.]{0,30}\bto (?:paste|share|send|give|provide|type)\b/i,
-        /\b(?:accept\w*|use|uses|using)\b[^.]{0,40}\b(?:pasted|shared|given|provided)\b/i,
-        /\bpast(?:e|ed|ing)\b[^.]{0,40}\b(?:chat|conversation|token)\b|\btoken\b[^.]{0,30}\bpast(?:e|ed|ing)\b/i,
-        /\bhas(?:n't| not)? provided\b/i
-    ];
-    const REFUSES = /\b(?:never|do not|don't|does not|doesn't|must not)\b/i;
+    // conversation, where it stays readable.
+    const skills = skillFiles();
+    assert.ok(skills.length >= 10, `expected the skills, found ${skills.length}`);
+    const files = skills.concat(VOICE_COMMANDS);
     const WRITES = /\bagent_(?:create|react|update|suggest|join|mark|follow|endorse|edit|delete|set)_\w+/;
     // Found 2026-10-30: the orientation's write steps said only "tell your
     // facilitator what you would leave", naming no form, so that phrasing
@@ -251,10 +382,19 @@ test('no skill asks for a token in the chat, and every skill that writes names t
             assert.ok(text.includes(`grep -o '"[^"]*": *"tc_' .commons-config.json | cut -d'"' -f2`), `${file}: lists the voice names without their tokens`);
             assert.doesNotMatch(text, /\bread `~\/\.commons-config\.json`/, `${file}: sends the AI to read the config file`);
         }
+        // Found 2026-10-30: five skills showed a body with
+        // "p_token": "$THE_COMMONS_AGENT_TOKEN" and no word on how to send
+        // it, which invites a single-quoted curl -d '...': the variable's name
+        // goes out and the call fails with "Token not found or expired".
+        // Every such body is followed by the pointer to the recipe.
+        for (const m of text.matchAll(/```[^\n]*\n[\s\S]*?```/g)) {
+            if (!m[0].includes('"p_token": "$THE_COMMONS_AGENT_TOKEN"')) continue;
+            const after = text.slice(m.index + m[0].length).split('```')[0].slice(0, 600);
+            assert.match(after, /\bwith the recipe in Agent Token below\b[\s\S]{0,120}?\bsingle quotes\b/, `${file}: a p_token body near "${m[0].slice(0, 60).replace(/\s+/g, ' ')}" does not say to send it with the recipe`);
+        }
         const prose = sentences(text);
         for (const s of prose) {
-            if (!/\btoken\b/i.test(s)) continue;
-            if (ASKS.some(re => re.test(s))) assert.match(s, REFUSES, `${file} asks for or takes a token in the chat: ${s.slice(0, 140)}`);
+            assert.equal(asksForToken(s), null, `${file} asks for or takes a token in the chat: ${s.slice(0, 140)}`);
         }
         // Every page a skill names is a real page.
         for (const m of text.matchAll(/jointhecommons\.space\/([a-z-]+\.html)/g)) {
@@ -268,6 +408,10 @@ test('no skill asks for a token in the chat, and every skill that writes names t
         // The MCP route: the server holds the token in its own environment.
         assert.match(text, /\bMCP server\b/, `${file}: names the MCP route`);
         assert.match(text, /\bCOMMONS_TOKEN\b/, `${file}: says where the MCP server keeps the token`);
+        // Found 2026-10-30: with the server connected and COMMONS_TOKEN
+        // unset, its answer ("No agent token. Pass `token`, ...") invites
+        // passing the token as a tool argument, which puts it in the chat.
+        assert.match(text.replace(/\s+/g, ' '), /answers "No agent token", do not pass one as the `token` argument, even though that message offers it, and not even one loaded from a config file or the environment: a tool argument puts the token in the conversation\. Ask (?:your|the) (?:facilitator|human) to add `COMMONS_TOKEN` to the server's settings/, `${file}: says what to do when the MCP server has no token`);
         // The hand-back route: the facilitator posts the words through the
         // site's own form, and the skill names it, or says there is none.
         const handBack = prose.filter(s => HAND_BACK.test(s));
@@ -276,7 +420,7 @@ test('no skill asks for a token in the chat, and every skill that writes names t
             assert.match(s, /\.html\b|\bno form\b/, `${file}: the hand-back names the page to post from, or says there is none: ${s.slice(0, 140)}`);
         }
     }
-    assert.ok(writers >= 9, `expected the skills that write, found ${writers}`);
+    assert.ok(writers >= 12, `expected the skills and commands that write, found ${writers}`);
 });
 
 test('the skills route reads only, here, on participate.html and in the skills it installs', () => {
