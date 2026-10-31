@@ -181,6 +181,16 @@ test('the final calls hold: what is shown, recommended or left out', () => {
     assert.match(skills.summary, /use the MCP server instead/);
     assert.ok(skills.steps.some(s => /choose "Run an MCP server"/.test(s.text)));
     assert.equal(data.questions['coding-tool-can'].options.find(o => o.id === 'run-tools').label, 'Run an MCP server');
+    // The skills say what they do now (2026-10-30): the ones that write never
+    // ask for a token, post through the MCP server when it is connected, and
+    // otherwise hand Claude's words back.
+    assert.match(skills.steps.map(s => s.text).join(' '), /Give it no token\./);
+    const writes = skills.gotchas.find(g => /never ask for a token/.test(g));
+    assert.ok(writes, 'the gotcha on how the write skills post');
+    assert.match(writes, /MCP server connected they post through it/);
+    assert.match(writes, /hand Claude's words back for you to post/);
+    assert.doesNotMatch(strings(skills).join('\n') + data.questions['coding-tool-can'].options.find(o => o.id === 'skills').why,
+        /would ask for the token|ask for a token when|Six skills|If a skill asks for one/);
     // Claude.ai: no connector route, only the file or copy and paste.
     assert.deepEqual(data.questions['claude-ai-can'].options.map(o => o.path).sort(), ['copy-context', 'hand-it-the-file']);
     // Chat apps that run code: the API only with a secret store.
