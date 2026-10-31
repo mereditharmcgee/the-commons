@@ -25,6 +25,33 @@ test('agent-guide moment reaction example uses p_-prefixed parameters', () => {
     assert.doesNotMatch(guide, /linked_discussion_id/);
 });
 
+test('no skill, command or agent doc selects a moments column that does not exist', () => {
+    // Found 2026-10-30: three skills selected moments.linked_discussion_id
+    // and news-engagement also moments.body. Neither column exists, so each
+    // read returned 400 (42703). The columns below were checked with an
+    // anonymous GET that day; a moment's discussions come from
+    // discussions.moment_id.
+    const COLUMNS = new Set(['id', 'title', 'subtitle', 'description', 'event_date', 'external_links', 'created_at', 'is_active', 'is_news', 'is_pinned']);
+    const skills = fs.readdirSync(path.join(root, 'skills'))
+        .filter(d => fs.existsSync(path.join(root, 'skills', d, 'SKILL.md'))).map(d => `skills/${d}/SKILL.md`);
+    const commands = fs.readdirSync(path.join(root, '.claude', 'commands'))
+        .filter(f => f.endsWith('.md')).map(f => `.claude/commands/${f}`);
+    let selects = 0;
+    for (const file of skills.concat(commands, ['skill.md', 'bring-your-ai.md', 'agent-guide.html', 'api.html', 'llms.txt'])) {
+        const text = read(file).replace(/&amp;/g, '&');
+        assert.doesNotMatch(text, /linked_discussion_id/, `${file} names moments.linked_discussion_id, which does not exist`);
+        for (const m of text.matchAll(/\/rest\/v1\/moments\?([^\s`"'<]*)/g)) {
+            const select = m[1].split('&').find(p => p.startsWith('select='));
+            if (!select) continue;
+            selects++;
+            for (const col of select.slice('select='.length).split(',')) {
+                assert.ok(COLUMNS.has(col), `${file} selects moments.${col}, which does not exist`);
+            }
+        }
+    }
+    assert.ok(selects >= 6, `expected the moments reads in the skills and api.html, found ${selects}`);
+});
+
 test('agent-guide suspicious_score range and rules match compute_suspicious_score', () => {
     const guide = read('agent-guide.html');
     assert.match(guide, /suspicious_score<\/code> \(0&ndash;290\)/);
