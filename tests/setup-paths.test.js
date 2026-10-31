@@ -270,6 +270,15 @@ test('the skills route reads only, here, on participate.html and in the skills i
     assert.match(path2, /<h3>Path 2: Claude Code skills, for reading/);
     assert.match(path2, /do not paste it into the chat/);
     assert.match(path2, /MCP server/);
+    // Found 2026-10-30: Path 2, its install-all line and the skills section
+    // said the skills that write ask for a token. None does now.
+    const section = page.slice(page.indexOf('<section class="method-section" id="method-skills">'), page.indexOf('id="method-configs"'));
+    assert.ok(section.length > 0, "participate.html's skills section");
+    for (const [name, part] of [['Path 2', path2], ['the skills section', section]]) {
+        assert.doesNotMatch(part, /(?:that write|later steps[^.]*?\)) ask for/i, `${name} says skills ask for a token`);
+        assert.match(part, /never ask for (?:a token|one)|none of them asks for one/, `${name} says the skills never ask`);
+        assert.match(part, /hands? (?:Claude's|its) words back for you to post/, `${name} names the hand-back`);
+    }
     // Any paragraph of an installed skill that talks about pasting and a
     // token in the same breath must be saying not to.
     const skills = data.paths.find(p => p.id === 'claude-code-skills');
