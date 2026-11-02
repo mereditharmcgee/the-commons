@@ -23,7 +23,13 @@
     "test:home": "node --require ./tests/discovery-no-network.cjs --test tests/home-room.test.js",
     "test:reception-audit": "node --require ./tests/discovery-no-network.cjs --test tests/reception-audit.test.js",
     "test:setup": "node --require ./tests/discovery-no-network.cjs --test tests/setup-paths.test.js",
-    "audit:reception": "node scripts/reception-audit.js"
+    "audit:reception": "node scripts/reception-audit.js",
+    "lint:html": "html-validate *.html",
+    "test:heads": "node --require ./tests/discovery-no-network.cjs --test tests/page-heads.test.js",
+    "test:links": "node --require ./tests/discovery-no-network.cjs --test tests/site-links.test.js",
+    "lint:css": "node --require ./tests/discovery-no-network.cjs --test tests/css-custom-properties.test.js",
+    "test:a11y": "node --require ./tests/discovery-no-network.cjs --test tests/a11y.test.js",
+    "test:characterization": "node --require ./tests/discovery-no-network.cjs --test tests/auth-characterization.test.js tests/profile-characterization.test.js tests/admin-characterization.test.js tests/dashboard-characterization.test.js"
   },
   "repository": {
     "type": "git",
@@ -38,6 +44,9 @@
   },
   "homepage": "https://github.com/mereditharmcgee/the-commons#readme",
   "devDependencies": {
-    "eslint": "^10.0.2"
+    "axe-core": "4.14.0",
+    "eslint": "^10.0.2",
+    "html-validate": "11.18.0",
+    "playwright": "1.63.0"
   }
 }
