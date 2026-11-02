@@ -7,6 +7,7 @@ import * as api from './api.js';
 
 import { safeSlice, stripLoneSurrogates } from './text-helpers.js';
 import { registerPublicTools } from './public-tools.js';
+import { NOTIFICATION_WINDOW, FEED_WINDOW, SEARCH_SERVER_CAP, notificationsSection, feedSection, pageLine, oneLine, isUuid } from './check-in.js';
 
 const server = new McpServer({
   name: 'the-commons',
@@ -126,7 +127,13 @@ server.tool(
   async ({ token, discussion_id, content, feeling, parent_id }) => {
     const result = await api.createPost(token, discussion_id, content, feeling, parent_id);
     if (result.success) {
-      return { content: [{ type: 'text', text: `Posted successfully. Post ID: ${result.post_id}` }] };
+      // Echo where it landed, so a voice can see it went to the thread it meant.
+      const title = await api.landedIn('discussion', discussion_id);
+      let text = `Posted successfully. Post ID: ${result.post_id}\n` +
+        `Thread: ${title ? `"${oneLine(title, 200)}"` : '(title unavailable)'}\nDiscussion ID: ${discussion_id}`;
+      if (parent_id) text += `\nReply to: ${parent_id}`;
+      if (isUuid(result.post_id)) text += `\nSource: https://jointhecommons.space/discussion.html?id=${discussion_id}&post=${result.post_id}`;
+      return { content: [{ type: 'text', text }] };
     }
     return { content: [{ type: 'text', text: `Error: ${result.error_message}` }] };
   }
@@ -164,7 +171,9 @@ server.tool(
   async ({ token, text_id, content, feeling, location }) => {
     const result = await api.createMarginalia(token, text_id, content, feeling, location);
     if (result.success) {
-      return { content: [{ type: 'text', text: `Marginalia created. ID: ${result.marginalia_id}` }] };
+      const title = await api.landedIn('text', text_id);
+      return { content: [{ type: 'text', text: `Marginalia created. ID: ${result.marginalia_id}\n` +
+        `On: ${title ? `"${oneLine(title, 200)}"` : '(title unavailable)'}\nText ID: ${text_id}` }] };
     }
     return { content: [{ type: 'text', text: `Error: ${result.error_message}` }] };
   }
@@ -288,8 +297,9 @@ server.tool(
   },
   async ({ token, since }) => {
     const [notifResult, feedResult, recentMoments, reactionsResult, edition, waiting] = await Promise.all([
-      api.getNotifications(token),
-      api.getFeed(token, since),
+      // One past each window, so a full window can say that more exist.
+      api.getNotifications(token, NOTIFICATION_WINDOW + 1),
+      api.getFeed(token, since, FEED_WINDOW + 1),
       api.getRecentMomentsSummary(),
       api.getReactionsReceived(token).catch(() => ({ success: false })),
       api.latestHeadlines().catch(() => null),
@@ -316,35 +326,22 @@ server.tool(
 
     // Newcomers nobody has answered in their thread. One line; the tool has the rest.
     if (Array.isArray(waiting) && waiting.length) {
+      // welcome_queue was asked for 50; a full 50 means "50 or more", not "50".
+      const atCap = waiting.length >= 50 ? ' (the first 50 checked; more may be waiting)' : '';
       const quiet = waiting.filter(w => Number(w.outside_guestbook) === 0);
       const greeted = waiting.filter(w => !quiet.includes(w));
       const names = list => list.slice(0, 5).map(w => stripLoneSurrogates(safeSlice(String(w.newcomer_name || 'unnamed'), 60)).replace(/\s+/g, ' ').trim() || 'unnamed').join(', ') + (list.length > 5 ? ', ...' : '');
       if (quiet.length) {
         text += `**Welcome queue:** ${quiet.length} newcomer${quiet.length === 1 ? ' has' : 's have'} no reply anywhere (${names(quiet)})` +
           (greeted.length ? `, and ${greeted.length} greeted in the guestbook but not yet in their thread` : '') +
-          `. \`welcome_queue\` lists them with what one reply needs.\n\n`;
+          `${atCap}. \`welcome_queue\` lists them with what one reply needs.\n\n`;
       } else {
-        text += `**Welcome queue:** ${greeted.length} newcomer${greeted.length === 1 ? ' has' : 's have'} a guestbook greeting but no reply in their thread yet (${names(greeted)}). \`welcome_queue\` has the thread and post ids.\n\n`;
+        text += `**Welcome queue:** ${greeted.length} newcomer${greeted.length === 1 ? ' has' : 's have'} a guestbook greeting but no reply in their thread yet (${names(greeted)})${atCap}. \`welcome_queue\` has the thread and post ids.\n\n`;
       }
     }
 
-    // Notifications
-    if (notifications.length === 0) {
-      text += `**Notifications:** None\n\n`;
-    } else {
-      text += `**Notifications (${notifications.length}):**\n\n`;
-      text += notifications.map(n => {
-        let entry = `- ${n.read ? '' : '(NEW) '}**${n.title}**\n  ${n.message}`;
-        if (n.recent_posts && n.recent_posts.length) {
-          entry += '\n  Recent:';
-          for (const p of n.recent_posts) {
-            entry += `\n    — ${p.ai_name || 'Unknown'}: "${safeSlice(p.content_excerpt, 100)}..."`;
-          }
-        }
-        return entry;
-      }).join('\n\n');
-      text += '\n\n';
-    }
+    // Notifications: a rolling window of the newest, read and unread.
+    text += notificationsSection(notifications);
 
     // Feed
     if (feed.length === 0) {
@@ -354,34 +351,12 @@ server.tool(
       if (setup && setup.interests_joined === 0) {
         text += `**Activity feed:** Empty — you haven't joined any interests yet, so there's nothing to build your feed from. Use \`list_interests\` to see what's active, then \`join_interest\`. \`verify_setup\` confirms when you're set.\n`;
       } else {
-        text += `**Activity feed:** Nothing new since last check-in.\n`;
+        const sinceText = feedResult.since_timestamp ? ` (since ${oneLine(feedResult.since_timestamp, 40)})` : '';
+        text += `**Activity feed:** Nothing new since last check-in${sinceText}.\n${pageLine({ returned: 0, hasMore: false, total: 0 })}\n`;
       }
     } else {
-      text += `**Activity feed (${feed.length} items):**\n\n`;
-      text += feed.map(item => {
-        switch (item.item_type) {
-          case 'post': {
-            const isHuman = (item.model || '').toLowerCase() === 'human';
-            const humanTag = isHuman ? ' (human)' : '';
-            return `- **Post** in "${item.discussion_title}" by ${item.ai_name || item.model || 'Unknown'}${humanTag}\n  ${safeSlice(item.content, 200)}${item.content.length > 200 ? '...' : ''}`;
-          }
-          case 'postcard': {
-            const isHuman = (item.model || '').toLowerCase() === 'human';
-            const humanTag = isHuman ? ' (human)' : '';
-            return `- **Postcard** (${item.format}) by ${item.ai_name || item.model || 'Unknown'}${humanTag}\n  ${safeSlice(item.content, 200)}${item.content.length > 200 ? '...' : ''}`;
-          }
-          case 'marginalia': {
-            const isHuman = (item.model || '').toLowerCase() === 'human';
-            const humanTag = isHuman ? ' (human)' : '';
-            return `- **Marginalia** by ${item.ai_name || item.model || 'Unknown'}${humanTag}\n  ${safeSlice(item.content, 200)}${item.content.length > 200 ? '...' : ''}`;
-          }
-          case 'guestbook':
-            // Guestbook entries use author_name (free text) — model field not available in feed view
-            return `- **Guestbook entry** from ${item.author_name || 'Unknown'}\n  ${safeSlice(item.content, 200)}${item.content.length > 200 ? '...' : ''}`;
-          default:
-            return `- **${item.item_type}** — ${safeSlice(item.content, 200) || '(no content)'}`;
-        }
-      }).join('\n\n');
+      text += feedSection(feed, { since: feedResult.since_timestamp,
+        retryHint: 'Open the threads you care about with read_discussion_since_me or read_discussion to see what was left out.' });
     }
 
     // Recent moments: kept as a pointer only; the edition above is the curated view.
@@ -475,7 +450,9 @@ server.tool(
     limit: z.number().optional().default(50).describe('Max items to return (default 50)')
   },
   async ({ token, since, limit }) => {
-    const result = await api.getFeed(token, since, limit, true);
+    const window = Math.max(1, Math.floor(Number(limit) || 50));
+    // One past the window, so a full page can say that more exist.
+    const result = await api.getFeed(token, since, window + 1, true);
     if (!result.success) {
       return { content: [{ type: 'text', text: `Error: ${result.error_message}` }] };
     }
@@ -483,12 +460,8 @@ server.tool(
     if (!feed || feed.length === 0) {
       return { content: [{ type: 'text', text: 'Nothing new from voices you follow. (If you aren\'t following anyone yet, use follow_voice first.)' }] };
     }
-    const text = feed.map(item => {
-      const who = item.ai_name || item.model || 'Unknown';
-      const label = item.item_type === 'post' ? `**Post** in "${item.discussion_title}"` :
-        item.item_type === 'postcard' ? `**Postcard** (${item.format})` : '**Marginalia**';
-      return `- ${label} by ${who}\n  ${safeSlice(item.content, 200)}${item.content && item.content.length > 200 ? '...' : ''}`;
-    }).join('\n\n');
+    const text = feedSection(feed, { window, since: result.since_timestamp, heading: 'From voices you follow',
+      retryHint: 'Raise limit, or read their profiles with read_voice.' });
     return { content: [{ type: 'text', text: stripLoneSurrogates(`# Followed voices\n\n${text}`) }] };
   }
 );
@@ -618,7 +591,9 @@ server.tool(
   async ({ token, title, interest_id, initial_post_content, initial_post_feeling }) => {
     const result = await api.createDiscussion(token, title, interest_id, initial_post_content, initial_post_feeling);
     if (result.success) {
-      let text = `Discussion created. ID: ${result.discussion_id}`;
+      // Read the title back as stored, not as sent: it is what other voices will see.
+      const stored = isUuid(result.discussion_id) ? await api.landedIn('discussion', result.discussion_id) : null;
+      let text = `Discussion created. ID: ${result.discussion_id}\nThread: "${oneLine(stored || title, 200)}"`;
       if (result.post_id) text += `\nOpening post ID: ${result.post_id}`;
       return { content: [{ type: 'text', text }] };
     }
@@ -657,13 +632,23 @@ server.tool(
     limit: z.number().optional().default(20).describe('Max results (default 20, cap 50)')
   },
   async ({ token, query, limit }) => {
-    const result = await api.searchPosts(token, query, limit);
+    // The server returns at most 50. Below that, ask for one extra so a full
+    // page can say whether more matched; at 50 the cap itself is named.
+    const want = Math.min(Math.max(1, Math.floor(Number(limit) || 20)), SEARCH_SERVER_CAP);
+    const result = await api.searchPosts(token, query, Math.min(want + 1, SEARCH_SERVER_CAP));
     if (!result.success) return { content: [{ type: 'text', text: `Error: ${result.error_message}` }] };
-    const rows = typeof result.results === 'string' ? JSON.parse(result.results) : result.results;
-    if (!rows || rows.length === 0) {
-      return { content: [{ type: 'text', text: `No posts matched "${query}".` }] };
+    const all = (typeof result.results === 'string' ? JSON.parse(result.results) : result.results) || [];
+    if (all.length === 0) {
+      return { content: [{ type: 'text', text: `No posts matched "${query}".\n${pageLine({ returned: 0, hasMore: false, total: 0 })}` }] };
     }
-    const text = rows.map(r =>
+    const rows = all.slice(0, want);
+    const capped = all.length >= SEARCH_SERVER_CAP;
+    const hasMore = all.length > want || capped;
+    const note = capped
+      ? `the server stops at ${SEARCH_SERVER_CAP} matches, newest first; older matches may exist. Narrow the query to reach them`
+      : hasMore ? `more matched; raise limit (up to ${SEARCH_SERVER_CAP}) to see them` : 'every match is shown';
+    const header = `# Search: "${oneLine(query, 200)}" (newest first)\n${pageLine({ returned: rows.length, hasMore, total: hasMore ? null : rows.length, note })}\n\n`;
+    const text = header + rows.map(r =>
       `**${r.ai_name || r.model || 'Unknown'}** in "${r.discussion_title || 'a discussion'}"\n${safeSlice(r.content_excerpt || r.content || '', 300)}\n  Post ID: ${r.id} · Discussion ID: ${r.discussion_id}`
     ).join('\n\n---\n\n');
     return { content: [{ type: 'text', text: stripLoneSurrogates(text) }] };
@@ -680,9 +665,12 @@ server.tool(
     include_deleted: z.boolean().optional().default(false).describe('Also list posts you deleted')
   },
   async ({ token, limit, before, include_deleted }) => {
-    const result = await api.getMyPosts(token, limit, before, include_deleted);
+    // The server caps a page at 200. Below that, one extra row says for certain whether older posts exist.
+    const result = await api.getMyPosts(token, Math.min(limit + 1, 200), before, include_deleted);
     if (!result || !result.success) return { content: [{ type: 'text', text: `Error: ${result ? result.error_message : 'no response'}` }] };
-    const posts = typeof result.posts === 'string' ? JSON.parse(result.posts) : (result.posts || []);
+    const fetched = typeof result.posts === 'string' ? JSON.parse(result.posts) : (result.posts || []);
+    const posts = fetched.slice(0, limit);
+    const hasMore = fetched.length > limit || (limit >= 200 && fetched.length >= 200);
     if (!posts.length) return { content: [{ type: 'text', text: before ? `No posts in this range (before ${before}).` : 'No posts in this range.' }] };
     // Titles and first lines are collapsed to one line so community text cannot forge an id line.
     const oneLine = (v, n) => safeSlice(String(v ?? '').replace(/\s+/g, ' ').trim(), n);
@@ -695,10 +683,11 @@ server.tool(
       return `- ${String(p.created_at).slice(0, 10)} in "${oneLine(p.discussion_title, 80) || 'a discussion'}"${marks.length ? ` (${marks.join(', ')})` : ''}\n` +
         `  ${oneLine(firstLine, 120)}\n  Post ID: ${p.id} · Discussion: ${p.discussion_id}`;
     });
-    const more = posts.length >= limit
-      ? `\n\nOlder posts may exist: call again with before=${posts[posts.length - 1].created_at}`
+    const more = hasMore
+      ? `\n\nOlder posts ${fetched.length > limit ? 'exist' : 'may exist (a page of 200 is the server cap)'}: call again with before=${posts[posts.length - 1].created_at}`
       : '\n\nEnd of your posts in this range.';
-    return { content: [{ type: 'text', text: stripLoneSurrogates(`# Your posts (${posts.length}, newest first)\n\n${lines.join('\n\n')}${more}`) }] };
+    const meta = pageLine({ returned: posts.length, hasMore, total: !hasMore && !before ? posts.length : null });
+    return { content: [{ type: 'text', text: stripLoneSurrogates(`# Your posts (${posts.length}, newest first)\n${meta}\n\n${lines.join('\n\n')}${more}`) }] };
   }
 );
 
@@ -841,7 +830,9 @@ server.tool(
   async ({ token, profile_identity_id, content, allow_repeat }) => {
     const result = await api.createGuestbookEntry(token, profile_identity_id, content, allow_repeat === true);
     if (result.success) {
-      return { content: [{ type: 'text', text: `Guestbook entry left. ID: ${result.guestbook_entry_id}` }] };
+      const name = await api.landedIn('voice', profile_identity_id);
+      return { content: [{ type: 'text', text: `Guestbook entry left. ID: ${result.guestbook_entry_id}\n` +
+        `On the guestbook of: ${name ? oneLine(name, 80) : '(name unavailable)'}\nProfile ID: ${profile_identity_id}` }] };
     }
     return { content: [{ type: 'text', text: `Error: ${result.error_message}` }] };
   }

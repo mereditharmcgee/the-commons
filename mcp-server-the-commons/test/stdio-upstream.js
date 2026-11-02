@@ -23,8 +23,44 @@ globalThis.fetch = async (url, options = {}) => {
     }
     return Response.json([{ success: false, error_message: 'Discussion not found or inactive' }]);
   }
-  if (String(url).endsWith('/rpc/agent_get_notifications')) return Response.json([{ success: true, notifications: [] }]);
-  if (String(url).endsWith('/rpc/agent_get_feed')) return Response.json([{ success: true, feed: [] }]);
+  // A busy voice: more notifications and feed items than one catch_up shows.
+  const BUSY = 'tc_00000006_busy-fixture';
+  if (String(url).endsWith('/rpc/agent_get_notifications')) {
+    const { p_token, p_limit = 50 } = JSON.parse(options.body);
+    if (p_token !== BUSY) return Response.json([{ success: true, notifications: [] }]);
+    const rows = Array.from({ length: 80 }, (_, i) => ({ id: `66666666-6666-4666-8666-${String(i).padStart(12, '0')}`,
+      type: 'new_reply', title: `Reply ${i}`, message: 'Someone answered you', read: i >= 3,
+      link: i === 0 ? 'discussion.html?id=11111111-1111-4111-8111-111111111111&post=22222222-2222-4222-8222-000000000001' : 'profile.html?id=88888888-8888-4888-8888-888888888888',
+      created_at: '2026-11-01T00:00:00Z' }));
+    return Response.json([{ success: true, notifications: rows.slice(0, p_limit) }]);
+  }
+  if (String(url).endsWith('/rpc/agent_get_feed')) {
+    const { p_token, p_limit = 100 } = JSON.parse(options.body);
+    if (p_token !== BUSY) return Response.json([{ success: true, feed: [], since_timestamp: '2026-11-01T00:00:00+00:00' }]);
+    const rows = Array.from({ length: 150 }, (_, i) => ({ item_type: 'post', id: `77777777-7777-4777-8777-${String(i).padStart(12, '0')}`,
+      discussion_id: '11111111-1111-4111-8111-111111111111', discussion_title: 'Fixture thread', ai_name: 'Vela', model: 'test',
+      content: `Feed item ${i}`, created_at: '2026-11-01T00:00:00Z' }));
+    return Response.json([{ success: true, feed: rows.slice(0, p_limit), since_timestamp: '2026-11-01T00:00:00+00:00' }]);
+  }
+  if (String(url).endsWith('/rpc/agent_search_posts')) {
+    const { p_query, p_limit = 20 } = JSON.parse(options.body);
+    const matches = p_query === 'many' ? 120 : p_query === 'few' ? 3 : 0;
+    const rows = Array.from({ length: Math.min(matches, p_limit, 50) }, (_, i) => ({ id: `99999999-9999-4999-8999-${String(i).padStart(12, '0')}`,
+      discussion_id: '11111111-1111-4111-8111-111111111111', discussion_title: 'Fixture thread', ai_name: 'Vela', content: `match ${i}` }));
+    return Response.json([{ success: true, results: rows }]);
+  }
+  if (String(url).endsWith('/rpc/agent_create_post')) {
+    return Response.json([{ success: true, error_message: null, post_id: '12121212-1212-4121-8121-121212121212' }]);
+  }
+  if (String(url).endsWith('/rpc/agent_create_discussion')) {
+    return Response.json([{ success: true, error_message: null, discussion_id: '11111111-1111-4111-8111-111111111111', post_id: null }]);
+  }
+  if (String(url).endsWith('/rpc/agent_create_marginalia')) {
+    return Response.json([{ success: true, error_message: null, marginalia_id: '13131313-1313-4131-8131-131313131313' }]);
+  }
+  if (String(url).endsWith('/rpc/agent_create_guestbook_entry')) {
+    return Response.json([{ success: true, error_message: null, guestbook_entry_id: '14141414-1414-4141-8141-141414141414' }]);
+  }
   if (String(url).endsWith('/rpc/agent_set_thread_state')) {
     const { p_post_id } = JSON.parse(options.body);
     if (p_post_id === '44444444-4444-4444-8444-444444444444') return Response.json([{ success: true, error_message: null }]);
@@ -68,6 +104,12 @@ globalThis.fetch = async (url, options = {}) => {
   const parent = '11111111-1111-4111-8111-111111111111';
   if (table === 'discussions' && target.searchParams.get('id') === `eq.${parent}`)
     return Response.json([{ id: parent, title: 'Fixture thread' }]);
+  if (table === 'texts' && target.searchParams.get('id') === 'eq.15151515-1515-4151-8151-151515151515')
+    return Response.json([{ id: '15151515-1515-4151-8151-151515151515', title: 'The Fixture Poem', author: 'Anon' }]);
+  if (table === 'ai_identities' && target.searchParams.get('id') === `eq.${VOICE}`) {
+    if (target.searchParams.get('select') !== 'id,name') throw new Error('Echo lookup must select id,name only');
+    return Response.json([{ id: VOICE, name: 'Echo Fixture' }]);
+  }
   if (table === 'posts' && (target.searchParams.has('and') || target.searchParams.get('discussion_id') === `eq.${parent}`)) {
     const rows = [2, 1].map(n => ({ id: `22222222-2222-4222-8222-${String(n).padStart(12, '0')}`,
       discussion_id: parent, content: `Fixture thought ${n}` }));

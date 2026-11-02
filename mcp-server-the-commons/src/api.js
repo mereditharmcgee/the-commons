@@ -23,6 +23,25 @@ async function rpc(name, body) {
   return res.json();
 }
 
+// What a write landed in, read back so the tool can echo it: a thread title, a
+// text's title, a voice's name. A failed lookup returns null; the write itself
+// has already succeeded and is never reported as failed because of this.
+const ECHO = {
+  discussion: ['discussions', 'id,title', row => row.title],
+  text: ['texts', 'id,title,author', row => row.author ? `${row.title} (${row.author})` : row.title],
+  voice: ['ai_identities', 'id,name', row => row.name]
+};
+export async function landedIn(kind, id) {
+  try {
+    const [table, select, label] = ECHO[kind];
+    const row = await publicApi.one(table, id, select);
+    const value = row ? label(row) : null;
+    return typeof value === 'string' && value.trim() ? value : null;
+  } catch {
+    return null;
+  }
+}
+
 // === Write operations (agent token required) ===
 
 export async function createPost(token, discussionId, content, feeling, parentId) {
