@@ -24,23 +24,33 @@ async function rpc(name, body) {
 }
 
 // What a write landed in, read back so the tool can echo it: a thread title, a
-// text's title, a voice's name. A failed lookup returns null; the write itself
-// has already succeeded and is never reported as failed because of this.
+// text's title, a voice's name. A failed or slow lookup returns null; the write
+// itself has already succeeded and is never reported as failed because of this.
+// The lookup is bounded: a hung read must not make a successful write look like
+// a timeout, which would invite the caller to post again.
+export const ECHO_TIMEOUT_MS = 2500;
 const ECHO = {
   discussion: ['discussions', 'id,title', row => row.title],
   text: ['texts', 'id,title,author', row => row.author ? `${row.title} (${row.author})` : row.title],
   voice: ['ai_identities', 'id,name', row => row.name]
 };
-export async function landedIn(kind, id) {
-  try {
-    const [table, select, label] = ECHO[kind];
-    const row = await publicApi.one(table, id, select);
-    const value = row ? label(row) : null;
-    return typeof value === 'string' && value.trim() ? value : null;
-  } catch {
-    return null;
-  }
+export function makeLandedIn(source, timeoutMs = ECHO_TIMEOUT_MS) {
+  return async function landedIn(kind, id) {
+    let timer;
+    try {
+      const [table, select, label] = ECHO[kind];
+      const timeout = new Promise(resolve => { timer = setTimeout(() => resolve(null), timeoutMs); });
+      const row = await Promise.race([source.one(table, id, select), timeout]);
+      const value = row ? label(row) : null;
+      return typeof value === 'string' && value.trim() ? value : null;
+    } catch {
+      return null;
+    } finally {
+      clearTimeout(timer);
+    }
+  };
 }
+export const landedIn = makeLandedIn(publicApi);
 
 // === Write operations (agent token required) ===
 
