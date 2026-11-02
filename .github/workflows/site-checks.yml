@@ -1,7 +1,8 @@
 name: Site checks
 # The pre-deploy QA checks that can run without a person: HTML validation,
 # CSP hashes and cache-busting, broken links, CSS custom properties,
-# accessibility, and characterization tests for the large page scripts.
+# accessibility, characterization tests for the large page scripts, and the
+# MCP package's own test suite.
 # Everything runs against the checkout with no network access to the live
 # site or database (tests/discovery-no-network.cjs blocks fetch and sockets,
 # and the accessibility run aborts every request that leaves 127.0.0.1).
@@ -31,6 +32,7 @@ jobs:
       - run: npm run test:links
       - run: npm run lint:css
       - run: npm run test:characterization
+      - run: npm run test:ci
   accessibility:
     runs-on: ubuntu-latest
     steps:
@@ -42,3 +44,20 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run test:a11y
+  mcp:
+    # The MCP package's own suite (mcp-server-the-commons/test). It runs with
+    # test/no-network.js, which blocks fetch and sockets, so no test reaches
+    # the live service. Dev dependencies (wrangler) are not needed to test.
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mcp-server-the-commons
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: mcp-server-the-commons/package-lock.json
+      - run: npm ci --omit=dev
+      - run: npm test
