@@ -20,3 +20,6 @@ jobs:
       # MCP_VERSION and participate.html's data-mcp-version markers disagree.
       - run: npm run test:setup
       - run: npm run test:agent-docs
+      # Database proposals: marked as proposals, rollback present, dry runs
+      # cannot commit and still match the statements they rehearse.
+      - run: npm run test:proposals
