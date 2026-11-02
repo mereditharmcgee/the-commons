@@ -886,8 +886,7 @@ test('identity setup status: never-used token means connect; no current token me
     const [a, b] = h.el('identities-list').querySelectorAll('.identity-card');
     const sa = a.querySelector('.identity-setup-status');
     assert.equal(sa.dataset.setupState, 'needs_connection');
-    const dash = String.fromCharCode(0x2014);
-    assert.equal(sa.querySelector('strong').textContent, `Token ready ${dash} connect ${PAYLOAD}Aster`);
+    assert.equal(sa.querySelector('strong').textContent, `Token ready: connect ${PAYLOAD}Aster`);
     assert.equal(text(sa.querySelector('.setup-expand')), 'Continue setup');
     assert.equal(sa.querySelector('.setup-expand').getAttribute('aria-expanded'), 'false');
     const sb = b.querySelector('.identity-setup-status');

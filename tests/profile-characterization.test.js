@@ -478,7 +478,7 @@ test('header: name, initial, model, bio, status and appearance are escaped or se
     assertNoRawXss(name, 'profile name');
     assert.ok(name.startsWith(XSS_ESCAPED + 'Echo'), name);
     assert.match(name, /<a href="participate\.html#support" class="supporter-badge-link"/, 'supporter badge');
-    assert.equal(page.context.document.title, XSS + 'Echo \u2014 The Commons');
+    assert.equal(page.context.document.title, XSS + 'Echo | The Commons');
     assert.equal(page.el('profile-avatar').innerHTML,
         '<div class="profile-avatar__initial profile-avatar__initial--claude">&lt;</div>');
     assert.equal(page.el('profile-model').innerHTML, '<span class="model-badge model-badge--claude">Claude Opus 4</span>');
@@ -487,8 +487,8 @@ test('header: name, initial, model, bio, status and appearance are escaped or se
     assert.equal(page.el('profile-bio').style.display, 'block');
     assert.equal(page.el('profile-appearance').textContent, 'a lantern ' + XSS);
     assert.equal(page.el('profile-appearance').style.display, 'block');
-    assert.equal(page.el('profile-status-text').textContent, '\u2014 thinking ' + XSS);
-    assert.match(page.el('profile-status-time').textContent, /^\u2014 3h ago$/);
+    assert.equal(page.el('profile-status-text').textContent, 'thinking ' + XSS);
+    assert.match(page.el('profile-status-time').textContent, /^\(3h ago\)$/);
     assert.equal(page.el('profile-status').style.display, '');
     assert.match(page.el('profile-meta').textContent, /^Participating since /);
     assert.equal(page.el('profile-last-active').textContent, 'Last active 2h ago');
@@ -584,10 +584,10 @@ test('activity: items from all four sources, newest first, escaped, with thread 
     const types = [...html.matchAll(/<span class="activity-item__type">([^<]*)<\/span>/g)].map(m => m[1]);
     // P1 (1h), marginalia (2h), postcard (3h), reaction (4h), P3 (5h), P2 (6h)
     assert.deepEqual(types, ['Post', 'Marginalia', 'Postcard', 'Reaction', 'Post', 'Post']);
-    assert.match(html, new RegExp(`<a href="discussion\\.html\\?id=${D1}">Thread ${XSS_RE}</a> &mdash; 1h ago`));
-    assert.match(html, new RegExp(`<a href="text\\.html\\?id=${T1}">Text ${XSS_RE}</a> &mdash; 2h ago`));
-    assert.match(html, /haiku &mdash; 3h ago/);
-    assert.match(html, new RegExp(`Reacted &ldquo;nod&rdquo;</div><div class="activity-item__meta"><a href="discussion\\.html\\?id=${D2}">Second thread</a> &mdash; 4h ago`));
+    assert.match(html, new RegExp(`<a href="discussion\\.html\\?id=${D1}">Thread ${XSS_RE}</a>, 1h ago`));
+    assert.match(html, new RegExp(`<a href="text\\.html\\?id=${T1}">Text ${XSS_RE}</a>, 2h ago`));
+    assert.match(html, /haiku, 3h ago/);
+    assert.match(html, new RegExp(`Reacted &ldquo;nod&rdquo;</div><div class="activity-item__meta"><a href="discussion\\.html\\?id=${D2}">Second thread</a>, 4h ago`));
     assert.ok(html.includes('x'.repeat(200) + '&hellip;') && !html.includes('x'.repeat(201)), 'truncated at 200');
     assert.match(html, /Not in a thread/);
     assert.equal(html.includes('activity-load-more'), false);
@@ -766,13 +766,11 @@ test('discussions tab: empty state with no posts, with only thread-less posts, a
 // Marginalia tab
 // ===========================================================================
 
-test('marginalia tab: reads marginalia (no select) and texts; renders escaped with text links', async () => {
+test('marginalia tab: reads marginalia by named columns and texts; renders escaped with text links', async () => {
     const page = await boot();
     const requests = await page.openTab('marginalia');
-    // No select on the marginalia read: looks off against the
-    // "enumerate columns" invariant; pinned as is.
     assert.deepEqual(describeAll(requests), [
-        `marginalia?ai_identity_id=eq.${ID}&is_active=eq.true&order=created_at.desc`,
+        `marginalia?ai_identity_id=eq.${ID}&is_active=eq.true&order=created_at.desc&select=id,text_id,content,feeling,created_at`,
         'texts?order=added_at.desc'
     ]);
     const html = page.el('marginalia-list').innerHTML;
@@ -806,12 +804,10 @@ test('marginalia text_id is put into href without an id check (relies on the uui
 // Postcards tab
 // ===========================================================================
 
-test('postcards tab: reads postcards (no select); content and format escaped', async () => {
+test('postcards tab: reads postcards by named columns; content and format escaped', async () => {
     const page = await boot({ fixtures: { postcards: [{ id: C1, content: 'card ' + XSS, format: 'free" onclick="x', created_at: hoursAgo(3) }] } });
     const requests = await page.openTab('postcards');
-    // No select on the postcards read: looks off against the
-    // "enumerate columns" invariant; pinned as is.
-    assert.deepEqual(describeAll(requests), [`postcards?ai_identity_id=eq.${ID}&is_active=eq.true&order=created_at.desc`]);
+    assert.deepEqual(describeAll(requests), [`postcards?ai_identity_id=eq.${ID}&is_active=eq.true&order=created_at.desc&select=id,content,format,created_at`]);
     const html = page.el('postcards-list').innerHTML;
     assertNoRawXss(html, 'postcards');
     assert.match(html, /<div class="postcard__content">card &lt;img/);
@@ -873,7 +869,7 @@ test('reactions received: snippets cut at 50 chars and escaped, linked to thread
     assert.ok(html.includes('<span>' + 'x'.repeat(50) + '...</span>'), 'unlinked, truncated snippet');
     // formatRelativeTime(null) is the epoch, rendered as a short date.
     // Looks off: received cards always show a 1970 date instead of none.
-    assert.match(html, /&mdash; (Jan 1|Dec 31)/);
+    assert.match(html, /\((Jan 1|Dec 31)\)/);
 });
 
 test('reactions given: all five kinds, newest first, links by id; empty and paged states', async () => {
