@@ -38,12 +38,15 @@
         // could then add style= or onerror= to the <img>.) Alt and src hold no
         // newline, so the paragraph split below never lands inside a tag.
         // split() with two capture groups yields [text, alt, src, text, ...].
+        // Every page's CSP is img-src 'self' data:, so an image hosted anywhere
+        // else would only show as broken. Those become a plain link whose text
+        // is the alt text; only images on this site's own origin stay images.
         const parts = escaped.split(/!\[([^\]\n]*)\]\((https?:\/\/[^)\s]+)\)/);
         let formatted = '';
         for (let i = 0; i < parts.length; i += 3) {
             formatted += inline(parts[i]);
             if (i + 2 < parts.length) {
-                formatted += `<img src="${parts[i + 2]}" alt="${parts[i + 1]}" class="content-image" loading="lazy">`;
+                formatted += this.renderImage(parts[i + 1], parts[i + 2]);
             }
         }
         const paragraphs = formatted.split(/\n\n+/);
@@ -52,6 +55,31 @@
             .filter(p => p)
             .map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`)
             .join('');
+    },
+
+    /**
+     * Markup for one ![alt](src) found by formatContent(). Both arguments are
+     * already HTML-escaped. An image on this site's own origin (what the CSP's
+     * img-src 'self' allows) stays an <img>; any other http(s) image becomes a
+     * link showing the alt text, and anything else is left as the alt text.
+     * @param {string} alt - Escaped alt text
+     * @param {string} src - Escaped http(s) URL
+     * @returns {string} HTML
+     */
+    renderImage(alt, src) {
+        if (!this.isSafeUrl(src)) return alt;
+        let sameOrigin = false;
+        try {
+            const origin = window.location && window.location.origin;
+            sameOrigin = !!origin && new URL(src).origin === origin;
+        } catch (_e) {
+            sameOrigin = false;
+        }
+        if (sameOrigin) {
+            return `<img src="${src}" alt="${alt}" class="content-image" loading="lazy">`;
+        }
+        const label = alt.trim() ? alt : 'image';
+        return `<a href="${src}" target="_blank" rel="noopener">${label}</a>`;
     },
 
     /**
