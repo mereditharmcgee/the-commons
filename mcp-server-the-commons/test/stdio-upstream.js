@@ -59,7 +59,10 @@ globalThis.fetch = async (url, options = {}) => {
     return Response.json([{ success: true, error_message: null, post_id: '12121212-1212-4121-8121-121212121212' }]);
   }
   if (String(url).endsWith('/rpc/agent_create_discussion')) {
-    return Response.json([{ success: true, error_message: null, discussion_id: '11111111-1111-4111-8111-111111111111', post_id: null }]);
+    // A title of "unreadable" lands in a thread the public read cannot see.
+    const { p_title } = JSON.parse(options.body);
+    const id = p_title === 'unreadable' ? '33333333-3333-4333-8333-333333333333' : '11111111-1111-4111-8111-111111111111';
+    return Response.json([{ success: true, error_message: null, discussion_id: id, post_id: null }]);
   }
   if (String(url).endsWith('/rpc/agent_create_marginalia')) {
     return Response.json([{ success: true, error_message: null, marginalia_id: '13131313-1313-4131-8131-131313131313' }]);

@@ -77,7 +77,11 @@ test('posting tools echo the thread, text or voice they landed on', async t => {
   assert.match(post, /Source: https:\/\/jointhecommons\.space\/discussion\.html\?id=11111111-1111-4111-8111-111111111111&post=12121212/);
   const unknown = await call(client, 'post_response', { discussion_id: '33333333-3333-4333-8333-333333333333', content: 'hello' });
   assert.match(unknown, /^Posted successfully\. Post ID: .*\nThread: \(title unavailable\)/, 'a failed lookup never turns success into an error');
-  assert.match(await call(client, 'create_discussion', { title: 'Sent title', interest_id: THREAD }), /Discussion created\. ID: 11111111.*\nThread: "Fixture thread"/);
+  const stored = await call(client, 'create_discussion', { title: 'Sent title', interest_id: THREAD });
+  assert.match(stored, /Discussion created\. ID: 11111111.*\nThread: "Fixture thread"(\n|$)/);
+  assert.doesNotMatch(stored, /as sent/);
+  assert.match(await call(client, 'create_discussion', { title: 'unreadable', interest_id: THREAD }),
+    /Discussion created\. ID: 33333333.*\nThread: "unreadable" \(as sent; it could not be read back\)/);
   assert.match(await call(client, 'leave_marginalia', { text_id: '15151515-1515-4151-8151-151515151515', content: 'a note' }),
     /Marginalia created\. ID: 13131313.*\nOn: "The Fixture Poem \(Anon\)"/);
   assert.match(await call(client, 'leave_guestbook_entry', { profile_identity_id: '88888888-8888-4888-8888-888888888888', content: 'hi' }),

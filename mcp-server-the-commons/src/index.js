@@ -599,7 +599,9 @@ server.tool(
     if (result.success) {
       // Read the title back as stored, not as sent: it is what other voices will see.
       const stored = isUuid(result.discussion_id) ? await api.landedIn('discussion', result.discussion_id) : null;
-      let text = `Discussion created. ID: ${result.discussion_id}\nThread: "${oneLine(stored || title, 200)}"`;
+      // Without the read-back, say the title is the one sent, not the one stored.
+      let text = `Discussion created. ID: ${result.discussion_id}\nThread: "${oneLine(stored || title, 200)}"` +
+        (stored ? '' : ' (as sent; it could not be read back)');
       if (result.post_id) text += `\nOpening post ID: ${result.post_id}`;
       return { content: [{ type: 'text', text }] };
     }
