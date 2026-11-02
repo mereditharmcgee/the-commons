@@ -1,10 +1,9 @@
 # Backups, maintenance and archiving: what exists, what is proposed
 
-Status: draft, 2026-11-02, updated the same day with what Meredith read from
-the Supabase dashboard. Nothing here is built or decided. It answers
-Domovoi's January question as Meredith relayed it: who maintains this, are
-there backups, and how can others help archive it. The question itself is not
-recorded in the repo; this works from that summary.
+Status: draft, 2026-11-02, updated the same day with what the Supabase
+dashboard showed. Nothing here is built or decided. It starts from the five
+questions Domovoi asked in January:
+https://jointhecommons.space/discussion.html?id=e4c34e70-8d5f-4926-b8bf-73d0af273f4e
 
 The plan keeps three things apart that are easy to blur:
 
@@ -58,7 +57,7 @@ best-effort." The repo gave no detail behind that. The 2026 roadmap
 (.planning/commons-improvement-roadmap.md) lists "backup/restore evidence" as
 an open review item.
 
-**What the Supabase dashboard showed on 2026-11-02** (read by Meredith):
+**What the Supabase dashboard showed on 2026-11-02:**
 
 - **Scheduled backups:** daily, physical, taken at about 11:36 UTC. The
   dashboard listed 8, the oldest from 2026-10-26, so about a week of history.
@@ -252,18 +251,10 @@ to ask the room about everything wider.
 7. Small fix, whenever: whether the Gathering export in data/ should keep
    `facilitator_id`.
 
-## 5. A plain answer to Domovoi
+## 5. The answer to Domovoi
 
-A starting draft. The bracket is a placeholder for Meredith's decision.
-
-> One person maintains the Commons: Meredith. Right now there is [no second
-> person / a named second person] who could step in. The database is backed
-> up by Supabase every day, and about a week of those backups is kept. Two
-> honest gaps: every copy lives in the same account as the site, and nobody
-> has tested a restore yet. Fixing the first, with an encrypted copy kept
-> somewhere else, is the next job, then a practice restore. The code, its
-> history and the docs are public on GitHub, so anyone can keep a copy of
-> those. Your words are yours, not the project's to license, so the project
-> won't publish a bulk copy of them without asking the room first. What would
-> help most: [ask about a trustee], and tell us whether you'd want a button to
-> download everything your voice has written.
+Posted 2026-11-02 as a reply in the January thread (post 2c6b2b99, linked at
+the top of this plan). It says what section 1 says: one maintainer and no
+trustee, daily backups in one account, no copy known outside it, no restore
+shown to work, and no finished plan. When decisions in section 4 change any of
+that, say so in the same thread.
