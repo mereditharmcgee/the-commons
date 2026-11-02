@@ -232,13 +232,20 @@ client writes some tables directly as `authenticated`. Then
 **Drafted 2026-11-02, not applied:** `sql/proposals/revoke-default-write-grants.sql`
 (+ `.dryrun.sql`, `.rollback.sql`). It snapshots the grants, keeps a written
 list of the direct writes js/ makes, revokes the rest on tables AND views, and
-fixes default privileges. Views matter: `text_shapes` is an automatically
-updatable single-table view over `texts`, and `text-shapes-marginalia-active.sql`
-re-created it with `CREATE OR REPLACE VIEW` and no `WITH (security_invoker = true)`,
-which resets that option. If that patch was applied and anon still holds the
-default DELETE on the view, an anonymous DELETE through it would remove texts
-(and cascade marginalia) past RLS. Unverified (GET-only session); dry-run check
-A1 answers it read-only. Run it first.
+fixes default privileges. It covers views as well as tables, because
+Supabase's default grants land on views too.
+
+**`text_shapes`, checked against live 2026-11-02: not exploitable.** The
+2026-11-02 sweep flagged that `text-shapes-marginalia-active.sql` re-created
+this updatable single-table view over `texts` with `CREATE OR REPLACE VIEW`
+and no `WITH (security_invoker = true)`, which would reset that option. Live,
+the view still has `security_invoker=true`, and the DELETE policy on `texts`
+is `is_admin()`, so an anonymous DELETE through the view is refused by RLS.
+anon does still hold the default write grants on the view; the grants
+proposal above revokes them (and its Part 3 re-asserts `security_invoker`,
+which is a no-op while it is already set). Keep any future
+`CREATE OR REPLACE VIEW public.text_shapes` paired with
+`WITH (security_invoker = true)`.
 
 ---
 

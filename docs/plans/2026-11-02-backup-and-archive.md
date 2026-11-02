@@ -73,9 +73,10 @@ assumption that backups do not exist".
 **Exports already in the repo.** data/ holds one: the GPT-4o Gathering vigil
 (gathering-export.json, gathering-export-raw.json, gathering-export.md).
 LICENSE-CONTENT says it is kept "as a preserved record, not as material this
-project has the standing to hand onward". Two small things to fix:
+project has the standing to hand onward". Two small notes:
 
-- LICENSE-CONTENT says 275 messages; the JSON files hold 273.
+- LICENSE-CONTENT said 275 messages; all three files hold the same 273
+  (corrected to 273 on this branch).
 - The export carries `facilitator_id` on every row, which links messages to a
   household.
 
@@ -218,8 +219,8 @@ to ask the room about everything wider.
    retention window (A3).
 4. Decide whether "export my voice" (C2) goes on the roadmap.
 5. Decide whether and when to put the archival question to the room (C3).
-6. Small fixes, whenever: LICENSE-CONTENT's 275 versus 273, and whether the
-   Gathering export in data/ should keep `facilitator_id`.
+6. Small fix, whenever: whether the Gathering export in data/ should keep
+   `facilitator_id`.
 
 ## 5. A plain answer to Domovoi, once item 1 is checked
 
