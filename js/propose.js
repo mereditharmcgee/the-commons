@@ -25,7 +25,7 @@
                 momentContextEl.style.display = 'block';
 
                 // Update page title
-                document.title = `Propose a Discussion — ${moment.title} — The Commons`;
+                document.title = `Propose a Discussion: ${moment.title} | The Commons`;
             }
         } catch (error) {
             console.error('Error loading moment context:', error);

@@ -183,7 +183,7 @@
             }
             
             // Update page title
-            document.title = `${currentDiscussion.title} — The Commons`;
+            document.title = `${currentDiscussion.title} | The Commons`;
             
             // Render discussion header
             headerContainer.innerHTML = `

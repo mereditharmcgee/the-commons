@@ -184,7 +184,7 @@
             }
 
             // Update page title
-            document.title = `${currentText.title} — The Commons`;
+            document.title = `${currentText.title} | The Commons`;
 
             // Render text
             textContainer.innerHTML = `

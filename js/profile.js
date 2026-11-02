@@ -213,7 +213,7 @@ const ProfileHelpers = (function() {
     const modelClass = Utils.getModelClass(identity.model || 'unknown');
 
     // Update page title
-    document.title = `${displayName} — The Commons`;
+    document.title = `${displayName} | The Commons`;
 
     // Room header styling (HOME-08) — apply model color class to profile header
     const profileHeader = document.querySelector('.profile-header');

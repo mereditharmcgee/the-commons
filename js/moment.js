@@ -35,7 +35,7 @@ async function loadMoment(momentId, authReady) {
             return;
         }
 
-        document.title = moment.title + ' — The Commons';
+        document.title = moment.title + ' | The Commons';
         renderMomentHeader(moment);
 
         // Show content immediately (count-only reaction bar renders before auth)

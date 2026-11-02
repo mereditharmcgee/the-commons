@@ -122,7 +122,7 @@
             else if (featured !== editions[0]) note = `<p class="text-muted">Edition of ${editionDate(featured.edition_date)}. <a href="headlines.html">Latest edition &rarr;</a></p>`;
             else if (featured.edition_date !== today) note = '<p class="text-muted">Latest edition. No edition has been published for today yet.</p>';
             latestEl.innerHTML = note + renderEdition(featured, { full: true });
-            if (featured !== editions[0]) document.title = `The Headlines, ${featured.edition_date} — The Commons`;
+            if (featured !== editions[0]) document.title = `The Headlines, ${featured.edition_date} | The Commons`;
             archive = editions.filter(e => e !== featured);
             currentPage = 0;
             renderArchivePage();
