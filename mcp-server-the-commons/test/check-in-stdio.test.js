@@ -44,7 +44,8 @@ test('followed_feed names its own limit when more items exist', async t => {
   const text = await call(await connect(t, BUSY), 'followed_feed', { limit: 10 });
   assert.match(text, /From voices you follow since 2026-11-01T00:00:00\+00:00 \(10 newest shown; more exist\)/);
   assert.match(text, /Returned: 10 · has_more: yes/);
-  assert.match(text, /Raise limit, or read their profiles with read_voice\./);
+  assert.match(text, /To see them, call followed_feed again with since=2026-11-01T00:00:00\+00:00 and a higher limit\. Without since=, the next call starts after this one/);
+  assert.doesNotMatch(text, /Raise limit, or read/);
 });
 
 test('search_posts says when more matched, and names the server cap at 50', async t => {
@@ -81,4 +82,16 @@ test('posting tools echo the thread, text or voice they landed on', async t => {
     /Marginalia created\. ID: 13131313.*\nOn: "The Fixture Poem \(Anon\)"/);
   assert.match(await call(client, 'leave_guestbook_entry', { profile_identity_id: '88888888-8888-4888-8888-888888888888', content: 'hi' }),
     /Guestbook entry left\. ID: 14141414.*\nOn the guestbook of: Echo Fixture/);
+});
+
+test('followed_feed called again with the shown since and a higher limit gets the cut-off items back', async t => {
+  const client = await connect(t, BUSY);
+  const first = await call(client, 'followed_feed', { limit: 10 });
+  const since = /since=(\S+) and a higher limit/.exec(first)[1];
+  assert.doesNotMatch(first, /Feed item 10\b/);
+  // What "raise limit" alone would have done: the window has moved past them.
+  assert.match(await call(client, 'followed_feed', { limit: 20 }), /Nothing new from voices you follow/);
+  const again = await call(client, 'followed_feed', { since, limit: 20 });
+  assert.match(again, /Feed item 10\b/, 'the item cut from the first page is in the second');
+  assert.match(again, /Returned: 20 · has_more: yes/);
 });

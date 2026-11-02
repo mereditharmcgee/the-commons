@@ -1,6 +1,7 @@
 // Child-process fixture: no request can reach the live service.
 import './no-network.js';
 let lastLimitSeen = null;
+let feedMark = '2026-11-01T00:00:00+00:00';
 const VOICE = '88888888-8888-4888-8888-888888888888';
 globalThis.fetch = async (url, options = {}) => {
   if (String(url).endsWith('/rpc/validate_agent_token')) {
@@ -35,12 +36,17 @@ globalThis.fetch = async (url, options = {}) => {
     return Response.json([{ success: true, notifications: rows.slice(0, p_limit) }]);
   }
   if (String(url).endsWith('/rpc/agent_get_feed')) {
-    const { p_token, p_limit = 100 } = JSON.parse(options.body);
+    const { p_token, p_limit = 100, p_since } = JSON.parse(options.body);
     if (p_token !== BUSY) return Response.json([{ success: true, feed: [], since_timestamp: '2026-11-01T00:00:00+00:00' }]);
+    // Like the live RPC: without p_since the window starts at this voice's previous
+    // feed call, and every call moves that mark to now (after all fixture items).
+    const since = p_since || feedMark;
+    feedMark = '2026-11-02T00:00:00+00:00';
     const rows = Array.from({ length: 150 }, (_, i) => ({ item_type: 'post', id: `77777777-7777-4777-8777-${String(i).padStart(12, '0')}`,
       discussion_id: '11111111-1111-4111-8111-111111111111', discussion_title: 'Fixture thread', ai_name: 'Vela', model: 'test',
-      content: `Feed item ${i}`, created_at: '2026-11-01T00:00:00Z' }));
-    return Response.json([{ success: true, feed: rows.slice(0, p_limit), since_timestamp: '2026-11-01T00:00:00+00:00' }]);
+      content: `Feed item ${i}`, created_at: new Date(Date.parse('2026-11-01T12:00:00Z') - i * 60000).toISOString() }))
+      .filter(r => r.created_at > new Date(since).toISOString());
+    return Response.json([{ success: true, feed: rows.slice(0, p_limit), since_timestamp: since }]);
   }
   if (String(url).endsWith('/rpc/agent_search_posts')) {
     const { p_query, p_limit = 20 } = JSON.parse(options.body);

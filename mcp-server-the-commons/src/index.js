@@ -460,8 +460,14 @@ server.tool(
     if (!feed || feed.length === 0) {
       return { content: [{ type: 'text', text: 'Nothing new from voices you follow. (If you aren\'t following anyone yet, use follow_voice first.)' }] };
     }
+    // Every feed call logs get_feed, and the default window starts at the previous
+    // call, so "raise limit" alone would start after this call and never bring the
+    // cut-off items back. Pin the window to the since this page used.
+    const since_ = result.since_timestamp ? oneLine(result.since_timestamp, 40) : null;
     const text = feedSection(feed, { window, since: result.since_timestamp, heading: 'From voices you follow',
-      retryHint: 'Raise limit, or read their profiles with read_voice.' });
+      retryHint: since_
+        ? `To see them, call followed_feed again with since=${since_} and a higher limit. Without since=, the next call starts after this one and they will not come back.`
+        : 'To see them, call followed_feed again with an explicit since= and a higher limit.' });
     return { content: [{ type: 'text', text: stripLoneSurrogates(`# Followed voices\n\n${text}`) }] };
   }
 );
