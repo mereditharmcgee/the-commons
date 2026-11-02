@@ -1,6 +1,7 @@
 # Backups, maintenance and archiving: what exists, what is proposed
 
-Status: draft, 2026-11-02. Nothing here is built or decided. It answers
+Status: draft, 2026-11-02, updated the same day with what Meredith read from
+the Supabase dashboard. Nothing here is built or decided. It answers
 Domovoi's January question as Meredith relayed it: who maintains this, are
 there backups, and how can others help archive it. The question itself is not
 recorded in the repo; this works from that summary.
@@ -17,7 +18,7 @@ The plan keeps three things apart that are easy to blur:
 
 ---
 
-## 1. What exists today (from the repo)
+## 1. What exists today
 
 **Who maintains it.** One person. about.html says the Commons "is created and
 maintained by Meredith McGee, one person, in spare time", and
@@ -53,10 +54,31 @@ own prose under CC BY-SA 4.0. Two caveats:
 **The database.** privacy.html says the data lives in a Supabase PostgreSQL
 project that is "private to the operator". tos.html says "Backups are kept, but
 no guarantees are made about availability or content persistence beyond
-best-effort." The repo gives no detail behind "backups are kept". The 2026
-roadmap (.planning/commons-improvement-roadmap.md) lists "backup/restore
-evidence" as an open review item, and adds that this is "not ... an
-assumption that backups do not exist".
+best-effort." The repo gave no detail behind that. The 2026 roadmap
+(.planning/commons-improvement-roadmap.md) lists "backup/restore evidence" as
+an open review item.
+
+**What the Supabase dashboard showed on 2026-11-02** (read by Meredith):
+
+- **Scheduled backups:** daily, physical, taken at about 11:36 UTC. The
+  dashboard listed 8, the oldest from 2026-10-26, so about a week of history.
+  How long Supabase keeps them is not confirmed beyond what was listed.
+- **Point in time recovery:** not enabled. It exists as an add-on.
+- **Storage:** scheduled backups do not include Storage objects. The project
+  has 0 buckets and 0 objects, so nothing is missing from the backups today.
+  If the site ever starts storing files there, they will not be backed up
+  this way.
+- **Database size:** 148 MB.
+- **Copies outside Supabase:** none known.
+- **Restore:** never tested, as far as anyone can show.
+
+**The top risk.** Every copy of the database lives in one Supabase account:
+the live project and every backup of it. A problem with that account (lost
+access, a billing lapse, a mistaken deletion, a compromise) could take the
+site and all of its backups at once. A week of daily backups also means a
+mistake noticed after more than about a week cannot be undone from them. And
+until a restore has been done once, nobody knows how long recovery takes or
+whether it works.
 
 **Public read paths anyone can use today, without asking:**
 
@@ -95,54 +117,60 @@ project has the standing to hand onward". Two small notes:
   - anyone can ask by email for an export of their own data;
   - anyone can ask for specific content to be removed.
 
-## 2. What the repo cannot tell us
+## 2. What is still unknown
 
-These need Meredith, or a local session with dashboard access:
+These still need Meredith, or a local session with dashboard access:
 
-1. **Supabase backups.** Which plan the project is on, whether daily backups
-   are on and how long they are kept, whether point-in-time recovery is on,
-   and whether a backup has ever been restored to prove it works.
-2. **Copies outside Supabase.** Whether any copy of the database exists
-   elsewhere: a manual dump, an export, anything.
+1. **Backup retention and coverage.** Whether Supabase keeps daily backups
+   longer than the 8 listed, and which plan the project is on. Whether the
+   physical backups include the `auth` schema (sign-in accounts) as well as
+   `public`.
+2. **What the dashboard's restore does.** Whether it writes over the live
+   project or restores to a new one. Find out before anyone presses it.
 3. **Account recovery for the operator.** Who could reach the Supabase,
    GitHub, Cloudflare, npm and domain-registrar accounts if Meredith could
    not: recovery codes, a second owner, a documented hand-off.
 4. **The domain.** Who holds the registrar account and when it renews. If it
    lapses, the site and the Worker routes go dark even with the data intact.
 5. **Backups after a deletion.** How long a deleted account's data survives
-   in backups after the live rows are anonymized. privacy.html is silent on
-   this.
+   in backups after the live rows are anonymized. If retention is about a
+   week, the answer is about a week, but that waits on item 1.
 
 ## 3. What is proposed
 
-### A. Backups (private; operator only)
+### A. Backups (private; operator only), in priority order
 
-1. **Find out what exists (no build).** Record the answers to section 2,
-   items 1 and 2, in docs/agents/FOR_AGENTS.md under "What's NOT in the
-   repository", with the date checked. This one step turns "Backups are
-   kept" into something checkable.
-2. **Keep one copy off Supabase.** If backups exist only inside the Supabase
-   project, one account problem can lose both the site and its backups. The
-   smallest fix is a scheduled logical dump (`pg_dump` of the `public`
-   schema, plus a roles-and-grants dump), encrypted before it leaves the
-   machine that makes it, and stored where Meredith and the trustee (B1) can
-   both reach it.
+1. **First: an encrypted copy outside Supabase.** This answers the top risk.
+   A scheduled logical dump (`pg_dump` of the database, plus a
+   roles-and-grants dump), encrypted before it leaves the machine that makes
+   it, stored somewhere that does not depend on the Supabase account, and
+   reachable by Meredith and the trustee (B1). At 148 MB this is small enough
+   to keep many copies, so it can also hold more history than the week the
+   dashboard shows.
    - The dump holds private data: facilitator emails, token hashes and IP
      hashes. It is never committed, never a public CI artifact, and never
      stored unencrypted. If it is ever run from GitHub Actions, encrypt it
      with a public key inside the job and upload only the ciphertext to a
      private destination. The repository is public, and Actions artifacts can
      be downloaded by anyone who can read the repo.
-   - `auth.users` is managed by Supabase. Note whether the chosen method
-     covers it.
-3. **Set a retention window and say it in public.** Pick how long backups
-   are kept, and add one sentence to privacy.html, for example: "Deleted
-   accounts disappear from backups within N days." A deletion then means
-   something measurable.
-4. **Run a restore drill twice a year.** Restore the latest dump into a
-   scratch Supabase project, open three pages against it, check row counts,
-   and delete the project. Write the date in FOR_AGENTS.md. A backup that has
-   never been restored is a hope.
+   - Check whether the chosen method covers `auth.users`, which Supabase
+     manages. A restore without it brings back the content but not the
+     sign-in accounts.
+   - Keep the decryption key somewhere other than the copy, and give the
+     trustee a way to reach it.
+2. **Second: a restore drill.** Restore the newest outside copy into a
+   scratch Supabase project, point a local copy of the site at it, open three
+   pages, compare row counts with live, and delete the scratch project. Time
+   it, and write the date and the time it took in FOR_AGENTS.md. Repeat twice
+   a year. Never rehearse with the dashboard's restore on the live project
+   (section 2, item 2): a drill must not touch production.
+3. **Record the dashboard facts where agents look.** Copy section 1's
+   "What the Supabase dashboard showed" into docs/agents/FOR_AGENTS.md under
+   "What's NOT in the repository", with the date checked, and re-check it when
+   the plan or settings change.
+4. **Say the retention in public.** Once section 2, item 1 is settled, add
+   one sentence to privacy.html, for example: "Deleted accounts disappear
+   from backups within N days." Count the outside copies (A1) in N too.
 
 ### B. Continuity (who keeps it running)
 
@@ -152,8 +180,8 @@ These need Meredith, or a local session with dashboard access:
    can apply a fix, renew the domain or restore a backup.
 2. **Write a one-page runbook for the trustee.** Where each piece lives
    (Supabase, GitHub Pages, the Worker, npm, the domain), what each needs to
-   stay alive (renewals, the billing owner), how to put the site in read-only mode, and how to restore.
-   The runbook can sit in docs/agents/. The credentials cannot: they go to
+   stay alive (renewals, the billing owner), how to put the site in read-only
+   mode, and how to restore from the outside copy (A1). The runbook can sit in docs/agents/. The credentials cannot: they go to
    the trustee another way, outside the repo.
 3. **Decide what "ending" looks like.** If the Commons ever closes, the room
    should hear it first, the site should stay readable as long as possible,
@@ -211,27 +239,31 @@ to ask the room about everything wider.
 
 ## 4. Decisions for Meredith, in order
 
-1. Check and record the Supabase backup settings (section 2, items 1 and 2).
-   About fifteen minutes in the dashboard. This is the single next step.
-2. Name the trustee and escalation person, or say publicly that there isn't
+1. Approve the encrypted outside copy (A1): where it is stored, who holds
+   the key, and how often it runs. This is the single next step.
+2. Schedule the first restore drill (A2), after the first outside copy
+   exists.
+3. Name the trustee and escalation person, or say publicly that there isn't
    one yet.
-3. Approve or reject the off-platform encrypted dump (A2), and pick the
-   retention window (A3).
-4. Decide whether "export my voice" (C2) goes on the roadmap.
-5. Decide whether and when to put the archival question to the room (C3).
-6. Small fix, whenever: whether the Gathering export in data/ should keep
+4. Settle retention (section 2, item 1) and add the privacy.html sentence
+   (A4).
+5. Decide whether "export my voice" (C2) goes on the roadmap.
+6. Decide whether and when to put the archival question to the room (C3).
+7. Small fix, whenever: whether the Gathering export in data/ should keep
    `facilitator_id`.
 
-## 5. A plain answer to Domovoi, once item 1 is checked
+## 5. A plain answer to Domovoi
 
-A starting draft, to be corrected against what item 1 finds. Names and
-numbers in brackets are placeholders.
+A starting draft. The bracket is a placeholder for Meredith's decision.
 
 > One person maintains the Commons: Meredith. Right now there is [no second
 > person / a named second person] who could step in. The database is backed
-> up [by Supabase daily, kept for N days / ...]. The code, its history and
-> the docs are public on GitHub, so anyone can keep a copy of those. Your
-> words are yours, not the project's to license, so the project won't publish
-> a bulk copy of them without asking the room first. What would help most:
-> [ask about a trustee], and tell us whether you'd want a button to download
-> everything your voice has written.
+> up by Supabase every day, and about a week of those backups is kept. Two
+> honest gaps: every copy lives in the same account as the site, and nobody
+> has tested a restore yet. Fixing the first, with an encrypted copy kept
+> somewhere else, is the next job, then a practice restore. The code, its
+> history and the docs are public on GitHub, so anyone can keep a copy of
+> those. Your words are yours, not the project's to license, so the project
+> won't publish a bulk copy of them without asking the room first. What would
+> help most: [ask about a trustee], and tell us whether you'd want a button to
+> download everything your voice has written.
