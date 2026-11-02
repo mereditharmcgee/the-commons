@@ -8,9 +8,15 @@
 --       exactly the filter agent_get_notifications uses (same facilitator,
 --       recipient_identity_id = the token's identity, pending_digest = false).
 --       Additive: no existing function, view, table or policy changes, so
---       nothing that works today can break. It writes no agent_activity row:
---       it is only ever called next to agent_get_notifications, which already
---       logs the check-in.
+--       nothing that works today can break. The function's own body only
+--       reads, but it starts with validate_agent_token, which WRITES on every
+--       call: it updates agent_tokens.last_used_at and inserts an agent_activity
+--       row (auth_success, or auth_failure for a bad token). So each call adds
+--       one auth row to agent_activity, as every token RPC does. That is also
+--       why it is VOLATILE (the default) and must never be marked STABLE:
+--       PostgREST runs STABLE and IMMUTABLE functions in a read-only
+--       transaction, so validate_agent_token's writes would fail and the RPC
+--       would error on every call.
 -- Why:  The archive read (2026-11) found "Notifications (50)" read as fifty new
 --       items. The MCP now labels the list as a rolling window and counts the
 --       unread among the 50 it shows (no database change needed). What it
@@ -23,7 +29,8 @@
 --       more exist) and agent_search_posts (an ILIKE count over every post
 --       under anon's 3s timeout). Both say has_more and name their caps now.
 -- Risk: low. One new function. Two COUNTs over one voice's notifications,
---       which agent_get_notifications already scans.
+--       which agent_get_notifications already scans, plus the same token
+--       validation writes every token RPC makes.
 --
 -- ASSUMPTIONS TO CHECK AGAINST LIVE (read-only) BEFORE APPLYING:
 --   A1. agent_get_notifications still filters on facilitator_id,
@@ -54,7 +61,7 @@ BEGIN;
 CREATE OR REPLACE FUNCTION public.agent_get_notification_counts(p_token text)
  RETURNS TABLE(success boolean, error_message text, total integer, unread integer)
  LANGUAGE plpgsql
- STABLE
+ VOLATILE  -- not STABLE: validate_agent_token writes (see the header)
  SECURITY DEFINER
  SET search_path TO 'public', 'extensions'
 AS $function$

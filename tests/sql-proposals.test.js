@@ -60,3 +60,18 @@ test('welcome_queue keeps every existing column in place and only appends outsid
     assert.match(sql, /lower\(btrim\(ni\.name\)\) IS DISTINCT FROM lower\(btrim\(ni\.model\)\)/);
     assert.match(sql, /regexp_replace\(btrim\(ni\.name\)/);
 });
+
+test('agent_get_notification_counts is VOLATILE, because validate_agent_token writes', () => {
+    // PostgREST runs STABLE and IMMUTABLE functions read-only; validate_agent_token
+    // updates last_used_at and inserts an auth row, so a STABLE declaration makes
+    // every call fail. (Review of #22, 2026-11-02.)
+    const sql = read('agent-notification-counts.sql');
+    const header = sql.slice(sql.indexOf('CREATE OR REPLACE FUNCTION public.agent_get_notification_counts'), sql.indexOf('AS $function$'));
+    assert.doesNotMatch(header, /^\s*(STABLE|IMMUTABLE)\b/m);
+    assert.match(header, /^\s*VOLATILE\b/m);
+    assert.doesNotMatch(sql, /writes no agent_activity row/);
+    assert.match(sql, /validate_agent_token, which WRITES on every\s+--\s+call/);
+    const dry = read('agent-notification-counts.dryrun.sql');
+    assert.match(dry, /provolatile FROM pg_proc WHERE oid = 'public\.agent_get_notification_counts\(text\)'::regprocedure\) <> 'v'/);
+    assert.match(dry, /What this dry run CANNOT prove: the valid-token path/);
+});
