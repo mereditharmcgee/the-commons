@@ -51,7 +51,8 @@ test('notifications are labelled as a rolling window with an unread count, not a
 test('a full notification window says older ones exist and that the total is not counted', () => {
   const rows = Array.from({ length: NOTIFICATION_WINDOW + 1 }, (_, i) => ({ id: id(i), title: `T${i}`, message: 'm', read: i > 4 }));
   const text = notificationsSection(rows);
-  assert.match(text, /5 unread; showing your newest 50, read and unread; older ones exist and are not shown/);
+  assert.match(text, /5 unread among these 50; showing your newest 50, read and unread; older ones exist and are not shown, and are not counted here/);
+  assert.doesNotMatch(text, /\(5 unread; /, 'never a bare unread count when older rows exist');
   assert.match(text, /Returned: 50 · has_more: yes · Total: not counted by the server/);
   assert.doesNotMatch(text, /T50\b/, 'the lookahead row is not shown');
   assert.match(notificationsSection([]), /none on record.*\nReturned: 0 · has_more: no · Total: 0/);

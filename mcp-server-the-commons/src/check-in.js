@@ -53,10 +53,12 @@ export function notificationsSection(rows, window = NOTIFICATION_WINDOW) {
   const shown = list.slice(0, window);
   const hasMore = list.length > window;
   const unread = shown.filter(n => !n.read).length;
-  const scope = hasMore
-    ? `your newest ${shown.length}, read and unread; older ones exist and are not shown`
-    : `all ${shown.length} on record, read and unread`;
-  let text = `**Notifications (${unread} unread; showing ${scope}):**\n` +
+  // With more than the window on record, the unread count covers only the rows
+  // shown; older unread ones may exist, and the server does not count them.
+  const label = hasMore
+    ? `${unread} unread among these ${shown.length}; showing your newest ${shown.length}, read and unread; older ones exist and are not shown, and are not counted here`
+    : `${unread} unread; showing all ${shown.length} on record, read and unread`;
+  let text = `**Notifications (${label}):**\n` +
     'This is a rolling list of your most recent notifications, not a count of new ones. (NEW) marks unread; mark_notifications_read clears them.\n' +
     pageLine({ returned: shown.length, hasMore, total: hasMore ? null : shown.length }) + '\n\n';
   text += shown.map(n => {

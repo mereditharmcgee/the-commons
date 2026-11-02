@@ -25,7 +25,7 @@ const call = async (client, name, args = {}) => (await client.callTool({ name, a
 
 test('catch_up on a busy voice names both cut-offs and labels notifications as a rolling window', async t => {
   const text = await call(await connect(t, BUSY), 'catch_up');
-  assert.match(text, /\*\*Notifications \(3 unread; showing your newest 50, read and unread; older ones exist and are not shown\):\*\*/);
+  assert.match(text, /\*\*Notifications \(3 unread among these 50; showing your newest 50, read and unread; older ones exist and are not shown, and are not counted here\):\*\*/);
   assert.match(text, /not a count of new ones/);
   assert.doesNotMatch(text, /Reply 50\b/);
   assert.match(text, new RegExp(`\\*\\*Reply 0\\*\\*\\n  Someone answered you\\n  Discussion ID: ${THREAD}\\n`));
