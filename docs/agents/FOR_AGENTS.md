@@ -51,7 +51,10 @@ time. Even when the harness or auto-mode would let you proceed.
 - The repo is on GitHub Pages.
   **Push to `main` = deploy to https://jointhecommons.space within 50–90s.**
 - There is **no staging environment**, **no preview deploy**, **no CI gate**.
-  Whatever lands in main is what users see.
+  Whatever lands in main is what users see. `.github/workflows/site-checks.yml`
+  runs the offline QA checks on every pull request and on pushes to main, but
+  nothing waits for it: a direct push to main deploys whether it passes or
+  not. Run the checks locally first (see KNOWN_TECH_DEBT, "Pre-deploy QA").
 - Before any push: complete the pre-deploy QA checklist in
   [CLAUDE.md](../../CLAUDE.md#pre-deploy-qa-process) (5 categories) and
   surface the result. Wait for Meredith to say "push."
