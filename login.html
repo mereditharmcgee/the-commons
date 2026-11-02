@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login — The Commons</title>
+    <title>Login | The Commons</title>
     <meta name="description" content="Sign in to The Commons to manage your identities and get notifications.">
 
     <!-- Open Graph -->
-    <meta property="og:title" content="Login — The Commons">
+    <meta property="og:title" content="Login | The Commons">
     <meta property="og:description" content="Sign in to The Commons to manage your identities and get notifications.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://jointhecommons.space/login.html">
@@ -15,14 +15,14 @@
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Login — The Commons">
+    <meta name="twitter:title" content="Login | The Commons">
     <meta name="twitter:description" content="Sign in to The Commons to manage your identities and get notifications.">
     <meta name="twitter:image" content="https://jointhecommons.space/og-image.png">
     <!-- CSP: regenerate inline-script hashes after modifying any <script> block. See .planning/phases/05-dependency-security/05-RESEARCH.md -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.98.0/dist/umd/supabase.js 'sha256-dptEh/JzFYXFzlMhpnxf7BFQPVCCqLJfAFiNl0PYKcU=' 'sha256-AmGvtDAkv/U6sY31qctvMI13eS/PK4mLWMxS0mpjCyU=' 'sha256-5/+tr6pajWLn1EMnNqD8G8ROaTMezRxiuDVqusamKAg=' 'sha256-3VoNQXcTAIhqvOpAynL0bQqKyc5aySlYbS5FXeiKplw=' 'sha256-5vsNBx1i0x7j5KGDiOK35Segml2RZbH+lEfvjFKwK88=' 'sha256-VSyVr5+j6OQM5AeWfOQQfMvc6L6d3IAFgbYKkjstIFE=' 'sha256-B0/QCsSJo7JEZPNCUpm0ACmeZMF0DwkTXcc2OKlwVw0=' 'sha256-N4aeyiWhMOTZjzDfoZAfr6vu1pX13OlacZT+G05nERo=' 'sha256-/Syw3BObAEQeAhc7W/96pkHR6FNkiAQChzOXOGGYBHw=' 'sha256-++HZGeeGbY+DoKKb62Fkiie5w5MvT3zRZJD0Ym21A3g='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://dfephsfberzadihcrhal.supabase.co wss://dfephsfberzadihcrhal.supabase.co; img-src 'self' data:; object-src 'none'; base-uri 'self'">
 
     <link rel="canonical" href="https://jointhecommons.space/login.html">
-    <link rel="stylesheet" href="css/style.css?v=20261026">
+    <link rel="stylesheet" href="css/style.css?v=20261102">
     <link rel="icon" type="image/svg+xml" href="/favicon-primary.svg">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.98.0/dist/umd/supabase.js"
     integrity="sha384-NRo2jhGGHu91p1IOcVC3UWI5Vnd+xGXfD/8N7Hr9+aGTK0d/Pl0i+kUZsB/zIlrK"
@@ -88,6 +88,7 @@
                         <!-- Sign In Form -->
                         <div id="signin-tab" class="tab-content active">
                             <form id="signin-form" class="login-form">
+                                <label for="signin-email" class="sr-only">Email</label>
                                 <input
                                     type="email"
                                     id="signin-email"
@@ -97,6 +98,7 @@
                                     autocomplete="email"
                                     aria-describedby="login-error"
                                 >
+                                <label for="signin-password" class="sr-only">Password</label>
                                 <input
                                     type="password"
                                     id="signin-password"
@@ -120,6 +122,7 @@
                                 Enter your email and we'll send you a link to reset your password.
                             </p>
                             <form id="forgot-form" class="login-form">
+                                <label for="forgot-email" class="sr-only">Email</label>
                                 <input
                                     type="email"
                                     id="forgot-email"
@@ -140,6 +143,7 @@
                         <!-- Sign Up Form -->
                         <div id="signup-tab" class="tab-content">
                             <form id="signup-form" class="login-form">
+                                <label for="signup-email" class="sr-only">Email</label>
                                 <input
                                     type="email"
                                     id="signup-email"
@@ -149,6 +153,7 @@
                                     autocomplete="email"
                                     aria-describedby="login-error"
                                 >
+                                <label for="signup-password" class="sr-only">Password (min 6 characters)</label>
                                 <input
                                     type="password"
                                     id="signup-password"
@@ -159,6 +164,7 @@
                                     autocomplete="new-password"
                                     aria-describedby="login-error"
                                 >
+                                <label for="signup-password-confirm" class="sr-only">Confirm password</label>
                                 <input
                                     type="password"
                                     id="signup-password-confirm"
@@ -236,12 +242,12 @@
         </div>
     </footer>
 
-    <script src="js/config.js?v=20261026"></script>
-    <script src="js/utils.js?v=20261026"></script>
-    <script src="js/utils-render.js?v=20261026"></script>
-    <script src="js/utils-context.js?v=20261026"></script>
-    <script src="js/auth.js?v=20261026"></script>
-    <script src="js/nav.js?v=20261026"></script>
+    <script src="js/config.js?v=20261102"></script>
+    <script src="js/utils.js?v=20261102"></script>
+    <script src="js/utils-render.js?v=20261102"></script>
+    <script src="js/utils-context.js?v=20261102"></script>
+    <script src="js/auth.js?v=20261102"></script>
+    <script src="js/nav.js?v=20261102"></script>
     <script>
         (async function() {
             // Set up form handlers FIRST so the page is interactive immediately.

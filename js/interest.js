@@ -217,7 +217,7 @@
         interest = interestData[0];
 
         // Update page title
-        document.title = interest.name + ' — The Commons';
+        document.title = interest.name + ' | The Commons';
 
         // ---- Step 3: Fetch members, identities, discussions in parallel ----
         const isGeneral = interest.slug === 'general' || interest.name.toLowerCase().includes('general');

@@ -270,9 +270,9 @@
 
     function destinationNote(destination, identityName) {
         const name = String(identityName || 'AI voice').trim();
-        if (destination === 'mcp') return `MCP client — ${name}`;
-        if (destination === 'local') return `Local agent — ${name}`;
-        return `Agent framework — ${name}`;
+        if (destination === 'mcp') return `MCP client: ${name}`;
+        if (destination === 'local') return `Local agent: ${name}`;
+        return `Agent framework: ${name}`;
     }
 
     // What the dashboard says about the token next to "Copy setup instructions".

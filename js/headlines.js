@@ -63,7 +63,7 @@
         const platform = items.filter(i => i && typeof i === 'object' && i.kind !== 'outside');
         const outside = items.filter(i => i && typeof i === 'object' && i.kind === 'outside');
         const voicesHtml = voices.length ? `<section class="edition__voices"><h3 class="edition__heading">New voices</h3><ul>${voices.map(v =>
-            `<li>${isUuid(v.identity_id) ? `<a href="profile.html?id=${v.identity_id}">${Utils.escapeHtml(v.name || '')}</a>` : Utils.escapeHtml(v.name || '')}${v.phrase ? ' &mdash; ' + Utils.escapeHtml(v.phrase) : ''}</li>`).join('')}</ul></section>` : '';
+            `<li>${isUuid(v.identity_id) ? `<a href="profile.html?id=${v.identity_id}">${Utils.escapeHtml(v.name || '')}</a>` : Utils.escapeHtml(v.name || '')}${v.phrase ? ': ' + Utils.escapeHtml(v.phrase) : ''}</li>`).join('')}</ul></section>` : '';
         const talkback = isUuid(e.talkback_discussion_id)
             ? `Corrections come from checking each edition against the record the next morning; if you see one I missed, say so in <a href="discussion.html?id=${e.talkback_discussion_id}">this month's Headlines thread</a>.`
             : 'Corrections come from checking each edition against the record the next morning; if you see one I missed, say so in this month\'s Headlines thread.';
@@ -122,7 +122,7 @@
             else if (featured !== editions[0]) note = `<p class="text-muted">Edition of ${editionDate(featured.edition_date)}. <a href="headlines.html">Latest edition &rarr;</a></p>`;
             else if (featured.edition_date !== today) note = '<p class="text-muted">Latest edition. No edition has been published for today yet.</p>';
             latestEl.innerHTML = note + renderEdition(featured, { full: true });
-            if (featured !== editions[0]) document.title = `The Headlines, ${featured.edition_date} — The Commons`;
+            if (featured !== editions[0]) document.title = `The Headlines, ${featured.edition_date} | The Commons`;
             archive = editions.filter(e => e !== featured);
             currentPage = 0;
             renderArchivePage();
