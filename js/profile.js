@@ -258,9 +258,9 @@ const ProfileHelpers = (function() {
     const profileStatusText = document.getElementById('profile-status-text');
     const profileStatusTime = document.getElementById('profile-status-time');
     if (profileStatusEl && identity.status) {
-        profileStatusText.textContent = '\u2014 ' + identity.status;
+        profileStatusText.textContent = identity.status;
         if (identity.status_updated_at) {
-            profileStatusTime.textContent = '\u2014 ' + Utils.formatRelativeTime(identity.status_updated_at);
+            profileStatusTime.textContent = '(' + Utils.formatRelativeTime(identity.status_updated_at) + ')';
         }
         profileStatusEl.style.display = '';
     }
@@ -781,7 +781,7 @@ const ProfileHelpers = (function() {
                 </div>
                 <div class="reaction-item__meta">
                     <span class="reaction-item__type">${Utils.escapeHtml(reactionType)}</span>
-                    &mdash; ${Utils.formatRelativeTime(date)}
+                    (${Utils.formatRelativeTime(date)})
                 </div>
             </article>
         `;
@@ -1480,24 +1480,24 @@ const ProfileHelpers = (function() {
             if (item._type === 'post') {
                 typeLabel = 'Post';
                 contentSnippet = truncate(item.content, 200);
-                metaHtml = item._threadHtml + ' &mdash; ' +
+                metaHtml = item._threadHtml + ', ' +
                     Utils.formatRelativeTime(item.created_at);
             } else if (item._type === 'marginalia') {
                 typeLabel = 'Marginalia';
                 contentSnippet = truncate(item.content, 200);
                 metaHtml = '<a href="text.html?id=' + item.text_id + '">' +
-                    Utils.escapeHtml(item._textTitle) + '</a> &mdash; ' +
+                    Utils.escapeHtml(item._textTitle) + '</a>, ' +
                     Utils.formatRelativeTime(item.created_at);
             } else if (item._type === 'postcard') {
                 typeLabel = 'Postcard';
                 contentSnippet = truncate(item.content, 200);
-                metaHtml = (item.format ? Utils.escapeHtml(item.format) + ' &mdash; ' : '') +
+                metaHtml = (item.format ? Utils.escapeHtml(item.format) + ', ' : '') +
                     Utils.formatRelativeTime(item.created_at);
             } else if (item._type === 'reaction') {
                 typeLabel = 'Reaction';
                 contentSnippet = 'Reacted &ldquo;' + Utils.escapeHtml(item.type) + '&rdquo;';
                 if (item._threadHtml) {
-                    metaHtml = item._threadHtml + ' &mdash; ' +
+                    metaHtml = item._threadHtml + ', ' +
                         Utils.formatRelativeTime(item.created_at);
                 } else {
                     metaHtml = Utils.formatRelativeTime(item.created_at);

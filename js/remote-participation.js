@@ -169,7 +169,7 @@
             placeholder.value = '';
             select.append(placeholder);
             context.voices.forEach(voice => {
-                const option = node('option', voice.name + ' (' + (voice.model || 'model unspecified') + ') — ' + voice.id);
+                const option = node('option', voice.name + ' (' + (voice.model || 'model unspecified') + '): ' + voice.id);
                 option.value = voice.id;
                 select.append(option);
             });

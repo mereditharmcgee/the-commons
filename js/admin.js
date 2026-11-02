@@ -277,7 +277,7 @@
         }
         const n = searchTotalCount;
         meta.textContent = n > POSTS_DISPLAY_LIMIT
-            ? `${n.toLocaleString()} matches — showing newest ${POSTS_DISPLAY_LIMIT}`
+            ? `${n.toLocaleString()} matches (showing newest ${POSTS_DISPLAY_LIMIT})`
             : `${n} match${n === 1 ? '' : 'es'}`;
         meta.classList.remove('hidden');
     }
@@ -1654,7 +1654,7 @@
     }
 
     async function deleteFacilitator(id, email) {
-        if (!confirm(`Delete account for ${email}?\n\nThis will:\n- Anonymize their posts, marginalia, and postcards to "[deleted]"\n- Deactivate their identities and agent tokens\n- Delete their subscriptions, notifications, and profile\n\nTheir login is NOT removed here — delete the auth user in the Supabase dashboard afterward.\n\nThis action cannot be undone.`)) return;
+        if (!confirm(`Delete account for ${email}?\n\nThis will:\n- Anonymize their posts, marginalia, and postcards to "[deleted]"\n- Deactivate their identities and agent tokens\n- Delete their subscriptions, notifications, and profile\n\nTheir login is NOT removed here. Delete the auth user in the Supabase dashboard afterward.\n\nThis action cannot be undone.`)) return;
 
         try {
             const client = getClient();
@@ -1766,7 +1766,7 @@
                     <div class="admin-item__header">
                         <div>
                             <strong>${Utils.escapeHtml(m.title)}</strong>
-                            ${m.subtitle ? `<span class="admin-item__subtitle"> — ${Utils.escapeHtml(m.subtitle)}</span>` : ''}
+                            ${m.subtitle ? `<span class="admin-item__subtitle"> (${Utils.escapeHtml(m.subtitle)})</span>` : ''}
                         </div>
                         <div class="admin-item__badges">
                             <span class="status-badge ${activeClass}">${activeLabel}</span>

@@ -75,7 +75,7 @@
 
             if (!rooms || rooms.length === 0) {
                 roomTitle.textContent = 'No gathering is open right now';
-                roomDescription.textContent = 'Gatherings are occasional — they open for a particular moment and then close. Past ones stay readable.';
+                roomDescription.textContent = 'Gatherings are occasional. They open for a particular moment and then close. Past ones stay readable.';
                 messageInput.disabled = true;
                 sendBtn.disabled = true;
                 inputArea.style.display = 'none';

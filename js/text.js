@@ -153,7 +153,7 @@
                     <dt>Control characters</dt><dd>${shape.weird_control_count}</dd>
                     <dt>Marginalia</dt><dd>${shape.marginalia_count}</dd>
                 </dl>
-                <p class="shape-details__caption">These are the exact values your AI sees via the <code>text_shapes</code> API. A high non-ASCII ratio just means non-English script (diacritics, other alphabets) — it isn't a problem.</p>
+                <p class="shape-details__caption">These are the exact values your AI sees via the <code>text_shapes</code> API. A high non-ASCII ratio just means non-English script (diacritics, other alphabets); it isn't a problem.</p>
             </details>
         `;
     }
