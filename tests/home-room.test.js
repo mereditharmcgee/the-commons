@@ -180,11 +180,71 @@ test('the connection line reads the view with enumerated columns and rounds the 
     const { room, calls, el } = loadHome(async () => view());
     await room.loadRoomConnections();
     assert.equal(calls[0].endpoint, '/rest/v1/room_connections_30d');
-    assert.equal(calls[0].params.select, 'window_start,window_end,replies_counted,cross_family_pct,cross_household_pct');
+    assert.equal(calls[0].params.select, 'window_start,window_end,replies_counted,cross_family_pct,cross_household_pct,cross_household_top2_pct');
+    assert.equal(calls.length, 1);
     assert.equal(el('room-connections').hidden, false);
     const html = el('room-connections').innerHTML;
     assert.ok(html.startsWith('In the last 30 days, 68% of replies crossed model families and 92% crossed households. '));
     assert.deepEqual(hrefs(html), ['research.html#reply-connections']);
+});
+
+// ------------------------------------------- the two-households clause, both ways
+
+const TODAY_LINE = 'In the last 30 days, 68% of replies crossed model families and 92% crossed households. ' +
+    '<a href="research.html#reply-connections">How it is counted</a>';
+
+test('with the new column, the line adds one clause about the two busiest households', async () => {
+    const { room, calls, el } = loadHome(async () => view({ cross_household_top2_pct: 66.4 }));
+    await room.loadRoomConnections();
+    assert.equal(calls.length, 1, 'one read once the view has the column');
+    assert.equal(el('room-connections').innerHTML,
+        'In the last 30 days, 68% of replies crossed model families and 92% crossed households, ' +
+        'though two households were at one end of 66% of those crossings. ' +
+        '<a href="research.html#reply-connections">How it is counted</a>');
+    assert.ok(!EM_DASH.test(el('room-connections').innerHTML));
+});
+
+test('before the view has the column, the 400 falls back to exactly today\'s line', async () => {
+    const { room, calls, el } = loadHome(async (endpoint, params) => {
+        if (params.select.includes('cross_household_top2_pct')) throw new Error('API Error: 400');
+        return view();
+    });
+    await room.loadRoomConnections();
+    assert.equal(calls.length, 2);
+    assert.equal(calls[1].params.select, room.connectionsParams().select);
+    assert.ok(!calls[1].params.select.includes('top2'));
+    assert.equal(el('room-connections').hidden, false);
+    assert.equal(el('room-connections').innerHTML, TODAY_LINE);
+});
+
+test('a missing, empty or unusable top-two share keeps today\'s line', () => {
+    const { room } = loadHome(noNetwork);
+    for (const extra of [{}, { cross_household_top2_pct: null }, { cross_household_top2_pct: '' },
+        { cross_household_top2_pct: 'abc' }, { cross_household_top2_pct: 140 }, { cross_household_top2_pct: -3 },
+        { cross_household_top2_pct: '<b>66</b>' }]) {
+        assert.equal(room.connectionsLine(view(extra)), TODAY_LINE, JSON.stringify(extra));
+    }
+});
+
+test('no clause about crossings when nothing crossed households', () => {
+    const { room } = loadHome(noNetwork);
+    const line = room.connectionsLine(view({ cross_household_pct: 0, cross_household_top2_pct: 0 }));
+    assert.match(line, /and 0% crossed households\. </);
+    assert.ok(!line.includes('two households'));
+});
+
+test('numeric strings for the top-two share read the same as numbers', () => {
+    const { room } = loadHome(noNetwork);
+    assert.match(room.connectionsLine(view({ cross_household_top2_pct: '66.6' })), /at one end of 67% of those crossings/);
+});
+
+test('the full read asks for the base columns first, then the one new column, nothing else', () => {
+    const { room } = loadHome(noNetwork);
+    const base = room.connectionsParams().select.split(',');
+    const full = room.connectionsFullParams().select.split(',');
+    assert.deepEqual(full, [...base, 'cross_household_top2_pct']);
+    assert.equal(room.connectionsFullParams().limit, '1');
+    assert.equal(room.connectionsParams().select.split(',').length, 5, 'the base read is not changed by the full one');
 });
 
 test('numeric strings from PostgREST are read the same as numbers', () => {
@@ -265,7 +325,8 @@ function researchSection() {
 test('research.html explains the count under a stable anchor', () => {
     const section = researchSection();
     for (const term of [/30 whole days/, /midnight UTC/, /threaded reply/i, /Model family/, /Household/, /left out/i,
-        /computed live/, /room_connections_30d/, /own post/]) {
+        /computed live/, /room_connections_30d/, /own post/, /two busiest households/, /never which two households/,
+        /household_unknown/, /until it is, the line ends at the household share/]) {
         assert.match(section, term);
     }
     assert.ok(!EM_DASH.test(section));
@@ -410,4 +471,67 @@ test('the dry run carries the patch verbatim, pins Oct 17, reads as anon, and al
     assert.match(dryrun, /RAISE EXCEPTION 'DRYRUN PASS %'/);
     assert.match(dryrun, /RAISE EXCEPTION 'DRYRUN FAIL %'/);
     assert.match(dryrun, /\nROLLBACK;\n?$/);
+});
+
+// ---------------------------------------------------------------- the proposal
+
+const PROPOSAL = 'sql/proposals/room-connections-concentration';
+
+test('room-connections-concentration.sql: append-only, security_invoker, same five columns first', () => {
+    const proposal = lf(read(`${PROPOSAL}.sql`));
+    for (const header of ['-- What:', '-- Why:', '-- Risk:', '-- Applied: NOT APPLIED.']) assert.ok(proposal.includes(header), header);
+    const code = proposal.replace(/^\s*--.*$/gm, '');
+    assert.ok(!/\bDROP\b/i.test(code));
+    assert.ok(!/\b(INSERT|UPDATE|DELETE|TRUNCATE|ALTER TABLE)\b/i.test(code), 'no table or row is touched');
+    assert.match(code, /CREATE OR REPLACE VIEW public\.room_connections_30d\s+WITH \(security_invoker = true\) AS/);
+    assert.ok(!/SECURITY DEFINER/i.test(code));
+    assert.match(code, /GRANT SELECT ON public\.room_connections_30d TO anon, authenticated;/);
+    const select = code.slice(code.lastIndexOf('\nSELECT b.window_start'), code.indexOf('FROM bounds b\n  LEFT JOIN'));
+    const cols = [...select.matchAll(/\bAS (\w+)|^SELECT b\.(\w+)|^\s+b\.(\w+),/gm)].map(m => m[1] || m[2] || m[3]);
+    const { room } = loadHome(noNetwork);
+    const base = room.connectionsParams().select.split(',');
+    assert.deepEqual(cols, [...base, 'cross_household_top2_pct', 'household_unknown'], 'new columns only at the end');
+    for (const col of room.connectionsFullParams().select.split(',')) assert.ok(cols.includes(col), col);
+    // Every line of the applied view's select list survives unchanged, in order.
+    const patch = lf(read('sql/patches/room-connections-30d.sql')).replace(/^\s*--.*$/gm, '');
+    const oldSelect = patch.slice(patch.lastIndexOf('\nSELECT b.window_start'), patch.indexOf(' AS cross_household_pct'));
+    assert.ok(select.startsWith(oldSelect), 'the five old column definitions are unchanged');
+    // Facilitator ids are compared, never returned.
+    assert.ok(!/AS (reply_household|parent_household|household|facilitator_id)\s*,?\s*$/m.test(select));
+});
+
+test('room-connections-concentration: the dry run carries the proposal verbatim and always rolls back', () => {
+    const proposal = lf(read(`${PROPOSAL}.sql`));
+    const dryrun = lf(read(`${PROPOSAL}.dryrun.sql`));
+    const body = proposal.slice(proposal.indexOf('\nCREATE OR REPLACE VIEW') + 1);
+    const begin = dryrun.indexOf('\nBEGIN;\n');
+    const check = dryrun.indexOf('DO $dryrun$');
+    assert.ok(begin > 0 && check > begin);
+    assert.ok(dryrun.slice(begin, check).includes(body), 'the proposal body is in the dry run verbatim');
+    assert.match(dryrun, /SET LOCAL ROLE anon/);
+    assert.match(dryrun, /RAISE EXCEPTION 'DRYRUN PASS %'/);
+    assert.match(dryrun, /RAISE EXCEPTION 'DRYRUN FAIL %'/);
+    assert.match(dryrun, /\nROLLBACK;\n?$/);
+    assert.ok(!/\bCOMMIT\b/.test(dryrun.replace(/^\s*--.*$/gm, '').replace(/ON COMMIT DROP/g, '')));
+});
+
+test('room-connections-concentration.rollback: drops without CASCADE and restores the applied view verbatim', () => {
+    const rollback = lf(read(`${PROPOSAL}.rollback.sql`));
+    const patch = lf(read('sql/patches/room-connections-30d.sql'));
+    const code = rollback.replace(/^\s*--.*$/gm, '');
+    assert.match(code, /\nDROP VIEW public\.room_connections_30d;\n/);
+    assert.ok(!/CASCADE/i.test(code));
+    assert.ok(rollback.includes(patch.slice(patch.indexOf('\nCREATE OR REPLACE VIEW') + 1).trim()), 'the applied patch body, verbatim');
+    assert.ok(code.indexOf('BEGIN;') < code.indexOf('DROP VIEW') && code.indexOf('DROP VIEW') < code.indexOf('COMMIT;'));
+});
+
+test('room-connections-concentration files carry no em dash', () => {
+    for (const suffix of ['.sql', '.dryrun.sql', '.rollback.sql']) assert.ok(!EM_DASH.test(read(PROPOSAL + suffix)), suffix);
+});
+
+test('research.html says the top-two column is not applied for exactly as long as the proposal says so', () => {
+    const pending = /^-- Applied: NOT APPLIED\.$/m.test(lf(read(`${PROPOSAL}.sql`)));
+    const section = researchSection();
+    assert.equal(/has not been applied to the database yet/.test(section), pending,
+        'update research.html#reply-connections in the same change that records the apply');
 });

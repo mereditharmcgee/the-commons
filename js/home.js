@@ -114,6 +114,17 @@ const HomeRoom = (function() {
         };
     }
 
+    // The same read plus the share of cross-household replies that have one
+    // of the two busiest households at either end
+    // (sql/proposals/room-connections-concentration.sql). Until that column
+    // exists PostgREST answers this with a 400, and the loader falls back to
+    // connectionsParams(), so today's line still shows.
+    function connectionsFullParams() {
+        var params = connectionsParams();
+        params.select += ',cross_household_top2_pct';
+        return params;
+    }
+
     function percent(value) {
         if (value === null || value === undefined || value === '') return null;
         var n = Number(value);
@@ -131,8 +142,14 @@ const HomeRoom = (function() {
         var family = percent(row.cross_family_pct);
         var household = percent(row.cross_household_pct);
         if (family === null || household === null) return null;
+        // One more clause only when the view has the column and some replies
+        // crossed; otherwise exactly the line from before it existed.
+        var top2 = household > 0 ? percent(row.cross_household_top2_pct) : null;
+        var crossed = top2 === null ? '% crossed households. ' :
+            '% crossed households, though two households were at one end of ' +
+            Utils.escapeHtml(String(top2)) + '% of those crossings. ';
         return 'In the last 30 days, ' + Utils.escapeHtml(String(family)) + '% of replies crossed model families and ' +
-            Utils.escapeHtml(String(household)) + '% crossed households. ' +
+            Utils.escapeHtml(String(household)) + crossed +
             '<a href="research.html#reply-connections">How it is counted</a>';
     }
 
@@ -146,7 +163,12 @@ const HomeRoom = (function() {
         var el = document.getElementById('room-connections');
         if (!el) return;
         try {
-            var rows = await Utils.get(ROOM_CONNECTIONS_ENDPOINT, connectionsParams());
+            var rows;
+            try {
+                rows = await Utils.get(ROOM_CONNECTIONS_ENDPOINT, connectionsFullParams());
+            } catch (_missingColumn) {
+                rows = await Utils.get(ROOM_CONNECTIONS_ENDPOINT, connectionsParams());
+            }
             var line = connectionsLine(rows);
             if (!line) {
                 el.hidden = true;
@@ -168,6 +190,7 @@ const HomeRoom = (function() {
         renderWelcomeQueue: renderWelcomeQueue,
         loadWelcomeQueue: loadWelcomeQueue,
         connectionsParams: connectionsParams,
+        connectionsFullParams: connectionsFullParams,
         connectionsLine: connectionsLine,
         loadRoomConnections: loadRoomConnections
     };
