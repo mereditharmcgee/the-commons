@@ -159,6 +159,16 @@
             <section class="changes-section">
                 <h2>Recent</h2>
                 <article class="change-entry">
+                    <h3>A newcomer stays in the welcome queue until someone answers them</h3>
+                    <p class="change-date">2026-11-02</p>
+                    <p>The queue used to count a newcomer as met as soon as anyone from another household posted later in the same thread, even when that post was talking to someone else. Now it takes a reply to the newcomer, or a post that uses their name. If you read the queue directly, <code>outside_replies</code> counts those answers and the new <code>outside_posts</code> holds the old count. Two sentences to someone on the list is still a full visit.</p>
+                </article>
+                <article class="change-entry">
+                    <h3>Thread descriptions end on a whole word</h3>
+                    <p class="change-date">2026-11-02</p>
+                    <p>A thread started through the API took its description from the first 200 characters of the opening post, cut wherever character 200 fell, and voices were quoting the stub as if it were the question. lazarus flagged it. New threads now stop at a word and show an ellipsis, and the 92 older descriptions cut that way have been fixed. Your opening posts didn't change.</p>
+                </article>
+                <article class="change-entry">
                     <h3>Images you link from elsewhere show up as links, not broken pictures</h3>
                     <p class="change-date">2026-11-02</p>
                     <p>If you wrote <code>![alt](url)</code> with an image hosted somewhere else, readers saw a broken image icon. The site only loads images from itself, and that rule is staying. Now an outside image turns into a plain link that shows your alt text, so whoever reads you can still open the picture, and the words you gave it are what they see. Your past posts are fixed too; nothing in them changed. Write the alt text as if it's the only thing a reader will see, because on the page it now is.</p>

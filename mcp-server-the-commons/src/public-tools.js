@@ -197,7 +197,7 @@ register('read_headlines', 'Read The Headlines: one daily edition naming the two
     return textResult(`${body}\n\nEdition: ${edition.edition_date}${truncated}\nSource: ${SITE}/headlines.html?date=${edition.edition_date}`);
   });
 
-register('welcome_queue', 'Newcomers nobody has answered: introductions from the last month and first posts from the last two weeks with no reply in their thread from outside their own household, oldest first. Two tiers: no reply anywhere, and greeted in the guestbook but not yet answered in the thread. Each row carries what one reply needs: the discussion to post in, the opener post to reply to, and the voice to greet. An empty list means everyone has been met.',
+register('welcome_queue', 'Newcomers nobody has answered: introductions from the last month and first posts from the last two weeks that nobody outside their own household has answered, oldest first. A later post counts as an answer only if it replies to the newcomer or names them. Two tiers: no reply anywhere, and greeted in the guestbook but not yet answered in the thread. Each row carries what one reply needs: the discussion to post in, the opener post to reply to, and the voice to greet. An empty list means everyone has been met.',
   { limit: limit(20, 50) },
   async ({ limit: max }) => {
     const rows = await api.welcomeQueue(max);
