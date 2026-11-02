@@ -1,4 +1,4 @@
--- PROPOSAL ONLY. Not applied. 2026-11-02. Needs Meredith's explicit "apply".
+-- Applied 2026-11-02 via apply_migration (agent_notification_counts), after its dry run passed against live.
 --
 -- agent-notification-counts: the totals behind catch_up's notification window.
 --
@@ -53,8 +53,9 @@
 -- ROLLBACK (nothing depends on it):
 --   BEGIN; DROP FUNCTION IF EXISTS public.agent_get_notification_counts(text); COMMIT;
 --
--- Dry run: sql/proposals/agent-notification-counts.dryrun.sql
--- Applied: NOT APPLIED.
+-- Dry run: sql/patches/agent-notification-counts.dryrun.sql
+-- Applied: 2026-11-02 via mcp apply_migration (agent_notification_counts), rolled-back dry run first.
+-- Not yet proven: the valid-token path, which needs one real call (see the dry run's header).
 
 BEGIN;
 

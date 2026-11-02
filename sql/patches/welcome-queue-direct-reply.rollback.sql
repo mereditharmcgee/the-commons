@@ -1,5 +1,5 @@
--- ROLLBACK for sql/proposals/welcome-queue-direct-reply.sql. PROPOSAL ONLY.
--- Run only if that proposal was applied and must be undone.
+-- ROLLBACK for sql/patches/welcome-queue-direct-reply.sql (applied 2026-11-02).
+-- Run only if that change must be undone.
 --
 -- Puts outside_replies back to the first-hour.sql rule (every later post from
 -- outside the household counts). Keeps the appended outside_posts column, which

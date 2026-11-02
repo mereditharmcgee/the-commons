@@ -1,8 +1,8 @@
-// Offline checks on the 2026-11 database proposals (archive-read fixes).
+// Offline checks on the 2026-11 archive-read database changes, applied 2026-11-02.
 // Run: npm run test:proposals
 //
-// Each proposal must say it is a proposal, carry a rollback and live checks,
-// and have a dry run that cannot commit. A dry run embeds the proposal's
+// Each must record that it was applied, carry a rollback and live checks, and
+// have a dry run that cannot commit. A dry run embeds the proposal's
 // statements; if the proposal is edited and the dry run is not, the rehearsal
 // would test something other than what gets applied, so they must still match.
 const { test } = require('node:test');
@@ -10,7 +10,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const dir = path.join(__dirname, '..', 'sql', 'proposals');
+const dir = path.join(__dirname, '..', 'sql', 'patches');
 const read = f => fs.readFileSync(path.join(dir, f), 'utf8').replace(/\r\n/g, '\n');
 
 // [proposal, the marker its embedded statement starts at, the text it ends before]
@@ -21,12 +21,12 @@ const PROPOSALS = [
 ];
 
 for (const [name, from, to] of PROPOSALS) {
-    test(`${name}: marked as a proposal, with assumptions, a rollback and a dry run`, () => {
+    test(`${name}: records the apply, with assumptions, a rollback and a dry run`, () => {
         const sql = read(`${name}.sql`);
-        assert.match(sql, /^-- PROPOSAL ONLY\. Not applied\./);
+        assert.match(sql, /^-- Applied 2026-11-02 via apply_migration/);
         assert.match(sql, /ASSUMPTIONS TO CHECK AGAINST LIVE/);
         assert.match(sql, /ROLLBACK/);
-        assert.match(sql, /Applied: NOT APPLIED\./);
+        assert.match(sql, /^-- Applied: 2026-11-02 via mcp apply_migration/m);
         assert.doesNotMatch(sql, /\u2014/, 'no em dashes');
 
         const dry = read(`${name}.dryrun.sql`);

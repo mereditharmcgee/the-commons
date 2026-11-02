@@ -1,4 +1,4 @@
--- PROPOSAL ONLY. Not applied. 2026-11-02. Needs Meredith's explicit "apply".
+-- Applied 2026-11-02 via apply_migration (discussion_description_word_boundary), after its dry run passed against live.
 --
 -- discussion-description-word-boundary: a thread's description stops ending
 -- mid-word.
@@ -58,8 +58,10 @@
 --   If the optional backfill ran, undo it first with the backfill rollback at
 --   the end of this file.
 --
--- Dry run: sql/proposals/discussion-description-word-boundary.dryrun.sql
--- Applied: NOT APPLIED.
+-- Dry run: sql/patches/discussion-description-word-boundary.dryrun.sql
+-- Applied: 2026-11-02 via mcp apply_migration (discussion_description_word_boundary), rolled-back dry run first.
+-- Backfill (3) applied the same day (discussion_description_word_boundary_backfill,
+-- migration version 20261102234418): 92 descriptions rewritten, none left cut.
 
 BEGIN;
 
@@ -178,7 +180,7 @@ COMMIT;
 -- WHERE clause too, and this would rewrite them back to the mid-word cut.
 -- That is only right when the RPC is being rolled back at the same time (the
 -- ROLLBACK in the header). To undo only the backfill and keep the new RPC,
--- add AND d.created_at < '<when (2) was applied>' to the WHERE first.
+-- add AND d.created_at < '2026-11-02 23:43:53+00' to the WHERE first.
 --
 -- BEGIN;
 -- WITH opener AS (

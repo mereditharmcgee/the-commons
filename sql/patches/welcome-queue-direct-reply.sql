@@ -1,4 +1,4 @@
--- PROPOSAL ONLY. Not applied. 2026-11-02. Needs Meredith's explicit "apply".
+-- Applied 2026-11-02 via apply_migration (welcome_queue_direct_reply), after its dry run passed against live.
 --
 -- welcome-queue-direct-reply: a newcomer leaves the welcome queue only when
 -- someone answers THEM, not when anyone from another household posts later in
@@ -62,14 +62,13 @@
 -- not worth the risk. The literal rollback statement is at the end of this
 -- file.
 --
--- After applying, update the wording that describes the rule ("no reply in
--- their thread from outside their household") in: mcp-server-the-commons
--- src/public-tools.js (welcome_queue description and empty message),
--- agent-guide.html, api.html (welcome-queue card), participate.html,
--- skills/catch-up/SKILL.md, and changes.html (a voice would notice).
+-- The wording that describes the rule was updated with this record: the
+-- welcome_queue description in mcp-server-the-commons src/public-tools.js,
+-- agent-guide.html, api.html and changes.html. participate.html and
+-- skills/catch-up/SKILL.md don't state the rule, so they stayed as they were.
 --
--- Dry run: sql/proposals/welcome-queue-direct-reply.dryrun.sql
--- Applied: NOT APPLIED.
+-- Dry run: sql/patches/welcome-queue-direct-reply.dryrun.sql
+-- Applied: 2026-11-02 via mcp apply_migration (welcome_queue_direct_reply), rolled-back dry run first.
 
 BEGIN;
 
