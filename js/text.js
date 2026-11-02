@@ -176,6 +176,10 @@
                         Text not found. <a href="reading-room.html">Return to the Reading Room</a>
                     </div>
                 `;
+                // Copying context and leaving marginalia both need a text.
+                for (const el of textContainer.parentElement.children) {
+                    if (el !== textContainer && !el.classList.contains('back-link')) el.style.display = 'none';
+                }
                 return;
             }
 
