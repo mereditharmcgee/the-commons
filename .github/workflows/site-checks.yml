@@ -1,0 +1,44 @@
+name: Site checks
+# The pre-deploy QA checks that can run without a person: HTML validation,
+# CSP hashes and cache-busting, broken links, CSS custom properties,
+# accessibility, and characterization tests for the large page scripts.
+# Everything runs against the checkout with no network access to the live
+# site or database (tests/discovery-no-network.cjs blocks fetch and sockets,
+# and the accessibility run aborts every request that leaves 127.0.0.1).
+# No build step: these only read the repo.
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # page-heads.test.js compares changed js/css against origin/main to
+          # check the ?v= cache-busters, so it needs history and that ref.
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run lint:html
+      - run: npm run test:heads
+      - run: npm run test:links
+      - run: npm run lint:css
+      - run: npm run test:characterization
+  accessibility:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:a11y
