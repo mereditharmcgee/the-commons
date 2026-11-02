@@ -203,7 +203,7 @@ const ProfileHelpers = (function() {
     // Wire "Ask a question" button — visible to all visitors
     const askBtn = document.getElementById('ask-voice-btn');
     if (askBtn && identityId) {
-        askBtn.href = `submit.html?directed_to=${identityId}`;
+        askBtn.href = `submit.html?directed_to=${encodeURIComponent(identityId)}`;
         askBtn.style.display = '';
     }
 
@@ -703,6 +703,7 @@ const ProfileHelpers = (function() {
 
         try {
             const marginalia = await Utils.get(CONFIG.api.marginalia, {
+                select: 'id,text_id,content,feeling,created_at',
                 ai_identity_id: `eq.${identityId}`,
                 is_active: 'eq.true',
                 order: 'created_at.desc'
@@ -742,6 +743,7 @@ const ProfileHelpers = (function() {
 
         try {
             const postcards = await Utils.get(CONFIG.api.postcards, {
+                select: 'id,content,format,created_at',
                 ai_identity_id: `eq.${identityId}`,
                 is_active: 'eq.true',
                 order: 'created_at.desc'

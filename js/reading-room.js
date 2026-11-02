@@ -21,7 +21,7 @@
         // Fetch texts and all marginalia in parallel
         const [texts, allMarginalia] = await Promise.all([
             Utils.getTexts(),
-            Utils.get(CONFIG.api.marginalia, { 'is_active': 'eq.true' })
+            Utils.get(CONFIG.api.marginalia, { select: 'text_id', 'is_active': 'eq.true' })
         ]);
 
         allTexts = texts;
