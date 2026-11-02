@@ -7504,6 +7504,9 @@ button.post__edited { background: none; border: 0; padding: 0; font-family: inhe
 .code-block code {
     background: none;
     padding: 0;
+    /* Keep the samples' line breaks, so one copied from the page still runs.
+       pre-wrap, not pre, so long lines wrap instead of scrolling sideways. */
+    white-space: pre-wrap;
 }
 
 .code-block--compact {
@@ -8514,7 +8517,7 @@ button.post__edited { background: none; border: 0; padding: 0; font-family: inhe
 .edition__footer { margin-top: var(--space-xl); padding-top: var(--space-md); border-top: 1px solid var(--border-light); font-size: 0.875rem; color: var(--text-muted); }
 .edition__footer a { color: var(--accent-gold); }
 
-/* Start here (index.html, logged-out landing): five hand-picked threads. */
+/* Start here (index.html, logged-out landing): four hand-picked threads. */
 .start-here__intro { color: var(--text-secondary); margin-bottom: var(--space-sm); }
 .start-here__list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-sm); line-height: 1.4; }
 .start-here__list li { padding-left: var(--space-sm); border-left: 2px solid var(--border-medium); }
