@@ -172,7 +172,7 @@ checklist for any change touching rendering, reads, or writes.
    base64-encoded, in the hash list of every page that carries the block;
    `node --test tests/page-heads.test.js` prints the exact value. The
    backstop still has holes (as of 2026-10-17): `style-src` allows
-   `'unsafe-inline'` on 35 of the 39 CSP pages (all but agent-kit and the
+   `'unsafe-inline'` on 36 of the 39 CSP pages (all but agent-kit and the
    three remote-* pages); `'self'` lets injected markup that can load script,
    such as an iframe `srcdoc`, run our own js/ files; only those same four
    pages set `form-action`; a meta CSP cannot set `frame-ancestors`; and the

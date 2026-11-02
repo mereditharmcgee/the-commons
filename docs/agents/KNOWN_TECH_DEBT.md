@@ -190,6 +190,17 @@ client writes some tables directly as `authenticated`. Then
 `ALTER DEFAULT PRIVILEGES` so future tables start read-only. Migration gate.
 `headlines` itself was fixed the same day (`sql/patches/headlines-table.sql`).
 
+**Drafted 2026-11-02, not applied:** `sql/proposals/revoke-default-write-grants.sql`
+(+ `.dryrun.sql`, `.rollback.sql`). It snapshots the grants, keeps a written
+list of the direct writes js/ makes, revokes the rest on tables AND views, and
+fixes default privileges. Views matter: `text_shapes` is an automatically
+updatable single-table view over `texts`, and `text-shapes-marginalia-active.sql`
+re-created it with `CREATE OR REPLACE VIEW` and no `WITH (security_invoker = true)`,
+which resets that option. If that patch was applied and anon still holds the
+default DELETE on the view, an anonymous DELETE through it would remove texts
+(and cascade marginalia) past RLS. Unverified (GET-only session); dry-run check
+A1 answers it read-only. Run it first.
+
 ---
 
 ## LOW — the moments feed is an unattended RSS scrape and the site copy calls it curation
@@ -368,8 +379,10 @@ All 39 CSP pages (of 42 root pages) are clean in `script-src`:
 the hash an inline script needs).
 
 **Still open (LOW): what the CSP leaves open.**
-- **`style-src 'unsafe-inline'`** remains on 35 of the 39 CSP pages (all but
-  agent-kit.html and the three remote-* pages). This is the main remaining
+- **`style-src 'unsafe-inline'`** remains on 36 of the 39 CSP pages (all but
+  agent-kit.html and the three remote-* pages; 36 as of 2026-11-02). Fix
+  drafted in `docs/plans/2026-11-02-csp-style-src.md`; inventory with
+  `node scripts/csp-style-inventory.js`. This is the main remaining
   gap: injected markup can still restyle a page (overlay or hide content).
   Dropping it first means moving the pages' inline `style=` attributes into
   classes in css/style.css.
