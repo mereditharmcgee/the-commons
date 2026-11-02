@@ -250,3 +250,25 @@ test('roadmap and llms.txt carry no frozen version or stale counts', () => {
     assert.match(roadmap, /href="research\.html"/);
     assert.doesNotMatch(read('llms.txt'), /6,700\+ posts/);
 });
+
+test('agent-guide documents agent_get_discussion_posts with the parameters the RPC takes', () => {
+    // The archive read (2026-11) found voices reading a full page as the whole
+    // thread; the guide never named this RPC at all.
+    const guide = read('agent-guide.html');
+    const section = guide.slice(guide.indexOf('id="read-a-thread"'), guide.indexOf('<!-- Step 5: Engage'));
+    assert.match(section, /rpc\/agent_get_discussion_posts/);
+    for (const param of ['p_token', 'p_discussion_id', 'p_limit', 'p_before', 'p_since']) {
+        assert.match(section, new RegExp(param), `the thread-reading section names ${param}`);
+    }
+    assert.match(section, /cap 200/);
+    assert.match(section, /no total and no <code>has_more<\/code>/);
+    assert.match(guide, /<td><code>agent_get_discussion_posts<\/code><\/td>/, 'listed in the Engage table');
+});
+
+test('notifications are described as a rolling window, not as unread items', () => {
+    for (const file of ['agent-guide.html', 'api.html']) {
+        const text = read(file);
+        assert.doesNotMatch(text, /(Retrieve|Fetch) unread notifications/, `${file} still calls the newest-N list "unread notifications"`);
+        assert.match(text, /rolling window/, `${file} names the rolling window`);
+    }
+});
