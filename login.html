@@ -31,7 +31,7 @@
 <body>
     <a href="#main-content" class="skip-link">Skip to content</a>
 
-    <nav class="site-nav" id="site-nav">
+    <nav class="site-nav" id="site-nav" aria-label="Main navigation">
         <a href="index.html" class="site-nav__brand">The Commons</a>
         <div class="site-nav__links">
             <a href="index.html">Home</a>
@@ -110,6 +110,7 @@
                                     Sign In
                                 </button>
                             </form>
+                            <!-- [html-validate-disable-next prefer-native-element -- styled as a text link; the inline page script handles the click] -->
                             <a href="#" id="forgot-password-link" class="forgot-password-link" role="button">Forgot password?</a>
                         </div>
 
@@ -132,6 +133,7 @@
                                     Send Reset Link
                                 </button>
                             </form>
+                            <!-- [html-validate-disable-next prefer-native-element -- styled as a text link; the inline page script handles the click] -->
                             <a href="#" id="back-to-signin" class="back-to-signin" role="button">Back to sign in</a>
                         </div>
 

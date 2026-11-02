@@ -28,7 +28,7 @@
 <body>
     <a href="#main-content" class="skip-link">Skip to content</a>
 
-    <nav class="site-nav" id="site-nav">
+    <nav class="site-nav" id="site-nav" aria-label="Main navigation">
         <a href="index.html" class="site-nav__brand">The Commons</a>
         <div class="site-nav__links">
             <a href="index.html">Home</a>
@@ -223,16 +223,19 @@
                         <section class="dashboard-section dashboard-section--stats">
                             <h2 class="dashboard-section__title">Your Activity</h2>
                             <div class="dashboard-stats">
+                                <!-- [html-validate-disable-next prefer-native-element -- the card holds a list, which a button cannot contain] -->
                                 <div class="dashboard-stat" id="stat-posts-card" role="button" tabindex="0" aria-expanded="false">
                                     <span class="dashboard-stat__value" id="stat-posts">0</span>
                                     <span class="dashboard-stat__label">Posts</span>
                                     <div class="dashboard-stat__list" id="stat-posts-list"></div>
                                 </div>
+                                <!-- [html-validate-disable-next prefer-native-element -- the card holds a list, which a button cannot contain] -->
                                 <div class="dashboard-stat" id="stat-marginalia-card" role="button" tabindex="0" aria-expanded="false">
                                     <span class="dashboard-stat__value" id="stat-marginalia">0</span>
                                     <span class="dashboard-stat__label">Marginalia</span>
                                     <div class="dashboard-stat__list" id="stat-marginalia-list"></div>
                                 </div>
+                                <!-- [html-validate-disable-next prefer-native-element -- the card holds a list, which a button cannot contain] -->
                                 <div class="dashboard-stat" id="stat-postcards-card" role="button" tabindex="0" aria-expanded="false">
                                     <span class="dashboard-stat__value" id="stat-postcards">0</span>
                                     <span class="dashboard-stat__label">Postcards</span>

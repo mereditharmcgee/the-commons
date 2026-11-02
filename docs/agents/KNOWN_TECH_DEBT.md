@@ -68,21 +68,54 @@ applies).
 
 ---
 
-## MEDIUM — Pre-deploy QA is documented but not automated
+## MEDIUM: Pre-deploy QA, mostly automated 2026-11-02 (what is left is below)
 
-**Status:** the 5-category QA checklist in CLAUDE.md is run by hand
-before every push. A CI hook could catch:
-- HTML validation (broken tags, missing alt text)
-- CSS lint (typos, unused custom properties)
-- Basic accessibility (ESLint plugin or pa11y)
-- CSP hash check for inline scripts (since 2026-10-17
-  `tests/page-heads.test.js` checks it locally and prints the needed hash,
-  but no CI workflow runs it yet)
-- Broken-link check across pages
+**Status:** `.github/workflows/site-checks.yml` runs on every pull request
+and every push to main. It does not block anything: a direct push to main
+still deploys whether it passes or not, so run the checks locally first
+(`npm ci` once, then the scripts below). Every check reads the repo only;
+`tests/discovery-no-network.cjs` blocks fetch and sockets, and the
+accessibility run aborts every request that leaves 127.0.0.1. No build step.
 
-**Constraint:** any CI hook must respect the "no build step" decision.
-Use GitHub Actions running existing tools, not introducing a build
-pipeline.
+| Check | Run locally | Catches |
+|---|---|---|
+| HTML validation | `npm run lint:html` | html-validate (recommended preset, `.htmlvalidate.json`) on every root page: unclosed or misnested tags, duplicate ids, missing `alt`, unlabelled controls, raw `&`, invalid nesting, unnamed duplicate landmarks |
+| CSP hashes and cache-busters | `npm run test:heads` | `tests/page-heads.test.js`: an inline script whose sha256 is not in the page's `script-src`, `'unsafe-inline'`, CDN scripts without SRI, inline `on*=` handlers, a changed js/css file still served under an old `?v=` |
+| Broken links | `npm run test:links` | `tests/site-links.test.js`: local href/src to a missing file, `#fragment` to an id the target page does not have, dead jointhecommons.space URLs in sitemap.xml, llms.txt, robots.txt and skill.md. External sites are not fetched |
+| CSS custom properties | `npm run lint:css` | `tests/css-custom-properties.test.js`: `var(--name)` with no fallback where `--name` is never defined (the declaration is silently dropped) |
+| Accessibility | `npm run test:a11y` | `tests/a11y.test.js`: axe-core WCAG 2.1 A/AA in headless Chromium on every root page's offline render (labels, names, alt, ARIA, landmarks, headings, keyboard-reachable scroll regions). Needs `npx playwright install chromium` once |
+| Characterization | `npm run test:characterization` | `tests/{auth,admin,profile,dashboard}-characterization.test.js`: the public surface, request shapes (tables, columns, filters, payloads), auth gates, escaping and empty states of the four big page scripts, so a split that changes behavior fails |
+
+Baselined when the checks were added, each with its reason in place:
+- `color-contrast` and `link-in-text-block` are reported by the a11y run but
+  do not fail it (about 440 and 160 elements). `--text-muted` (#6b7280) on
+  the dark background is under 4.5:1 site-wide, and body links differ from
+  text by color only. Both are palette decisions for Meredith.
+- `css/style.css` uses `var(--bg-secondary)` (the identity setup stage
+  button and the empty-onboarding card render with no background) and
+  `changes.html` uses `var(--text-tertiary)` (dates and credits inherit
+  the body color). Neither is defined. Listed as KNOWN in the CSS check,
+  which fails once they are fixed so the list cannot go stale. Fixing the
+  first one is a css/style.css change, so it re-stamps every page's `?v=`.
+- `css/style.css` `.notification-filters` sets `row-gap` and then `gap`,
+  so the `row-gap` line never applies. Harmless; delete it in the next
+  style.css change. (Found by stylelint; stylelint itself was not added
+  because this was its only finding.)
+- Inline `html-validate-disable-next` comments: headings filled in by page
+  scripts (interest, moment, profile, propose), the dashboard stat cards
+  and two login links that use `role="button"`, and chat.html's heading
+  inside the agent-access button (a fix needs a style.css selector change).
+- No unused-custom-property check: about 30 are unused, which costs nothing.
+
+**Still manual:** everything in the CLAUDE.md checklist that needs data or a
+person: RLS as anon/authenticated/admin, data consistency across views, real
+mobile layout, slow-Supabase behavior. `tests/run-all.js` is not in CI because
+its `verify-*.js` checks call the production API (offline, those network
+checks fail; AUTH39-49 and AUTH39-57, the two stale failures, were fixed
+2026-11-02 to check what shipped rather than what was pending).
+
+**Constraint (unchanged):** any CI hook must respect the "no build step"
+decision. GitHub Actions running existing tools, not a build pipeline.
 
 ---
 
@@ -605,6 +638,14 @@ the regression risk. **Policy: split them opportunistically — the next time re
 feature work takes you into one, break off the section you're touching, validated
 by that work's own testing.** Each now carries a TOC comment block at the top for
 navigation in the meantime. See `docs/agents/ARCHITECTURE.md`.
+
+**Update 2026-11-02:** each of the four now has a characterization suite
+(`npm run test:characterization`, also in CI). It pins the public surface,
+the exact requests, the auth gates and the escaping, so a split that changes
+behavior fails. Run it before and after. The suites pin some behavior that
+looks wrong, marked "Looks off" in comments (for example unchecked ids in
+links on profile.js and select-less reads); fix those as separate changes
+and update the pinned expectation in the same commit.
 
 ---
 
