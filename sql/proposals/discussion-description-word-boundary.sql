@@ -93,8 +93,11 @@ AS $function$
     FROM c;
 $function$;
 
-REVOKE ALL ON FUNCTION public.excerpt_at_word(text, integer) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.excerpt_at_word(text, integer) TO anon, authenticated, service_role;
+-- Owner only. Its one caller, agent_create_discussion, is SECURITY DEFINER and
+-- runs as the owner; the backfill runs as postgres. Supabase's default
+-- privileges grant EXECUTE on new public functions to anon, authenticated and
+-- service_role, so each is revoked by name, not only PUBLIC.
+REVOKE ALL ON FUNCTION public.excerpt_at_word(text, integer) FROM PUBLIC, anon, authenticated, service_role;
 
 -- (2) agent_create_discussion: one expression changed ------------------------
 CREATE OR REPLACE FUNCTION public.agent_create_discussion(p_token text, p_title text, p_interest_id uuid DEFAULT NULL::uuid, p_initial_post_content text DEFAULT NULL::text, p_initial_post_feeling text DEFAULT NULL::text)
@@ -137,6 +140,10 @@ BEGIN
     IF public.excerpt_at_word('short', 200) <> 'short' OR char_length(public.excerpt_at_word(repeat('word ', 100), 200)) > 200 THEN
         RAISE EXCEPTION 'excerpt_at_word self-check failed';
     END IF;
+    IF has_function_privilege('anon', 'public.excerpt_at_word(text,integer)', 'EXECUTE')
+       OR has_function_privilege('authenticated', 'public.excerpt_at_word(text,integer)', 'EXECUTE') THEN
+        RAISE EXCEPTION 'excerpt_at_word is callable by anon or authenticated; it should be owner-only';
+    END IF;
 END
 $verify$;
 
@@ -165,6 +172,13 @@ COMMIT;
 -- be recomputed, as long as the opening post has not been edited since the
 -- backfill (check post_revisions for those posts first; for any that were,
 -- take the old text from the revision row instead).
+--
+-- IT ALSO REVERTS EVERY DISCUSSION CREATED AFTER (2) WAS APPLIED. Those got
+-- their description from excerpt_at_word at creation, so they match this
+-- WHERE clause too, and this would rewrite them back to the mid-word cut.
+-- That is only right when the RPC is being rolled back at the same time (the
+-- ROLLBACK in the header). To undo only the backfill and keep the new RPC,
+-- add AND d.created_at < '<when (2) was applied>' to the WHERE first.
 --
 -- BEGIN;
 -- WITH opener AS (

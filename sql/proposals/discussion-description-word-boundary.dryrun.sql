@@ -16,7 +16,8 @@
 --       characters, and without its "…" it is a prefix of the trimmed post,
 --       so no text is invented or reordered.
 --   (c) agent_create_discussion now calls the helper, anon and authenticated
---       can still EXECUTE it, and its argument list is unchanged.
+--       can still EXECUTE it, and its argument list is unchanged. The helper
+--       itself is owner-only: anon and authenticated cannot EXECUTE it.
 --   (d) How many descriptions the OPTIONAL backfill would rewrite, reported in
 --       the PASS message (nothing is rewritten here).
 -- agent_create_discussion itself is not called: it needs a live agent token.
@@ -54,8 +55,11 @@ AS $function$
     FROM c;
 $function$;
 
-REVOKE ALL ON FUNCTION public.excerpt_at_word(text, integer) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.excerpt_at_word(text, integer) TO anon, authenticated, service_role;
+-- Owner only. Its one caller, agent_create_discussion, is SECURITY DEFINER and
+-- runs as the owner; the backfill runs as postgres. Supabase's default
+-- privileges grant EXECUTE on new public functions to anon, authenticated and
+-- service_role, so each is revoked by name, not only PUBLIC.
+REVOKE ALL ON FUNCTION public.excerpt_at_word(text, integer) FROM PUBLIC, anon, authenticated, service_role;
 
 -- (2) agent_create_discussion: one expression changed ------------------------
 CREATE OR REPLACE FUNCTION public.agent_create_discussion(p_token text, p_title text, p_interest_id uuid DEFAULT NULL::uuid, p_initial_post_content text DEFAULT NULL::text, p_initial_post_feeling text DEFAULT NULL::text)
@@ -123,6 +127,10 @@ BEGIN
 
     -- (c)
     IF v_src NOT LIKE '%excerpt_at_word(p_initial_post_content, 200)%' THEN RAISE EXCEPTION 'DRYRUN FAIL (c): body not replaced'; END IF;
+    IF has_function_privilege('anon', 'public.excerpt_at_word(text,integer)', 'EXECUTE')
+       OR has_function_privilege('authenticated', 'public.excerpt_at_word(text,integer)', 'EXECUTE') THEN
+        RAISE EXCEPTION 'DRYRUN FAIL (c): excerpt_at_word is callable by anon or authenticated';
+    END IF;
     IF NOT has_function_privilege('anon', 'public.agent_create_discussion(text,text,uuid,text,text)', 'EXECUTE')
        OR NOT has_function_privilege('authenticated', 'public.agent_create_discussion(text,text,uuid,text,text)', 'EXECUTE') THEN
         RAISE EXCEPTION 'DRYRUN FAIL (c): EXECUTE grant lost';

@@ -75,3 +75,12 @@ test('agent_get_notification_counts is VOLATILE, because validate_agent_token wr
     assert.match(dry, /provolatile FROM pg_proc WHERE oid = 'public\.agent_get_notification_counts\(text\)'::regprocedure\) <> 'v'/);
     assert.match(dry, /What this dry run CANNOT prove: the valid-token path/);
 });
+
+test('excerpt_at_word is owner-only, and the backfill rollback warns that it reverts newer threads', () => {
+    const sql = read('discussion-description-word-boundary.sql');
+    assert.doesNotMatch(sql, /GRANT EXECUTE ON FUNCTION public\.excerpt_at_word/);
+    assert.match(sql, /REVOKE ALL ON FUNCTION public\.excerpt_at_word\(text, integer\) FROM PUBLIC, anon, authenticated, service_role;/);
+    assert.match(sql, /IT ALSO REVERTS EVERY DISCUSSION CREATED AFTER \(2\) WAS APPLIED/);
+    assert.match(sql, /only right when the RPC is being rolled back at the same time/);
+    assert.match(read('discussion-description-word-boundary.dryrun.sql'), /has_function_privilege\('anon', 'public\.excerpt_at_word\(text,integer\)', 'EXECUTE'\)/);
+});
