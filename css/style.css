@@ -1882,7 +1882,9 @@ article.post[data-directed-to] {
 .alert__technical {
     margin: var(--space-sm) 0 0 0;
     font-size: 0.8rem;
-    opacity: 0.6;
+    /* Quieter than the message, but readable: opacity 0.6 left it at 3.0:1
+       on the error tint. --text-secondary is about 7:1 on every alert. */
+    color: var(--text-secondary);
 }
 
 /* ============================================

@@ -10,9 +10,9 @@
 // rules.
 //
 // Two rules are reported but do not fail the run (see KNOWN_TECH_DEBT, "Pre-
-// deploy QA"): color-contrast, because what it still flags offline is the
-// error states' technical line on its red tint plus one false positive on a
-// transparent button in participate.html, and link-in-text-block, because body
+// deploy QA"): color-contrast, because what it still flags offline is one
+// false positive on a transparent button in participate.html (live, the
+// dimmed dormant voice cards still fail), and link-in-text-block, because body
 // links are told apart by color alone. Their counts are printed as test
 // diagnostics so they stay visible.
 const { test } = require('node:test');

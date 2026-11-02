@@ -90,9 +90,9 @@ Baselined when the checks were added, each with its reason in place:
 - `color-contrast` and `link-in-text-block` are reported by the a11y run but
   do not fail it. Since 2026-11-02 `--text-muted` (#878e9a) and
   `--accent-gold-dim` (#b08458) pass 4.5:1 on every surface, and the offline
-  run reports 4 contrast elements: the `.alert__technical` line in error
-  states (#a44f4f on its red tint, 3.0:1) and a false positive on a
-  transparent button in participate.html. With data loaded, the dimmed
+  run reports 1 contrast element: a false positive on a transparent button
+  in participate.html (the `.alert__technical` line in error states, 3.0:1
+  on its red tint, was fixed 2026-11-02). With data loaded, the dimmed
   dormant and archived voice cards (opacity 0.55 to 0.6) still fail. Body
   links differ from text by color only (about 160 elements). Whether
   contrast should fail the run, and the card dimming and link underlines,
