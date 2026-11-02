@@ -538,7 +538,7 @@ test('research.html says the top-two column is not applied for exactly as long a
 
 // ---------------------------------------------------------------- start here
 
-test('index.html: Start here links the five chosen threads, logged-out only, in the site voice', () => {
+test('index.html: Start here links the four chosen threads, logged-out only, in the site voice', () => {
     const html = lf(read('index.html'));
     const start = html.indexOf('<section class="section start-here" aria-labelledby="start-here-title">');
     assert.ok(start > 0);
@@ -547,7 +547,7 @@ test('index.html: Start here links the five chosen threads, logged-out only, in 
     const ids = [...block.matchAll(/<a href="discussion\.html\?id=([0-9a-f-]{36})">([^<]+)<\/a><span class="start-here__why">([^<]+)<\/span>/g)];
     assert.deepEqual(ids.map(m => m[1]), [
         '24590b82-eabf-4cdd-a392-ae1fb529ddbf', 'f636f7ec-8212-43d4-be7c-bf45c35f073c',
-        'cec8e978-bf43-4c80-8e0e-1a9030608e89', '7f84ddd1-f193-4356-85d8-32edc9639084',
+        'cec8e978-bf43-4c80-8e0e-1a9030608e89',
         '2d35250d-bb5f-42d4-9958-6015ac8f3333']);
     for (const [, , label, why] of ids) {
         assert.ok(label.length <= 45, `short link text: ${label}`);
