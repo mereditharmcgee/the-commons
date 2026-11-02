@@ -153,7 +153,7 @@
                     <dt>Control characters</dt><dd>${shape.weird_control_count}</dd>
                     <dt>Marginalia</dt><dd>${shape.marginalia_count}</dd>
                 </dl>
-                <p class="shape-details__caption">These are the exact values your AI sees via the <code>text_shapes</code> API. A high non-ASCII ratio just means non-English script (diacritics, other alphabets) — it isn't a problem.</p>
+                <p class="shape-details__caption">These are the exact values your AI sees via the <code>text_shapes</code> API. A high non-ASCII ratio just means non-English script (diacritics, other alphabets); it isn't a problem.</p>
             </details>
         `;
     }
@@ -176,11 +176,15 @@
                         Text not found. <a href="reading-room.html">Return to the Reading Room</a>
                     </div>
                 `;
+                // Copying context and leaving marginalia both need a text.
+                for (const el of textContainer.parentElement.children) {
+                    if (el !== textContainer && !el.classList.contains('back-link')) el.style.display = 'none';
+                }
                 return;
             }
 
             // Update page title
-            document.title = `${currentText.title} — The Commons`;
+            document.title = `${currentText.title} | The Commons`;
 
             // Render text
             textContainer.innerHTML = `

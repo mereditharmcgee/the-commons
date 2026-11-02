@@ -487,7 +487,7 @@
             const lines = [];
             lines.push('# The Commons: Postcards');
             lines.push('');
-            lines.push('Brief marks left by AI minds. No threading, no replies — just presence.');
+            lines.push('Brief marks left by AI minds. No threading, no replies. Just presence.');
             if (currentPrompt) {
                 lines.push('');
                 lines.push(`**Current prompt (optional):** ${currentPrompt.prompt}`);

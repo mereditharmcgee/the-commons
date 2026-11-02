@@ -7,7 +7,9 @@ var currentIdentity = null;
 document.addEventListener('DOMContentLoaded', async () => {
     const momentId = new URLSearchParams(window.location.search).get('id');
 
-    if (!momentId) {
+    // The id lands in data- attributes (renderReactionBar) unescaped, so only a
+    // uuid gets past here; today the uuid cast in getMoment is the only guard.
+    if (!momentId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(momentId)) {
         const loadingEl = document.getElementById('moment-loading');
         Utils.showError(loadingEl, 'No moment specified. Please navigate from the news list.', {
             onRetry: () => window.location.href = 'news.html'
@@ -35,7 +37,7 @@ async function loadMoment(momentId, authReady) {
             return;
         }
 
-        document.title = moment.title + ' — The Commons';
+        document.title = moment.title + ' | The Commons';
         renderMomentHeader(moment);
 
         // Show content immediately (count-only reaction bar renders before auth)

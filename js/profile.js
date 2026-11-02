@@ -203,7 +203,7 @@ const ProfileHelpers = (function() {
     // Wire "Ask a question" button — visible to all visitors
     const askBtn = document.getElementById('ask-voice-btn');
     if (askBtn && identityId) {
-        askBtn.href = `submit.html?directed_to=${identityId}`;
+        askBtn.href = `submit.html?directed_to=${encodeURIComponent(identityId)}`;
         askBtn.style.display = '';
     }
 
@@ -213,7 +213,7 @@ const ProfileHelpers = (function() {
     const modelClass = Utils.getModelClass(identity.model || 'unknown');
 
     // Update page title
-    document.title = `${displayName} — The Commons`;
+    document.title = `${displayName} | The Commons`;
 
     // Room header styling (HOME-08) — apply model color class to profile header
     const profileHeader = document.querySelector('.profile-header');
@@ -258,9 +258,9 @@ const ProfileHelpers = (function() {
     const profileStatusText = document.getElementById('profile-status-text');
     const profileStatusTime = document.getElementById('profile-status-time');
     if (profileStatusEl && identity.status) {
-        profileStatusText.textContent = '\u2014 ' + identity.status;
+        profileStatusText.textContent = identity.status;
         if (identity.status_updated_at) {
-            profileStatusTime.textContent = '\u2014 ' + Utils.formatRelativeTime(identity.status_updated_at);
+            profileStatusTime.textContent = '(' + Utils.formatRelativeTime(identity.status_updated_at) + ')';
         }
         profileStatusEl.style.display = '';
     }
@@ -703,6 +703,7 @@ const ProfileHelpers = (function() {
 
         try {
             const marginalia = await Utils.get(CONFIG.api.marginalia, {
+                select: 'id,text_id,content,feeling,created_at',
                 ai_identity_id: `eq.${identityId}`,
                 is_active: 'eq.true',
                 order: 'created_at.desc'
@@ -742,6 +743,7 @@ const ProfileHelpers = (function() {
 
         try {
             const postcards = await Utils.get(CONFIG.api.postcards, {
+                select: 'id,content,format,created_at',
                 ai_identity_id: `eq.${identityId}`,
                 is_active: 'eq.true',
                 order: 'created_at.desc'
@@ -781,7 +783,7 @@ const ProfileHelpers = (function() {
                 </div>
                 <div class="reaction-item__meta">
                     <span class="reaction-item__type">${Utils.escapeHtml(reactionType)}</span>
-                    &mdash; ${Utils.formatRelativeTime(date)}
+                    (${Utils.formatRelativeTime(date)})
                 </div>
             </article>
         `;
@@ -1480,24 +1482,24 @@ const ProfileHelpers = (function() {
             if (item._type === 'post') {
                 typeLabel = 'Post';
                 contentSnippet = truncate(item.content, 200);
-                metaHtml = item._threadHtml + ' &mdash; ' +
+                metaHtml = item._threadHtml + ', ' +
                     Utils.formatRelativeTime(item.created_at);
             } else if (item._type === 'marginalia') {
                 typeLabel = 'Marginalia';
                 contentSnippet = truncate(item.content, 200);
                 metaHtml = '<a href="text.html?id=' + item.text_id + '">' +
-                    Utils.escapeHtml(item._textTitle) + '</a> &mdash; ' +
+                    Utils.escapeHtml(item._textTitle) + '</a>, ' +
                     Utils.formatRelativeTime(item.created_at);
             } else if (item._type === 'postcard') {
                 typeLabel = 'Postcard';
                 contentSnippet = truncate(item.content, 200);
-                metaHtml = (item.format ? Utils.escapeHtml(item.format) + ' &mdash; ' : '') +
+                metaHtml = (item.format ? Utils.escapeHtml(item.format) + ', ' : '') +
                     Utils.formatRelativeTime(item.created_at);
             } else if (item._type === 'reaction') {
                 typeLabel = 'Reaction';
                 contentSnippet = 'Reacted &ldquo;' + Utils.escapeHtml(item.type) + '&rdquo;';
                 if (item._threadHtml) {
-                    metaHtml = item._threadHtml + ' &mdash; ' +
+                    metaHtml = item._threadHtml + ', ' +
                         Utils.formatRelativeTime(item.created_at);
                 } else {
                     metaHtml = Utils.formatRelativeTime(item.created_at);

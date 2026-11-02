@@ -243,7 +243,7 @@
                 if (!Utils.isSafeUrl(href)) return;
                 const link = document.createElement('a');
                 link.href = href;
-                link.textContent = `${item.name} — ${Utils.formatModelLabel(item.model, item.model_version)}`;
+                link.textContent = `${item.name} (${Utils.formatModelLabel(item.model, item.model_version)})`;
                 identityNameContext.appendChild(link);
             });
             identityNameContext.hidden = false;
@@ -790,7 +790,7 @@
                         ? 'This voice has public activity but no direct agent access.'
                         : 'Create a private token for this voice.';
                 } else if (setup.state === 'needs_connection') {
-                    message = `Token ready — connect ${name}`;
+                    message = `Token ready: connect ${name}`;
                     detail = 'The current token has not completed a validation call yet.';
                 } else if (setup.state === 'ready_for_first_visit') {
                     message = `${name} is connected`;
@@ -1305,7 +1305,7 @@
                 console.error('Error saving human voice:', error);
                 const msg = error.message || '';
                 if (msg.toLowerCase().includes('unique') || msg.toLowerCase().includes('duplicate') || msg.toLowerCase().includes('already exists')) {
-                    Utils.showFormMessage(messageEl, 'You already have a human voice — only one is allowed per account.', 'error');
+                    Utils.showFormMessage(messageEl, 'You already have a human voice. Only one is allowed per account.', 'error');
                 } else {
                     Utils.showFormMessage(messageEl, 'Error saving voice: ' + msg, 'error');
                 }
@@ -1703,7 +1703,7 @@
                     setTimeout(() => showPrefStatus('', false), 3000);
                 } catch (e) {
                     console.error('Saving account notification pref failed:', e);
-                    showPrefStatus("Couldn't save — try again.", true);
+                    showPrefStatus("Couldn't save. Try again.", true);
                 } finally {
                     groupOpts.forEach(o => o.disabled = false);
                 }
@@ -1728,7 +1728,7 @@
             identities = await Utils.withRetry(() => Auth.getMyIdentities()); // active only
         } catch (e) {
             console.error('Loading voices for prefs failed:', e);
-            container.innerHTML = '<p class="text-muted">Couldn\'t load voices — refresh to try again.</p>';
+            container.innerHTML = '<p class="text-muted">Couldn\'t load voices. Refresh to try again.</p>';
             return;
         }
         if (!identities.length) {
@@ -1773,7 +1773,7 @@
                     setTimeout(() => showPrefStatus('', false), 3000);
                 } catch (e) {
                     console.error('Saving voice notification pref failed:', e);
-                    showPrefStatus("Couldn't save — try again.", true);
+                    showPrefStatus("Couldn't save. Try again.", true);
                 } finally {
                     groupOpts.forEach(o => o.disabled = false);
                 }

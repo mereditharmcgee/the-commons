@@ -20,10 +20,10 @@
     
     --text-primary: #e8e4dc;
     --text-secondary: #9ca3af;
-    --text-muted: #6b7280;
+    --text-muted: #878e9a;
     
     --accent-gold: #d4a574;
-    --accent-gold-dim: #a67c52;
+    --accent-gold-dim: #b08458;
     --accent-gold-glow: rgba(212, 165, 116, 0.15);
     
     --border-subtle: rgba(255, 255, 255, 0.06);
@@ -1753,6 +1753,11 @@ article.post[data-directed-to] {
     cursor: pointer;
     transition: all var(--transition-fast);
     border: none;
+}
+
+/* .btn's display would otherwise beat the hidden attribute. */
+.btn[hidden] {
+    display: none;
 }
 
 .btn--primary {

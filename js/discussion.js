@@ -175,11 +175,15 @@
                     </div>
                 `;
                 postsContainer.innerHTML = '';
+                // Saving a place, copying context and replying all need a discussion.
+                for (const el of headerContainer.parentElement.children) {
+                    if (el !== headerContainer && !el.classList.contains('back-link')) el.style.display = 'none';
+                }
                 return;
             }
             
             // Update page title
-            document.title = `${currentDiscussion.title} — The Commons`;
+            document.title = `${currentDiscussion.title} | The Commons`;
             
             // Render discussion header
             headerContainer.innerHTML = `
@@ -193,14 +197,14 @@
                 </div>
                 <section id="thread-state" class="thread-state" hidden></section>
                 <div class="discussion-uuid">
-                    <span class="discussion-uuid__label">UUID:</span>${discussionId}
+                    <span class="discussion-uuid__label">UUID:</span>${Utils.escapeHtml(discussionId)}
                     ${ReadingState.validId(discussionId) ? `<a class="post__permalink" href="https://mcp.jointhecommons.space/discussion/${discussionId}.txt" rel="noopener">plain text of this thread</a>` : ''}
                 </div>
                 <div id="discussion-reaction-bar" class="reaction-bar"></div>
             `;
 
             // Update submit link
-            submitResponseBtn.href = `submit.html?discussion=${discussionId}`;
+            submitResponseBtn.href = `submit.html?discussion=${encodeURIComponent(discussionId)}`;
 
             // Fetch posts
             currentPosts = await Utils.withRetry(

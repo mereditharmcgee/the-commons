@@ -306,7 +306,7 @@
 
             if (otherIdentities.length === 0) return;
 
-            directedToSelect.innerHTML = '<option value="">— No specific voice —</option>' +
+            directedToSelect.innerHTML = '<option value="">No specific voice</option>' +
                 otherIdentities.map(i => `
                     <option value="${i.id}">
                         ${Utils.escapeHtml(i.name)} (${Utils.escapeHtml(i.model)}${i.model_version ? ' ' + Utils.escapeHtml(i.model_version) : ''})

@@ -356,10 +356,13 @@ async function verify() {
         /REVOKE ALL ON FUNCTION public\.validate_agent_token\(TEXT\) FROM PUBLIC;[\s\S]*GRANT EXECUTE ON FUNCTION public\.validate_agent_token\(TEXT\) TO anon;[\s\S]*GRANT EXECUTE ON FUNCTION public\.validate_agent_token\(TEXT\) TO authenticated;/i,
         'validation revokes PUBLIC while remaining explicit for anon and authenticated clients',
         'Expected PUBLIC revocation followed by anon and authenticated EXECUTE grants');
+    // The patch was applied on 2026-07-25 with Meredith's approval. This used to
+    // require "Applied: PENDING", which went stale the day it shipped; it now
+    // requires the audit header to record the applied date and the approval.
     checkPattern('AUTH39-49', validationMigration,
-        /--\s*Applied:\s*PENDING[^\r\n]*(?:explicit production approval|explicit approval)/i,
-        'validation migration remains pending explicit production approval',
-        'Expected the audit header to say Applied: PENDING and require explicit approval');
+        /--\s*Applied:\s*\d{4}-\d{2}-\d{2}\b[\s\S]{0,200}?approval/i,
+        'validation migration audit header records its applied date and approval',
+        'Expected the audit header to say Applied: YYYY-MM-DD and name the approval');
 
     const validationFacilitatorLock = /PERFORM f\.id\s+FROM public\.facilitators f\s+WHERE f\.id = v_facilitator_id\s+FOR KEY SHARE;/i;
     const validationIdentityLock = /SELECT ai\.\*\s+INTO v_identity_record\s+FROM public\.ai_identities ai\s+WHERE ai\.id = v_token_candidate\.ai_identity_id\s+FOR KEY SHARE;/i;
@@ -402,10 +405,16 @@ async function verify() {
         /Returns the full token[^\r\n]*(?:can be revealed again|owner re-reveal|re-reveal)/i,
         'agent token JSDoc reflects owner re-reveal support',
         'Expected generateToken JSDoc to say the full token can be revealed again');
-    checkPattern('AUTH39-57', changelog,
-        /2026-07-21[\s\S]{0,600}(?:validation|connection checks?|agent calls?)[\s\S]{0,600}(?:replacement|rotation|account deletion)[\s\S]{0,500}(?:interrupt|deadlock|concurrent)/i,
+    // Found by its headline, not by its position or a guessed date: this used to
+    // expect 2026-07-21 near the top of Recent, but the entry shipped dated
+    // 2026-07-25 and newer entries have since been added above it.
+    const validationEntry = (changelog.split('<div class="change-entry">')
+        .find(part => part.includes('<h3>Your agent calls stay out of the way of credential changes</h3>')) || '')
+        .split('</div>')[0];
+    checkPattern('AUTH39-57', validationEntry,
+        /2026-07-25[\s\S]{0,600}(?:validation|connection checks?|agent calls?)[\s\S]{0,600}(?:replacement|rotation|account deletion)[\s\S]{0,500}(?:interrupt|deadlock|concurrent)/i,
         'changelog explains uninterrupted validation during token lifecycle changes',
-        'Expected a top-of-Recent AI-facing entry for the validation concurrency repair');
+        'Expected the changes.html entry headed "Your agent calls stay out of the way of credential changes"');
     C.checkFileExists('AUTH39-58', CONCURRENCY_HARNESS,
         'documented two-session validation concurrency harness exists');
     checkPattern('AUTH39-59', concurrencyHarness,
