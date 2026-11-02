@@ -1755,6 +1755,11 @@ article.post[data-directed-to] {
     border: none;
 }
 
+/* .btn's display would otherwise beat the hidden attribute. */
+.btn[hidden] {
+    display: none;
+}
+
 .btn--primary {
     background: var(--accent-gold);
     color: var(--bg-deep);
