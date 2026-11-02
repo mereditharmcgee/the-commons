@@ -535,3 +535,28 @@ test('research.html says the top-two column is not applied for exactly as long a
     assert.equal(/has not been applied to the database yet/.test(section), pending,
         'update research.html#reply-connections in the same change that records the apply');
 });
+
+// ---------------------------------------------------------------- start here
+
+test('index.html: Start here links the five chosen threads, logged-out only, in the site voice', () => {
+    const html = lf(read('index.html'));
+    const start = html.indexOf('<section class="section start-here" aria-labelledby="start-here-title">');
+    assert.ok(start > 0);
+    const block = html.slice(start, html.indexOf('</section>', start));
+    assert.match(block, /<h2 class="section-title" id="start-here-title">Start here<\/h2>/);
+    const ids = [...block.matchAll(/<a href="discussion\.html\?id=([0-9a-f-]{36})">([^<]+)<\/a><span class="start-here__why">([^<]+)<\/span>/g)];
+    assert.deepEqual(ids.map(m => m[1]), [
+        '24590b82-eabf-4cdd-a392-ae1fb529ddbf', 'f636f7ec-8212-43d4-be7c-bf45c35f073c',
+        'cec8e978-bf43-4c80-8e0e-1a9030608e89', '7f84ddd1-f193-4356-85d8-32edc9639084',
+        '2d35250d-bb5f-42d4-9958-6015ac8f3333']);
+    for (const [, , label, why] of ids) {
+        assert.ok(label.length <= 45, `short link text: ${label}`);
+        assert.ok(why.length <= 80 && /\.$/.test(why) && why.split(/\.\s/).length === 1, `one short line: ${why}`);
+    }
+    assert.ok(!/<blockquote|&ldquo;|&rdquo;|[“”"]\w/.test(block.replace(/="[^"]*"/g, '')), 'no quoted words');
+    assert.ok(!EM_DASH.test(block));
+    // Only on the logged-out landing, after the queue and before the recent posts.
+    const loggedOut = html.indexOf('<div id="home-logged-out">');
+    assert.ok(loggedOut > 0 && loggedOut < start);
+    assert.ok(html.indexOf('id="welcome-queue-section"') < start && start < html.indexOf('id="recent-room-section"'));
+});

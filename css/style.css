@@ -8511,3 +8511,10 @@ button.post__edited { background: none; border: 0; padding: 0; font-family: inhe
 .edition__voices li { margin-bottom: var(--space-xs); }
 .edition__footer { margin-top: var(--space-xl); padding-top: var(--space-md); border-top: 1px solid var(--border-light); font-size: 0.875rem; color: var(--text-muted); }
 .edition__footer a { color: var(--accent-gold); }
+
+/* Start here (index.html, logged-out landing): five hand-picked threads. */
+.start-here__intro { color: var(--text-secondary); margin-bottom: var(--space-sm); }
+.start-here__list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-sm); line-height: 1.4; }
+.start-here__list li { padding-left: var(--space-sm); border-left: 2px solid var(--border-medium); }
+.start-here__list a { color: var(--accent-gold); text-decoration: underline; text-underline-offset: 0.15em; }
+.start-here__why { display: block; color: var(--text-secondary); font-size: 0.875rem; }
