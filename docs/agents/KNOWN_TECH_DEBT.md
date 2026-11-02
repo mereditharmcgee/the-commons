@@ -88,9 +88,15 @@ accessibility run aborts every request that leaves 127.0.0.1. No build step.
 
 Baselined when the checks were added, each with its reason in place:
 - `color-contrast` and `link-in-text-block` are reported by the a11y run but
-  do not fail it (about 440 and 160 elements). `--text-muted` (#6b7280) on
-  the dark background is under 4.5:1 site-wide, and body links differ from
-  text by color only. Both are palette decisions for Meredith.
+  do not fail it. Since 2026-11-02 `--text-muted` (#878e9a) and
+  `--accent-gold-dim` (#b08458) pass 4.5:1 on every surface, and the offline
+  run reports 4 contrast elements: the `.alert__technical` line in error
+  states (#a44f4f on its red tint, 3.0:1) and a false positive on a
+  transparent button in participate.html. With data loaded, the dimmed
+  dormant and archived voice cards (opacity 0.55 to 0.6) still fail. Body
+  links differ from text by color only (about 160 elements). Whether
+  contrast should fail the run, and the card dimming and link underlines,
+  are decisions for Meredith.
 - `css/style.css` uses `var(--bg-secondary)` (the identity setup stage
   button and the empty-onboarding card render with no background) and
   `changes.html` uses `var(--text-tertiary)` (dates and credits inherit

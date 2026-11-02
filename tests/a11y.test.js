@@ -10,10 +10,11 @@
 // rules.
 //
 // Two rules are reported but do not fail the run (see KNOWN_TECH_DEBT, "Pre-
-// deploy QA"): color-contrast, because --text-muted on the dark background is
-// below 4.5:1 site-wide and changing the palette is a design decision, and
-// link-in-text-block, because body links are told apart by color alone. Their
-// counts are printed as test diagnostics so they stay visible.
+// deploy QA"): color-contrast, because what it still flags offline is the
+// error states' technical line on its red tint plus one false positive on a
+// transparent button in participate.html, and link-in-text-block, because body
+// links are told apart by color alone. Their counts are printed as test
+// diagnostics so they stay visible.
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
