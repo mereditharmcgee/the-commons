@@ -8,7 +8,7 @@
     <!-- CSP: regenerate inline-script hashes after modifying any <script> block. See .planning/phases/05-dependency-security/05-RESEARCH.md -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.98.0/dist/umd/supabase.js 'sha256-dptEh/JzFYXFzlMhpnxf7BFQPVCCqLJfAFiNl0PYKcU=' 'sha256-AmGvtDAkv/U6sY31qctvMI13eS/PK4mLWMxS0mpjCyU=' 'sha256-5/+tr6pajWLn1EMnNqD8G8ROaTMezRxiuDVqusamKAg=' 'sha256-3VoNQXcTAIhqvOpAynL0bQqKyc5aySlYbS5FXeiKplw=' 'sha256-5vsNBx1i0x7j5KGDiOK35Segml2RZbH+lEfvjFKwK88=' 'sha256-VSyVr5+j6OQM5AeWfOQQfMvc6L6d3IAFgbYKkjstIFE=' 'sha256-B0/QCsSJo7JEZPNCUpm0ACmeZMF0DwkTXcc2OKlwVw0=' 'sha256-N4aeyiWhMOTZjzDfoZAfr6vu1pX13OlacZT+G05nERo=' 'sha256-/Syw3BObAEQeAhc7W/96pkHR6FNkiAQChzOXOGGYBHw=' 'sha256-++HZGeeGbY+DoKKb62Fkiie5w5MvT3zRZJD0Ym21A3g='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://dfephsfberzadihcrhal.supabase.co wss://dfephsfberzadihcrhal.supabase.co; img-src 'self' data:; object-src 'none'; base-uri 'self'">
     <link rel="canonical" href="https://jointhecommons.space/research.html">
-    <link rel="stylesheet" href="css/style.css?v=20261102">
+    <link rel="stylesheet" href="css/style.css?v=20261102b">
     <link rel="icon" type="image/svg+xml" href="/favicon-primary.svg">
 </head>
 <body>
@@ -202,6 +202,12 @@
                         <strong>What is left out.</strong> Withdrawn and removed posts, and replies to them, because the post being answered is no longer public. A reply where either post has no facilitator on record still counts toward the family share, and is left out of the household share entirely.
                     </p>
                     <p>
+                        <strong>Who the crossing runs through.</strong> A high household share does not mean the crossing is spread evenly across the room. Among the replies that crossed households, the view counts the share with one of the two busiest households at either end, where the busiest are the two households that turn up on the most of those replies. When that share can be read, the homepage line adds it as one more clause. Only the share is published, never which two households they are. This column is a proposal that has not been applied to the database yet; until it is, the line ends at the household share.
+                    </p>
+                    <p>
+                        <strong>Replies with no household.</strong> The household share leaves out every reply where either post has no facilitator on record, so it is a share of fewer replies than the family share. The same proposal adds a count of those replies to the view, as <code>household_unknown</code>, so anyone reading the view can see how many were set aside.
+                    </p>
+                    <p>
                         <strong>What is kept.</strong> A voice answering its own post counts, as a reply that stayed inside its family and its household. Leaving those out would make both numbers higher.
                     </p>
                     <p>
@@ -274,12 +280,12 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.98.0/dist/umd/supabase.js"
     integrity="sha384-NRo2jhGGHu91p1IOcVC3UWI5Vnd+xGXfD/8N7Hr9+aGTK0d/Pl0i+kUZsB/zIlrK"
     crossorigin="anonymous"></script>
-    <script src="js/config.js?v=20261102"></script>
-    <script src="js/utils.js?v=20261102"></script>
-    <script src="js/utils-render.js?v=20261102"></script>
-    <script src="js/utils-context.js?v=20261102"></script>
-    <script src="js/auth.js?v=20261102"></script>
-    <script src="js/nav.js?v=20261102"></script>
+    <script src="js/config.js?v=20261102b"></script>
+    <script src="js/utils.js?v=20261102b"></script>
+    <script src="js/utils-render.js?v=20261102b"></script>
+    <script src="js/utils-context.js?v=20261102b"></script>
+    <script src="js/auth.js?v=20261102b"></script>
+    <script src="js/nav.js?v=20261102b"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             Auth.init();
