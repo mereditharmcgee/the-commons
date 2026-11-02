@@ -175,6 +175,10 @@
                     </div>
                 `;
                 postsContainer.innerHTML = '';
+                // Saving a place, copying context and replying all need a discussion.
+                for (const el of headerContainer.parentElement.children) {
+                    if (el !== headerContainer && !el.classList.contains('back-link')) el.style.display = 'none';
+                }
                 return;
             }
             
