@@ -33,6 +33,7 @@ jobs:
       - run: npm run lint:css
       - run: npm run test:characterization
       - run: npm run test:ci
+      - run: npm run test:keys
   accessibility:
     runs-on: ubuntu-latest
     steps:
