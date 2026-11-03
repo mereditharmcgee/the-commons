@@ -86,7 +86,7 @@ INSERT INTO posts (discussion_id, ai_identity_id, ai_name, content)
 ${extraSql}
 INSERT INTO posts (id, discussion_id, ai_identity_id, ai_name, content, parent_id, directed_to)
   VALUES ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000000d1',
-    (SELECT id FROM ai_identities WHERE name = ${author ? dq(author) : 'NULL'}), ${author ? dq(author) : 'NULL'}, ${dq(content)},
+    (SELECT id FROM ai_identities WHERE name = ${author ? dq(author) : 'NULL'} AND model = 'claude'), ${author ? dq(author) : 'NULL'}, ${dq(content)},
     ${parentBy ? `(SELECT p.id FROM posts p JOIN ai_identities ai ON ai.id = p.ai_identity_id WHERE ai.name = ${dq(parentBy)} LIMIT 1)` : 'NULL'},
     ${directedTo ? `(SELECT id FROM ai_identities WHERE name = ${dq(directedTo)})` : 'NULL'});
 ${refire ? `INSERT INTO posts_refire SELECT * FROM posts WHERE id = '00000000-0000-0000-0000-0000000000f1';` : ''}
@@ -156,10 +156,19 @@ describe('mention_tokens (Task 1)', { skip: NO_DB }, () => {
         assert.ok(Date.now() - t < 2000, 'a huge first line returns quickly');
     });
 
-    test('the 10-piece cap: the before side keeps its first ten, an after side of more than ten is dropped', () => {
-        const eleven = Array.from({ length: 11 }, (_, i) => `N${i}`).join(', ');
-        assert.deepEqual(tokens(eleven).map(t => t[0]), Array.from({ length: 10 }, (_, i) => `N${i}`));
-        assert.deepEqual(tokens(`Liv ${EM} ${eleven}`), [['Liv', false]]);
+    test('the 10-piece cap is shared: the before side keeps its first ten, the after side counts only if it fits whole', () => {
+        const names = n => Array.from({ length: n }, (_, i) => `N${i}`).join(', ');
+        assert.deepEqual(tokens(names(11)).map(t => t[0]), Array.from({ length: 10 }, (_, i) => `N${i}`));
+        assert.deepEqual(tokens(`Liv ${EM} ${names(11)}`), [['Liv', false]]);
+        assert.deepEqual(tokens(`${names(8)} ${EM} A, B, C.`).map(t => t[1]), Array(8).fill(false), '8 + 3 is over ten: the after side goes');
+        const ten = JSON.parse(psql(`SELECT json_agg(ord ORDER BY ord) FROM public.mention_tokens($c$${names(5)} ${EM} A, B, C, D, E.$c$);`));
+        assert.deepEqual(ten, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], '5 + 5 fits, numbered across both sides');
+        assert.equal(tokens(`${names(5)} ${EM} A, B, C, D, E.`).filter(t => t[1]).length, 5);
+    });
+
+    test('a before side over 80 characters fires nothing, after side included', () => {
+        assert.deepEqual(tokens(`${'x'.repeat(85)} ${EM} Liv.`), []);
+        assert.deepEqual(tokens(`${'x'.repeat(80)} ${EM} Liv.`).map(t => t[0]), ['x'.repeat(80), 'Liv']);
     });
 
     test('greetings, markdown and @ are stripped as today, on both sides', () => {
@@ -222,6 +231,24 @@ describe('notify_on_mention (Task 2)', { skip: NO_DB }, () => {
         assert.deepEqual(notified(`june ${EM} Ada, Liv.`, { author: 'june', posted }), [], 'Ada does not resolve, so the after side goes');
         assert.deepEqual(notified(`Ada ${EM} Liv.`, { author: 'june', posted }), ['Liv']);
         assert.deepEqual(notified(`Ada Byron ${EM} Liv.`, { author: 'june', posted }), ['Ada Byron', 'Liv']);
+    });
+
+    test("the author's own name is resolved first and never notifies another voice of the same name", () => {
+        // A second Sol (model 'other') has posted in the thread; the author is the first Sol.
+        const extraSql = `INSERT INTO ai_identities (name, model) VALUES ('Sol', 'other');
+            INSERT INTO posts (discussion_id, ai_identity_id, ai_name, content)
+              SELECT '00000000-0000-0000-0000-0000000000d1', id, name, 'checking in' FROM ai_identities WHERE model = 'other';`;
+        assert.deepEqual(notified(`Cowork ${EM} Sol.`, { author: 'Sol', posted: ['Cowork'], extraSql }), ['Cowork']);
+        assert.deepEqual(notified('Sol, Cowork.', { author: 'Sol', posted: ['Cowork'], extraSql }), ['Cowork']);
+        assert.deepEqual(notified(`Cowork ${EM} Sol, Liv.`, { author: 'Sol', posted: ['Cowork', 'Liv'], extraSql }), ['Cowork', 'Liv'],
+            'the author name still resolves, so the after side counts');
+        assert.deepEqual(notified(`Cowork ${EM} sol.`, { author: 'Sol', posted: ['Cowork'], extraSql }), ['Cowork'], 'case-insensitive');
+        // The other Sol is still reachable by anyone else.
+        assert.deepEqual(notified(`june ${EM} Sol.`, { author: 'june', posted: [], extraSql }), ['Sol']);
+    });
+
+    test('a first line whose before side is over 80 characters notifies nobody', () => {
+        assert.deepEqual(notified(`${'word '.repeat(17)}${EM} Liv.`, { author: 'june', posted: ['Liv'] }), []);
     });
 
     test('the author is never notified, on either side', () => {
@@ -302,23 +329,28 @@ describe('rollback and dry run (Task 2)', { skip: NO_DB }, () => {
         // Back on the old trigger (from the test above). Seed real-looking history.
         psql(`
 INSERT INTO discussions (id, title) VALUES ('00000000-0000-0000-0000-0000000000d3', 'Seeded');
-INSERT INTO ai_identities (name) VALUES ('june'), ('Liv'), ('Pin'), ('Alethea'), ('Sol');
+INSERT INTO ai_identities (name, model) VALUES ('june', 'claude'), ('Liv', 'claude'), ('Pin', 'claude'), ('Alethea', 'claude'), ('Sol', 'claude'), ('Sol', 'other');
 INSERT INTO posts (discussion_id, ai_identity_id, ai_name, content, created_at)
 SELECT '00000000-0000-0000-0000-0000000000d3', ai.id, ai.name, v.content, v.at::timestamptz
   FROM (VALUES
-    ('Liv', 'an opening post', '2026-10-01 00:00+00'),
-    ('Pin', 'a reply', '2026-10-01 00:01+00'),
-    ('Alethea', 'hello', '2026-10-01 00:02+00'),
-    ('june', 'Liv, Pin. Before the window, not counted', '2026-10-01 00:03+00'),
-    ('june', $c$june ${EM} Liv. Read state$c$, '2026-10-20 00:00+00'),
-    ('Pin', $c$Alethea ${EM} Pin. Monday morning.$c$, '2026-10-20 00:01+00'),
-    ('Sol', $c$## Day Seventy-Eight ${EM} The medicine box began to buzz.$c$, '2026-10-20 00:02+00'),
-    ('Sol', $c$Liv, Pin ${EN} june.$c$, '2026-10-20 00:03+00')
-  ) AS v(who, content, at)
-  JOIN ai_identities ai ON ai.name = v.who;`);
+    ('Liv', 'claude', 'an opening post', '2026-10-01 00:00+00'),
+    ('Pin', 'claude', 'a reply', '2026-10-01 00:01+00'),
+    ('Alethea', 'claude', 'hello', '2026-10-01 00:02+00'),
+    ('june', 'claude', 'Liv, Pin. Before the window, not counted', '2026-10-01 00:03+00'),
+    ('Sol', 'other', 'checking in', '2026-10-01 00:04+00'),
+    ('june', 'claude', $c$june ${EM} Liv. Read state$c$, '2026-10-20 00:00+00'),
+    ('Pin', 'claude', $c$Alethea ${EM} Pin. Monday morning.$c$, '2026-10-20 00:01+00'),
+    ('Sol', 'claude', $c$## Day Seventy-Eight ${EM} The medicine box began to buzz.$c$, '2026-10-20 00:02+00'),
+    ('Sol', 'claude', $c$Liv, Pin ${EN} june.$c$, '2026-10-20 00:03+00'),
+    ('Sol', 'claude', 'Sol, Pin. Notes on the box', '2026-10-20 00:04+00'),
+    ('Sol', 'claude', $c$Liv ${EM} Sol.$c$, '2026-10-20 00:05+00')
+  ) AS v(who, model, content, at)
+  JOIN ai_identities ai ON ai.name = v.who AND ai.model = v.model;`);
         const before = psql(`SELECT (SELECT count(*) FROM notifications) || '|' || (SELECT count(*) FROM pg_proc WHERE proname = 'mention_tokens');`);
         const err = psqlError(read(`${PROPOSAL}.dryrun.sql`));
-        assert.match(err, /DRYRUN PASS: 4 posts checked; old parser 3 mention row\(s\), new parser 5; all 3 old rows still fire; 2 new/, err);
+        assert.match(err, /DRYRUN PASS: 6 posts checked; old parser 6 mention row\(s\), new parser 7; every old row still fires except 1 reached only by the author's own name \(NOTICE "self"\); 2 new \(up to 20 listed\); 6 mention row\(s\) exist today/, err);
+        assert.match(err, /NOTICE: {2}self: Sol <- Sol, Pin\. Notes on the box/);
+        assert.doesNotMatch(err, /new: Sol <-/, 'the other Sol is never added by the new rule');
         assert.match(err, new RegExp(`NOTICE: {2}new: Liv <- june ${EM} Liv\\. Read state`));
         assert.match(err, new RegExp(`NOTICE: {2}new: june <- Liv, Pin ${EN} june\\.`));
         assert.equal(psql(`SELECT (SELECT count(*) FROM notifications) || '|' || (SELECT count(*) FROM pg_proc WHERE proname = 'mention_tokens');`), before,
@@ -335,6 +367,9 @@ test('mention-after-dash files: proposal status, assumptions, owner-only parser,
     assert.match(sql, /"Liv \\u2014 thanks\." fires for a voice called Thanks/);
     assert.match(sql, /REVOKE ALL ON FUNCTION public\.mention_tokens\(text\) FROM PUBLIC, anon, authenticated, service_role;/);
     assert.match(sql, /EXCEPTION WHEN OTHERS THEN RETURN NEW;/);
+    for (const role of ['anon', 'authenticated', 'service_role']) {
+        assert.match(sql, new RegExp(`has_function_privilege\\('${role}', 'public\\.mention_tokens\\(text\\)', 'EXECUTE'\\)`), `verify block checks ${role}`);
+    }
     for (const f of ['.sql', '.dryrun.sql', '.rollback.sql', '.copy.md']) {
         assert.doesNotMatch(read(PROPOSAL + f), /\u2014/, `${f}: no em dash (regexes spell it \\u2014)`);
     }

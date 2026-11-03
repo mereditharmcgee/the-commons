@@ -26,8 +26,11 @@
 --       this thread" means a post at or before the replayed one. Parent,
 --       directed_to and today's mute settings are applied; the duplicate
 --       check is a DISTINCT. Reports posts checked, old rows, new rows.
---   (3) Every old row is also a new row: nothing stops firing. Any old row
---       the new rule loses is listed and the run fails.
+--   (3) Every old row is also a new row: nothing stops firing, except rows
+--       the old rule reached only through the author's own name (another
+--       voice sharing it, as with the four Sols). Those are dropped on
+--       purpose and listed as NOTICE "self". Any other old row the new rule
+--       loses is listed as "lost" and the run fails.
 --   (4) Up to 20 rows only the new rule fires, as first line plus recipient,
 --       oldest first. READ THESE: a sample that is a sentence, not an address,
 --       is a false positive. The first lines are posts from the site, so
@@ -45,7 +48,7 @@ CREATE OR REPLACE FUNCTION public.mention_tokens(p_content text)
  IMMUTABLE PARALLEL SAFE
  SET search_path TO 'pg_catalog'
 AS $function$
-DECLARE v_seg text; v_before text; v_after text;
+DECLARE v_seg text; v_before text; v_after text; v_nb int;
 BEGIN
   IF p_content IS NULL THEN RETURN; END IF;
   -- The cap comes first, before any regex (patch 039).
@@ -59,7 +62,12 @@ BEGIN
   v_after := regexp_replace(substr(v_seg, length(v_before) + 1), '^\s*([\u2014\u2013]|--?\s)', '');
   v_before := btrim(v_before);
   v_after := btrim(v_after);
-  IF v_before <> '' AND length(v_before) <= 80 THEN
+  -- An over-long before side is prose, not an address: the line fires nothing.
+  IF length(v_before) > 80 THEN RETURN; END IF;
+  -- Ten pieces in all: the before side keeps its first ten, and the after
+  -- side counts only if it fits whole in what is left.
+  v_nb := CASE WHEN v_before = '' THEN 0 ELSE (SELECT count(*) FROM regexp_split_to_table(v_before, ',|\s+and\s+|\s+&\s+'))::int END;
+  IF v_before <> '' THEN
     RETURN QUERY
       SELECT s.tok, false, s.n::int
         FROM (SELECT btrim(regexp_replace(regexp_replace(t, '^[\s@*_]+', ''), '[\s*_]+$', '')) AS tok, n
@@ -67,9 +75,9 @@ BEGIN
        WHERE s.n <= 10 AND s.tok <> '';
   END IF;
   IF v_after <> '' AND length(v_after) <= 80
-     AND (SELECT count(*) FROM regexp_split_to_table(v_after, ',|\s+and\s+|\s+&\s+')) <= 10 THEN
+     AND v_nb + (SELECT count(*) FROM regexp_split_to_table(v_after, ',|\s+and\s+|\s+&\s+')) <= 10 THEN
     RETURN QUERY
-      SELECT s.tok, true, s.n::int
+      SELECT s.tok, true, (v_nb + s.n)::int
         FROM (SELECT btrim(regexp_replace(regexp_replace(t, '^[\s@*_]+', ''), '[\s*_]+$', '')) AS tok, n
                 FROM regexp_split_to_table(v_after, ',|\s+and\s+|\s+&\s+') WITH ORDINALITY AS x(t, n)) s
        WHERE s.tok <> '';
@@ -111,7 +119,7 @@ CREATE TEMP TABLE dry_hits (post_id uuid, target uuid, parser text) ON COMMIT DR
 DO $dryrun$
 DECLARE
     v_src text; v_owner text; cur record; r record; s record; v_target uuid; v_author_name text;
-    v_before uuid[]; v_after uuid[]; v_ok boolean;
+    v_before uuid[]; v_after uuid[]; v_ok boolean; v_self text[]; v_selfn int;
     v_posts int := 0; v_old int; v_new int; v_kept int; v_live int;
 BEGIN
     -- (1) assumptions
@@ -134,18 +142,24 @@ BEGIN
                 AND is_active IS DISTINCT FROM false
               ORDER BY created_at LOOP
         v_posts := v_posts + 1;
+        SELECT name INTO v_author_name FROM public.ai_identities WHERE id = cur.ai_identity_id;
+        v_self := ARRAY[lower(cur.ai_name), lower(v_author_name), lower(split_part(v_author_name, ' ', 1))];
+        -- An old row reached through the author's own name is tagged 'old_self':
+        -- the new rule drops it on purpose.
         INSERT INTO dry_hits
-          SELECT cur.id, pg_temp.dry_match(t, cur.discussion_id, cur.ai_identity_id, cur.created_at), 'old' FROM pg_temp.dry_old_tokens(cur.content) t;
+          SELECT cur.id, pg_temp.dry_match(t, cur.discussion_id, cur.ai_identity_id, cur.created_at),
+                 CASE WHEN COALESCE(lower(t) = ANY (v_self), false) THEN 'old_self' ELSE 'old' END
+            FROM pg_temp.dry_old_tokens(cur.content) t;
 
         v_before := '{}'; v_after := '{}'; v_ok := true;
-        SELECT name INTO v_author_name FROM public.ai_identities WHERE id = cur.ai_identity_id;
         FOR r IN SELECT t.token, t.after_dash FROM public.mention_tokens(cur.content) t ORDER BY t.after_dash, t.ord LOOP
+            IF COALESCE(lower(r.token) = ANY (v_self), false) THEN CONTINUE; END IF;
             v_target := pg_temp.dry_match(r.token, cur.discussion_id, cur.ai_identity_id, cur.created_at);
             IF NOT r.after_dash THEN
                 IF v_target IS NOT NULL THEN v_before := v_before || v_target; END IF;
             ELSIF v_target IS NOT NULL THEN
                 v_after := v_after || v_target;
-            ELSIF NOT COALESCE(lower(r.token) = ANY (ARRAY[lower(cur.ai_name), lower(v_author_name), lower(split_part(v_author_name, ' ', 1))]), false) THEN
+            ELSE
                 v_ok := false;
             END IF;
         END LOOP;
@@ -160,13 +174,15 @@ BEGIN
     DELETE FROM dry_hits h USING public.ai_identities ai
      WHERE ai.id = h.target AND public.notif_muted(ai.facilitator_id, 'mention', h.target);
 
-    SELECT count(*) INTO v_old FROM (SELECT DISTINCT post_id, target FROM dry_hits WHERE parser = 'old') x;
+    SELECT count(*) INTO v_old FROM (SELECT DISTINCT post_id, target FROM dry_hits WHERE parser IN ('old', 'old_self')) x;
     SELECT count(*) INTO v_new FROM (SELECT DISTINCT post_id, target FROM dry_hits WHERE parser = 'new') x;
-    SELECT count(*) INTO v_kept FROM (SELECT post_id, target FROM dry_hits WHERE parser = 'old'
+    -- v_kept: old rows (any tag) the new rule still fires.
+    SELECT count(*) INTO v_kept FROM (SELECT post_id, target FROM dry_hits WHERE parser IN ('old', 'old_self')
                                       INTERSECT SELECT post_id, target FROM dry_hits WHERE parser = 'new') x;
 
     -- (3) nothing stops firing
-    IF v_kept < v_old THEN
+    IF EXISTS (SELECT post_id, target FROM dry_hits WHERE parser = 'old'
+               EXCEPT SELECT post_id, target FROM dry_hits WHERE parser = 'new') THEN
         FOR s IN SELECT ai.name, left(split_part(replace(p.content, E'\r', ''), E'\n', 1), 200) AS line
                    FROM (SELECT post_id, target FROM dry_hits WHERE parser = 'old'
                          EXCEPT SELECT post_id, target FROM dry_hits WHERE parser = 'new') g
@@ -174,13 +190,24 @@ BEGIN
                   ORDER BY p.created_at LIMIT 20 LOOP
             RAISE NOTICE 'lost: % <- %', s.name, s.line;
         END LOOP;
-        RAISE EXCEPTION 'DRYRUN FAIL (3): % of % old mention rows would stop firing', v_old - v_kept, v_old;
+        RAISE EXCEPTION 'DRYRUN FAIL (3): old mention rows would stop firing (listed as NOTICE "lost"); % of % old rows kept', v_kept, v_old;
     END IF;
+
+    -- Rows only the author's own name reached: dropped on purpose, listed.
+    v_selfn := 0;
+    FOR s IN SELECT ai.name, left(split_part(replace(p.content, E'\r', ''), E'\n', 1), 200) AS line
+               FROM (SELECT post_id, target FROM dry_hits WHERE parser = 'old_self'
+                     EXCEPT SELECT post_id, target FROM dry_hits WHERE parser IN ('old', 'new')) g
+               JOIN public.posts p ON p.id = g.post_id JOIN public.ai_identities ai ON ai.id = g.target
+              ORDER BY p.created_at LOOP
+        v_selfn := v_selfn + 1;
+        IF v_selfn <= 20 THEN RAISE NOTICE 'self: % <- %', s.name, s.line; END IF;
+    END LOOP;
 
     -- (4) samples of what only the new rule fires
     FOR s IN SELECT ai.name, left(split_part(replace(p.content, E'\r', ''), E'\n', 1), 200) AS line
                FROM (SELECT post_id, target FROM dry_hits WHERE parser = 'new'
-                     EXCEPT SELECT post_id, target FROM dry_hits WHERE parser = 'old') g
+                     EXCEPT SELECT post_id, target FROM dry_hits WHERE parser IN ('old', 'old_self')) g
                JOIN public.posts p ON p.id = g.post_id JOIN public.ai_identities ai ON ai.id = g.target
               ORDER BY p.created_at LIMIT 20 LOOP
         RAISE NOTICE 'new: % <- %', s.name, s.line;
@@ -192,8 +219,8 @@ BEGIN
                        WHERE p.created_at >= '2026-10-08 19:36+00' AND p.discussion_id IS NOT NULL AND p.content IS NOT NULL
                          AND p.is_active IS DISTINCT FROM false);
 
-    RAISE EXCEPTION 'DRYRUN PASS: % posts checked; old parser % mention row(s), new parser %; all % old rows still fire; % new (up to 20 listed above); % mention row(s) exist today for these posts',
-        v_posts, v_old, v_new, v_old, v_new - v_kept, v_live;
+    RAISE EXCEPTION 'DRYRUN PASS: % posts checked; old parser % mention row(s), new parser %; every old row still fires except % reached only by the author''s own name (NOTICE "self"); % new (up to 20 listed); % mention row(s) exist today for these posts',
+        v_posts, v_old, v_new, v_selfn, v_new - v_kept, v_live;
 END
 $dryrun$;
 

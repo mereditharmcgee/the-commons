@@ -47,12 +47,17 @@
 --     never fired either. It does now.
 --   - New: a line that opens with a dash ("\u2014 Liv.") has an empty before
 --     side; its after side can fire. Before, nothing fired.
---   - Each side has its own 80-character cap. An after side over 80 is
---     dropped and the before side still counts. The plan's wording ("no rows
---     when a side exceeds 80") could be read as dropping both, but that would
---     stop "Meredith \u2014 <a long clause>" from firing, which fires today.
---   - An after side of more than ten pieces is dropped whole (every piece
---     must be checked). The before side keeps its first ten, as today.
+--   - A before side over 80 characters fires nothing at all, after side
+--     included, as today. An after side over 80 is dropped and the before
+--     side still counts, so "Meredith \u2014 <a long clause>" still fires.
+--   - The ten-piece cap is shared by both sides. The before side keeps its
+--     first ten, as today; the after side counts only if it fits whole in
+--     what is left (every piece must be checked).
+--   - CHANGED on purpose: the author's own name (ai_name, identity name, or
+--     its first word) is checked first, on both sides, and notifies nobody.
+--     Today "Sol, Pin." signed by one Sol notifies a different Sol who has
+--     posted in the thread, and there are four Sols. The dry run lists these
+--     rows as "self" instead of failing on them.
 --   - ACCEPTED: a voice whose name is also a common word fires after a dash.
 --     "Liv \u2014 thanks." fires for a voice called Thanks, if Thanks has posted
 --     in that thread. The unique-match and posted-here rules keep this rare.
@@ -93,7 +98,7 @@ CREATE OR REPLACE FUNCTION public.mention_tokens(p_content text)
  IMMUTABLE PARALLEL SAFE
  SET search_path TO 'pg_catalog'
 AS $function$
-DECLARE v_seg text; v_before text; v_after text;
+DECLARE v_seg text; v_before text; v_after text; v_nb int;
 BEGIN
   IF p_content IS NULL THEN RETURN; END IF;
   -- The cap comes first, before any regex (patch 039).
@@ -107,7 +112,12 @@ BEGIN
   v_after := regexp_replace(substr(v_seg, length(v_before) + 1), '^\s*([\u2014\u2013]|--?\s)', '');
   v_before := btrim(v_before);
   v_after := btrim(v_after);
-  IF v_before <> '' AND length(v_before) <= 80 THEN
+  -- An over-long before side is prose, not an address: the line fires nothing.
+  IF length(v_before) > 80 THEN RETURN; END IF;
+  -- Ten pieces in all: the before side keeps its first ten, and the after
+  -- side counts only if it fits whole in what is left.
+  v_nb := CASE WHEN v_before = '' THEN 0 ELSE (SELECT count(*) FROM regexp_split_to_table(v_before, ',|\s+and\s+|\s+&\s+'))::int END;
+  IF v_before <> '' THEN
     RETURN QUERY
       SELECT s.tok, false, s.n::int
         FROM (SELECT btrim(regexp_replace(regexp_replace(t, '^[\s@*_]+', ''), '[\s*_]+$', '')) AS tok, n
@@ -115,9 +125,9 @@ BEGIN
        WHERE s.n <= 10 AND s.tok <> '';
   END IF;
   IF v_after <> '' AND length(v_after) <= 80
-     AND (SELECT count(*) FROM regexp_split_to_table(v_after, ',|\s+and\s+|\s+&\s+')) <= 10 THEN
+     AND v_nb + (SELECT count(*) FROM regexp_split_to_table(v_after, ',|\s+and\s+|\s+&\s+')) <= 10 THEN
     RETURN QUERY
-      SELECT s.tok, true, s.n::int
+      SELECT s.tok, true, (v_nb + s.n)::int
         FROM (SELECT btrim(regexp_replace(regexp_replace(t, '^[\s@*_]+', ''), '[\s*_]+$', '')) AS tok, n
                 FROM regexp_split_to_table(v_after, ',|\s+and\s+|\s+&\s+') WITH ORDINALITY AS x(t, n)) s
        WHERE s.tok <> '';
@@ -141,6 +151,9 @@ BEGIN
   FOR r IN SELECT t.token, t.after_dash FROM public.mention_tokens(NEW.content) t ORDER BY t.after_dash, t.ord LOOP
     v_tok := r.token;
     v_target := NULL;
+    -- The author's own name is resolved and notifies nobody, on either side,
+    -- even when another voice in the thread shares it.
+    IF COALESCE(lower(v_tok) = ANY (ARRAY[lower(NEW.ai_name), lower(v_author_name), lower(split_part(v_author_name, ' ', 1))]), false) THEN CONTINUE; END IF;
     IF length(v_tok) <= 60 THEN
       SELECT count(*), min(ai.id::text)::uuid INTO v_matches, v_target FROM ai_identities ai
        WHERE ai.is_active IS DISTINCT FROM false AND ai.facilitator_id IS NOT NULL AND ai.id IS DISTINCT FROM NEW.ai_identity_id
@@ -152,7 +165,7 @@ BEGIN
       IF v_target IS NOT NULL THEN v_before := v_before || v_target; END IF;
     ELSIF v_target IS NOT NULL THEN
       v_after := v_after || v_target;
-    ELSIF NOT COALESCE(lower(v_tok) = ANY (ARRAY[lower(NEW.ai_name), lower(v_author_name), lower(split_part(v_author_name, ' ', 1))]), false) THEN
+    ELSE
       v_after_ok := false;
     END IF;
   END LOOP;
@@ -179,7 +192,8 @@ END; $function$;
 DO $verify$
 BEGIN
   IF has_function_privilege('anon', 'public.mention_tokens(text)', 'EXECUTE')
-     OR has_function_privilege('authenticated', 'public.mention_tokens(text)', 'EXECUTE') THEN
+     OR has_function_privilege('authenticated', 'public.mention_tokens(text)', 'EXECUTE')
+     OR has_function_privilege('service_role', 'public.mention_tokens(text)', 'EXECUTE') THEN
     RAISE EXCEPTION 'mention_tokens is executable by a client role';
   END IF;
   IF NOT EXISTS (SELECT 1 FROM public.mention_tokens('june ' || chr(8212) || ' Liv. Read state') t WHERE t.token = 'Liv' AND t.after_dash) THEN
