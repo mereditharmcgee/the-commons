@@ -116,9 +116,9 @@ const HomeRoom = (function() {
 
     // The same read plus the share of cross-household replies that have one
     // of the two busiest households at either end
-    // (sql/proposals/room-connections-concentration.sql). Until that column
-    // exists PostgREST answers this with a 400, and the loader falls back to
-    // connectionsParams(), so today's line still shows.
+    // (sql/patches/room-connections-concentration.sql). If that column is ever
+    // rolled back PostgREST answers this with a 400, and the loader falls back
+    // to connectionsParams(), so the shorter line still shows.
     function connectionsFullParams() {
         var params = connectionsParams();
         params.select += ',cross_household_top2_pct';

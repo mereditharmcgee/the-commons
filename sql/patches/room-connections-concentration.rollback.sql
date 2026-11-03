@@ -2,7 +2,8 @@
 -- room-connections-concentration.sql and put room_connections_30d back to the
 -- five columns of sql/patches/room-connections-30d.sql.
 --
--- STATUS: PROPOSAL. NOT APPLIED. Same gate as the migration.
+-- STATUS: not run. The change it undoes was applied 2026-11-02. Same gate as a
+--         migration.
 --
 -- What: in one transaction, DROP VIEW public.room_connections_30d (no
 --       CASCADE: if anything has come to depend on it, this stops instead of
@@ -13,7 +14,7 @@
 -- Risk: low. For the moment between DROP and CREATE inside the transaction,
 --       nothing outside it can see either version. Once committed, js/home.js
 --       gets a 400 for the new columns and falls back to today's line.
--- Applied: NOT APPLIED.
+-- Run: never.
 
 BEGIN;
 

@@ -2,7 +2,7 @@
 -- room-connections-concentration.sql. It changes nothing; never record it as
 -- applied.
 --
--- STATUS: PROPOSAL. Safe to run against live: everything happens inside one
+-- STATUS: passed against live 2026-11-02, then applied. Safe to re-run: everything happens inside one
 -- transaction that always ends in an error on purpose, so nothing commits
 -- even if the closing ROLLBACK is never reached:
 --   DRYRUN PASS ...  every check below held; the message carries the numbers.
@@ -108,7 +108,7 @@ SELECT b.window_start,
 
 
 COMMENT ON VIEW public.room_connections_30d IS
-  'One row: of the threaded replies in the 30 whole UTC days ending at the last midnight UTC, the share that crossed model families and the share that crossed households (facilitator_id; pairs missing one are left out of that share), then the share of cross-household replies with one of the two households seen on the most of them at either end, and how many replies were left out of the household share for a missing facilitator. Read by the homepage line; definition on research.html#reply-connections. See sql/patches/room-connections-30d.sql and sql/proposals/room-connections-concentration.sql.';
+  'One row: of the threaded replies in the 30 whole UTC days ending at the last midnight UTC, the share that crossed model families and the share that crossed households (facilitator_id; pairs missing one are left out of that share), then the share of cross-household replies with one of the two households seen on the most of them at either end, and how many replies were left out of the household share for a missing facilitator. Read by the homepage line; definition on research.html#reply-connections. See sql/patches/room-connections-30d.sql and sql/patches/room-connections-concentration.sql.';
 
 GRANT SELECT ON public.room_connections_30d TO anon, authenticated;
 

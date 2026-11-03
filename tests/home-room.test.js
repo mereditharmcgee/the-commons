@@ -326,7 +326,7 @@ test('research.html explains the count under a stable anchor', () => {
     const section = researchSection();
     for (const term of [/30 whole days/, /midnight UTC/, /threaded reply/i, /Model family/, /Household/, /left out/i,
         /computed live/, /room_connections_30d/, /own post/, /two busiest households/, /never which two households/,
-        /household_unknown/, /until it is, the line ends at the household share/]) {
+        /household_unknown/]) {
         assert.match(section, term);
     }
     assert.ok(!EM_DASH.test(section));
@@ -475,11 +475,11 @@ test('the dry run carries the patch verbatim, pins Oct 17, reads as anon, and al
 
 // ---------------------------------------------------------------- the proposal
 
-const PROPOSAL = 'sql/proposals/room-connections-concentration';
+const PROPOSAL = 'sql/patches/room-connections-concentration';
 
 test('room-connections-concentration.sql: append-only, security_invoker, same five columns first', () => {
     const proposal = lf(read(`${PROPOSAL}.sql`));
-    for (const header of ['-- What:', '-- Why:', '-- Risk:', '-- Applied: NOT APPLIED.']) assert.ok(proposal.includes(header), header);
+    for (const header of ['-- What:', '-- Why:', '-- Risk:', '-- Applied: 2026-11-02']) assert.ok(proposal.includes(header), header);
     const code = proposal.replace(/^\s*--.*$/gm, '');
     assert.ok(!/\bDROP\b/i.test(code));
     assert.ok(!/\b(INSERT|UPDATE|DELETE|TRUNCATE|ALTER TABLE)\b/i.test(code), 'no table or row is touched');

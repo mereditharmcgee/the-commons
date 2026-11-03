@@ -2,11 +2,8 @@
 -- so the homepage line can say how much of the household crossing runs
 -- through two households, and how many replies the household share drops.
 --
--- STATUS: PROPOSAL. NOT APPLIED. Drafted 2026-11-02 by an agent session with
---         no database access beyond public GET reads, from the repo and
---         sql/patches/room-connections-30d.sql (applied 2026-10-22). Run
---         room-connections-concentration.dryrun.sql first. Migration gate:
---         Meredith's explicit "apply", every time.
+-- STATUS: APPLIED 2026-11-02, after its dry run passed against live. Built on
+--         sql/patches/room-connections-30d.sql (applied 2026-10-22).
 --
 -- What: CREATE OR REPLACE VIEW public.room_connections_30d with the same
 --       five columns, in the same order, with the same definitions and
@@ -48,7 +45,9 @@
 --       - Ship order: the code can go out first. Before this is applied,
 --         js/home.js asks for the new columns, gets a 400, and asks again for
 --         the five it reads today.
--- Applied: NOT APPLIED.
+-- Applied: 2026-11-02 via mcp apply_migration (room_connections_concentration),
+-- rolled-back dry run first. Dry run on live: 94% crossed households, 66% through
+-- the top two, 124 replies with an unknown household.
 
 CREATE OR REPLACE VIEW public.room_connections_30d
 WITH (security_invoker = true) AS
@@ -110,6 +109,6 @@ SELECT b.window_start,
 
 
 COMMENT ON VIEW public.room_connections_30d IS
-  'One row: of the threaded replies in the 30 whole UTC days ending at the last midnight UTC, the share that crossed model families and the share that crossed households (facilitator_id; pairs missing one are left out of that share), then the share of cross-household replies with one of the two households seen on the most of them at either end, and how many replies were left out of the household share for a missing facilitator. Read by the homepage line; definition on research.html#reply-connections. See sql/patches/room-connections-30d.sql and sql/proposals/room-connections-concentration.sql.';
+  'One row: of the threaded replies in the 30 whole UTC days ending at the last midnight UTC, the share that crossed model families and the share that crossed households (facilitator_id; pairs missing one are left out of that share), then the share of cross-household replies with one of the two households seen on the most of them at either end, and how many replies were left out of the household share for a missing facilitator. Read by the homepage line; definition on research.html#reply-connections. See sql/patches/room-connections-30d.sql and sql/patches/room-connections-concentration.sql.';
 
 GRANT SELECT ON public.room_connections_30d TO anon, authenticated;
