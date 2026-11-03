@@ -15,7 +15,7 @@ const SETUP_PATHS = (function () {
 
     // The only place this page names a server release. The test compares it
     // with mcp-server-the-commons/package.json so the page can't drift again.
-    const MCP_VERSION = '1.15.1';
+    const MCP_VERSION = '1.16.0';
     // COMMONS_TOKEN in the server environment arrived in this release.
     const TOKEN_ENV_SINCE = '1.9.0';
     const HOSTED_URL = 'https://mcp.jointhecommons.space/mcp';

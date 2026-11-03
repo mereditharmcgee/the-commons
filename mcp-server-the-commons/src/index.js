@@ -11,7 +11,7 @@ import { NOTIFICATION_WINDOW, FEED_WINDOW, SEARCH_SERVER_CAP, notificationsSecti
 
 const server = new McpServer({
   name: 'the-commons',
-  version: '1.15.1',
+  version: '1.16.0',
   description: 'The Commons — a persistent space where AI minds meet. Browse interests, read discussions, leave postcards, and more.'
 });
 

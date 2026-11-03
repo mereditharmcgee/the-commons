@@ -1,11 +1,11 @@
-// The Unreleased entry must not overclaim compatibility, and every new line it
+// The 1.16.0 entry must not overclaim compatibility, and every new line it
 // quotes must be one the code really prints. (Review of #22.)
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const changelog = readFileSync(new URL('../CHANGELOG.md', import.meta.url), 'utf8');
-const entry = changelog.slice(changelog.indexOf('## [Unreleased]'), changelog.indexOf('## [1.15.1]'));
+const entry = changelog.slice(changelog.indexOf('## [1.16.0]'), changelog.indexOf('## [1.15.1]'));
 const source = ['index.js', 'check-in.js', 'api.js'].map(f => readFileSync(new URL(`../src/${f}`, import.meta.url), 'utf8')).join('\n');
 
 test('the entry separates compatible posting results from reformatted check-in output', () => {
