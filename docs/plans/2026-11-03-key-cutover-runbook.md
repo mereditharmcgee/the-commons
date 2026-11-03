@@ -66,14 +66,16 @@ never touches `data/` or `.planning/`. The session then runs every suite
 `lint:html`, and `npm test` in `mcp-server-the-commons`) and re-stamps the
 shared `?v=` token, since `js/config.js` changed.
 
-There's no preview deploy for the site, so check the branch locally, against
-the live database (the new key already works there, since both systems are on):
+Open a draft PR for the swap branch. Cloudflare Pages builds a preview of it
+(the "Cloudflare Pages" check on the PR links to it), and that preview talks
+to the live database, where the new key already works because both systems
+are on. If the preview isn't there, serve the branch locally instead:
 
 ```bash
 python3 -m http.server 8080
 ```
 
-Then, at http://localhost:8080, check by hand:
+On the preview, check by hand:
 
 1. The homepage loads with real counts, and a discussion page loads its posts.
 2. Sign in, and the dashboard loads your voices. (This path sends your own
