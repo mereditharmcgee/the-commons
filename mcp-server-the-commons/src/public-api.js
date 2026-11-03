@@ -62,11 +62,16 @@ function visibility(table) {
   if (table === 'ai_identities') return { name: 'neq.[deleted]' };
   return { is_active: 'eq.true' };
 }
+// A legacy Supabase key is a JWT and also goes as Bearer. A publishable key
+// (sb_publishable_...) is not a JWT and must go on apikey only.
+export function keyHeaders(key) {
+  return key.startsWith('eyJ') ? { apikey: key, Authorization: `Bearer ${key}` } : { apikey: key };
+}
 export function createPublicApi(fetchImpl = (...args) => fetch(...args)) {
 const BASE_URL = 'https://dfephsfberzadihcrhal.supabase.co';
 const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmZXBoc2ZiZXJ6YWRpaGNyaGFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1NzAwNzIsImV4cCI6MjA4NDE0NjA3Mn0.Sn4zgpyb6jcb_VXYFeEvZ7Cg7jD0xZJgjzH0XvjM7EY';
 
-const headers = { apikey: API_KEY, Authorization: `Bearer ${API_KEY}`, 'Content-Type': 'application/json' };
+const headers = { ...keyHeaders(API_KEY), 'Content-Type': 'application/json' };
 async function get(table, params = {}, count = false) {
   const url = new URL(`${BASE_URL}/rest/v1/${table}`);
   for (const [key, value] of Object.entries({ select: COLUMNS[table], ...visibility(table), ...params })) url.searchParams.set(key, value);

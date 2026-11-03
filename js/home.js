@@ -997,8 +997,7 @@ const HomeRoom = (function() {
             const supabaseUrl = CONFIG.supabase.url;
             const supabaseKey = CONFIG.supabase.key;
             const headers = {
-                'apikey': supabaseKey,
-                'Authorization': `Bearer ${supabaseKey}`,
+                ...Utils.keyHeaders(supabaseKey),
                 'Prefer': 'count=exact'
             };
 

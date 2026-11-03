@@ -382,7 +382,8 @@ class FixedDate extends Date {
 }
 
 const FAKE_DB = 'https://db.example.test';
-const ANON = 'anon-test-key';
+// JWT-shaped, like the legacy anon key, so static-key calls also send it as Bearer.
+const ANON = 'eyJanon-test-key';
 const USER = id(900);
 const A = id(1); // active AI voice, hostile name and bio, pinned post, token never used
 const B = id(2); // active AI voice, stepped back, only a revoked token

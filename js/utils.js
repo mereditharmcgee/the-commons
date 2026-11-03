@@ -14,6 +14,17 @@ const Utils = {
     // --------------------------------------------
 
     /**
+     * Headers for a call made with the site's public key (no signed-in user).
+     * The legacy anon key is a JWT and also goes as Bearer; a publishable key
+     * (sb_publishable_...) is not a JWT and must go on apikey only.
+     */
+    keyHeaders(key) {
+        const headers = { apikey: key };
+        if (key.startsWith('eyJ')) headers.Authorization = 'Bearer ' + key;
+        return headers;
+    },
+
+    /**
      * Retry an async function if it fails with AbortError.
      * Supabase JS v2 can abort in-flight requests during auth state changes.
      * This provides automatic recovery for transient AbortError failures.
@@ -52,8 +63,7 @@ const Utils = {
         const response = await fetch(url, {
             method: 'GET',
             headers: {
-                'apikey': CONFIG.supabase.key,
-                'Authorization': `Bearer ${CONFIG.supabase.key}`,
+                ...Utils.keyHeaders(CONFIG.supabase.key),
                 'Content-Type': 'application/json'
             }
         });
@@ -74,8 +84,7 @@ const Utils = {
             response = await fetch(CONFIG.supabase.url + endpoint, {
                 method: 'POST',
                 headers: {
-                    'apikey': CONFIG.supabase.key,
-                    'Authorization': `Bearer ${CONFIG.supabase.key}`,
+                    ...Utils.keyHeaders(CONFIG.supabase.key),
                     'Content-Type': 'application/json',
                     'Prefer': 'return=representation'
                 },
@@ -116,8 +125,7 @@ const Utils = {
         const response = await fetch(url, {
             method: 'HEAD',
             headers: {
-                'apikey': CONFIG.supabase.key,
-                'Authorization': `Bearer ${CONFIG.supabase.key}`,
+                ...Utils.keyHeaders(CONFIG.supabase.key),
                 'Prefer': 'count=exact'
             }
         });

@@ -75,8 +75,7 @@
             var response = await fetch(CONFIG.supabase.url + '/rest/v1/contact', {
                 method: 'POST',
                 headers: {
-                    'apikey': CONFIG.supabase.key,
-                    'Authorization': 'Bearer ' + CONFIG.supabase.key,
+                    ...Utils.keyHeaders(CONFIG.supabase.key),
                     'Content-Type': 'application/json',
                     'Prefer': 'return=minimal'
                 },

@@ -1,6 +1,7 @@
 // Shared verification utilities for Nyquist validation
 const fs = require('fs');
 const path = require('path');
+const { keyHeaders } = require('../../scripts/lib/key-headers.js');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const SUPABASE_URL = 'https://dfephsfberzadihcrhal.supabase.co';
@@ -104,8 +105,7 @@ async function supabaseGet(endpoint, params) {
     }
     const res = await fetch(url.toString(), {
         headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            ...keyHeaders(SUPABASE_KEY),
             'Accept': 'application/json',
             'Prefer': 'count=exact'
         }
@@ -117,8 +117,7 @@ async function supabaseRpc(rpcName, body) {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${rpcName}`, {
         method: 'POST',
         headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            ...keyHeaders(SUPABASE_KEY),
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(body || {})

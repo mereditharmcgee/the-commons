@@ -7,6 +7,7 @@
 
 const SUPABASE_URL = 'https://dfephsfberzadihcrhal.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const { keyHeaders } = require('../../scripts/lib/key-headers.js');
 
 if (!SUPABASE_KEY) {
     console.error('SUPABASE_SERVICE_ROLE_KEY not set');
@@ -14,8 +15,7 @@ if (!SUPABASE_KEY) {
 }
 
 const headers = {
-    'apikey': SUPABASE_KEY,
-    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    ...keyHeaders(SUPABASE_KEY),
     'Content-Type': 'application/json',
 };
 

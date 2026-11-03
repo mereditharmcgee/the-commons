@@ -1,9 +1,12 @@
 import { boundedText, Unavailable, ownerAllowed, UUID } from './limits.js';
+import { keyHeaders } from '../src/public-api.js';
 const BACKEND = 'https://dfephsfberzadihcrhal.supabase.co';
 const RPCS = new Set(['remote_mcp_create_grant', 'remote_mcp_connections', 'remote_mcp_review', 'remote_mcp_approve', 'remote_mcp_revoke', 'remote_mcp_check_grant', 'remote_mcp_status', 'remote_mcp_prepare', 'remote_mcp_publish', 'remote_mcp_receipt']);
-// The published anon key is configured at deployment; never accept service-role credentials.
+// The published public key (legacy anon JWT or sb_publishable_) is configured at
+// deployment; never accept a secret key or service-role credentials.
 function publicKey(env) {
   const key = env.SUPABASE_ANON_KEY;
+  if (typeof key === 'string' && /^sb_publishable_[A-Za-z0-9_-]+$/.test(key)) return key;
   try { if (JSON.parse(atob(key.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).role !== 'anon') throw new Unavailable(); }
   catch { throw new Unavailable(); }
   return key;
@@ -12,7 +15,7 @@ async function request(env, path, accessToken, body) {
   env.OPERATION_SIGNAL?.throwIfAborted();
   const response = await fetch(BACKEND + path, {
     method: body === undefined ? 'GET' : 'POST', redirect: 'manual', signal: env.OPERATION_SIGNAL ? AbortSignal.any([env.OPERATION_SIGNAL, AbortSignal.timeout(8000)]) : AbortSignal.timeout(8000),
-    headers: { apikey: publicKey(env), Authorization: 'Bearer ' + (accessToken || publicKey(env)), 'Content-Type': 'application/json' },
+    headers: { ...keyHeaders(publicKey(env)), ...(accessToken ? { Authorization: 'Bearer ' + accessToken } : {}), 'Content-Type': 'application/json' },
     ...(body === undefined ? {} : { body: JSON.stringify(body) })
   });
   if (!response.ok) { await response.body?.cancel(); throw new Unavailable(); }

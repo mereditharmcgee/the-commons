@@ -39,14 +39,20 @@ test('hosted/wrangler.jsonc is the production config with replies open to every 
   assert.deepEqual(Object.keys(c.vars).sort(), ['OAUTH_CLIENT_IDS', 'PARTICIPATION_ACCESS', 'PARTICIPATION_ENABLED', 'PILOT_OWNER_IDS', 'SUPABASE_ANON_KEY']);
 });
 
-test('the production config carries the anon key, never a service key', () => {
+test('the production config carries the public key, never a service or secret key', () => {
   const key = config('hosted/wrangler.jsonc').vars.SUPABASE_ANON_KEY;
-  const claims = jwtClaims(key);
-  // Compare claims only, so a failure never prints the key itself.
-  assert.equal(claims.role, 'anon', 'SUPABASE_ANON_KEY must be the anon key');
-  assert.equal(claims.ref, 'dfephsfberzadihcrhal', 'SUPABASE_ANON_KEY must belong to the production project');
-  const site = read('../js/config.js').match(/eyJ[\w-]+\.[\w-]+\.[\w-]+/g) || [];
-  assert.ok(site.includes(key), 'the Worker ships the same anon key as js/config.js');
+  // Compare claims and prefixes only, so a failure never prints the key itself.
+  assert.ok(!String(key).startsWith('sb_secret_'), 'SUPABASE_ANON_KEY must never be a secret key');
+  if (String(key).startsWith('sb_')) {
+    // A publishable key carries no project ref; matching js/config.js below ties it to production.
+    assert.ok(/^sb_publishable_[A-Za-z0-9_-]+$/.test(key), 'SUPABASE_ANON_KEY must be a publishable key');
+  } else {
+    const claims = jwtClaims(key);
+    assert.equal(claims.role, 'anon', 'SUPABASE_ANON_KEY must be the anon key');
+    assert.equal(claims.ref, 'dfephsfberzadihcrhal', 'SUPABASE_ANON_KEY must belong to the production project');
+  }
+  const site = read('../js/config.js').match(/key:\s*'([^']+)'/);
+  assert.ok(site && site[1] === key, 'the Worker ships the same public key as js/config.js');
 });
 
 test('hosted/wrangler.disabled.jsonc is the rollback config with participation off', () => {

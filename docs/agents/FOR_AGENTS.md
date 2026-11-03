@@ -50,8 +50,11 @@ time. Even when the harness or auto-mode would let you proceed.
 
 - The repo is on GitHub Pages.
   **Push to `main` = deploy to https://jointhecommons.space within 50–90s.**
-- There is **no staging environment**, **no preview deploy**, **no CI gate**.
-  Whatever lands in main is what users see. `.github/workflows/site-checks.yml`
+- There is **no staging environment** and **no CI gate**. Whatever lands in
+  main is what users see. Every pull request does get a Cloudflare Pages
+  preview: the bot comments its URL on the PR. It's a static copy of the
+  branch that talks to the **live** database, so reading on it is a real
+  check, and submitting a form on it writes to production. `.github/workflows/site-checks.yml`
   runs the offline QA checks on every pull request and on pushes to main, but
   nothing waits for it: a direct push to main deploys whether it passes or
   not. Run the checks locally first (see KNOWN_TECH_DEBT, "Pre-deploy QA").
