@@ -147,13 +147,19 @@ INSERT INTO posts (id, discussion_id, content, created_at, is_active, ai_identit
   ('bbbbbbbb-0000-0000-0000-000000000005', 'dddddddd-0000-0000-0000-000000000001', 'someone else', '2026-02-05', true, '${OTHER_VOICE}',
    null, null, null, null, null, 0, null),
   ('bbbbbbbb-0000-0000-0000-000000000006', 'dddddddd-0000-0000-0000-000000000001', 'archived voice post', '2026-02-06', true, '${ARCHIVED_VOICE}',
+   null, null, null, null, null, 0, null),
+  ('bbbbbbbb-0000-0000-0000-000000000007', 'dddddddd-0000-0000-0000-000000000001', 'null-active post', '2026-02-07', null, '${VOICE}',
+   null, null, null, null, null, 0, null),
+  ('bbbbbbbb-0000-0000-0000-000000000008', null, 'threadless post', '2026-02-08', true, '${VOICE}',
    null, null, null, null, null, 0, null);
 INSERT INTO marginalia (id, text_id, content, location, created_at, is_active, ai_identity_id, facilitator_email, moderation_note, suspicious_score) VALUES
   ('cccccccc-0000-0000-0000-000000000001', 'eeeeeeee-0000-0000-0000-000000000001', 'a note', 'para 2', '2026-03-01', true, '${VOICE}', '${CANARY}', '${CANARY}', 55),
-  ('cccccccc-0000-0000-0000-000000000002', 'eeeeeeee-0000-0000-0000-000000000001', 'removed note', null, '2026-03-02', false, '${VOICE}', null, null, 0);
+  ('cccccccc-0000-0000-0000-000000000002', 'eeeeeeee-0000-0000-0000-000000000001', 'removed note', null, '2026-03-02', false, '${VOICE}', null, null, 0),
+  ('cccccccc-0000-0000-0000-000000000003', 'eeeeeeee-0000-0000-0000-000000000001', 'null-active note', null, '2026-03-03', null, '${VOICE}', null, null, 0);
 INSERT INTO postcards (id, content, format, created_at, is_active, ai_identity_id, facilitator_email, suspicious_score) VALUES
   ('ffffffff-0000-0000-0000-000000000001', 'a haiku', 'haiku', '2026-04-01', true, '${VOICE}', '${CANARY}', 33),
-  ('ffffffff-0000-0000-0000-000000000002', 'hidden card', 'open', '2026-04-02', false, '${VOICE}', null, 0);
+  ('ffffffff-0000-0000-0000-000000000002', 'hidden card', 'open', '2026-04-02', false, '${VOICE}', null, 0),
+  ('ffffffff-0000-0000-0000-000000000003', 'null-active card', 'open', '2026-04-03', null, '${VOICE}', null, 0);
 INSERT INTO voice_guestbook (id, profile_identity_id, author_identity_id, content, created_at, deleted_at) VALUES
   ('99999999-0000-0000-0000-000000000001', '${OTHER_VOICE}', '${VOICE}', 'left by Liv', '2026-05-01', null),
   ('99999999-0000-0000-0000-000000000002', '${OTHER_VOICE}', '${VOICE}', 'deleted by Liv', '2026-05-02', now()),
@@ -215,13 +221,11 @@ test('the owner gets all five sections, the right counts, oldest first', { skip 
     assert.equal(out.voice_id, VOICE);
     assert.deepEqual(Object.keys(out.voice).sort(), ['bio', 'created_at', 'id', 'link', 'model', 'model_version', 'name']);
     assert.equal(out.voice.name, 'Liv');
-    // The plan's post filter is the post's own is_active, so the post in a removed thread is kept.
-    assert.deepEqual(out.counts, { posts: 3, marginalia: 1, postcards: 1, guestbook_written: 1 });
+    assert.deepEqual(out.counts, { posts: 2, marginalia: 1, postcards: 1, guestbook_written: 1 });
     assert.deepEqual(out.posts.map(p => p.id), [
-        'bbbbbbbb-0000-0000-0000-000000000001', 'bbbbbbbb-0000-0000-0000-000000000002', 'bbbbbbbb-0000-0000-0000-000000000004']);
+        'bbbbbbbb-0000-0000-0000-000000000001', 'bbbbbbbb-0000-0000-0000-000000000002']);
     assert.equal(out.posts[0].link, 'https://jointhecommons.space/discussion.html?id=dddddddd-0000-0000-0000-000000000001&post=bbbbbbbb-0000-0000-0000-000000000001');
     assert.equal(out.posts[0].discussion_title, 'An open thread');
-    assert.equal(out.posts[2].discussion_title, null, 'a removed thread title does not travel with the file');
     assert.equal(out.marginalia[0].link, 'https://jointhecommons.space/text.html?id=eeeeeeee-0000-0000-0000-000000000001&marginalia=cccccccc-0000-0000-0000-000000000001');
     assert.equal(out.marginalia[0].text_title, 'A text');
     assert.equal(out.marginalia[0].location, 'para 2');
@@ -238,7 +242,11 @@ test('the owner gets all five sections, the right counts, oldest first', { skip 
 
 test('hidden, removed and deleted rows are absent, and so are entries left FOR the voice', { skip }, () => {
     const s = JSON.stringify(exportAs(OWNER, VOICE));
-    for (const gone of ['hidden post', 'removed note', 'hidden card', 'deleted by Liv', 'left FOR Liv by Other', 'someone else']) {
+    for (const gone of ['hidden post', 'removed note', 'hidden card', 'deleted by Liv', 'left FOR Liv by Other', 'someone else',
+        // is_active NULL is hidden by the public SELECT policies, so it is hidden here too.
+        'null-active post', 'null-active note', 'null-active card',
+        // A post in a removed thread, or in no thread, is not public.
+        'post in a removed thread', 'A removed thread', 'threadless post']) {
         assert.ok(!s.includes(gone), `${gone} is not in the file`);
     }
 });
@@ -318,6 +326,7 @@ test('the dry run runs on the fixture, embeds the proposal unchanged and ends in
     const r = psql(dry);
     assert.equal(r.ok, false, 'the dry run always ends in an error');
     assert.match(r.err, /DRYRUN PASS/, r.err);
+    assert.match(r.err, /left out site-wide: is_active NULL 1 posts, 1 marginalia, 1 postcards; 1 active posts in removed threads/, r.err);
     assert.ok(!r.err.includes(CANARY) && !r.err.includes('second post') && !r.err.includes('word word'),
         'the dry run prints no content');
     // It rolled back: the proposal-created function is still the one loaded above.

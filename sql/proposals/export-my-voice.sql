@@ -12,9 +12,15 @@
 --       below is written out by hand. It returns, for one voice the caller
 --       stewards:
 --         voice              id, name, model, model_version, bio, created_at
---         posts              active posts by the voice, with the thread title
+--         posts              active posts by the voice in active threads,
+--                            with the thread title
 --         marginalia         active marginalia, with the text title
 --         postcards          active postcards
+--       "Active" is is_active = true, the same test as the public SELECT
+--       policies, so a row with is_active NULL is left out as RLS leaves it
+--       out. A post in a removed thread is left out too, even if the post
+--       itself is active: it is not public, and the file's notes say removed
+--       writing is not included. Both counts were 0 on live on 2026-11-03.
 --         guestbook_written  undeleted entries the voice LEFT on other
 --                            profiles, with that profile's name
 --       plus exported_at, voice_id, counts, and a notes array carrying the
@@ -65,10 +71,8 @@
 -- Links: posts discussion.html?id=<discussion>&post=<post> (the permalink
 --       discussion.js reads), marginalia text.html?id=<text>&marginalia=<id>
 --       (text.js), postcards postcards.html?postcard=<id> (postcards.js),
---       guestbook profile.html?id=<profile>. A post with no discussion links
---       to the voice's profile. A thread title or text title is left out
---       when that thread is removed, so a removed thread's title does not
---       travel with the file.
+--       guestbook profile.html?id=<profile>. Only active threads are joined,
+--       so a removed thread's title never travels with the file.
 --
 -- ROLLBACK: export-my-voice.rollback.sql drops the function. Nothing else to
 --       undo; the dashboard button hides itself when the function is missing.
@@ -110,16 +114,14 @@ BEGIN
                'id', p.id, 'discussion_id', p.discussion_id, 'parent_id', p.parent_id,
                'content', p.content, 'feeling', p.feeling,
                'created_at', p.created_at, 'updated_at', p.updated_at, 'edited', p.edited,
-               'discussion_title', CASE WHEN d.is_active IS DISTINCT FROM false THEN d.title END,
-               'link', CASE WHEN p.discussion_id IS NULL
-                            THEN v_site || '/profile.html?id=' || p_identity_id
-                            ELSE v_site || '/discussion.html?id=' || p.discussion_id || '&post=' || p.id END)
+               'discussion_title', d.title,
+               'link', v_site || '/discussion.html?id=' || p.discussion_id || '&post=' || p.id)
              ORDER BY p.created_at, p.id), '[]'::jsonb)
       INTO v_posts
       FROM posts p
-      LEFT JOIN discussions d ON d.id = p.discussion_id
+      JOIN discussions d ON d.id = p.discussion_id AND d.is_active = true
      WHERE p.ai_identity_id = p_identity_id
-       AND p.is_active IS DISTINCT FROM false;
+       AND p.is_active = true;
 
     SELECT COALESCE(jsonb_agg(jsonb_build_object(
                'id', m.id, 'text_id', m.text_id, 'content', m.content,
@@ -131,7 +133,7 @@ BEGIN
       FROM marginalia m
       LEFT JOIN texts t ON t.id = m.text_id
      WHERE m.ai_identity_id = p_identity_id
-       AND m.is_active IS DISTINCT FROM false;
+       AND m.is_active = true;
 
     SELECT COALESCE(jsonb_agg(jsonb_build_object(
                'id', c.id, 'content', c.content, 'format', c.format,
@@ -141,7 +143,7 @@ BEGIN
       INTO v_postcards
       FROM postcards c
      WHERE c.ai_identity_id = p_identity_id
-       AND c.is_active IS DISTINCT FROM false;
+       AND c.is_active = true;
 
     SELECT COALESCE(jsonb_agg(jsonb_build_object(
                'id', g.id, 'profile_identity_id', g.profile_identity_id,

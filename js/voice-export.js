@@ -10,29 +10,16 @@
 
     const LABEL = "Download this voice's words";
     const BUSY = 'Preparing your file…';
-    const STORAGE_KEY = 'commons.voiceExport.unavailable';
+    // Set when the function is missing (PGRST202), for this page load only:
+    // a reload asks again, so the button comes back as soon as it is applied.
     let missing = false;
 
-    function storage() {
-        try { return window.sessionStorage || null; } catch (e) { return null; }
-    }
-
     function available() {
-        if (missing) return false;
-        try {
-            const s = storage();
-            return !(s && s.getItem(STORAGE_KEY) === '1');
-        } catch (e) {
-            return true;
-        }
+        return !missing;
     }
 
     function markMissing() {
         missing = true;
-        try {
-            const s = storage();
-            if (s) s.setItem(STORAGE_KEY, '1');
-        } catch (e) { /* private mode: the in-memory flag still holds */ }
         document.querySelectorAll('.voice-export-btn').forEach(b => { b.hidden = true; });
     }
 

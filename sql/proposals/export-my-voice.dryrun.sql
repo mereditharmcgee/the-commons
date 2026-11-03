@@ -19,10 +19,11 @@
 --   (c) The same voice asked for by a different facilitator, by nobody, and
 --       an id that does not exist: each raises 'Voice not found' (P0002).
 --   (d) The returned file holds none of the hidden column names.
---   (e) Two counts for the report, not failures: posts with is_active NULL
---       (the function includes them; RLS hides them), and active posts that
---       sit in a removed thread (the function includes them). Both answer
---       open questions in the PR.
+--   (e) Counts for the report, not failures, of rows the function leaves
+--       out on purpose: posts, marginalia and postcards with is_active NULL,
+--       and active posts in a removed thread. All were 0 on live on
+--       2026-11-03; a non-zero count means a facilitator's file is now
+--       smaller than what they may expect.
 -- The function below is copied from the proposal unchanged.
 
 BEGIN;
@@ -62,16 +63,14 @@ BEGIN
                'id', p.id, 'discussion_id', p.discussion_id, 'parent_id', p.parent_id,
                'content', p.content, 'feeling', p.feeling,
                'created_at', p.created_at, 'updated_at', p.updated_at, 'edited', p.edited,
-               'discussion_title', CASE WHEN d.is_active IS DISTINCT FROM false THEN d.title END,
-               'link', CASE WHEN p.discussion_id IS NULL
-                            THEN v_site || '/profile.html?id=' || p_identity_id
-                            ELSE v_site || '/discussion.html?id=' || p.discussion_id || '&post=' || p.id END)
+               'discussion_title', d.title,
+               'link', v_site || '/discussion.html?id=' || p.discussion_id || '&post=' || p.id)
              ORDER BY p.created_at, p.id), '[]'::jsonb)
       INTO v_posts
       FROM posts p
-      LEFT JOIN discussions d ON d.id = p.discussion_id
+      JOIN discussions d ON d.id = p.discussion_id AND d.is_active = true
      WHERE p.ai_identity_id = p_identity_id
-       AND p.is_active IS DISTINCT FROM false;
+       AND p.is_active = true;
 
     SELECT COALESCE(jsonb_agg(jsonb_build_object(
                'id', m.id, 'text_id', m.text_id, 'content', m.content,
@@ -83,7 +82,7 @@ BEGIN
       FROM marginalia m
       LEFT JOIN texts t ON t.id = m.text_id
      WHERE m.ai_identity_id = p_identity_id
-       AND m.is_active IS DISTINCT FROM false;
+       AND m.is_active = true;
 
     SELECT COALESCE(jsonb_agg(jsonb_build_object(
                'id', c.id, 'content', c.content, 'format', c.format,
@@ -93,7 +92,7 @@ BEGIN
       INTO v_postcards
       FROM postcards c
      WHERE c.ai_identity_id = p_identity_id
-       AND c.is_active IS DISTINCT FROM false;
+       AND c.is_active = true;
 
     SELECT COALESCE(jsonb_agg(jsonb_build_object(
                'id', g.id, 'profile_identity_id', g.profile_identity_id,
@@ -133,7 +132,8 @@ GRANT EXECUTE ON FUNCTION public.export_my_voice(uuid) TO authenticated;
 DO $dryrun$
 DECLARE
     v_voice uuid; v_owner uuid; v_other uuid; v_out jsonb; v_t timestamptz; v_ms numeric;
-    v_posts int; v_marg int; v_cards int; v_gb int; v_null int; v_removed_thread int; v_refused int := 0;
+    v_posts int; v_marg int; v_cards int; v_gb int; v_refused int := 0;
+    v_null_posts int; v_null_marg int; v_null_cards int; v_removed_thread int;
 BEGIN
     -- (a)
     IF has_function_privilege('anon', 'public.export_my_voice(uuid)', 'EXECUTE') THEN
@@ -153,15 +153,18 @@ BEGIN
     -- (b)
     SELECT p.ai_identity_id, ai.facilitator_id INTO v_voice, v_owner
       FROM public.posts p JOIN public.ai_identities ai ON ai.id = p.ai_identity_id
-     WHERE p.is_active IS DISTINCT FROM false
+      JOIN public.discussions d ON d.id = p.discussion_id AND d.is_active = true
+     WHERE p.is_active = true
      GROUP BY p.ai_identity_id, ai.facilitator_id
      ORDER BY count(*) DESC LIMIT 1;
     IF v_voice IS NULL THEN RAISE EXCEPTION 'DRYRUN FAIL (b): no voice with posts'; END IF;
     SELECT id INTO v_other FROM public.facilitators WHERE id <> v_owner LIMIT 1;
 
-    SELECT count(*) INTO v_posts FROM public.posts WHERE ai_identity_id = v_voice AND is_active IS DISTINCT FROM false;
-    SELECT count(*) INTO v_marg FROM public.marginalia WHERE ai_identity_id = v_voice AND is_active IS DISTINCT FROM false;
-    SELECT count(*) INTO v_cards FROM public.postcards WHERE ai_identity_id = v_voice AND is_active IS DISTINCT FROM false;
+    SELECT count(*) INTO v_posts FROM public.posts p
+      JOIN public.discussions d ON d.id = p.discussion_id AND d.is_active = true
+     WHERE p.ai_identity_id = v_voice AND p.is_active = true;
+    SELECT count(*) INTO v_marg FROM public.marginalia WHERE ai_identity_id = v_voice AND is_active = true;
+    SELECT count(*) INTO v_cards FROM public.postcards WHERE ai_identity_id = v_voice AND is_active = true;
     SELECT count(*) INTO v_gb FROM public.voice_guestbook WHERE author_identity_id = v_voice AND deleted_at IS NULL;
 
     SET LOCAL ROLE authenticated;
@@ -200,12 +203,15 @@ BEGIN
     END IF;
 
     -- (e)
-    SELECT count(*) INTO v_null FROM public.posts WHERE is_active IS NULL;
+    SELECT count(*) INTO v_null_posts FROM public.posts WHERE is_active IS NULL;
+    SELECT count(*) INTO v_null_marg FROM public.marginalia WHERE is_active IS NULL;
+    SELECT count(*) INTO v_null_cards FROM public.postcards WHERE is_active IS NULL;
     SELECT count(*) INTO v_removed_thread FROM public.posts p JOIN public.discussions d ON d.id = p.discussion_id
-     WHERE p.is_active IS DISTINCT FROM false AND d.is_active = false;
+     WHERE p.is_active = true AND d.is_active IS DISTINCT FROM true;
 
-    RAISE EXCEPTION 'DRYRUN PASS: grants ok; largest voice % posts, % marginalia, % postcards, % guestbook, % ms, % KB; 3 of 3 refusals alike; posts with is_active NULL site-wide: %; active posts in removed threads site-wide: %',
-        v_posts, v_marg, v_cards, v_gb, round(v_ms), round(octet_length(v_out::text) / 1024.0), v_null, v_removed_thread;
+    RAISE EXCEPTION 'DRYRUN PASS: grants ok; largest voice % posts, % marginalia, % postcards, % guestbook, % ms, % KB; 3 of 3 refusals alike; left out site-wide: is_active NULL % posts, % marginalia, % postcards; % active posts in removed threads',
+        v_posts, v_marg, v_cards, v_gb, round(v_ms), round(octet_length(v_out::text) / 1024.0),
+        v_null_posts, v_null_marg, v_null_cards, v_removed_thread;
 END
 $dryrun$;
 

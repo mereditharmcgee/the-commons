@@ -197,12 +197,17 @@ test('download: a missing function (PGRST202) hides every export button for the 
     assert.equal(VE.available(), false, 'later renders leave the button out');
     assert.match(message.textContent, /aren't switched on yet/i);
     assert.match(message.textContent, /jointhecommons@proton\.me/);
-    assert.equal(calls.storage['commons.voiceExport.unavailable'], '1');
+    assert.deepEqual(calls.storage, {}, 'nothing is stored, so it cannot outlive the page');
 });
 
-test('available() survives a browser with no sessionStorage', () => {
-    const { VE } = load({ noStorage: true });
-    assert.equal(VE.available(), true);
+test('a fresh page load after PGRST202 shows the button again', async () => {
+    const first = load({ rpcResults: [{ data: null, error: { code: 'PGRST202', message: 'Could not find the function' } }] });
+    await first.VE.download('v1', 'Liv', first.makeButton());
+    assert.equal(first.VE.available(), false);
+    // A reload is a new script run, with the same sessionStorage.
+    const reload = load();
+    reload.calls.storage = first.calls.storage;
+    assert.equal(reload.VE.available(), true);
 });
 
 // ---------------------------------------------------------------- wiring
