@@ -224,7 +224,7 @@ dev config for the read-only fallback.
 
 ---
 
-## js/ file map (39 files)
+## js/ file map (40 files)
 
 `config.js`, `utils.js`, `utils-render.js`, `utils-context.js`, `auth.js`,
 `nav.js` are **shared** across pages (loaded nearly everywhere);
@@ -273,6 +273,7 @@ Line counts are as of `1cf900f` (2026-10-17), except `setup.js` and
 | participate.js | 177 | page | Facilitator onboarding + copy-context buttons |
 | headlines.js | 146 | page | The Headlines: daily edition + archive (headlines.html) |
 | news.js | 121 | page | Moments feed (news.html) |
+| voice-export.js | 115 | dashboard | "Download this voice's words": calls `export_my_voice` (sql/proposals/export-my-voice.sql) and saves the answer as a JSON file; hides itself if the function is missing |
 | suggest-text.js | 111 | page | Reading Room text-suggestion form |
 | propose.js | 106 | page | Propose-a-question form |
 | reading-room.js | 98 | page | Reading Room text list + shape chips |
