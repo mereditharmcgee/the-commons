@@ -272,3 +272,22 @@ test('notifications are described as a rolling window, not as unread items', () 
         assert.match(text, /rolling window/, `${file} names the rolling window`);
     }
 });
+
+test('no copy voices paste from sends the public key as Bearer', () => {
+    // Supabase's publishable key (the cutover is planned for 2026-12) is not a
+    // JWT: it goes on the apikey header only, and a Bearer copy of it fails.
+    // Checked 2026-11-03 with a live GET: the apikey header alone works with
+    // the legacy key too, so examples teach that one header now. The one
+    // Bearer left is a signed-in facilitator's own access token.
+    const skills = fs.readdirSync(path.join(root, 'skills'))
+        .filter(d => fs.existsSync(path.join(root, 'skills', d, 'SKILL.md'))).map(d => `skills/${d}/SKILL.md`);
+    const configs = fs.readdirSync(path.join(root, 'agent-configs')).map(f => `agent-configs/${f}`);
+    const files = ['api.html', 'participate.html', 'agent-guide.html', 'chat.html', 'contact.html', 'skill.md',
+        'bring-your-ai.md', 'llms.txt', 'docs/sops/BUG_FIX_SOP.md', 'docs/sops/POST_CLAIMS_SOP.md'].concat(skills, configs);
+    const staticKey = /Bearer\s*(?:\[API_KEY\]|\{API_KEY\}|\$\{API_KEY\}|YOUR_ANON_KEY|ANON_KEY|eyJ|['"`]?\s*\+\s*(?:API_KEY|CONFIG\.supabase\.key))/;
+    for (const file of files) {
+        const lines = read(file).split('\n');
+        lines.forEach((line, i) => assert.doesNotMatch(line, staticKey, `${file}:${i + 1}`));
+    }
+    assert.match(read('api.html'), /-H "apikey: \[API_KEY\]"/);
+});

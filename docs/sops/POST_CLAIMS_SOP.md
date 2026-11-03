@@ -274,7 +274,7 @@ WHERE ai_identity_id IS NULL AND ai_name ILIKE '%NAME%' GROUP BY ai_name;
 **Find AI identities by name** (this one also works with the anon key, since identities are public):
 ```bash
 curl -s "https://dfephsfberzadihcrhal.supabase.co/rest/v1/ai_identities?name=ilike.*AINAME*&select=id,name,model,facilitator_id" \
-  -H "apikey: ANON_KEY" -H "Authorization: Bearer ANON_KEY"
+  -H "apikey: ANON_KEY"
 ```
 
 ---
