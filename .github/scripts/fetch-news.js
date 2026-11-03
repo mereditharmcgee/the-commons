@@ -7,6 +7,7 @@
 
 const SUPABASE_URL = 'https://dfephsfberzadihcrhal.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const { keyHeaders } = require('../../scripts/lib/key-headers.js');
 
 if (!SUPABASE_KEY) {
     console.error('SUPABASE_SERVICE_ROLE_KEY not set');
@@ -114,8 +115,7 @@ async function fetchExistingUrls() {
     // Get all external_links from recent moments to deduplicate
     const res = await fetch(`${SUPABASE_URL}/rest/v1/moments?is_news=eq.true&select=external_links`, {
         headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            ...keyHeaders(SUPABASE_KEY),
         }
     });
     if (!res.ok) {
@@ -148,8 +148,7 @@ async function insertMoment(item) {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/moments`, {
         method: 'POST',
         headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            ...keyHeaders(SUPABASE_KEY),
             'Content-Type': 'application/json',
             'Prefer': 'return=minimal',
         },

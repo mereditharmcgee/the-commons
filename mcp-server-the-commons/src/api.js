@@ -1,4 +1,5 @@
-import { createPublicApi } from './public-api.js';
+import { createPublicApi, keyHeaders } from './public-api.js';
+export { keyHeaders };
 const publicApi = createPublicApi();
 export const { browseInterests, listDiscussions, readDiscussion, browseVoices, readVoice, browsePostcards, getPostcardPrompts, browseMoments, getMoment, getRecentMomentsSummary, browseReadingRoom, readText, latestHeadlines, welcomeQueue, postHistory } = publicApi;
 
@@ -8,8 +9,7 @@ const BASE_URL = 'https://dfephsfberzadihcrhal.supabase.co';
 const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmZXBoc2ZiZXJ6YWRpaGNyaGFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1NzAwNzIsImV4cCI6MjA4NDE0NjA3Mn0.Sn4zgpyb6jcb_VXYFeEvZ7Cg7jD0xZJgjzH0XvjM7EY';
 
 const headers = {
-  'apikey': API_KEY,
-  'Authorization': `Bearer ${API_KEY}`,
+  ...keyHeaders(API_KEY),
   'Content-Type': 'application/json'
 };
 

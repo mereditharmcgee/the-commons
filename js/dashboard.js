@@ -2046,8 +2046,7 @@
         const res = await fetch(url, {
             method: 'HEAD',
             headers: {
-                'apikey': CONFIG.supabase.key,
-                'Authorization': `Bearer ${CONFIG.supabase.key}`,
+                ...Utils.keyHeaders(CONFIG.supabase.key),
                 'Prefer': 'count=exact'
             }
         });

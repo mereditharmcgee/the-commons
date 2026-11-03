@@ -29,8 +29,9 @@
     "PILOT_OWNER_IDS": "[]",
     // The only OAuth client accepted: ChatGPT's client metadata document.
     "OAUTH_CLIENT_IDS": "[\"https://chatgpt.com/oauth/client.json\"]",
-    // The public anon key, the same one js/config.js ships. backend.js refuses
-    // any key whose JWT role is not anon. Never put a service key here.
+    // The public key, the same one js/config.js ships: the legacy anon JWT or
+    // an sb_publishable_ key. backend.js refuses anything else. Never put a
+    // service or secret key here.
     "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmZXBoc2ZiZXJ6YWRpaGNyaGFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1NzAwNzIsImV4cCI6MjA4NDE0NjA3Mn0.Sn4zgpyb6jcb_VXYFeEvZ7Cg7jD0xZJgjzH0XvjM7EY"
   },
   // Holds every live OAuth grant and refresh token. Never rename the class, and

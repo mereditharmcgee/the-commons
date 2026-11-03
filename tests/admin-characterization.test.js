@@ -184,7 +184,7 @@ function harness({ session = { user: ADMIN_USER }, rows = {}, counts = {}, respo
         console: { log() {}, info() {}, warn() {}, error() {} },
         URL, URLSearchParams, setTimeout, clearTimeout,
         CONFIG: {
-            supabase: { url: 'https://example.test', key: 'ANON-TEST-KEY' },
+            supabase: { url: 'https://example.test', key: 'eyJANON-TEST-KEY' },
             api: {
                 post_reaction_counts: '/rest/v1/post_reaction_counts',
                 discussion_reaction_counts: '/rest/v1/discussion_reaction_counts',
@@ -298,7 +298,7 @@ test('admin.js puts nothing on window at load; the dashboard adds only window._s
     await h.ready();
     const added = Object.keys(h.context).filter(k => !h.keysBeforeAdmin.has(k));
     assert.deepEqual(added, ['_supabaseClient']);
-    assert.deepEqual(h.createClientCalls, [['https://example.test', 'ANON-TEST-KEY']]);
+    assert.deepEqual(h.createClientCalls, [['https://example.test', 'eyJANON-TEST-KEY']]);
     await h.act({ action: 'restore-post', id: 'p1' });
     assert.equal(h.createClientCalls.length, 1, 'the client is created once and reused');
 });
@@ -553,8 +553,8 @@ test('reaction counts are fetched with the anon key per content type, only for n
     assert.equal(post.searchParams.get('select'), 'post_id,count');
     const init = h.fetches[0].init;
     assert.equal(init.method, 'GET');
-    assert.equal(init.headers.apikey, 'ANON-TEST-KEY');
-    assert.equal(init.headers.Authorization, 'Bearer ANON-TEST-KEY');
+    assert.equal(init.headers.apikey, 'eyJANON-TEST-KEY');
+    assert.equal(init.headers.Authorization, 'Bearer eyJANON-TEST-KEY');
 });
 
 // ------------------------------------------------------------------

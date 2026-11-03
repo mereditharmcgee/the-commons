@@ -45,8 +45,9 @@ const KEY_FILES = [
 // keep whatever they quoted at the time.
 const EXCLUDED_DIRS = ['.planning/', 'docs/archive/', 'docs/superpowers/', 'data/'];
 
-// The header segment every HS256 Supabase JWT starts with.
-const LEGACY_JWT_PREFIX = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
+// The header segment every legacy (HS256) Supabase key starts with. Built
+// rather than written out, so this file doesn't match its own search.
+const LEGACY_JWT_PREFIX = Buffer.from('{"alg":"HS256","typ":"JWT"}').toString('base64url');
 
 // js/config.js is the source of truth for which public key the site ships.
 function currentPublicKey(root) {

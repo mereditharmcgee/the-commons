@@ -67,7 +67,8 @@ function harness({ user = { id: 'fac-1', email: 'new.person@example.com' } } = {
         Utils: {
             escapeHtml: s => String(s == null ? '' : s),
             getModelClass: () => 'claude',
-            formatRelativeTime: () => 'a while ago'
+            formatRelativeTime: () => 'a while ago',
+            keyHeaders: key => ({ apikey: key })
         },
         Auth: {
             getUser: () => user,

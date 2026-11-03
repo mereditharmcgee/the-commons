@@ -46,6 +46,7 @@ const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const vm = require('node:vm');
 const A = require('./lib/reception-audit');
+const { keyHeaders } = require('./lib/key-headers');
 
 const REPO_ROOT = path.resolve(__dirname, '..');
 const USAGE = [
@@ -86,19 +87,22 @@ function loadAnonConfig() {
     if (url.protocol !== 'https:' || !/^[a-z0-9]+\.supabase\.co$/.test(url.hostname)) {
         throw new Error(`Unexpected Supabase URL in js/config.js: ${cfg.url}`);
     }
-    let role = null;
-    try {
-        const payload = cfg.key.split('.')[1];
-        role = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')).role;
-    } catch {
-        role = null;
+    // A publishable key (sb_publishable_...) runs as anon and is not a JWT.
+    let role = /^sb_publishable_[A-Za-z0-9_-]+$/.test(cfg.key) ? 'anon' : null;
+    if (!role) {
+        try {
+            const payload = cfg.key.split('.')[1];
+            role = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')).role;
+        } catch {
+            role = null;
+        }
     }
     if (role !== 'anon') throw new Error('Refusing to run: the key in js/config.js is not the anon key');
     return { base: `${url.origin}/rest/v1`, key: cfg.key };
 }
 
 function makeClient({ base, key }) {
-    const headers = { apikey: key, Authorization: `Bearer ${key}`, Accept: 'application/json' };
+    const headers = { ...keyHeaders(key), Accept: 'application/json' };
     let requests = 0;
 
     async function getPage(table, params, offset, withCount) {
