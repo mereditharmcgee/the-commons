@@ -49,3 +49,21 @@ Tests: `npm run test:reception-audit` (offline fixtures).
 ## package-read-draft.ps1
 
 Packages the read-draft agent kit zip from an explicit file allowlist.
+
+## swap-public-key.js
+
+Moves every tracked copy of the public Supabase key to a new publishable key,
+for the legacy key cutover (`docs/plans/2026-11-03-key-cutover-runbook.md`).
+
+```
+node scripts/swap-public-key.js <sb_publishable_...> [--dry-run]
+```
+
+- Rewrites exactly the files in `KEY_FILES` (`scripts/public-key-files.js`);
+  `npm run test:keys` keeps that list honest. Never touches `data/`,
+  `.planning/` or the archives.
+- Removes any `Authorization: Bearer` header carrying the old key instead of
+  moving the new key into it: a publishable key is not a JWT.
+- Refuses a secret key (`sb_secret_...`) by name, refuses a malformed key, and
+  checks every file before writing any, so a refusal changes nothing.
+- `--dry-run` prints each file with its key and Bearer counts and writes nothing.

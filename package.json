@@ -32,7 +32,7 @@
     "test:characterization": "node --require ./tests/discovery-no-network.cjs --test tests/auth-characterization.test.js tests/profile-characterization.test.js tests/admin-characterization.test.js tests/dashboard-characterization.test.js",
     "test:proposals": "node --require ./tests/discovery-no-network.cjs --test tests/sql-proposals.test.js",
     "test:ci": "node --require ./tests/discovery-no-network.cjs --test tests/ci-workflows.test.js",
-    "test:keys": "node --require ./tests/discovery-no-network.cjs --test tests/key-inventory.test.js tests/key-headers.test.js"
+    "test:keys": "node --require ./tests/discovery-no-network.cjs --test tests/key-inventory.test.js tests/key-headers.test.js tests/swap-public-key.test.js"
   },
   "repository": {
     "type": "git",
