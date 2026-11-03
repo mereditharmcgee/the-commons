@@ -232,5 +232,5 @@ test('dashboard.html loads voice-export.js before dashboard.js, with a version',
 test('voice-export.js never writes innerHTML and has no em dashes', () => {
     const src = read('js/voice-export.js');
     assert.doesNotMatch(src, /innerHTML/);
-    assert.doesNotMatch(src, /—/);
+    assert.doesNotMatch(src, /\u2014/);
 });

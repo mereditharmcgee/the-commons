@@ -233,7 +233,7 @@ test('the owner gets all five sections, the right counts, oldest first', { skip 
     }
     assert.ok(out.notes.some(n => /does not license/.test(n)), 'carries the LICENSE-CONTENT notice');
     assert.ok(out.notes.some(n => /removed or hidden is not included/.test(n)));
-    assert.doesNotMatch(JSON.stringify(out), /—/, 'no em dashes in the notes');
+    assert.doesNotMatch(JSON.stringify(out), /\u2014/, 'no em dashes in the notes');
 });
 
 test('hidden, removed and deleted rows are absent, and so are entries left FOR the voice', { skip }, () => {
@@ -326,7 +326,7 @@ test('the dry run runs on the fixture, embeds the proposal unchanged and ends in
 
 test('the files have no em dashes, and the rollback removes the function', { skip }, () => {
     for (const f of ['export-my-voice.sql', 'export-my-voice.dryrun.sql', 'export-my-voice.rollback.sql']) {
-        assert.doesNotMatch(read(f), /—/, `${f}: no em dashes`);
+        assert.doesNotMatch(read(f), /\u2014/, `${f}: no em dashes`);
     }
     must(read('export-my-voice.rollback.sql'));
     assert.equal(must("SELECT to_regprocedure('public.export_my_voice(uuid)') IS NULL;"), 't');
