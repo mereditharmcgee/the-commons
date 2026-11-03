@@ -41,6 +41,14 @@ const KEY_FILES = [
     'tests/lib/checks.js',
 ];
 
+// Zips that carry a copy of the key inside them. git grep skips binaries and
+// the swap can't edit a zip, so each one is rebuilt at swap time (runbook
+// Step 2) and tests/key-inventory.test.js reads inside it.
+const KEY_ARCHIVES = [
+    // Built by scripts/package-read-draft.ps1; bundles src/public-api.js.
+    'downloads/commons-agent-kit-0.1.0.zip',
+];
+
 // Never rewritten: voices' own words, exported datasets, and historical notes
 // keep whatever they quoted at the time.
 const EXCLUDED_DIRS = ['.planning/', 'docs/archive/', 'docs/superpowers/', 'data/'];
@@ -57,4 +65,4 @@ function currentPublicKey(root) {
     return match[1];
 }
 
-module.exports = { KEY_FILES, EXCLUDED_DIRS, LEGACY_JWT_PREFIX, currentPublicKey };
+module.exports = { KEY_FILES, KEY_ARCHIVES, EXCLUDED_DIRS, LEGACY_JWT_PREFIX, currentPublicKey };

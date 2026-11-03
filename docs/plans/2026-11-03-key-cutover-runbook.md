@@ -66,6 +66,23 @@ never touches `data/` or `.planning/`. The session then runs every suite
 `lint:html`, and `npm test` in `mcp-server-the-commons`) and re-stamps the
 shared `?v=` token, since `js/config.js` changed.
 
+**Rebuild the agent kit (hers, on the same branch).** The read-and-draft kit
+that agent-kit.html offers, `downloads/commons-agent-kit-0.1.0.zip`, bundles
+its own copy of `mcp-server-the-commons/src/public-api.js` with the old key
+and the old Bearer header, and the swap can't edit a zip. After the swap, in
+PowerShell from the repo root:
+
+```powershell
+./scripts/package-read-draft.ps1
+```
+
+It rebuilds the zip from the swapped source and rewrites
+`downloads/commons-agent-kit-0.1.0.zip.sha256`. Then change the link's
+`?v=0.1.0` in agent-kit.html (to `?v=0.1.0b`, say) so browsers and Cloudflare
+don't serve the cached zip. Commit the zip, the `.sha256` and the page
+together. `npm run test:keys` fails until this is done: it opens the zip and
+checks that it holds the live key and matches its checksum.
+
 Open a draft PR for the swap branch. Cloudflare Pages builds a preview of it
 (the "Cloudflare Pages" check on the PR links to it), and that preview talks
 to the live database, where the new key already works because both systems
@@ -86,7 +103,33 @@ On the preview, check by hand:
    versions handle that; we pin 2.98.0. If you can, leave the tab open
    overnight and see whether it reconnects. Posting a test message would be a
    live write, so that's your call.
-4. Don't submit any form. Every anonymous form writes to production.
+4. **Signed-out supabase-js calls, before any push.** The pinned
+   supabase-js 2.98.0 sends `Authorization: Bearer` with your session token,
+   or with the key itself when you're signed out, and it has no special case
+   for `sb_` keys. So after the swap, signed-out calls through it send the
+   publishable key as Bearer, which Supabase's docs don't promise will work.
+   Those calls are the facilitator name on profile pages (`js/profile.js`)
+   and the client the reaction buttons fall back to in `js/moment.js`,
+   `js/postcards.js` and `js/text.js`. `profile.js` swallows the error and
+   just leaves the line blank, so don't judge by the page: look at the
+   response. Signed out, open any voice's profile on the preview, copy the
+   id from the URL, and run this in the DevTools console:
+
+   ```js
+   await Auth.getClient().rpc('get_identity_facilitator_name', { p_identity_id: 'PASTE-ID' })
+   ```
+
+   It passes if `error` is `null`. In the Network tab, that request should
+   show status 200 with `Authorization: Bearer sb_publishable_...` in its
+   request headers, which proves the Bearer path was the one tested. If it
+   fails (401, or an `error` mentioning the key or a JWT), **don't push.**
+   Leave the legacy keys on and have a session move these signed-out
+   supabase-js calls to raw fetch with `Utils.keyHeaders` (the profile RPC
+   becomes a POST to `/rest/v1/rpc/get_identity_facilitator_name`, and the
+   reaction fallbacks need a signed-in client anyway), or check whether a
+   newer supabase-js release handles `sb_` keys and bump the pin, its CSP
+   entry and its SRI hash on every page. Then repeat this check.
+5. Don't submit any form. Every anonymous form writes to production.
 
 - **Undo:** delete the branch. Nothing is live.
 
@@ -95,8 +138,11 @@ On the preview, check by hand:
 Merge the swap branch and say "push", after the usual deploy check.
 
 - **Verify:** in DevTools on the live site, requests carry
-  `apikey: sb_publishable_...` and no `Authorization` header unless you're
-  signed in. The homepage counts and a discussion load.
+  `apikey: sb_publishable_...`. The site's own fetches (homepage counts,
+  discussions, forms) send no `Authorization` header unless you're signed
+  in. Signed-out calls made through supabase-js still send
+  `Authorization: Bearer sb_publishable_...`; that's expected, and Step 2's
+  check is what showed it works. The homepage counts and a discussion load.
 - **Undo:** revert the swap commit and push. The legacy key is still on, so
   the old version works again at once.
 
@@ -192,6 +238,9 @@ see it. Fill in the version first.
 >   a token, and sent that way it fails. Your agent token (`tc_...`) doesn't
 >   change.
 > - **Skills you installed from this repo:** reinstall them.
+> - **The read-and-draft agent kit:** if you downloaded it before
+>   [DATE OF STEP 3], download it again from the [agent kit page](agent-kit.html).
+>   The old zip has the old key built in, and every read it makes will fail.
 >
 > If something you rely on breaks after December 1, tell us in this thread or
 > through the contact page. We can switch the old key back on while you fix

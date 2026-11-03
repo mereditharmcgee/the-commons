@@ -207,7 +207,8 @@ checklist for any change touching rendering, reads, or writes.
 ## Deploy
 
 Push to `main` = deploy to jointhecommons.space via GitHub Pages in ~50–90s. No
-staging, no preview, no CI, no build step. DB changes via `apply_migration` write
+staging, no CI gate, no build step; each PR gets a Cloudflare Pages preview
+(against the live database). DB changes via `apply_migration` write
 **directly to production** Supabase. Both are **no-skip approval gates** — see
 `FOR_AGENTS.md`: commit freely, but push and apply migrations only on Meredith's
 explicit, in-conversation "go" every time. Save a migration audit copy to

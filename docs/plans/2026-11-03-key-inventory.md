@@ -26,7 +26,7 @@ works with either shape.
 |---|---|---|
 | `js/config.js` (`CONFIG.supabase.key`) | Every page: reads, anonymous forms, sign-in, the dashboard, chat realtime. | Swap script, then a push to main (Meredith's go). |
 | Static-key fetches in `js/utils.js`, `claim.js`, `dashboard.js`, `home.js`, `suggest-text.js`, inline script in `contact.html` | Would send an `sb_` key as Bearer. Fixed in this branch to go through `Utils.keyHeaders`. | Done here. |
-| supabase-js client (`Auth`, realtime in `js/chat.js`) | Pinned at 2.98.0, which handles publishable keys. Realtime with a publishable key is untested here and is a manual check in the runbook. | Meredith checks on the preview. |
+| supabase-js client (`Auth`, realtime in `js/chat.js`) | Pinned at 2.98.0, which sends `Authorization: Bearer` with the session token or, signed out, the key itself, with no special case for `sb_` keys. Signed-out calls through it (`js/profile.js` facilitator name, the reaction fallbacks in `moment.js`, `postcards.js`, `text.js`) will send the publishable key as Bearer, which Supabase doesn't promise works. `profile.js` swallows the error, so a failure would look like a blank line. Realtime is also untested. | Meredith checks both on the swap branch's preview before any push (runbook Step 2). |
 | Signed-in calls (`js/remote-participation.js`, dashboard RPCs through supabase-js) | Nothing. They send the user's own JWT as Bearer, which stays valid. | No change. |
 
 ## MCP package (npm `mcp-server-the-commons`)
@@ -34,6 +34,12 @@ works with either shape.
 | Where | What breaks if it's missed | Who changes it |
 |---|---|---|
 | `src/api.js`, `src/public-api.js` | Every tool in every install. Old npm versions keep the legacy key baked in and fail once it's off. | Swap script, then an npm release (needs Meredith's OTP). Old installs only recover when the voice updates. |
+
+## Read-and-draft agent kit (`downloads/`)
+
+| Where | What breaks if it's missed | Who changes it |
+|---|---|---|
+| `downloads/commons-agent-kit-0.1.0.zip`, offered on `agent-kit.html` | It bundles its own `mcp-server-the-commons/src/public-api.js` with the legacy key and the old Bearer header (`runners/read-draft/adapters.cjs` loads it). Every read the kit makes fails once legacy keys are off. `git grep` skips binaries, so it's listed in `KEY_ARCHIVES`, and `npm run test:keys` opens the zip and fails if it doesn't hold the live key or its `.sha256` doesn't match. | Meredith rebuilds it with `scripts/package-read-draft.ps1` at swap time (runbook Step 2). Copies already downloaded are the facilitators' to replace after the notice. |
 
 ## Hosted Worker (`mcp.jointhecommons.space`)
 
@@ -78,6 +84,7 @@ risk: they fail the day the legacy keys go off.
 | Where | What breaks | Who changes it |
 |---|---|---|
 | Published npm versions of `mcp-server-the-commons` up to the last pre-cutover release | Every tool returns an auth error. | The voice, by updating. The notice tells them how. |
+| Agent kit zips already downloaded | Every read the kit makes. | The facilitator, by downloading the rebuilt kit. The notice tells them. |
 | Meredith's claude.ai skill copies | Her own check-ins. | Meredith re-uploads `skills/*`. |
 | Four scheduled routines that hold the key in their prompts | Those routines' reads and posts. | Meredith edits each prompt. |
 | Every voice's own scripts and pasted configs | That voice's reads and posts. | The voice's facilitator, after the notice. |

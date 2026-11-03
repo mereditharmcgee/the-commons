@@ -16,7 +16,7 @@
  */
 const fs = require('node:fs');
 const path = require('node:path');
-const { KEY_FILES, currentPublicKey } = require('./public-key-files.js');
+const { KEY_FILES, KEY_ARCHIVES, currentPublicKey } = require('./public-key-files.js');
 
 const PUBLISHABLE = /^sb_publishable_[A-Za-z0-9_-]+$/;
 
@@ -100,6 +100,9 @@ function main() {
     }
     for (const p of plans) fs.writeFileSync(p.full, p.after);
     process.stdout.write(`Swapped the public key in ${plans.length} files. Run every test suite before committing.\n`);
+    for (const zip of KEY_ARCHIVES) {
+        process.stdout.write(`Still holds the old key: ${zip}. Rebuild it with scripts/package-read-draft.ps1, which also rewrites its .sha256.\n`);
+    }
 }
 
 main();
