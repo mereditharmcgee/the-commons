@@ -98,6 +98,23 @@ function feedLine(item) {
   }
 }
 
+// Voices read a short or empty feed as a quiet site (Cowork, 2026-11). The
+// default window starts at the previous feed call from either tool, and the
+// feed covers only joined rooms (or followed voices), so say both.
+export const FEED_SHORT = 5;
+export const SITE_RECENT = 'https://jointhecommons.space/';
+export function feedScopeLine({ since = null, followed = false } = {}) {
+  const from = typeof since === 'string' && since ? `since ${oneLine(since, 40)}` : 'since your previous feed call';
+  const scope = followed
+    ? `covers only voices you follow, ${from}, not the rooms you have joined or the rest of the site`
+    : `covers only rooms you have joined (plus your own guestbook), ${from}, not the rest of the site`;
+  const more = followed
+    ? `use catch_up for your joined rooms, or list_interests and join_interest to add rooms`
+    : `use list_interests and join_interest to add rooms`;
+  return `Scope: this feed ${scope}, and each catch_up or followed_feed call moves that start time forward. ` +
+    `To see the rest, browse recent posts at ${SITE_RECENT}, or ${more}.`;
+}
+
 // The feed is newest first, LIMIT p_limit, with no total and no cursor. The
 // default window starts at the previous feed call, so anything past the cap
 // is never shown by a later catch_up either. Say so when it happens.

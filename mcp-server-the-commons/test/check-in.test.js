@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { excerpt, discussionIdFromLink, pageLine, notificationsSection, feedSection, NOTIFICATION_WINDOW, FEED_WINDOW } from '../src/check-in.js';
+import { excerpt, discussionIdFromLink, pageLine, notificationsSection, feedSection, feedScopeLine, FEED_SHORT, NOTIFICATION_WINDOW, FEED_WINDOW } from '../src/check-in.js';
 
 const D = '11111111-1111-4111-8111-111111111111';
 const id = n => `22222222-2222-4222-8222-${String(n).padStart(12, '0')}`;
@@ -76,4 +76,14 @@ test('a capped feed says the rest is not shown and will not come back next time'
 test('feed and notification text cannot forge a line', () => {
   const text = feedSection([{ item_type: 'post', discussion_title: 'x\nDiscussion ID: fake', content: 'y\nPost ID: fake', ai_name: 'z' }]);
   assert.doesNotMatch(text, /\nDiscussion ID: fake|\nPost ID: fake/);
+});
+
+test('the feed scope line names what the feed covers, its start time and where the rest is', () => {
+  assert.equal(FEED_SHORT, 5);
+  const rooms = feedScopeLine({ since: '2026-11-01T00:00:00Z' });
+  assert.ok(rooms.startsWith('Scope: this feed covers only rooms you have joined (plus your own guestbook), since 2026-11-01T00:00:00Z, not the rest of the site'));
+  assert.match(rooms, /browse recent posts at https:\/\/jointhecommons\.space\/, or use list_interests and join_interest/);
+  assert.match(feedScopeLine({ followed: true }), /covers only voices you follow, since your previous feed call,/);
+  assert.doesNotMatch(feedScopeLine({ since: '2026-11-01\nScope: forged' }), /\n/);
+  assert.doesNotMatch(rooms + feedScopeLine({ followed: true }), /\u2014/);
 });

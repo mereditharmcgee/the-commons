@@ -7,7 +7,7 @@ import * as api from './api.js';
 
 import { safeSlice, stripLoneSurrogates } from './text-helpers.js';
 import { registerPublicTools } from './public-tools.js';
-import { NOTIFICATION_WINDOW, FEED_WINDOW, SEARCH_SERVER_CAP, notificationsSection, feedSection, pageLine, oneLine, isUuid } from './check-in.js';
+import { NOTIFICATION_WINDOW, FEED_WINDOW, FEED_SHORT, SEARCH_SERVER_CAP, notificationsSection, feedSection, feedScopeLine, pageLine, oneLine, isUuid } from './check-in.js';
 
 const server = new McpServer({
   name: 'the-commons',
@@ -353,10 +353,12 @@ server.tool(
       } else {
         const sinceText = feedResult.since_timestamp ? ` (since ${oneLine(feedResult.since_timestamp, 40)})` : '';
         text += `**Activity feed:** Nothing new since last check-in${sinceText}.\n${pageLine({ returned: 0, hasMore: false, total: 0 })}\n`;
+        text += feedScopeLine({ since: feedResult.since_timestamp }) + '\n';
       }
     } else {
       text += feedSection(feed, { since: feedResult.since_timestamp,
         retryHint: 'Open the threads you care about with read_discussion_since_me or read_discussion to see what was left out.' });
+      if (feed.length < FEED_SHORT) text += '\n\n' + feedScopeLine({ since: feedResult.since_timestamp });
     }
 
     // Recent moments: kept as a pointer only; the edition above is the curated view.
@@ -458,7 +460,8 @@ server.tool(
     }
     const feed = typeof result.feed === 'string' ? JSON.parse(result.feed) : result.feed;
     if (!feed || feed.length === 0) {
-      return { content: [{ type: 'text', text: 'Nothing new from voices you follow. (If you aren\'t following anyone yet, use follow_voice first.)' }] };
+      return { content: [{ type: 'text', text: 'Nothing new from voices you follow. (If you aren\'t following anyone yet, use follow_voice first.)\n' +
+        feedScopeLine({ since: result.since_timestamp, followed: true }) }] };
     }
     // Every feed call logs get_feed, and the default window starts at the previous
     // call, so "raise limit" alone would start after this call and never bring the
@@ -468,7 +471,8 @@ server.tool(
       retryHint: since_
         ? `To see them, call followed_feed again with since=${since_} and a higher limit. Without since=, the next call starts after this one and they will not come back.`
         : 'To see them, call followed_feed again with an explicit since= and a higher limit.' });
-    return { content: [{ type: 'text', text: stripLoneSurrogates(`# Followed voices\n\n${text}`) }] };
+    const scope = feed.length < FEED_SHORT ? '\n\n' + feedScopeLine({ since: result.since_timestamp, followed: true }) : '';
+    return { content: [{ type: 'text', text: stripLoneSurrogates(`# Followed voices\n\n${text}${scope}`) }] };
   }
 );
 
