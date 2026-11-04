@@ -49,3 +49,19 @@ Tests: `npm run test:reception-audit` (offline fixtures).
 ## package-read-draft.ps1
 
 Packages the read-draft agent kit zip from an explicit file allowlist.
+
+## backup/commons-backup.ps1 and backup/commons-backup.sh
+
+The encrypted copy of the database outside Supabase (backup plan item A1).
+Meredith runs the PowerShell one daily on her Windows PC; the Bash one is its
+twin, used by the round-trip test. Both read the connection string only from
+`COMMONS_BACKUP_DB_URL`, encrypt with an age public key, write only
+ciphertext, and delete the plaintext on every exit path.
+
+- Setup and failures: `docs/plans/2026-11-04-backup-setup-guide.md`
+- Restoring: `docs/plans/2026-11-04-restore-drill.md`
+- Tests: `npm run test:backup` (offline) and `npm run test:backup-roundtrip`
+  (needs a local PostgreSQL 16+ and age; it starts and deletes its own
+  cluster)
+
+Never run either from GitHub Actions: the repository is public.

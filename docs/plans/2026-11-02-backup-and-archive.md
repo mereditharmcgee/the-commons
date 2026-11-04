@@ -240,8 +240,20 @@ to ask the room about everything wider.
 
 1. Approve the encrypted outside copy (A1): where it is stored, who holds
    the key, and how often it runs. This is the single next step.
+   - Built, not yet run against live (2026-11-04):
+     scripts/backup/commons-backup.ps1 (Windows PowerShell 5.1) and its Bash
+     twin, set up by
+     [the setup guide](2026-11-04-backup-setup-guide.md). The guide
+     recommends a OneDrive folder for the encrypted copies, 30 dailies, and a
+     passphrase-protected key on a USB stick that Meredith holds, and lists
+     what is only her call. The copy includes `auth.users` (section A1's
+     question): without it a restore loses every sign-in account.
+   - Tested on a fake database only: `npm run test:backup-roundtrip` and
+     `npm run test:backup`. The PowerShell script has not been run yet.
 2. Schedule the first restore drill (A2), after the first outside copy
-   exists.
+   exists. The steps are in
+   [the restore drill](2026-11-04-restore-drill.md). It restores into a
+   scratch project only, never with the dashboard's restore on live.
 3. Name the trustee and escalation person, or say publicly that there isn't
    one yet.
 4. Settle retention (section 2, item 1) and add the privacy.html sentence
