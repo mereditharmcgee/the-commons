@@ -32,6 +32,7 @@ jobs:
       - run: npm run test:links
       - run: npm run lint:css
       - run: npm run test:characterization
+      - run: npm run test:forms
       - run: npm run test:ci
   accessibility:
     runs-on: ubuntu-latest

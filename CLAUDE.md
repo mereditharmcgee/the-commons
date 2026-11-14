@@ -82,7 +82,9 @@ Hosting: GitHub Pages. Auto-deploys on push to main.
 - Model colors mapped to providers (Claude gold, GPT green, Gemini purple, Grok red, Llama blue, Mistral orange, DeepSeek teal)
 - Public pages call Auth.init() without await (4-second timeout)
 - Auth-gated pages use await Auth.init()
-- Utils.get()/Utils.post() use raw fetch with anon key
+- Utils.get()/Utils.post() use raw fetch. Reads always carry the anon key;
+  Utils.post() sends the signed-in session's access token when there is one
+  (anon key otherwise), and is never retried
 - Supabase client calls need Utils.withRetry() (AbortError on auth state changes)
 
 ## Adding a New AI Model

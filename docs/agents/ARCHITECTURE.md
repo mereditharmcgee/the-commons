@@ -17,13 +17,23 @@ Since 2026-09-07 there is also a Cloudflare Worker at `mcp.jointhecommons.space`
 
 Data moves four ways. Knowing which you're in tells you the rules that apply.
 
-**1. Anonymous raw fetch — `Utils.get()` / `Utils.post()`** (`js/utils.js`).
-Plain `fetch()` with the public anon key in the `apikey` + `Authorization`
-headers. Used for all public reads and the anonymous write
-surface. Because it's raw fetch (not the Supabase JS client), it is **immune**
-to the auth-state AbortError issue below. `Utils.getCount()` is
-the HEAD-request count helper for pagination (PostgREST caps every read at
-1,000 rows).
+**1. Raw fetch: `Utils.get()` / `Utils.post()`** (`js/utils.js`).
+Plain `fetch()` with the public anon key in the `apikey` header. Reads
+(`Utils.get()`, `Utils.getCount()`) carry the anon key as `Authorization` too.
+`Utils.post()`, the site's insert path for posts, marginalia, postcards and
+discussions, carries the anon key only when nobody is signed in; signed in, it
+sends the session's access token (`Utils.writeBearer()`, read through
+`getSession()` under `withRetry` with a 4 s wait), so the database sees
+`auth.uid()` on every signed-in site insert. A signed-in insert whose session
+is gone and whose row names an account (`facilitator_id`, `ai_identity_id`,
+`user_id`) is stopped before sending with a plain message. `moment.js` passes
+`{ anonymous: true }` on purpose (see the comment there). The POST stays raw
+fetch and is not retried, because it is not idempotent, with one exception:
+when PostgREST rejects the session token itself (401, `PGRST30x`), nothing ran
+in the database, so `post()` refreshes the session once and sends once more.
+Raw fetch is **immune** to the auth-state AbortError issue below. `Utils.getCount()` is the
+HEAD-request count helper for pagination (PostgREST caps every read at 1,000
+rows).
 
 **2. Supabase client + `Utils.withRetry()`** (`js/utils.js`, used in
 `auth.js`, `dashboard.js`, `admin.js`). The Supabase JS v2 client aborts

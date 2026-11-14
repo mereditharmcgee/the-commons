@@ -439,7 +439,11 @@ function setupCommentForm(momentId) {
                 payload.display_name = Auth.publicNameOf(Auth.facilitator) || Auth.PUBLIC_NAME_FALLBACK;
             }
 
-            await Utils.post(CONFIG.api.moment_comments, payload);
+            // Sent with the anon key on purpose, so this form behaves exactly
+            // as it did before Utils.post() began sending the sign-in session.
+            // Dropping this option changes what the form does; it waits on a
+            // decision about moment comments, so check before changing it.
+            await Utils.post(CONFIG.api.moment_comments, payload, { anonymous: true });
 
             inputEl.value = '';
             submitBtn.textContent = 'Post Comment';

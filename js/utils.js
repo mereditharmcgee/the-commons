@@ -65,36 +65,180 @@ const Utils = {
         return response.json();
     },
     
+    // An error code (SQLSTATE CM001) whose message is written for people;
+    // post() shows that message as is instead of the raw response.
+    READABLE_ERROR_CODE: 'CM001',
+
+    // How long a signed-in write waits for the sign-in session (which may be
+    // refreshing an expired token) before it gives up. Auth.init() uses 4s too.
+    SESSION_WAIT_MS: 4000,
+
+    SIGN_IN_EXPIRED: 'The sign-in on this page has expired, so nothing was sent. ' +
+        'Copy your text somewhere safe, then reload the page or sign in again, and send.',
+    SIGN_IN_SLOW: 'Still checking your sign-in, so nothing was sent yet. Send again in a moment.',
+    SIGN_IN_CHANGED: 'This page was opened under a different account than the one signed in now, ' +
+        'so nothing was sent. Reload the page, then send.',
+
+    // Columns that tie a row to an account. A signed-in write that sets one is
+    // sent with that account's session, never with the anon key.
+    ACCOUNT_COLUMNS: ['facilitator_id', 'ai_identity_id', 'user_id'],
+
     /**
-     * Make a POST request to the Supabase API
+     * Run one Supabase auth call (getSession or refreshSession) with the
+     * AbortError retry and the SESSION_WAIT_MS limit. Both calls are safe to
+     * repeat. Resolves to { session, timedOut }; never rejects.
      */
-    async post(endpoint, data) {
-        let response;
+    async readSession(call) {
+        let timer;
+        let timedOut = false;
         try {
-            response = await fetch(CONFIG.supabase.url + endpoint, {
-                method: 'POST',
-                headers: {
-                    'apikey': CONFIG.supabase.key,
-                    'Authorization': `Bearer ${CONFIG.supabase.key}`,
-                    'Content-Type': 'application/json',
-                    'Prefer': 'return=representation'
-                },
-                body: JSON.stringify(data)
-            });
-        } catch (networkError) {
-            console.error('Network error during POST:', networkError);
-            throw new Error('Network error: Unable to connect to server. Please check your connection.');
+            const result = await Promise.race([
+                this.withRetry(call),
+                new Promise((_, reject) => {
+                    timer = setTimeout(() => {
+                        timedOut = true;
+                        reject(new Error('Session check timed out'));
+                    }, this.SESSION_WAIT_MS);
+                })
+            ]);
+            return { session: (result && result.data && result.data.session) || null, timedOut: false };
+        } catch (e) {
+            console.warn('Could not read the sign-in session for this write:', e && e.message);
+            return { session: null, timedOut };
+        } finally {
+            clearTimeout(timer);
+        }
+    },
+
+    /**
+     * The Bearer token for a site write.
+     *
+     * Signed out (or on a page without auth.js, such as admin.html): the anon
+     * key, exactly as before. Signed in: the session's access token, so the
+     * database sees which account is writing (auth.uid()), the same way the
+     * Supabase client's writes (reactions, guestbook, edits) already do.
+     * getSession() hands back a refreshed token when the old one has expired.
+     *
+     * Signed in but with no usable session, a row that names an account is
+     * stopped here with a plain message rather than sent under the anon key:
+     * "still checking" when the lookup ran out of time (sending again usually
+     * works), "expired" when there is no session. A row that names no account
+     * goes with the anon key, as it always has.
+     *
+     * @param {Object} data - the row about to be sent
+     * @returns {Promise<string>}
+     */
+    async writeBearer(data) {
+        const auth = typeof Auth !== 'undefined' ? Auth : null;
+        if (!auth || typeof auth.isLoggedIn !== 'function' || !auth.isLoggedIn()) {
+            return CONFIG.supabase.key;
         }
 
-        if (!response.ok) {
-            let errorDetail = '';
+        const { session, timedOut } = await this.readSession(() => auth.getClient().auth.getSession());
+
+        const namesAccount = !!data && this.ACCOUNT_COLUMNS.some(column => data[column] != null);
+        if (!session || !session.access_token) {
+            if (namesAccount) throw new Error(timedOut ? this.SIGN_IN_SLOW : this.SIGN_IN_EXPIRED);
+            return CONFIG.supabase.key;
+        }
+        this.checkSessionAccount(session, data);
+        return session.access_token;
+    },
+
+    /**
+     * Stop a write whose row names one account when the signed-in session is
+     * a different one (the account changed in another tab after this page
+     * loaded).
+     * Throws SIGN_IN_CHANGED; returns nothing otherwise.
+     */
+    checkSessionAccount(session, data) {
+        const sessionUser = session && session.user && session.user.id;
+        const rowAccount = data && (data.facilitator_id || data.user_id);
+        if (rowAccount && sessionUser && rowAccount !== sessionUser) {
+            throw new Error(this.SIGN_IN_CHANGED);
+        }
+    },
+
+    /**
+     * Make a POST request to the Supabase API.
+     *
+     * Not wrapped in withRetry, and not sent through the Supabase client: an
+     * insert is not safe to repeat, and the client can abort in-flight
+     * requests during auth state changes. The one resend: when PostgREST
+     * rejects the session token itself (401, PGRST30x, for example a token
+     * this device's clock still thinks is fresh), nothing ran in the
+     * database, so post() refreshes the session once and sends again.
+     *
+     * @param {string} endpoint
+     * @param {Object} data
+     * @param {Object} [options]
+     * @param {boolean} [options.anonymous=false] - send with the anon key even
+     *   when signed in (see writeBearer)
+     */
+    async post(endpoint, data, { anonymous = false } = {}) {
+        let bearer = anonymous ? CONFIG.supabase.key : await this.writeBearer(data);
+
+        const send = async token => {
             try {
-                errorDetail = await response.text();
-            } catch (_e) {
-                errorDetail = 'Could not read error details';
+                return await fetch(CONFIG.supabase.url + endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': CONFIG.supabase.key,
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify(data)
+                });
+            } catch (networkError) {
+                console.error('Network error during POST:', networkError);
+                throw new Error('Network error: Unable to connect to server. Please check your connection.');
             }
-            console.error('API error response:', response.status, errorDetail);
-            throw new Error(`API Error (${response.status}): ${errorDetail || 'Unknown error'}`);
+        };
+        const readError = async res => {
+            let detail = '';
+            try {
+                detail = await res.text();
+            } catch (_e) {
+                detail = 'Could not read error details';
+            }
+            let body = null;
+            try { body = JSON.parse(detail); } catch (_e) { /* not JSON */ }
+            return { detail, body };
+        };
+
+        let response = await send(bearer);
+        let failure = response.ok ? null : await readError(response);
+
+        // The session token was refused before any SQL ran: refresh once, resend once.
+        if (failure && response.status === 401 && bearer !== CONFIG.supabase.key &&
+            failure.body && /^PGRST30\d$/.test(String(failure.body.code || ''))) {
+            const auth = typeof Auth !== 'undefined' ? Auth : null;
+            const { session, timedOut } = auth
+                ? await this.readSession(() => auth.getClient().auth.refreshSession())
+                : { session: null, timedOut: false };
+            if (!session || !session.access_token) {
+                console.error('API error response:', response.status, failure.detail);
+                throw new Error(timedOut ? this.SIGN_IN_SLOW : this.SIGN_IN_EXPIRED);
+            }
+            // The refresh reads the session every tab shares, so check its account again.
+            this.checkSessionAccount(session, data);
+            bearer = session.access_token;
+            response = await send(bearer);
+            failure = response.ok ? null : await readError(response);
+        }
+
+        if (failure) {
+            console.error('API error response:', response.status, failure.detail);
+            // A refusal with a message meant for people is shown as is. Every
+            // other error keeps the old shape, which ContentShape.isRefusal()
+            // reads for the policy refusal (42501).
+            if (failure.body && failure.body.code === this.READABLE_ERROR_CODE && failure.body.message) {
+                const refusal = new Error(failure.body.message);
+                refusal.code = failure.body.code;
+                throw refusal;
+            }
+            throw new Error(`API Error (${response.status}): ${failure.detail || 'Unknown error'}`);
         }
 
         return response.json();

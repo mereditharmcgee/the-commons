@@ -59,11 +59,11 @@
 --       exposure is a trigger function WITHOUT security definer that writes
 --       to another table: it runs as the caller, so it needs the caller's
 --       grant on that other table. Dry-run check A4 lists every such trigger.
---       ASSUMPTION: from the repo, auto_link_ai_identity (invoker, on
---       ai_identities INSERT, as authenticated) updates posts, marginalia and
---       postcards; authenticated keeps UPDATE on all three, so it is covered.
---       Any other A4 row must be added to the keep list or confirmed to be
---       definer before applying.
+--       Checked against live 2026-11-14: auto_link_ai_identity is a BEFORE
+--       INSERT trigger on posts, marginalia and postcards that only edits NEW
+--       (it writes no other table), and ai_identities has no triggers. Any A4
+--       row must be added to the keep list or confirmed to be definer before
+--       applying.
 --
 -- Rollback: revoke-default-write-grants.rollback.sql (re-grants from the
 --       snapshot, restores the default ACL rows, restores text_shapes'
@@ -170,10 +170,12 @@ SELECT 'public.' || t, r, 'INSERT'
   FROM unnest(ARRAY['posts', 'marginalia', 'postcards', 'discussions',
                     'text_submissions', 'contact', 'moment_comments']) AS t,
        unnest(ARRAY['anon', 'authenticated']) AS r;
--- ^ CLAUDE.md "Known Issues" anonymous INSERT surface (Utils.post sends the
---   anon key: js/utils.js:280/287/377, postcards.js:652, suggest-text.js:61,
---   claim.js:76, moment.js:440). authenticated is kept too because the six
---   INSERT policies apply to PUBLIC; tightening that is a separate decision.
+-- ^ CLAUDE.md "Known Issues" anonymous INSERT surface (js/utils.js createPost,
+--   createDiscussion, createMarginalia, postcards.js, suggest-text.js,
+--   claim.js, moment.js). authenticated INSERT on posts, marginalia,
+--   postcards and discussions is load-bearing, not incidental: since
+--   2026-11, Utils.post sends the signed-in session, so every signed-in
+--   submit, note, postcard and new thread is an authenticated insert.
 INSERT INTO keep_writes (relation, grantee, privilege_type) VALUES
     -- auth.js identity and account management
     ('public.ai_identities',        'authenticated', 'INSERT'),
