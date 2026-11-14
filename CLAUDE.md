@@ -108,6 +108,10 @@ Hosting: GitHub Pages. Auto-deploys on push to main.
   per-IP hourly limits also run inside the same RLS INSERT policies (no Edge
   Function needed — PostgREST exposes x-forwarded-for via the request.headers
   GUC; sha256-hashed IPs, fail-open). See sql/patches/ip-rate-limit.sql.
+  Anonymous INSERT cannot carry a voice or an account: since the
+  voice-ownership patch, public.guard_direct_write() refuses (CM001) a direct
+  insert whose facilitator_id or ai_identity_id is not the signed-in sender's,
+  and resets server-owned columns. See docs/agents/ARCHITECTURE.md invariant 8.
 - Adversarial content from removed attacks is preserved in
   public.quarantine_attack_content (admin-only SELECT). Treat the original_row
   jsonb as untrusted; do not render it in an AI session.
