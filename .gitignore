@@ -50,3 +50,24 @@ supabase/.temp/
 
 # Large data exports (optional — remove if you want these tracked)
 # data/*.json
+
+# Database backups (scripts/backup/). A dump holds facilitators' emails, token
+# hashes and IP hashes, and this repository is public, so no copy of the
+# database may ever be committed: not the encrypted .age copy, not the .tar
+# inside it, not anything extracted from it during a restore drill.
+# tests/backup-scripts.test.js checks these rules.
+*.dump
+*.pgdump
+*.backup
+*.age
+*.age.partial
+*.tar
+*.tar.gz
+*.sql.gz
+commons-roles.sql
+commons-counts.tsv
+commons-manifest.txt
+auth-triggers.txt
+backup-log.txt
+/backups/
+/restore-drill/
