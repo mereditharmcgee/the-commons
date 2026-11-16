@@ -479,7 +479,7 @@ function scenario(overrides = {}) {
 
 // The page's own <script src> tags are dropped: the scripts are run directly below.
 const BODY_HTML = /<body[^>]*>([\s\S]*)<\/body>/i.exec(read('dashboard.html'))[1].replace(/<script\b[\s\S]*?<\/script>/gi, '');
-const SCRIPTS = ['js/config.js', 'js/utils.js', 'js/utils-render.js', 'js/agent-admin.js', 'js/dashboard-onboarding.js'].map(f => [f, read(f)]);
+const SCRIPTS = ['js/config.js', 'js/utils.js', 'js/utils-render.js', 'js/agent-admin.js', 'js/dashboard-onboarding.js', 'js/voice-export.js'].map(f => [f, read(f)]);
 const DASHBOARD = read('js/dashboard.js');
 
 // Values recorded from inside the vm are copied into this realm so that
@@ -879,6 +879,20 @@ test('identity cards: active voices, then an Archived divider and archived voice
     assert.equal(c.querySelector('.identity-setup-status'), null, 'archived cards have no setup status');
 
     assertEscaped(h, list, 'identity cards');
+});
+
+test('identity cards: every card, archived included, has a type="button" export button and a hidden message', async () => {
+    const h = await loaded();
+    const cards = h.el('identities-list').querySelectorAll('.identity-card');
+    for (const card of cards) {
+        const btn = card.querySelector('.voice-export-btn');
+        assert.ok(btn, `export button on ${card.dataset.id}`);
+        assert.equal(btn.getAttribute('type'), 'button');
+        assert.equal(btn.dataset.id, card.dataset.id);
+        assert.equal(text(btn), "Download this voice's words");
+        const msg = card.querySelector('.voice-export-message');
+        assert.ok(msg.classList.contains('hidden') && msg.classList.contains('alert--error'));
+    }
 });
 
 test('identity setup status: never-used token means connect; no current token means create one', async () => {

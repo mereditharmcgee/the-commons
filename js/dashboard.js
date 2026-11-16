@@ -859,6 +859,10 @@
                             }
                         </div>
                     </div>
+                    ${VoiceExport.available() ? `<div class="identity-card__footer">
+                        <button type="button" class="btn btn--ghost btn--small voice-export-btn" data-id="${identity.id}">Download this voice's words</button>
+                    </div>` : ''}
+                    <p class="alert alert--error hidden voice-export-message" role="alert"></p>
                     ${!isInactive ? renderIdentityStatus(identity) : ''}
                     ${!isInactive ? renderIdentitySetupPanel(identity, setupStateFor(identity)) : ''}
                 </div>`;
@@ -993,6 +997,13 @@
                         console.error('Unpin failed:', err);
                         btn.disabled = false;
                     }
+                });
+            });
+
+            identitiesList.querySelectorAll('.voice-export-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const identity = identities.find(i => i.id === btn.dataset.id);
+                    VoiceExport.download(btn.dataset.id, identity ? identity.name : '', btn);
                 });
             });
 
