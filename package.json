@@ -30,7 +30,7 @@
     "lint:css": "node --require ./tests/discovery-no-network.cjs --test tests/css-custom-properties.test.js",
     "test:a11y": "node --require ./tests/discovery-no-network.cjs --test tests/a11y.test.js",
     "test:characterization": "node --require ./tests/discovery-no-network.cjs --test tests/auth-characterization.test.js tests/profile-characterization.test.js tests/admin-characterization.test.js tests/dashboard-characterization.test.js",
-    "test:proposals": "node --require ./tests/discovery-no-network.cjs --test tests/sql-proposals.test.js",
+    "test:proposals": "node --require ./tests/discovery-no-network.cjs --test tests/sql-proposals.test.js tests/mention-after-dash.test.js",
     "test:ci": "node --require ./tests/discovery-no-network.cjs --test tests/ci-workflows.test.js"
   },
   "repository": {

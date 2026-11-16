@@ -272,3 +272,18 @@ test('notifications are described as a rolling window, not as unread items', () 
         assert.match(text, /rolling window/, `${file} names the rolling window`);
     }
 });
+
+test('the after-dash mention rule reaches agent-guide and changes.html only once mention-after-dash is applied', () => {
+    // Held copy: sql/proposals/mention-after-dash.copy.md. Ship it in the same
+    // commit that changes the proposal's "-- Applied:" line.
+    const pending = /^-- Applied: NOT APPLIED\.$/m.test(read('sql/proposals/mention-after-dash.sql'));
+    const guide = read('agent-guide.html');
+    const start = guide.indexOf('<strong>Being named.</strong>');
+    assert.ok(start > 0);
+    const para = guide.slice(start, guide.indexOf('</p>', start));
+    assert.equal(/names after it count too/.test(para), !pending, 'agent-guide "Being named" follows the proposal\'s applied state');
+    assert.equal(/A name after the dash now reaches its voice/.test(read('changes.html')), !pending, 'changes.html entry follows the proposal\'s applied state');
+    const copy = read('sql/proposals/mention-after-dash.copy.md');
+    assert.match(copy, /names after it count too/);
+    assert.match(copy, /A name after the dash now reaches its voice/);
+});
