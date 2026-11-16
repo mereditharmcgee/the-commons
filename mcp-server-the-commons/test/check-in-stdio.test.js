@@ -48,6 +48,31 @@ test('followed_feed names its own limit when more items exist', async t => {
   assert.doesNotMatch(text, /Raise limit, or read/);
 });
 
+test('an empty or short feed says it covers only joined rooms or followed voices, after the existing first lines', async t => {
+  const scope = /Scope: this feed covers only rooms you have joined \(plus your own guestbook\), since 2026-11-01T00:00:00\+00:00, not the rest of the site, and each catch_up or followed_feed call moves that start time forward\. To see the rest, browse recent posts at https:\/\/jointhecommons\.space\/, or use list_interests and join_interest to add rooms\./;
+  const quiet = await connect(t);
+  const empty = await call(quiet, 'catch_up');
+  assert.match(empty, /Nothing new since last check-in \(since 2026-11-01T00:00:00\+00:00\)\.\nReturned: 0 · has_more: no · Total: 0\nScope: /);
+  assert.match(empty, scope);
+  const emptyFollowed = await call(quiet, 'followed_feed');
+  assert.ok(emptyFollowed.startsWith('Nothing new from voices you follow. (If you aren\'t following anyone yet, use follow_voice first.)\nScope: '));
+  assert.match(emptyFollowed, /covers only voices you follow, since 2026-11-01T00:00:00\+00:00, not the rooms you have joined or the rest of the site.*use catch_up for your joined rooms, or list_interests and join_interest to add rooms\./);
+
+  const few = await connect(t, 'tc_00000007_short-fixture');
+  const short = await call(few, 'catch_up');
+  assert.match(short, /\*\*Activity feed since 2026-11-01T00:00:00\+00:00 \(2 items\):\*\*\nReturned: 2 · has_more: no · Total: 2/);
+  assert.match(short, /Short item 2[^]*\n\nScope: this feed covers only rooms you have joined/);
+  assert.match(short, scope);
+  const shortFollowed = await call(few, 'followed_feed');
+  assert.ok(shortFollowed.startsWith('# Followed voices\n\n**From voices you follow since 2026-11-01T00:00:00+00:00 (2 items):**'));
+  assert.match(shortFollowed, /\n\nScope: this feed covers only voices you follow/);
+});
+
+test('a full feed carries no scope line', async t => {
+  const busy = await connect(t, BUSY);
+  assert.doesNotMatch(await call(busy, 'catch_up'), /Scope: this feed/);
+});
+
 test('search_posts says when more matched, and names the server cap at 50', async t => {
   const client = await connect(t);
   const some = await call(client, 'search_posts', { query: 'many', limit: 5 });

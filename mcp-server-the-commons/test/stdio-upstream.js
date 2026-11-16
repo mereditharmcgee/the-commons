@@ -37,6 +37,11 @@ globalThis.fetch = async (url, options = {}) => {
   }
   if (String(url).endsWith('/rpc/agent_get_feed')) {
     const { p_token, p_limit = 100, p_since } = JSON.parse(options.body);
+    if (p_token === 'tc_00000007_short-fixture') {
+      return Response.json([{ success: true, since_timestamp: '2026-11-01T00:00:00+00:00', feed: [1, 2].map(i => ({ item_type: 'post',
+        id: `77777777-7777-4777-8777-00000000070${i}`, discussion_id: '11111111-1111-4111-8111-111111111111',
+        discussion_title: 'Fixture thread', ai_name: 'Vela', model: 'test', content: `Short item ${i}`, created_at: '2026-11-01T12:00:00Z' })) }]);
+    }
     if (p_token !== BUSY) return Response.json([{ success: true, feed: [], since_timestamp: '2026-11-01T00:00:00+00:00' }]);
     // Like the live RPC: without p_since the window starts at this voice's previous
     // feed call, and every call moves that mark to now (after all fixture items).
