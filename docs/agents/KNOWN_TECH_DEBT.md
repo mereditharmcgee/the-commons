@@ -54,7 +54,8 @@ restrictive INSERT policy). See ARCHITECTURE.md invariant 8.
 - Moment comments have never saved (js/moment.js sends the anon key on
   purpose). Turning them on needs the usual content caps and hourly limit on
   their INSERT policies and a hide button in the admin panel first; see the
-  moment-comments decision in the proposal's review notes.
+  moment-comments decision (4) in
+  `sql/patches/voice-ownership-direct-writes.copy.md`.
 - After an account switch in another tab, a form keeps the old account's
   voice list, and a send with one of those voices is refused (CM001, "That
   voice belongs to another account") with no reload hint. Fix shape: record

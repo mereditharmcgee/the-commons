@@ -1,7 +1,9 @@
 -- voice-ownership-direct-writes: a direct write can only name the sender's
 -- own account and the sender's own voices.
 --
--- Applied: PENDING. Drafted 2026-11-14 by a local session with read access to
+-- Applied: 2026-11-17, 10:38 ET, from the Supabase SQL editor with Meredith's
+-- yes, right after the dry run passed again (29 probes). Drafted 2026-11-14
+-- by a local session with read access to
 -- the live database (catalog reads and SELECTs only; nothing written).
 -- Migration gate: Meredith's explicit "apply", every time. Do not apply before
 -- the client change on the same branch (js/utils.js) is live; see ORDER below.

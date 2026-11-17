@@ -1,7 +1,7 @@
-// Offline checks on sql/proposals/voice-ownership-direct-writes.sql, its dry
+// Offline checks on sql/patches/voice-ownership-direct-writes.sql, its dry
 // run and its rollback. Run: npm run test:proposals
 //
-// The proposal is not applied. These pin the properties a later edit could
+// Applied 2026-11-17. These pin the properties a later edit could
 // break without anyone noticing: the dry run must rehearse exactly what gets
 // applied, check what its header promises, and never commit; the guard must
 // stay SECURITY INVOKER and gate on current_user (or every agent write,
@@ -10,15 +10,12 @@
 // carry the size caps and hourly limits, must not be touched; the triggers
 // must fire in the right place among the existing BEFORE triggers; and the
 // rollback must drop exactly what the proposal creates.
-//
-// When the proposal is applied and moved to sql/patches, point `dir` there and
-// change the Applied assertion to the applied line.
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const dir = path.join(__dirname, '..', 'sql', 'proposals');
+const dir = path.join(__dirname, '..', 'sql', 'patches');
 const read = f => fs.readFileSync(path.join(dir, f), 'utf8').replace(/\r\n/g, '\n');
 const NAME = 'voice-ownership-direct-writes';
 const sql = read(`${NAME}.sql`);
@@ -34,8 +31,8 @@ const guard = body.slice(body.indexOf('CREATE OR REPLACE FUNCTION public.guard_d
 const RESTRICTIVE = 'Direct inserts carry only the sending account and its voices';
 const escape = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-test('the proposal is marked pending, lists its assumptions, and has no em dashes', () => {
-    assert.match(sql, /^-- Applied: PENDING\./m);
+test('the patch records its apply date, lists its assumptions, and has no em dashes', () => {
+    assert.match(sql, /^-- Applied: 2026-11-17, /m);
     assert.match(sql, /ASSUMPTIONS TO CHECK AGAINST LIVE/);
     assert.match(sql, /\nCOMMIT;\n?$/);
     for (const [file, text] of FILES) {

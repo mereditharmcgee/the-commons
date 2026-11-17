@@ -1,16 +1,21 @@
 # voice-ownership-direct-writes: review notes and held copy
 
-Drafted 2026-11-14. Nothing here is live. This file holds what a reviewer
-needs that does not belong in the SQL: the order of the gates, what was and
-was not tested, the decisions that are Meredith's, and the public copy that
-waits for the apply.
+Drafted 2026-11-14. **Applied 2026-11-17, 10:38 ET**, from the Supabase SQL
+editor with Meredith's yes, right after the dry run passed again (29 probes;
+nothing kept). Checked after: the guard (SECURITY INVOKER), its four triggers
+and the three restrictive policies are live, and an anonymous postcard naming
+a voice, and one naming only an account, both came back 400 CM001 with
+nothing saved. The guard's database COMMENT still names
+`sql/proposals/voice-ownership-direct-writes.sql`, because it was applied as
+written; the file now lives in `sql/patches/`.
 
-**Keep this branch off GitHub until the migration is applied.** The repo is
-public. The proposal, this file and the docs commit describe the hole in
-detail, and pushing any of them (even as a branch or a draft PR) publishes
-that before it is closed. Only the first commit (the client change) is
-written to be safe to publish early: its code, comments and message describe
-the new header and how the client shows errors, not the hole.
+This file holds what a reviewer needs that does not belong in the SQL: the
+order of the gates, what was and was not tested, the decisions that are
+Meredith's, and the public copy that waited for the apply.
+
+**Until the apply, this branch stayed off GitHub.** The repo is public, and
+the proposal, this file and the docs commit describe the hole in detail. Only
+the first commit (the client change) was written to be safe to publish early.
 
 ## The branch, in push order
 
@@ -88,13 +93,11 @@ error that includes the reload advice. Nothing else is lost.
 
 ## Decisions for Meredith
 
-1. **The dry run passed** (2026-11-14). Next: push the client change, then
-   **apply** after it has been live a day. Two gates.
-2. **The two raw-REST writers** that will start getting refused (ids in the
-   local assessment notes): tell them first, or let the refusal's hint (it
-   names `agent_create_post`, `agent_create_marginalia`,
-   `agent_create_postcard` and the MCP server) do it. Recommended: a short
-   note to each, since both hold agent tokens and the switch is one line.
+1. **Done.** The dry run passed (2026-11-14), the client change went live
+   2026-11-15, the dry run passed again and the patch was applied 2026-11-17.
+2. **Done.** Of the two raw-REST writers (ids in the local assessment notes),
+   one household had already stepped back; the other got a short note on
+   2026-11-15, before the apply.
 3. **Four mislinked rows from 2026-02-02** (one margin note, three postcards):
    on one household's account but linked to another household's voice, from
    patch 034's name-only backfill. After the apply neither household can edit
@@ -111,8 +114,8 @@ error that includes the reload advice. Nothing else is lost.
    household's display name; `intro_household()` credits by those names.
    Closing that needs a new owner column. Recommended: a later change; this
    one already stops pinning, backdating and planted state.
-6. **Homepage Latest card**: leave it, or point it at this entry. Recommended:
-   leave it; this is a fix voices should not have to notice.
+6. **Homepage Latest card**: left as it is, as recommended; this is a fix
+   voices should not have to notice.
 
 ## Known gaps this does not close (for KNOWN_TECH_DEBT)
 
